@@ -1,10 +1,10 @@
-import type { ListingWithRelations, FeedItem } from '@/types';
+import type { ListingWithRelations, FeedItem } from "@/types";
 
 // ─── Single source of truth for active-boost check ─────────────────────────
 
 export function isActiveBoost(
   listing: ListingWithRelations,
-  now: number = Date.now()
+  now: number = Date.now(),
 ): boolean {
   return (
     listing.isBoosted &&
@@ -48,108 +48,74 @@ export interface ComposeFeedPageArgs {
   seed: number;
 }
 
-export function composeFeedPage({
+function buildFullFeed({
   allFiltered,
   isPriceSort,
-  page,
   pageSize = 12,
   adSlotIndexes = [0, 5, 10],
   seed,
-}: ComposeFeedPageArgs): FeedItem[] {
-  // If price sort or no items, just slice the filtered list. No ads.
+}: Omit<ComposeFeedPageArgs, "page">): FeedItem[] {
   if (isPriceSort || allFiltered.length === 0) {
-    const start = (page - 1) * pageSize;
-    return allFiltered.slice(start, start + pageSize).map((listing) => ({
-      listing,
-      isAd: false,
-    }));
+    return allFiltered.map((listing) => ({ listing, isAd: false }));
   }
 
   const now = Date.now();
-  const boostedListings = allFiltered.filter((l) => isActiveBoost(l, now));
-
-  // Sort pool by ID for deterministic ad assignment and shuffle with seeded PRNG
-  const sortedBoosted = [...boostedListings].sort((a, b) =>
-    a.id.localeCompare(b.id)
+  const remaining = seededShuffle(
+    allFiltered
+      .filter((l) => isActiveBoost(l, now))
+      .sort((a, b) => a.id.localeCompare(b.id)),
+    seed,
   );
-  const shuffledPool = seededShuffle(sortedBoosted, seed);
 
-  const totalItems = allFiltered.length;
-  const totalPages = Math.ceil(totalItems / pageSize);
+  const total = allFiltered.length;
+  const totalPages = Math.ceil(total / pageSize);
+  const adsByPage: ListingWithRelations[][] = [];
+  const adIds = new Set<string>();
 
-  // If requested page is out of bounds, return empty
-  if (page < 1 || page > totalPages) {
-    return [];
+  // Assign ads page by page: no wrap-around, max 1 ad per seller per page.
+  for (let p = 0; p < totalPages; p++) {
+    const itemsOnPage = Math.min(pageSize, total - p * pageSize);
+    const slots = adSlotIndexes.filter((s) => s < itemsOnPage);
+    const usedSellers = new Set<string>();
+    const pageAds: ListingWithRelations[] = [];
+
+    for (let s = 0; s < slots.length; s++) {
+      const idx = remaining.findIndex((c) => !usedSellers.has(c.sellerId));
+      if (idx === -1) break;
+      const [ad] = remaining.splice(idx, 1);
+      usedSellers.add(ad.sellerId);
+      adIds.add(ad.id);
+      pageAds.push(ad);
+    }
+    adsByPage.push(pageAds);
   }
 
-  // --- Global Ad Assignment ---
-  // Assign ads across all pages *before* slicing for the current page.
-  // This ensures ad assignment doesn't depend on `upToPage`.
-  const assignedAdIds = new Set<string>();
-  const pageAdAssignments: ListingWithRelations[][] = Array.from({ length: totalPages }, () => []);
-  const usedSellersThisCycle = new Set<string>(); // Track sellers used across ALL assigned ads
-  let poolIdx = 0;
+  // Unassigned boosts stay in the organic list without the ad flag.
+  const organic = allFiltered.filter((l) => !adIds.has(l.id));
+  const feed: FeedItem[] = [];
+  let organicIdx = 0;
 
   for (let p = 0; p < totalPages; p++) {
-    const currentPageItemCount = Math.min(pageSize, totalItems - p * pageSize);
-    const availableAdSlotsOnPage = adSlotIndexes.filter((slot) => slot < currentPageItemCount);
+    const itemsOnPage = Math.min(pageSize, total - p * pageSize);
+    const slots = adSlotIndexes.filter((s) => s < itemsOnPage);
+    const pageAds = adsByPage[p];
 
-    let adsAssignedOnPage = 0;
-    while (
-      adsAssignedOnPage < availableAdSlotsOnPage.length &&
-      poolIdx < shuffledPool.length &&
-      adsAssignedOnPage < 3 // Max 3 ads per page
-    ) {
-      const candidate = shuffledPool[poolIdx];
-
-      // Assign if not already used globally and seller is not used on this specific page yet
-      if (!assignedAdIds.has(candidate.id) && !usedSellersThisCycle.has(candidate.sellerId)) {
-        pageAdAssignments[p].push(candidate);
-        assignedAdIds.add(candidate.id);
-        usedSellersThisCycle.add(candidate.sellerId); // Mark seller used globally for this run
-        adsAssignedOnPage++;
-      }
-      poolIdx++;
-      if (poolIdx >= shuffledPool.length) {
-        // Reset pool index if we've exhausted the shuffled pool
-        // This is crucial for scenarios where ads need to be placed on many pages
-        // and the pool is smaller than totalPages * maxAdsPerPage
-        poolIdx = 0; // Reset to start from the beginning of the pool
-      }
-    }
-  }
-
-  const organicList = allFiltered.filter((l) => !assignedAdIds.has(l.id));
-
-  // --- Page Construction ---
-  const startIdx = (page - 1) * pageSize;
-  const endIdx = Math.min(startIdx + pageSize, totalItems);
-  const pageLength = endIdx - startIdx;
-
-  const result: (FeedItem | null)[] = Array(pageLength).fill(null);
-  const adsForThisPage = pageAdAssignments[page - 1];
-  const availableAdSlotsForThisPage = adSlotIndexes.filter((slot) => slot < pageLength);
-
-  // Place ads first
-  for (let i = 0; i < adsForThisPage.length; i++) {
-    if (i < availableAdSlotsForThisPage.length) {
-      result[availableAdSlotsForThisPage[i]] = { listing: adsForThisPage[i], isAd: true };
-    }
-  }
-
-  // Fill remaining slots with organic items
-  let organicIdx = startIdx - assignedAdIds.size; // Adjust start index based on ads assigned *before* this page
-  for (let i = 0; i < pageLength; i++) {
-    if (result[i] === null) {
-      if (organicIdx < organicList.length) {
-        result[i] = { listing: organicList[organicIdx++], isAd: false };
+    for (let i = 0; i < itemsOnPage; i++) {
+      const adPos = slots.indexOf(i);
+      if (adPos !== -1 && adPos < pageAds.length) {
+        feed.push({ listing: pageAds[adPos], isAd: true });
       } else {
-        // Should not happen if totalItems calculation is correct and pageLength is respected,
-        // but as a safeguard, break if organic list is exhausted.
-        break;
+        feed.push({ listing: organic[organicIdx++], isAd: false });
       }
     }
   }
 
-  return result.filter((item) => item !== null) as FeedItem[];
+  return feed;
+}
+
+export function composeFeedPage(args: ComposeFeedPageArgs): FeedItem[] {
+  const { page, pageSize = 12 } = args;
+  if (page < 1) return [];
+  const start = (page - 1) * pageSize;
+  return buildFullFeed(args).slice(start, start + pageSize);
 }

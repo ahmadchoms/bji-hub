@@ -170,39 +170,22 @@ export async function getCatalogFeed(
   const now = Date.now();
   const seed = Math.floor(now / 3_600_000);
 
-  // When sorting by price, all items are organic — no ad slots.
-  const boostedPool = isPriceSort
-    ? []
-    : allFiltered.filter((l) => isActiveBoost(l, now));
-
-  // Remove every pool member from organic globally so a listing never appears twice.
-  const allPoolIds = new Set(boostedPool.map((l) => l.id));
-  const organicAll = isPriceSort
-    ? allFiltered
-    : allFiltered.filter((l) => !allPoolIds.has(l.id));
-
-  // Pre-compute adsPerPage (same calculation as inside composeFeedPage).
-  const sortedPool = [...boostedPool].sort((a, b) => a.id.localeCompare(b.id));
-  const shuffledPool = seededShuffle(sortedPool, seed);
-  const uniqueSellerCount = new Set(shuffledPool.map((l) => l.sellerId)).size;
-  const adsPerPage = Math.min(3, uniqueSellerCount);
-  const organicPerPage = 12 - adsPerPage;
-
   const items: FeedItem[] = [];
   for (let page = 1; page <= upToPage; page++) {
     const pageItems = composeFeedPage({
-      organic: organicAll,
-      boostedPool,
+      allFiltered,
+      isPriceSort,
       page,
       pageSize: 12,
       adSlotIndexes: [0, 5, 10],
       seed,
     });
+    if (pageItems.length === 0) break;
     items.push(...pageItems);
   }
 
   const total = allFiltered.length;
-  const hasMore = upToPage * organicPerPage < organicAll.length;
+  const hasMore = upToPage * 12 < total;
 
   return { items, total, hasMore };
 }

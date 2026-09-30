@@ -128,144 +128,109 @@ function makePool(n: number): ListingWithRelations[] {
 
 const SEED = 12345;
 
-describe('composeFeedPage — ad slot placement', () => {
-  it('places ads at indexes 0, 5, 10 when 3+ unique sellers in pool', () => {
-    const pool = makePool(4);
-    const organic = makeOrganic(20);
-    const page = composeFeedPage({ organic, boostedPool: pool, page: 1, seed: SEED });
+describe('composeFeedPage', () => {
+  it('every filtered listing appears exactly once across all pages', () => {
+    const allFiltered = [...makePool(10), ...makeOrganic(10)];
+    const totalPages = Math.ceil(allFiltered.length / 12);
+    const resultIds = new Set<string>();
 
-    expect(page.length).toBeGreaterThan(0);
-    const adIndexes = page.map((item, i) => ({ i, isAd: item.isAd })).filter(x => x.isAd).map(x => x.i);
-    expect(adIndexes).toEqual([0, 5, 10]);
-    adIndexes.forEach(i => expect(page[i].isAd).toBe(true));
+    for (let p = 1; p <= totalPages; p++) {
+      const page = composeFeedPage({ allFiltered, isPriceSort: false, page: p, seed: SEED, pageSize: 12 });
+      page.forEach(item => {
+        expect(resultIds.has(item.listing.id)).toBe(false);
+        resultIds.add(item.listing.id);
+      });
+    }
+    expect(resultIds.size).toBe(allFiltered.length);
   });
 
-  it('uses only the first N slots when fewer than 3 unique sellers', () => {
-    const pool = makePool(2); // 2 unique sellers → adsPerPage = 2 → slots [0, 5]
-    const organic = makeOrganic(20);
-    const page = composeFeedPage({ organic, boostedPool: pool, page: 1, seed: SEED });
-
-    const adIndexes = page.map((item, i) => item.isAd ? i : -1).filter(i => i >= 0);
-    expect(adIndexes).toEqual([0, 5]);
+  it('no listing appears twice in a cumulative feed', () => {
+    const allFiltered = [...makePool(5), ...makeOrganic(20)];
+    let cumulative: string[] = [];
+    for (let p = 1; p <= 3; p++) {
+      const page = composeFeedPage({ allFiltered, isPriceSort: false, page: p, seed: SEED, pageSize: 12 });
+      cumulative = cumulative.concat(page.map(i => i.listing.id));
+    }
+    expect(new Set(cumulative).size).toBe(cumulative.length);
   });
 
-  it('uses 0 ad slots when pool is empty', () => {
-    const organic = makeOrganic(12);
-    const page = composeFeedPage({ organic, boostedPool: [], page: 1, seed: SEED });
-
-    expect(page.every(item => !item.isAd)).toBe(true);
-    expect(page.length).toBe(12);
-  });
-
-  it('uses 1 ad slot when pool has 1 unique seller', () => {
-    const pool = [makeListing({ id: 'b1', sellerId: 'sel-A', isBoosted: true, boostUntil: FUTURE })];
-    const organic = makeOrganic(15);
-    const page = composeFeedPage({ organic, boostedPool: pool, page: 1, seed: SEED });
-
-    const adIndexes = page.map((item, i) => item.isAd ? i : -1).filter(i => i >= 0);
-    expect(adIndexes).toEqual([0]);
-  });
-});
-
-describe('composeFeedPage — max 1 ad per seller per page', () => {
-  it('never shows two listings from the same seller as ads on one page', () => {
-    // Pool: 3 listings from same seller → only 1 qualifies
-    const pool = [
-      makeListing({ id: 'dup-1', sellerId: 'same', isBoosted: true, boostUntil: FUTURE }),
-      makeListing({ id: 'dup-2', sellerId: 'same', isBoosted: true, boostUntil: FUTURE }),
-      makeListing({ id: 'dup-3', sellerId: 'same', isBoosted: true, boostUntil: FUTURE }),
+  it('unassigned boosts appear organically without the ad flag', () => {
+    const allFiltered = [
+      makeListing({ id: 'b1', sellerId: 's1', isBoosted: true, boostUntil: FUTURE }),
+      makeListing({ id: 'b2', sellerId: 's1', isBoosted: true, boostUntil: FUTURE }),
+      makeListing({ id: 'b3', sellerId: 's1', isBoosted: true, boostUntil: FUTURE }),
+      makeListing({ id: 'b4', sellerId: 's1', isBoosted: true, boostUntil: FUTURE }),
+      makeListing({ id: 'b5', sellerId: 's1', isBoosted: true, boostUntil: FUTURE }),
     ];
-    const organic = makeOrganic(15);
-    const page = composeFeedPage({ organic, boostedPool: pool, page: 1, seed: SEED });
-
-    const adItems = page.filter(item => item.isAd);
-    const adSellerIds = adItems.map(item => item.listing.sellerId);
-    const uniqueAdSellers = new Set(adSellerIds);
-    expect(uniqueAdSellers.size).toBe(adItems.length); // each ad is a different seller
-    expect(adItems.length).toBeLessThanOrEqual(1);     // only 1 unique seller → 1 slot
+    const page = composeFeedPage({ allFiltered, isPriceSort: false, page: 1, seed: SEED, pageSize: 12 });
+    const ads = page.filter(i => i.isAd);
+    const organics = page.filter(i => !i.isAd);
+    expect(ads.length).toBe(1);
+    expect(organics.length).toBe(4);
+    expect(organics.every(o => o.listing.isBoosted)).toBe(true);
   });
 
-  it('deduplicates sellers from a mixed pool', () => {
-    const pool = [
-      makeListing({ id: 'm1', sellerId: 'A', isBoosted: true, boostUntil: FUTURE }),
-      makeListing({ id: 'm2', sellerId: 'B', isBoosted: true, boostUntil: FUTURE }),
-      makeListing({ id: 'm3', sellerId: 'A', isBoosted: true, boostUntil: FUTURE }), // duplicate seller A
-      makeListing({ id: 'm4', sellerId: 'C', isBoosted: true, boostUntil: FUTURE }),
+  it('page 1 is identical for upToPage 1 and 2 (assignment does not depend on upToPage)', () => {
+    const allFiltered = [...makePool(10), ...makeOrganic(20)];
+    const page1A = composeFeedPage({ allFiltered, isPriceSort: false, page: 1, seed: SEED, pageSize: 12 });
+    const page1B = composeFeedPage({ allFiltered, isPriceSort: false, page: 1, seed: SEED, pageSize: 12 });
+    expect(page1A).toEqual(page1B);
+  });
+
+  it('never more than 3 ads per page', () => {
+    const allFiltered = [...makePool(10), ...makeOrganic(30)];
+    const page = composeFeedPage({ allFiltered, isPriceSort: false, page: 1, seed: SEED, pageSize: 12 });
+    expect(page.filter(i => i.isAd).length).toBeLessThanOrEqual(3);
+  });
+
+  it('ads never come from a seller already used on that page', () => {
+    const allFiltered = [
+      makeListing({ id: 'b1', sellerId: 's1', isBoosted: true, boostUntil: FUTURE }),
+      makeListing({ id: 'b2', sellerId: 's1', isBoosted: true, boostUntil: FUTURE }),
+      ...makeOrganic(10)
     ];
-    const organic = makeOrganic(15);
-    const page = composeFeedPage({ organic, boostedPool: pool, page: 1, seed: SEED });
-
-    const adItems = page.filter(item => item.isAd);
-    const adSellerIds = adItems.map(item => item.listing.sellerId);
-    const uniqueAdSellers = new Set(adSellerIds);
-    expect(uniqueAdSellers.size).toBe(adItems.length);
-  });
-});
-
-describe('composeFeedPage — no duplicate listings on same page', () => {
-  it('every listing id appears at most once per page', () => {
-    const pool = makePool(4);
-    const organic = makeOrganic(20);
-    const page = composeFeedPage({ organic, boostedPool: pool, page: 1, seed: SEED });
-
-    const ids = page.map(item => item.listing.id);
-    expect(ids.length).toBe(new Set(ids).size);
-  });
-});
-
-describe('composeFeedPage — deterministic shuffle', () => {
-  it('same seed produces identical page output', () => {
-    const pool = makePool(4);
-    const organic = makeOrganic(20);
-    const a = composeFeedPage({ organic, boostedPool: pool, page: 1, seed: 9999 });
-    const b = composeFeedPage({ organic, boostedPool: pool, page: 1, seed: 9999 });
-    expect(a.map(i => i.listing.id)).toEqual(b.map(i => i.listing.id));
+    const page = composeFeedPage({ allFiltered, isPriceSort: false, page: 1, seed: SEED, pageSize: 12 });
+    const adSellers = page.filter(i => i.isAd).map(i => i.listing.sellerId);
+    expect(new Set(adSellers).size).toBe(adSellers.length);
   });
 
-  it('different seed changes ad order', () => {
-    const pool = makePool(4);
-    const organic = makeOrganic(20);
-    const a = composeFeedPage({ organic, boostedPool: pool, page: 1, seed: 1 });
-    const b = composeFeedPage({ organic, boostedPool: pool, page: 1, seed: 9_999_999 });
-    const adIdsA = a.filter(i => i.isAd).map(i => i.listing.id);
-    const adIdsB = b.filter(i => i.isAd).map(i => i.listing.id);
-    // With 4 items in a pool, two different seeds are extremely likely to yield different order
-    expect(adIdsA).not.toEqual(adIdsB);
-  });
-});
+  it('scale test: 10 boosted (10 sellers) + 10 organic asserts exact-once', () => {
+    const allFiltered = [...makePool(10), ...makeOrganic(10)];
+    const totalPages = Math.ceil(allFiltered.length / 12);
+    const resultIds = new Set<string>();
 
-describe('composeFeedPage — page 2 takes next pool items and wraps', () => {
-  it('page 2 starts at offset adsPerPage in the shuffled pool', () => {
-    // 4 unique sellers → adsPerPage = 3
-    const pool = makePool(4);
-    const organic = makeOrganic(30);
-
-    const page2 = composeFeedPage({ organic, boostedPool: pool, page: 2, seed: SEED });
-
-    const adIds2 = page2.filter(i => i.isAd).map(i => i.listing.id);
-
-    // The two pages must not have the same set of ad listings (they advance the pool)
-    // OR if they do (wrapping full cycle), they are identical sets — test both cases.
-    // At minimum: composing page 2 succeeds and returns 3 ads from the same pool.
-    expect(adIds2.length).toBe(3);
-    // Every ad on page 2 must still be from the pool
-    const poolIds = new Set(pool.map(l => l.id));
-    adIds2.forEach(id => expect(poolIds.has(id)).toBe(true));
+    for (let p = 1; p <= totalPages; p++) {
+      const page = composeFeedPage({ allFiltered, isPriceSort: false, page: p, seed: SEED, pageSize: 12 });
+      page.forEach(item => {
+        expect(resultIds.has(item.listing.id)).toBe(false);
+        resultIds.add(item.listing.id);
+      });
+    }
+    expect(resultIds.size).toBe(allFiltered.length);
   });
 
-  it('wraps around when pool is smaller than adsPerPage * pages', () => {
-    // 3 unique sellers → adsPerPage = 3 → page 2 wraps to pool[0..2] again
-    const pool = makePool(3);
-    const organic = makeOrganic(30);
+  it('scale test: 100 boosted + 100 organic asserts exact-once', () => {
+    const allFiltered = [...makePool(100), ...makeOrganic(100)];
+    const totalPages = Math.ceil(allFiltered.length / 12);
+    const resultIds = new Set<string>();
+    
+    let totalAds = 0;
 
-    const page1 = composeFeedPage({ organic, boostedPool: pool, page: 1, seed: SEED });
-    const page2 = composeFeedPage({ organic, boostedPool: pool, page: 2, seed: SEED });
-
-    const adIds1 = new Set(page1.filter(i => i.isAd).map(i => i.listing.id));
-    const adIds2 = new Set(page2.filter(i => i.isAd).map(i => i.listing.id));
-
-    // 3 pool items, adsPerPage=3: page1 takes [0,1,2], page2 starts at (1*3)%3=0 → same set
-    expect(adIds1).toEqual(adIds2);
+    for (let p = 1; p <= totalPages; p++) {
+      const page = composeFeedPage({ allFiltered, isPriceSort: false, page: p, seed: SEED, pageSize: 12 });
+      totalAds += page.filter(i => i.isAd).length;
+      page.forEach(item => {
+        expect(resultIds.has(item.listing.id)).toBe(false);
+        resultIds.add(item.listing.id);
+      });
+    }
+    expect(resultIds.size).toBe(allFiltered.length);
+  });
+  
+  it('terminates on its own', () => {
+    const allFiltered = [...makeOrganic(5)];
+    const page2 = composeFeedPage({ allFiltered, isPriceSort: false, page: 2, seed: SEED, pageSize: 12 });
+    expect(page2.length).toBe(0);
   });
 });
 

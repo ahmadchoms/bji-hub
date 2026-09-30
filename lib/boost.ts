@@ -40,72 +40,93 @@ export function seededShuffle<T>(items: T[], seed: number): T[] {
 // ─── Feed-page composition ──────────────────────────────────────────────────
 
 export interface ComposeFeedPageArgs {
-  /** Full filtered organic list (sorted by requested sort, pool members already removed). */
-  organic: ListingWithRelations[];
-  /** All eligible active-boost listings for this filter set. */
-  boostedPool: ListingWithRelations[];
+  allFiltered: ListingWithRelations[];
+  isPriceSort: boolean;
   page: number;
   pageSize?: number;
   adSlotIndexes?: number[];
-  /** Seed = Math.floor(Date.now() / 3_600_000) so it changes every hour. */
   seed: number;
 }
 
 export function composeFeedPage({
-  organic,
-  boostedPool,
+  allFiltered,
+  isPriceSort,
   page,
   pageSize = 12,
   adSlotIndexes = [0, 5, 10],
   seed,
 }: ComposeFeedPageArgs): FeedItem[] {
-  // Sort pool by id for a stable base, then shuffle deterministically.
-  const sortedPool = [...boostedPool].sort((a, b) =>
-    a.id.localeCompare(b.id)
-  );
-  const shuffledPool = seededShuffle(sortedPool, seed);
+  if (isPriceSort || allFiltered.length === 0) {
+    const start = (page - 1) * pageSize;
+    return allFiltered.slice(start, start + pageSize).map((listing) => ({ listing, isAd: false }));
+  }
 
-  // adsPerPage = min(available slots, unique seller count in pool)
-  const uniqueSellerIds = new Set(shuffledPool.map((l) => l.sellerId));
-  const adsPerPage = Math.min(adSlotIndexes.length, uniqueSellerIds.size);
-  const activeSlots = adSlotIndexes.slice(0, adsPerPage);
-  const organicPerPage = pageSize - adsPerPage;
+  const now = Date.now();
+  const boostedListings = allFiltered.filter((l) => isActiveBoost(l, now));
 
-  // Select ads for this page; pool cycles via modulo, max 1 per seller.
-  const selectedAds: ListingWithRelations[] = [];
-  if (shuffledPool.length > 0 && adsPerPage > 0) {
-    const startIdx = ((page - 1) * adsPerPage) % shuffledPool.length;
-    const usedSellers = new Set<string>();
-    let probed = 0;
-    while (selectedAds.length < adsPerPage && probed < shuffledPool.length) {
-      const item = shuffledPool[(startIdx + probed) % shuffledPool.length];
-      if (!usedSellers.has(item.sellerId)) {
-        selectedAds.push(item);
-        usedSellers.add(item.sellerId);
+  const sortedBoosted = [...boostedListings].sort((a, b) => a.id.localeCompare(b.id));
+  const shuffledPool = seededShuffle(sortedBoosted, seed);
+
+  const totalPages = Math.ceil(allFiltered.length / pageSize);
+  if (page > totalPages || page < 1) {
+    return [];
+  }
+
+  const assignedAdIds = new Set<string>();
+  const pageAdAssignments: ListingWithRelations[][] = Array.from({ length: totalPages }, () => []);
+  let poolIndex = 0;
+
+  for (let p = 0; p < totalPages; p++) {
+    const pageStartIndex = p * pageSize;
+    const pageEndIndex = Math.min(pageStartIndex + pageSize, allFiltered.length);
+    const pageItemsCount = pageEndIndex - pageStartIndex;
+
+    const availableAdSlots = adSlotIndexes.filter((slot) => slot < pageItemsCount);
+    const usedSellersOnPage = new Set<string>();
+    let scanned = 0;
+    const startPoolIndex = poolIndex;
+
+    while (pageAdAssignments[p].length < availableAdSlots.length && scanned < shuffledPool.length) {
+      const candidateIdx = (startPoolIndex + scanned) % shuffledPool.length;
+      const candidate = shuffledPool[candidateIdx];
+
+      if (!assignedAdIds.has(candidate.id) && !usedSellersOnPage.has(candidate.sellerId)) {
+        pageAdAssignments[p].push(candidate);
+        assignedAdIds.add(candidate.id);
+        usedSellersOnPage.add(candidate.sellerId);
+        poolIndex = candidateIdx + 1;
       }
-      probed++;
+      scanned++;
     }
   }
 
-  // Organic slice for this page.
-  const organicSlice = organic.slice(
-    (page - 1) * organicPerPage,
-    page * organicPerPage
-  );
+  const organicList = allFiltered.filter((l) => !assignedAdIds.has(l.id));
 
-  // Build the page: ads at activeSlots, organic everywhere else.
-  const result: (FeedItem | null)[] = Array(pageSize).fill(null);
-  activeSlots.forEach((slotIdx, i) => {
-    if (i < selectedAds.length) {
-      result[slotIdx] = { listing: selectedAds[i], isAd: true };
-    }
-  });
-  let organicIdx = 0;
-  for (let slot = 0; slot < pageSize; slot++) {
-    if (result[slot] === null && organicIdx < organicSlice.length) {
-      result[slot] = { listing: organicSlice[organicIdx++], isAd: false };
+  let pastAdsCount = 0;
+  for (let p = 0; p < page - 1; p++) {
+    pastAdsCount += pageAdAssignments[p].length;
+  }
+  const organicStartIdx = (page - 1) * pageSize - pastAdsCount;
+
+  const pageStartIndex = (page - 1) * pageSize;
+  const pageEndIndex = Math.min(pageStartIndex + pageSize, allFiltered.length);
+  const pageItemsCount = pageEndIndex - pageStartIndex;
+
+  const adsForThisPage = pageAdAssignments[page - 1];
+  const availableAdSlotsForThisPage = adSlotIndexes.filter((slot) => slot < pageItemsCount);
+
+  const result: (FeedItem | null)[] = Array(pageItemsCount).fill(null);
+
+  for (let i = 0; i < adsForThisPage.length; i++) {
+    result[availableAdSlotsForThisPage[i]] = { listing: adsForThisPage[i], isAd: true };
+  }
+
+  let organicIdx = organicStartIdx;
+  for (let i = 0; i < pageItemsCount; i++) {
+    if (result[i] === null) {
+      result[i] = { listing: organicList[organicIdx++], isAd: false };
     }
   }
 
-  return result.filter((item): item is FeedItem => item !== null);
+  return result as FeedItem[];
 }

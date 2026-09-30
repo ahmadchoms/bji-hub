@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { ListingWithRelations } from "@/types";
 import { toast } from "sonner";
+import { isActiveBoost } from "@/lib/boost";
 
 interface BillingSectionProps {
   subscription?: Subscription;
@@ -78,7 +79,7 @@ export function BillingSection({
     setBoostLoading(true);
     await new Promise((r) => setTimeout(r, 800));
     toast.success("Boost berhasil diaktifkan!", {
-      description: "Listing Anda akan tampil di posisi teratas.",
+      description: "Listing Anda akan tampil di slot iklan pada pencarian yang cocok.",
     });
     setBoostLoading(false);
     setBoostDialogOpen(false);
@@ -158,7 +159,7 @@ export function BillingSection({
                     </SelectTrigger>
                     <SelectContent>
                       {listings
-                        .filter((l) => l.status === "active" && !l.isBoosted)
+                        .filter((l) => l.status === "active" && !isActiveBoost(l))
                         .map((l) => (
                           <SelectItem key={l.id} value={l.id}>
                             {l.title}

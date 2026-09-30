@@ -25,9 +25,10 @@ export async function CatalogFeed({ params }: { params: CatalogParams }) {
         .filter(([, value]) => value !== "" && value !== false && value !== undefined)
         .map(([key, value]) => [key, String(value)])
     ).toString();
-    const nextUrl = feed.hasMore
-      ? `/?${serialized ? `${serialized}&` : ""}halaman=${params.halaman + 1}`
-      : null;
+    
+    const nextParams = new URLSearchParams(serialized);
+    nextParams.set("halaman", String(params.halaman + 1));
+    const nextUrl = feed.hasMore ? `/?${nextParams.toString()}` : null;
 
     return (
       <>

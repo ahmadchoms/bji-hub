@@ -42,7 +42,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           <span>/</span>
           <Link href="/catalog" className="hover:text-primary-700">Katalog</Link>
           <span>/</span>
-          <Link href={`/catalog?category=${listing.category.slug}`} className="hover:text-primary-700">{listing.category.name}</Link>
+          <Link href={`/?kategori=${listing.category.slug}`} className="hover:text-primary-700">{listing.category.name}</Link>
           <span>/</span>
           <span className="text-neutral-900 truncate max-w-xs">{listing.title}</span>
         </nav>
@@ -149,7 +149,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           <div className="pt-8 border-t border-neutral-300 space-y-6">
             <div className="flex items-baseline justify-between pb-3 border-b border-neutral-300">
               <h3 className="font-display text-xl text-neutral-900 font-semibold">Sejenis Lainnya</h3>
-              <Link href={`/catalog?category=${listing.category.slug}`} className="text-xs font-medium text-primary-600 hover:underline">
+              <Link href={`/?kategori=${listing.category.slug}`} className="text-xs font-medium text-primary-600 hover:underline">
                 Lihat Semua →
               </Link>
             </div>

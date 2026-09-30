@@ -240,10 +240,8 @@ describe('composeFeedPage — page 2 takes next pool items and wraps', () => {
     const pool = makePool(4);
     const organic = makeOrganic(30);
 
-    const page1 = composeFeedPage({ organic, boostedPool: pool, page: 1, seed: SEED });
     const page2 = composeFeedPage({ organic, boostedPool: pool, page: 2, seed: SEED });
 
-    const adIds1 = page1.filter(i => i.isAd).map(i => i.listing.id);
     const adIds2 = page2.filter(i => i.isAd).map(i => i.listing.id);
 
     // The two pages must not have the same set of ad listings (they advance the pool)

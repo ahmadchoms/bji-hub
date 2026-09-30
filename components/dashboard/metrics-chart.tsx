@@ -40,15 +40,15 @@ export function MetricsChart({ data, className }: MetricsChartProps) {
       <div className="w-full h-64">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#D8CFC5" />
+            <CartesianGrid strokeDasharray="0" stroke="#E5DDD2" vertical={false} />
             <XAxis
               dataKey="date"
               tick={{ fill: "#8C8078", fontSize: 10, fontFamily: "var(--font-mono)" }}
-              axisLine={{ stroke: "#D8CFC5" }}
+              axisLine={{ stroke: "#E5DDD2", strokeWidth: 1 }}
             />
             <YAxis
               tick={{ fill: "#8C8078", fontSize: 10, fontFamily: "var(--font-mono)" }}
-              axisLine={{ stroke: "#D8CFC5" }}
+              axisLine={{ stroke: "#E5DDD2", strokeWidth: 1 }}
             />
             <Tooltip
               contentStyle={{
@@ -67,7 +67,7 @@ export function MetricsChart({ data, className }: MetricsChartProps) {
               dataKey="views"
               name="Tayangan"
               stroke="#512615"
-              strokeWidth={1.5}
+              strokeWidth={1}
               dot={false}
               activeDot={{ r: 3 }}
             />
@@ -76,7 +76,7 @@ export function MetricsChart({ data, className }: MetricsChartProps) {
               dataKey="clicks"
               name="Klik Kontak"
               stroke="#2F6D4F"
-              strokeWidth={1.5}
+              strokeWidth={1}
               dot={false}
               activeDot={{ r: 3 }}
             />

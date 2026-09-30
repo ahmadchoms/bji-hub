@@ -65,8 +65,8 @@ export function ListingForm({
       onSubmit={handleSubmit(onSubmit)}
       className={cn("space-y-8", className)}
     >
-      <div className="border border-neutral-300 bg-surface-base rounded-sm p-5 space-y-5">
-        <h3 className="font-display text-lg text-neutral-900 font-semibold pb-3 border-b border-neutral-300">
+      <div className="space-y-5">
+        <h3 className="font-display text-2xl text-neutral-900 font-semibold">
           Informasi Produk
         </h3>
 
@@ -148,8 +148,8 @@ export function ListingForm({
         </div>
       </div>
 
-      <div className="border border-neutral-300 bg-surface-base rounded-sm p-5 space-y-5">
-        <h3 className="font-display text-lg text-neutral-900 font-semibold pb-3 border-b border-neutral-300">
+      <div className="space-y-5">
+        <h3 className="font-display text-2xl text-neutral-900 font-semibold">
           Profil Rasa
         </h3>
 

@@ -16,7 +16,7 @@ interface NavLink {
 }
 
 const links: NavLink[] = [
-  { label: "Paket Penjual", href: "/price", roles: ["guest", "buyer", "seller", "admin"] },
+  { label: "Paket Penjual", href: "/pricing", roles: ["guest", "buyer", "seller", "admin"] },
 ];
 
 function getJualKopiHref(role: string): string {

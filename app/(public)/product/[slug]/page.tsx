@@ -9,8 +9,8 @@ import { InquiryForm } from "@/components/catalog/inquiry-form";
 import { ListingGrid } from "@/components/catalog/listing-grid";
 import { PriceText } from "@/components/shared/price-text";
 import { VerifiedBadge } from "@/components/shared/verified-badge";
-import { BoostedBadge } from "@/components/shared/boosted-badge";
 import { WhatsAppButton } from "@/components/shared/whatsapp-button";
+import { ProductStickyCTA } from "@/components/catalog/product-sticky-cta";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
@@ -28,7 +28,13 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   const relatedListings = relatedResult.items.filter((l) => l.id !== listing.id).slice(0, 3);
 
   return (
-    <div className="py-8 md:py-12 space-y-10">
+    <div className="py-8 md:py-12 space-y-10 pb-20 md:pb-0">
+      <ProductStickyCTA
+        phoneNumber={listing.seller.whatsappNumber}
+        listingId={listing.id}
+        listingTitle={listing.title}
+        sellerName={listing.seller.businessName}
+      />
       <PageContainer className="space-y-8">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-xs text-neutral-500 font-mono overflow-x-auto whitespace-nowrap" aria-label="Breadcrumb">
@@ -65,7 +71,6 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
               {/* Badges */}
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-mono text-neutral-500 uppercase tracking-wider">{listing.category.name}</span>
-                {listing.isBoosted && <BoostedBadge size="sm" />}
                 {listing.seller.isVerified && <VerifiedBadge size="sm" />}
               </div>
 
@@ -127,12 +132,14 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
               {/* Flavor Profile */}
               <FlavorProfile tasteProfile={listing.tasteProfile} />
 
-              {/* B2B Inquiry */}
-              <InquiryForm
-                listingId={listing.id}
-                listingTitle={listing.title}
-                sellerName={listing.seller.businessName}
-              />
+               {/* B2B Inquiry */}
+               <div id="inquiry-form">
+                 <InquiryForm
+                   listingId={listing.id}
+                   listingTitle={listing.title}
+                   sellerName={listing.seller.businessName}
+                 />
+               </div>
             </div>
           </div>
         </div>

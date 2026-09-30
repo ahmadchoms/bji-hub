@@ -21,9 +21,9 @@ import { useState } from "react";
 
 const ADMIN_NAV: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/admin", label: "Ringkasan", icon: LayoutDashboard },
-  { href: "/admin/verifikasi", label: "Antrean Verifikasi", icon: BadgeCheck },
-  { href: "/admin/moderasi", label: "Moderasi Listing", icon: ClipboardList },
-  { href: "/admin/transaksi", label: "Riwayat Transaksi", icon: Receipt },
+  { href: "/admin/verification", label: "Antrean Verifikasi", icon: BadgeCheck },
+  { href: "/admin/moderation", label: "Moderasi Listing", icon: ClipboardList },
+  { href: "/admin/transactions", label: "Riwayat Transaksi", icon: Receipt },
 ];
 
 function isNavActive(pathname: string, href: string): boolean {

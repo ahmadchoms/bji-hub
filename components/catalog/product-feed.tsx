@@ -1,23 +1,29 @@
 import Link from "next/link";
 import { ListingCard } from "@/components/catalog/listing-card";
-import { ListingWithRelations } from "@/types";
+import { buildCatalogHref } from "@/lib/catalog-url";
+import { FeedItem } from "@/types";
 
 interface CategoryTabsProps {
   categories: { slug: string; name: string }[];
   active: string;
+  currentParams?: URLSearchParams;
 }
 
-export function CategoryTabs({ categories, active }: CategoryTabsProps) {
+// Bug 2 fix: category tabs now preserve all current filters (q, asal, proses, etc.)
+// by using buildCatalogHref which merges overrides into the current param set.
+export function CategoryTabs({ categories, active, currentParams }: CategoryTabsProps) {
+  const base = currentParams ?? new URLSearchParams();
   const items = [{ slug: "", name: "Semua" }, ...categories];
   return (
     <nav aria-label="Kategori" className="overflow-x-auto border-b border-neutral-300 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <div className="mx-auto flex min-w-max max-w-7xl px-4 sm:px-6 lg:px-8">
         {items.map((item) => {
           const selected = active === item.slug;
+          const href = buildCatalogHref(base, { kategori: item.slug || undefined });
           return (
             <Link
               key={item.slug || "all"}
-              href={item.slug ? `/?kategori=${encodeURIComponent(item.slug)}` : "/"}
+              href={href}
               aria-current={selected ? "page" : undefined}
               className={`min-h-11 border-b-2 px-4 py-3 text-xs font-medium ${selected ? "border-primary-600 text-primary-900" : "border-transparent text-neutral-600 hover:text-neutral-900"}`}
             >
@@ -47,10 +53,12 @@ export function ResultMeta({ total, params }: { total: number; params: URLSearch
   );
 }
 
-export function ProductList({ items }: { items: ListingWithRelations[] }) {
+export function ProductList({ items }: { items: FeedItem[] }) {
   return (
     <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4" aria-label="Daftar produk kopi">
-      {items.map((listing, index) => <ListingCard key={listing.id} listing={listing} priority={index < 4} />)}
+      {items.map((item, index) => (
+        <ListingCard key={item.listing.id} listing={item.listing} priority={index < 4} isAd={item.isAd} />
+      ))}
     </ul>
   );
 }

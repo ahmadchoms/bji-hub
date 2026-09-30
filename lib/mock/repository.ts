@@ -5,6 +5,8 @@ import {
   ListingFilters,
   ListingFeedResult,
   ListingFilterOptions,
+  CatalogFeedResult,
+  FeedItem,
   SellerStats,
   AdminStats,
   Inquiry,
@@ -17,6 +19,7 @@ import {
   mockPayments,
   mockInquiries,
 } from './data';
+import { isActiveBoost, seededShuffle, composeFeedPage } from '@/lib/boost';
 
 // Simulation Configuration for Testing States (Empty & Error)
 export interface MockSimulationConfig {
@@ -131,14 +134,8 @@ async function findListings(filters: ListingFilters = {}): Promise<ListingWithRe
     });
   }
 
-  // Valid boosted listings lead every ordering, then requested sort.
-  const isActiveBoost = (listing: ListingWithRelations) =>
-    listing.isBoosted && Boolean(listing.boostUntil) && new Date(listing.boostUntil || 0).getTime() > Date.now();
-
+  // Sort by requested criteria only — boost placement is handled by getCatalogFeed.
   results.sort((a, b) => {
-    if (isActiveBoost(a) !== isActiveBoost(b)) {
-      return isActiveBoost(a) ? -1 : 1;
-    }
     if (filters.sort === 'price_asc') return a.price - b.price;
     if (filters.sort === 'price_desc') return b.price - a.price;
     if (filters.sort === 'popular') return a.minOrderQty - b.minOrderQty;
@@ -158,6 +155,56 @@ export async function getListings(filters: ListingFilters & { page?: number; pag
 
 export async function getListingFeed(filters: ListingFilters & { page?: number; pageSize?: number } = {}): Promise<ListingFeedResult> {
   return getListings(filters);
+}
+
+/**
+ * Builds the public catalog feed for pages 1..upToPage using the boost placement
+ * algorithm (ad slots at indexes 0, 5, 10; seed = current hour; no ads on price sort).
+ */
+export async function getCatalogFeed(
+  filters: ListingFilters,
+  upToPage: number
+): Promise<CatalogFeedResult> {
+  const allFiltered = await findListings(filters);
+  const isPriceSort = filters.sort === 'price_asc' || filters.sort === 'price_desc';
+  const now = Date.now();
+  const seed = Math.floor(now / 3_600_000);
+
+  // When sorting by price, all items are organic — no ad slots.
+  const boostedPool = isPriceSort
+    ? []
+    : allFiltered.filter((l) => isActiveBoost(l, now));
+
+  // Remove every pool member from organic globally so a listing never appears twice.
+  const allPoolIds = new Set(boostedPool.map((l) => l.id));
+  const organicAll = isPriceSort
+    ? allFiltered
+    : allFiltered.filter((l) => !allPoolIds.has(l.id));
+
+  // Pre-compute adsPerPage (same calculation as inside composeFeedPage).
+  const sortedPool = [...boostedPool].sort((a, b) => a.id.localeCompare(b.id));
+  const shuffledPool = seededShuffle(sortedPool, seed);
+  const uniqueSellerCount = new Set(shuffledPool.map((l) => l.sellerId)).size;
+  const adsPerPage = Math.min(3, uniqueSellerCount);
+  const organicPerPage = 12 - adsPerPage;
+
+  const items: FeedItem[] = [];
+  for (let page = 1; page <= upToPage; page++) {
+    const pageItems = composeFeedPage({
+      organic: organicAll,
+      boostedPool,
+      page,
+      pageSize: 12,
+      adSlotIndexes: [0, 5, 10],
+      seed,
+    });
+    items.push(...pageItems);
+  }
+
+  const total = allFiltered.length;
+  const hasMore = upToPage * organicPerPage < organicAll.length;
+
+  return { items, total, hasMore };
 }
 
 export async function getFilterOptions(): Promise<ListingFilterOptions> {

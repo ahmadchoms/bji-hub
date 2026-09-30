@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -20,7 +20,7 @@ const PROVINCES = [
   "Sulawesi Selatan", "Papua",
 ];
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useSession();
@@ -133,7 +133,7 @@ export default function RegisterPage() {
               <label className="flex items-start gap-2 cursor-pointer text-xs text-neutral-700">
                 <input type="checkbox" {...register("termsAccepted")} className="mt-0.5 w-4 h-4 rounded text-primary-600 focus:ring-primary-400 border-neutral-300" />
                 <span className="leading-relaxed">
-                  Saya setuju dengan <Link href="/syarat" className="text-primary-600 hover:underline">Syarat & Ketentuan</Link> Direktori Kopi Biji.
+                  Saya setuju dengan <Link href="/terms" className="text-primary-600 hover:underline">Syarat & Ketentuan</Link> Direktori Kopi Biji.
                 </span>
               </label>
               {errors.termsAccepted?.message && (
@@ -160,5 +160,13 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="py-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-neutral-400" /></div>}>
+      <RegisterForm />
+    </Suspense>
   );
 }

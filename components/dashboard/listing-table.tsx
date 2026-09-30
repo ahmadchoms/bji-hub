@@ -5,7 +5,7 @@ import Image from "next/image";
 import { ListingWithRelations } from "@/types";
 import { formatRupiah } from "@/components/shared/price-text";
 import { VerifiedBadge } from "@/components/shared/verified-badge";
-import { BoostedBadge } from "@/components/shared/boosted-badge";
+import { isActiveBoost } from "@/lib/boost";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -87,7 +87,11 @@ export function ListingTable({ listings, className }: ListingTableProps) {
                         {listing.title}
                       </Link>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        {listing.isBoosted && <BoostedBadge size="sm" />}
+                        {isActiveBoost(listing) && (
+                          <span className="text-[10px] font-mono text-neutral-500">
+                            Boost aktif sampai {new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric" }).format(new Date(listing.boostUntil!))}
+                          </span>
+                        )}
                         {listing.seller.isVerified && <VerifiedBadge size="sm" showLabel={false} />}
                       </div>
                     </div>
@@ -156,7 +160,11 @@ export function ListingTable({ listings, className }: ListingTableProps) {
               </div>
               <div className="flex items-center justify-between mt-3 pt-3 border-t border-neutral-200">
                 <div className="flex items-center gap-1.5">
-                  {listing.isBoosted && <BoostedBadge size="sm" />}
+                  {isActiveBoost(listing) && (
+                    <span className="text-[10px] font-mono text-neutral-500">
+                      Boost aktif sampai {new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric" }).format(new Date(listing.boostUntil!))}
+                    </span>
+                  )}
                   {listing.seller.isVerified && <VerifiedBadge size="sm" showLabel={false} />}
                 </div>
                 <div className="flex items-center gap-1">

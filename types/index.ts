@@ -146,6 +146,17 @@ export interface ListingFeedResult {
   total: number;
 }
 
+export interface FeedItem {
+  listing: ListingWithRelations;
+  isAd: boolean;
+}
+
+export interface CatalogFeedResult {
+  items: FeedItem[];
+  total: number;
+  hasMore: boolean;
+}
+
 export interface ListingFilterOptions {
   origins: string[];
   processes: string[];

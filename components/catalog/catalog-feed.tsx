@@ -1,26 +1,33 @@
 import Link from "next/link";
-import { getListings } from "@/lib/mock/repository";
+import { getCatalogFeed } from "@/lib/mock/repository";
 import { parseCatalogParams, type CatalogParams } from "@/lib/validations/catalog-params.schema";
 import { ProductList, ResultMeta } from "@/components/catalog/product-feed";
 import { LoadMore } from "@/components/catalog/load-more";
 
 export async function CatalogFeed({ params }: { params: CatalogParams }) {
   try {
-    const feed = await getListings({
-      categorySlug: params.kategori,
-      originRegion: params.asal,
-      processMethod: params.proses,
-      roastLevel: params.sangrai,
-      minPrice: params.harga_min,
-      maxPrice: params.harga_max,
-      isVerified: params.verified,
-      search: params.q,
-      sort: params.urut === "harga_terendah" ? "price_asc" : params.urut === "harga_tertinggi" ? "price_desc" : "newest",
-      page: params.halaman,
-      pageSize: 12,
-    });
-    const serialized = new URLSearchParams(Object.entries(params).filter(([, value]) => value !== "" && value !== false && value !== undefined).map(([key, value]) => [key, String(value)])).toString();
-    const nextUrl = params.halaman < Math.ceil(feed.total / 12) ? `/?${serialized ? `${serialized}&` : ""}halaman=${params.halaman + 1}` : null;
+    const feed = await getCatalogFeed(
+      {
+        categorySlug: params.kategori,
+        originRegion: params.asal,
+        processMethod: params.proses,
+        roastLevel: params.sangrai,
+        minPrice: params.harga_min,
+        maxPrice: params.harga_max,
+        isVerified: params.verified,
+        search: params.q,
+        sort: params.urut === "harga_terendah" ? "price_asc" : params.urut === "harga_tertinggi" ? "price_desc" : "newest",
+      },
+      params.halaman
+    );
+    const serialized = new URLSearchParams(
+      Object.entries(params)
+        .filter(([, value]) => value !== "" && value !== false && value !== undefined)
+        .map(([key, value]) => [key, String(value)])
+    ).toString();
+    const nextUrl = feed.hasMore
+      ? `/?${serialized ? `${serialized}&` : ""}halaman=${params.halaman + 1}`
+      : null;
 
     return (
       <>
@@ -28,15 +35,27 @@ export async function CatalogFeed({ params }: { params: CatalogParams }) {
         {feed.items.length ? (
           <>
             <ProductList items={feed.items} />
-            {nextUrl && <div className="flex justify-center py-8"><LoadMore href={nextUrl} /></div>}
+            {nextUrl && (
+              <div className="flex justify-center py-8">
+                <LoadMore href={nextUrl} />
+              </div>
+            )}
           </>
         ) : (
-          <div className="py-10"><p className="font-display text-xl text-neutral-900">Tidak ada produk yang cocok.</p><Link href="/" className="mt-3 inline-block text-sm font-medium text-primary-600 hover:underline">Hapus filter</Link></div>
+          <div className="py-10">
+            <p className="font-display text-xl text-neutral-900">Tidak ada produk yang cocok.</p>
+            <Link href="/" className="mt-3 inline-block text-sm font-medium text-primary-600 hover:underline">Hapus filter</Link>
+          </div>
         )}
       </>
     );
   } catch {
-    return <div className="py-10"><p className="font-display text-xl text-neutral-900">Gagal memuat produk.</p><Link href="/" className="mt-3 inline-block text-sm font-medium text-primary-600 hover:underline">Coba lagi</Link></div>;
+    return (
+      <div className="py-10">
+        <p className="font-display text-xl text-neutral-900">Gagal memuat produk.</p>
+        <Link href="/" className="mt-3 inline-block text-sm font-medium text-primary-600 hover:underline">Coba lagi</Link>
+      </div>
+    );
   }
 }
 

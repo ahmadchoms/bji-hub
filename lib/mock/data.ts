@@ -7,6 +7,11 @@ import {
   Inquiry,
 } from '@/types';
 
+/** Returns an ISO string N days from the current moment. Negative N = past. */
+function daysFromNow(n: number): string {
+  return new Date(Date.now() + n * 86_400_000).toISOString();
+}
+
 export const mockCategories: Category[] = [
   {
     id: 'cat-1',
@@ -140,7 +145,7 @@ export const mockListings: ListingWithRelations[] = [
     minOrderQty: 1,
     status: 'active',
     isBoosted: true,
-    boostUntil: '2026-10-15T23:59:59.000Z',
+    boostUntil: daysFromNow(15),
     createdAt: '2025-02-10T09:00:00.000Z',
     seller: mockSellers[0],
     category: mockCategories[1],
@@ -185,7 +190,7 @@ export const mockListings: ListingWithRelations[] = [
     minOrderQty: 1,
     status: 'active',
     isBoosted: true,
-    boostUntil: '2026-10-20T23:59:59.000Z',
+    boostUntil: daysFromNow(20),
     createdAt: '2025-02-12T10:00:00.000Z',
     seller: mockSellers[1],
     category: mockCategories[1],
@@ -335,7 +340,7 @@ export const mockListings: ListingWithRelations[] = [
     minOrderQty: 5,
     status: 'active',
     isBoosted: true,
-    boostUntil: '2026-11-01T23:59:59.000Z',
+    boostUntil: daysFromNow(-5), // deliberately expired — exercises exclusion path
     createdAt: '2025-02-20T14:00:00.000Z',
     seller: mockSellers[0],
     category: mockCategories[0],
@@ -518,7 +523,7 @@ export const mockListings: ListingWithRelations[] = [
     minOrderQty: 1,
     status: 'active',
     isBoosted: true,
-    boostUntil: '2026-10-30T23:59:59.000Z',
+    boostUntil: daysFromNow(1), // expires in ~1 day — exercises near-boundary path
     createdAt: '2025-02-25T13:00:00.000Z',
     seller: mockSellers[5],
     category: mockCategories[3],
@@ -570,7 +575,7 @@ export const mockListings: ListingWithRelations[] = [
     minOrderQty: 1,
     status: 'active',
     isBoosted: true,
-    boostUntil: '2026-11-15T23:59:59.000Z',
+    boostUntil: daysFromNow(45),
     createdAt: '2025-02-27T10:00:00.000Z',
     seller: mockSellers[4],
     category: mockCategories[1],

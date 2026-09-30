@@ -26,7 +26,7 @@ const SELLER_NAV: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/dashboard/listing", label: "Produk Saya", icon: Package },
   { href: "/dashboard/analytics", label: "Analitik", icon: BarChart3 },
   { href: "/dashboard/billing", label: "Langganan", icon: CreditCard },
-  { href: "/dashboard/profil", label: "Profil Toko", icon: Store },
+  { href: "/dashboard/profile", label: "Profil Toko", icon: Store },
   { href: "/dashboard/inquiry", label: "Pesan Masuk", icon: MessageSquare },
 ];
 

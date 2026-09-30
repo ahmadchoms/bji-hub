@@ -7,14 +7,14 @@ interface ListingCardProps {
   listing: ListingWithRelations;
   priority?: boolean;
   className?: string;
+  isAd?: boolean;
 }
 
-export function ListingCard({ listing, priority = false, className }: ListingCardProps) {
+export function ListingCard({ listing, priority = false, className, isAd = false }: ListingCardProps) {
   const image = listing.images[0]?.url;
   const origin = listing.tasteProfile?.originRegion || listing.seller.city;
   const process = listing.tasteProfile?.processMethod || "—";
   const roast = listing.tasteProfile?.roastLevel || "—";
-  const activeBoost = listing.isBoosted && Boolean(listing.boostUntil) && new Date(listing.boostUntil || 0).getTime() > Date.now();
 
   return (
     <li className={cn("min-w-0", className)}>
@@ -44,13 +44,13 @@ export function ListingCard({ listing, priority = false, className }: ListingCar
             {listing.title}
           </h2>
           <p className="truncate text-[11px] font-mono uppercase tracking-tight text-neutral-500">
-            {origin} · {process} · {roast}{activeBoost ? " · Iklan" : ""}
+            {origin} · {process} · {roast}{isAd ? " · Iklan" : ""}
           </p>
           <p className="font-mono text-base font-bold tabular-nums text-primary-900">
             {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(listing.price)} / {listing.unit}
           </p>
           {listing.minOrderQty > 1 && (
-            <p className="text-[11px] text-neutral-500">Min. order {listing.minOrderQty} {listing.unit}</p>
+            <p className="text-[11px] font-mono text-neutral-500">Min. order {listing.minOrderQty} {listing.unit}</p>
           )}
           <p className="truncate text-xs text-neutral-600">
             {listing.seller.businessName}{listing.seller.isVerified ? " · Terverifikasi" : ""}

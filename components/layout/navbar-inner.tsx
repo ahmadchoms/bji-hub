@@ -75,9 +75,7 @@ export function NavbarInner({ role }: { role: Role }) {
       <header className="sticky top-0 z-40 hidden border-b border-neutral-300 bg-surface-base md:block">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-10">
-            <Link href="/" aria-label="Biji — Beranda" className={focusRing}>
-              <Logo size="md" />
-            </Link>
+            <Logo size="md" />
             <nav
               className="flex items-center gap-6"
               aria-label="Navigasi utama"
@@ -118,9 +116,7 @@ export function NavbarInner({ role }: { role: Role }) {
 
       <header className="sticky top-0 z-40 border-b border-neutral-300 bg-surface-base md:hidden">
         <div className="flex h-14 items-center justify-between px-4">
-          <Link href="/" aria-label="Biji — Beranda" className={focusRing}>
-            <Logo size="md" />
-          </Link>
+          <Logo size="md" />
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger
               render={

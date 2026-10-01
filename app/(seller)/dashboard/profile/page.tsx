@@ -1,11 +1,11 @@
 import { getSellerById } from "@/lib/mock/repository";
 import { SectionHeader } from "@/components/shared/section-header";
 import { ProfileForm } from "@/components/dashboard/profile-form";
-
-const MOCK_SELLER_ID = "seller-1";
+import { requireSeller } from "@/lib/auth/session";
 
 export default async function DashboardProfilPage() {
-  const seller = await getSellerById(MOCK_SELLER_ID);
+  const { sellerId } = await requireSeller();
+  const seller = await getSellerById(sellerId);
 
   if (!seller) {
     return <p className="text-neutral-500">Data seller tidak ditemukan.</p>;

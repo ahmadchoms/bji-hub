@@ -11,6 +11,7 @@ import { PriceText } from "@/components/shared/price-text";
 import { VerifiedBadge } from "@/components/shared/verified-badge";
 import { WhatsAppButton } from "@/components/shared/whatsapp-button";
 import { ProductStickyCTA } from "@/components/catalog/product-sticky-cta";
+import { TrackOnMount } from "@/components/shared/track-visible";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
@@ -24,11 +25,16 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     notFound();
   }
 
-  const relatedResult = await getListingFeed({ categorySlug: listing.category.slug });
-  const relatedListings = relatedResult.items.filter((l) => l.id !== listing.id).slice(0, 3);
+  const relatedResult = await getListingFeed({
+    categorySlug: listing.category.slug,
+  });
+  const relatedListings = relatedResult.items
+    .filter((l) => l.id !== listing.id)
+    .slice(0, 3);
 
   return (
     <div className="py-8 md:py-12 space-y-10 pb-20 md:pb-0">
+      <TrackOnMount listingId={listing.id} type="view" />
       <ProductStickyCTA
         phoneNumber={listing.seller.whatsappNumber}
         listingId={listing.id}
@@ -37,14 +43,28 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
       />
       <PageContainer className="space-y-8">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-xs text-neutral-500 font-mono overflow-x-auto whitespace-nowrap" aria-label="Breadcrumb">
-          <Link href="/" className="hover:text-primary-700">Beranda</Link>
+        <nav
+          className="flex items-center gap-2 text-xs text-neutral-500 font-mono overflow-x-auto whitespace-nowrap"
+          aria-label="Breadcrumb"
+        >
+          <Link href="/" className="hover:text-primary-700">
+            Beranda
+          </Link>
           <span>/</span>
-          <Link href="/catalog" className="hover:text-primary-700">Katalog</Link>
+          <Link href="/catalog" className="hover:text-primary-700">
+            Katalog
+          </Link>
           <span>/</span>
-          <Link href={`/?kategori=${listing.category.slug}`} className="hover:text-primary-700">{listing.category.name}</Link>
+          <Link
+            href={`/?kategori=${listing.category.slug}`}
+            className="hover:text-primary-700"
+          >
+            {listing.category.name}
+          </Link>
           <span>/</span>
-          <span className="text-neutral-900 truncate max-w-xs">{listing.title}</span>
+          <span className="text-neutral-900 truncate max-w-xs">
+            {listing.title}
+          </span>
         </nav>
 
         {/* Product Detail — 2 column editorial */}
@@ -60,7 +80,8 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                 Deskripsi
               </h3>
               <p className="text-sm text-neutral-700 leading-relaxed whitespace-pre-line">
-                {listing.description || "Biji kopi pilihan yang diproses dengan dedikasi tinggi oleh petani lokal untuk menghadirkan cita rasa terbaik khas tanah Nusantara."}
+                {listing.description ||
+                  "Biji kopi pilihan yang diproses dengan dedikasi tinggi oleh petani lokal untuk menghadirkan cita rasa terbaik khas tanah Nusantara."}
               </p>
             </div>
           </div>
@@ -70,7 +91,9 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
             <div className="lg:sticky lg:top-24 space-y-6">
               {/* Badges */}
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-mono text-neutral-500 uppercase tracking-wider">{listing.category.name}</span>
+                <span className="text-[11px] font-mono text-neutral-500 uppercase tracking-wider">
+                  {listing.category.name}
+                </span>
                 {listing.seller.isVerified && <VerifiedBadge size="sm" />}
               </div>
 
@@ -80,7 +103,9 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                   {listing.title}
                 </h1>
                 <p className="text-sm text-neutral-600">
-                  {listing.seller.businessName} — {listing.tasteProfile?.originRegion || listing.seller.city}, {listing.seller.province}
+                  {listing.seller.businessName} —{" "}
+                  {listing.tasteProfile?.originRegion || listing.seller.city},{" "}
+                  {listing.seller.province}
                 </p>
               </div>
 
@@ -88,11 +113,19 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
               <div className="p-4 bg-neutral-50 border border-neutral-300 rounded-sm">
                 <div className="flex items-baseline justify-between">
                   <div>
-                    <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest mb-1">Harga</p>
-                    <PriceText price={listing.price} unit={listing.unit} size="lg" />
+                    <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest mb-1">
+                      Harga
+                    </p>
+                    <PriceText
+                      price={listing.price}
+                      unit={listing.unit}
+                      size="lg"
+                    />
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest mb-1">Min. Order</p>
+                    <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest mb-1">
+                      Min. Order
+                    </p>
                     <span className="font-mono text-sm font-bold text-neutral-900">
                       {listing.minOrderQty} {listing.unit}
                     </span>
@@ -119,12 +152,21 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
               <div className="p-4 border border-neutral-300 rounded-sm flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="font-medium text-sm text-neutral-900 truncate">{listing.seller.businessName}</span>
-                    {listing.seller.isVerified && <VerifiedBadge size="sm" showLabel={false} />}
+                    <span className="font-medium text-sm text-neutral-900 truncate">
+                      {listing.seller.businessName}
+                    </span>
+                    {listing.seller.isVerified && (
+                      <VerifiedBadge size="sm" showLabel={false} />
+                    )}
                   </div>
-                  <p className="text-xs text-neutral-500">{listing.seller.city}, {listing.seller.province}</p>
+                  <p className="text-xs text-neutral-500">
+                    {listing.seller.city}, {listing.seller.province}
+                  </p>
                 </div>
-                <Link href={`/store/${listing.seller.slug}`} className="px-3 py-1.5 text-xs font-medium text-primary-700 border border-neutral-300 rounded-sm hover:bg-neutral-50 shrink-0">
+                <Link
+                  href={`/store/${listing.seller.slug}`}
+                  className="px-3 py-1.5 text-xs font-medium text-primary-700 border border-neutral-300 rounded-sm hover:bg-neutral-50 shrink-0"
+                >
                   Kunjungi Toko
                 </Link>
               </div>
@@ -132,14 +174,14 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
               {/* Flavor Profile */}
               <FlavorProfile tasteProfile={listing.tasteProfile} />
 
-               {/* B2B Inquiry */}
-               <div id="inquiry-form">
-                 <InquiryForm
-                   listingId={listing.id}
-                   listingTitle={listing.title}
-                   sellerName={listing.seller.businessName}
-                 />
-               </div>
+              {/* B2B Inquiry */}
+              <div id="inquiry-form">
+                <InquiryForm
+                  listingId={listing.id}
+                  listingTitle={listing.title}
+                  sellerName={listing.seller.businessName}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -148,8 +190,13 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
         {relatedListings.length > 0 && (
           <div className="pt-8 border-t border-neutral-300 space-y-6">
             <div className="flex items-baseline justify-between pb-3 border-b border-neutral-300">
-              <h3 className="font-display text-xl text-neutral-900 font-semibold">Sejenis Lainnya</h3>
-              <Link href={`/?kategori=${listing.category.slug}`} className="text-xs font-medium text-primary-600 hover:underline">
+              <h3 className="font-display text-xl text-neutral-900 font-semibold">
+                Sejenis Lainnya
+              </h3>
+              <Link
+                href={`/?kategori=${listing.category.slug}`}
+                className="text-xs font-medium text-primary-600 hover:underline"
+              >
                 Lihat Semua →
               </Link>
             </div>

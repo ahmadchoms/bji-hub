@@ -3,11 +3,11 @@ import { SectionHeader } from "@/components/shared/section-header";
 import { ListingTable } from "@/components/dashboard/listing-table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-
-const MOCK_SELLER_ID = "seller-1";
+import { requireSeller } from "@/lib/auth/session";
 
 export default async function DashboardListingPage() {
-  const seller = await getSellerById(MOCK_SELLER_ID);
+  const { sellerId } = await requireSeller();
+  const seller = await getSellerById(sellerId);
 
   if (!seller) {
     return <p className="text-neutral-500">Data seller tidak ditemukan.</p>;

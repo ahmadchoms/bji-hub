@@ -1,10 +1,13 @@
 import { AdminSidebar } from "@/components/dashboard/admin-sidebar";
+import { requireRole } from "@/lib/auth/session";
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  await requireRole(["admin"], "/admin");
+
   return (
     <div className="min-h-screen bg-surface-alt">
       <AdminSidebar>

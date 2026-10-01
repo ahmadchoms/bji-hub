@@ -10,7 +10,8 @@ import {
   SellerStats,
   AdminStats,
   Inquiry,
-} from '@/types';
+  ListingPerformance,
+} from "@/types";
 import {
   mockCategories,
   mockListings,
@@ -18,8 +19,9 @@ import {
   mockSubscriptions,
   mockPayments,
   mockInquiries,
-} from './data';
-import { isActiveBoost, seededShuffle, composeFeedPage } from '@/lib/boost';
+} from "./data";
+import { composeFeedPage, isActiveBoost } from "@/lib/boost";
+import { getEventSeries } from "./analytics-store";
 
 // Simulation Configuration for Testing States (Empty & Error)
 export interface MockSimulationConfig {
@@ -32,7 +34,7 @@ export interface MockSimulationConfig {
 const mockConfig: MockSimulationConfig = {
   simulateLatencyMs: 200,
   shouldFail: false,
-  errorMessage: 'Gagal memuat data dari mock repository. Silakan coba lagi.',
+  errorMessage: "Gagal memuat data dari mock repository. Silakan coba lagi.",
   forceEmptyListings: false,
 };
 
@@ -43,7 +45,8 @@ export function configureMock(newConfig: Partial<MockSimulationConfig>) {
 export function resetMockConfig() {
   mockConfig.simulateLatencyMs = 200;
   mockConfig.shouldFail = false;
-  mockConfig.errorMessage = 'Gagal memuat data dari mock repository. Silakan coba lagi.';
+  mockConfig.errorMessage =
+    "Gagal memuat data dari mock repository. Silakan coba lagi.";
   mockConfig.forceEmptyListings = false;
 }
 
@@ -67,7 +70,9 @@ export async function getCategories(): Promise<Category[]> {
 /**
  * Fetch category by slug
  */
-export async function getCategoryBySlug(slug: string): Promise<Category | null> {
+export async function getCategoryBySlug(
+  slug: string,
+): Promise<Category | null> {
   await simulateDelay();
   return mockCategories.find((c) => c.slug === slug) ?? null;
 }
@@ -75,33 +80,43 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
 /**
  * Fetch listings with optional filtering and sorting
  */
-async function findListings(filters: ListingFilters = {}): Promise<ListingWithRelations[]> {
+async function findListings(
+  filters: ListingFilters = {},
+): Promise<ListingWithRelations[]> {
   await simulateDelay();
 
   if (mockConfig.forceEmptyListings) {
     return [];
   }
 
-  let results = mockListings.filter((item) => item.status === 'active');
+  let results = mockListings.filter((item) => item.status === "active");
 
   // Category filter
-  if (filters.categorySlug && filters.categorySlug !== 'all') {
-    results = results.filter((item) => item.category.slug === filters.categorySlug);
+  if (filters.categorySlug && filters.categorySlug !== "all") {
+    results = results.filter(
+      (item) => item.category.slug === filters.categorySlug,
+    );
   }
 
   // Origin region filter
-  if (filters.originRegion && filters.originRegion !== 'all') {
-    results = results.filter((item) => item.tasteProfile?.originRegion === filters.originRegion);
+  if (filters.originRegion && filters.originRegion !== "all") {
+    results = results.filter(
+      (item) => item.tasteProfile?.originRegion === filters.originRegion,
+    );
   }
 
   // Process method filter
-  if (filters.processMethod && filters.processMethod !== 'all') {
-    results = results.filter((item) => item.tasteProfile?.processMethod === filters.processMethod);
+  if (filters.processMethod && filters.processMethod !== "all") {
+    results = results.filter(
+      (item) => item.tasteProfile?.processMethod === filters.processMethod,
+    );
   }
 
   // Roast level filter
-  if (filters.roastLevel && filters.roastLevel !== 'all') {
-    results = results.filter((item) => item.tasteProfile?.roastLevel === filters.roastLevel);
+  if (filters.roastLevel && filters.roastLevel !== "all") {
+    results = results.filter(
+      (item) => item.tasteProfile?.roastLevel === filters.roastLevel,
+    );
   }
 
   // Verified seller only filter
@@ -115,45 +130,54 @@ async function findListings(filters: ListingFilters = {}): Promise<ListingWithRe
   }
 
   // Price range filters
-  if (typeof filters.minPrice === 'number' && !isNaN(filters.minPrice)) {
+  if (typeof filters.minPrice === "number" && !isNaN(filters.minPrice)) {
     results = results.filter((item) => item.price >= filters.minPrice!);
   }
-  if (typeof filters.maxPrice === 'number' && !isNaN(filters.maxPrice)) {
+  if (typeof filters.maxPrice === "number" && !isNaN(filters.maxPrice)) {
     results = results.filter((item) => item.price <= filters.maxPrice!);
   }
 
   // Keyword search (title, seller name, origin, flavor notes)
-  if (filters.search && filters.search.trim() !== '') {
+  if (filters.search && filters.search.trim() !== "") {
     const q = filters.search.toLowerCase().trim();
     results = results.filter((item) => {
       const matchTitle = item.title.toLowerCase().includes(q);
       const matchSeller = item.seller.businessName.toLowerCase().includes(q);
-      const matchOrigin = item.tasteProfile?.originRegion.toLowerCase().includes(q) ?? false;
-      const matchNotes = item.tasteProfile?.flavorNotes.toLowerCase().includes(q) ?? false;
+      const matchOrigin =
+        item.tasteProfile?.originRegion.toLowerCase().includes(q) ?? false;
+      const matchNotes =
+        item.tasteProfile?.flavorNotes.toLowerCase().includes(q) ?? false;
       return matchTitle || matchSeller || matchOrigin || matchNotes;
     });
   }
 
   // Sort by requested criteria only — boost placement is handled by getCatalogFeed.
   results.sort((a, b) => {
-    if (filters.sort === 'price_asc') return a.price - b.price;
-    if (filters.sort === 'price_desc') return b.price - a.price;
-    if (filters.sort === 'popular') return a.minOrderQty - b.minOrderQty;
+    if (filters.sort === "price_asc") return a.price - b.price;
+    if (filters.sort === "price_desc") return b.price - a.price;
+    if (filters.sort === "popular") return a.minOrderQty - b.minOrderQty;
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
   return results;
 }
 
-export async function getListings(filters: ListingFilters & { page?: number; pageSize?: number } = {}): Promise<ListingFeedResult> {
+export async function getListings(
+  filters: ListingFilters & { page?: number; pageSize?: number } = {},
+): Promise<ListingFeedResult> {
   const results = await findListings(filters);
   const pageSize = Math.max(1, filters.pageSize ?? Number.MAX_SAFE_INTEGER);
   const page = Math.max(1, filters.page ?? 1);
   const start = (page - 1) * pageSize;
-  return { items: results.slice(start, start + pageSize), total: results.length };
+  return {
+    items: results.slice(start, start + pageSize),
+    total: results.length,
+  };
 }
 
-export async function getListingFeed(filters: ListingFilters & { page?: number; pageSize?: number } = {}): Promise<ListingFeedResult> {
+export async function getListingFeed(
+  filters: ListingFilters & { page?: number; pageSize?: number } = {},
+): Promise<ListingFeedResult> {
   return getListings(filters);
 }
 
@@ -163,10 +187,11 @@ export async function getListingFeed(filters: ListingFilters & { page?: number; 
  */
 export async function getCatalogFeed(
   filters: ListingFilters,
-  upToPage: number
+  upToPage: number,
 ): Promise<CatalogFeedResult> {
   const allFiltered = await findListings(filters);
-  const isPriceSort = filters.sort === 'price_asc' || filters.sort === 'price_desc';
+  const isPriceSort =
+    filters.sort === "price_asc" || filters.sort === "price_desc";
   const now = Date.now();
   const seed = Math.floor(now / 3_600_000);
 
@@ -193,16 +218,40 @@ export async function getCatalogFeed(
 export async function getFilterOptions(): Promise<ListingFilterOptions> {
   await simulateDelay();
   return {
-    origins: [...new Set(mockListings.map((listing) => listing.tasteProfile?.originRegion).filter((value): value is string => Boolean(value)))].sort(),
-    processes: [...new Set(mockListings.map((listing) => listing.tasteProfile?.processMethod).filter((value): value is NonNullable<typeof value> => Boolean(value)))].sort(),
-    roastLevels: [...new Set(mockListings.map((listing) => listing.tasteProfile?.roastLevel).filter((value): value is NonNullable<typeof value> => Boolean(value)))].sort(),
+    origins: [
+      ...new Set(
+        mockListings
+          .map((listing) => listing.tasteProfile?.originRegion)
+          .filter((value): value is string => Boolean(value)),
+      ),
+    ].sort(),
+    processes: [
+      ...new Set(
+        mockListings
+          .map((listing) => listing.tasteProfile?.processMethod)
+          .filter((value): value is NonNullable<typeof value> =>
+            Boolean(value),
+          ),
+      ),
+    ].sort(),
+    roastLevels: [
+      ...new Set(
+        mockListings
+          .map((listing) => listing.tasteProfile?.roastLevel)
+          .filter((value): value is NonNullable<typeof value> =>
+            Boolean(value),
+          ),
+      ),
+    ].sort(),
   };
 }
 
 /**
  * Fetch a single listing by its slug
  */
-export async function getListingBySlug(slug: string): Promise<ListingWithRelations | null> {
+export async function getListingBySlug(
+  slug: string,
+): Promise<ListingWithRelations | null> {
   await simulateDelay();
   const listing = mockListings.find((item) => item.slug === slug);
   return listing ? { ...listing } : null;
@@ -211,7 +260,9 @@ export async function getListingBySlug(slug: string): Promise<ListingWithRelatio
 /**
  * Fetch a single listing by its ID
  */
-export async function getListingById(id: string): Promise<ListingWithRelations | null> {
+export async function getListingById(
+  id: string,
+): Promise<ListingWithRelations | null> {
   await simulateDelay();
   const listing = mockListings.find((item) => item.id === id);
   return listing ? { ...listing } : null;
@@ -220,13 +271,17 @@ export async function getListingById(id: string): Promise<ListingWithRelations |
 /**
  * Fetch a seller profile with associated listings and relations
  */
-export async function getSellerBySlug(slug: string): Promise<SellerWithRelations | null> {
+export async function getSellerBySlug(
+  slug: string,
+): Promise<SellerWithRelations | null> {
   await simulateDelay();
   const seller = mockSellers.find((s) => s.slug === slug);
   if (!seller) return null;
 
   const listings = mockListings.filter((l) => l.sellerId === seller.id);
-  const subscriptions = mockSubscriptions.filter((sub) => sub.sellerId === seller.id);
+  const subscriptions = mockSubscriptions.filter(
+    (sub) => sub.sellerId === seller.id,
+  );
   const payments = mockPayments.filter((p) => p.sellerId === seller.id);
 
   return {
@@ -240,13 +295,17 @@ export async function getSellerBySlug(slug: string): Promise<SellerWithRelations
 /**
  * Fetch seller profile by sellerId
  */
-export async function getSellerById(id: string): Promise<SellerWithRelations | null> {
+export async function getSellerById(
+  id: string,
+): Promise<SellerWithRelations | null> {
   await simulateDelay();
   const seller = mockSellers.find((s) => s.id === id);
   if (!seller) return null;
 
   const listings = mockListings.filter((l) => l.sellerId === seller.id);
-  const subscriptions = mockSubscriptions.filter((sub) => sub.sellerId === seller.id);
+  const subscriptions = mockSubscriptions.filter(
+    (sub) => sub.sellerId === seller.id,
+  );
   const payments = mockPayments.filter((p) => p.sellerId === seller.id);
 
   return {
@@ -260,44 +319,66 @@ export async function getSellerById(id: string): Promise<SellerWithRelations | n
 /**
  * Fetch analytics metrics and overview for seller dashboard
  */
+export const STATS_WINDOW_DAYS = 30;
+
 export async function getSellerStats(sellerId: string): Promise<SellerStats> {
   await simulateDelay();
 
   const sellerListings = mockListings.filter((l) => l.sellerId === sellerId);
   const listingIds = new Set(sellerListings.map((l) => l.id));
-  const inquiries = mockInquiries.filter((inq) => listingIds.has(inq.listingId));
+  const inquiries = mockInquiries.filter((inq) =>
+    listingIds.has(inq.listingId),
+  );
 
-  // Generate realistic daily metrics for past 14 days
-  const metrics = [
-    { date: '15 Feb', views: 42, clicks: 5 },
-    { date: '16 Feb', views: 56, clicks: 7 },
-    { date: '17 Feb', views: 48, clicks: 4 },
-    { date: '18 Feb', views: 72, clicks: 9 },
-    { date: '19 Feb', views: 65, clicks: 8 },
-    { date: '20 Feb', views: 89, clicks: 12 },
-    { date: '21 Feb', views: 95, clicks: 14 },
-    { date: '22 Feb', views: 110, clicks: 16 },
-    { date: '23 Feb', views: 85, clicks: 11 },
-    { date: '24 Feb', views: 102, clicks: 15 },
-    { date: '25 Feb', views: 120, clicks: 18 },
-    { date: '26 Feb', views: 135, clicks: 21 },
-    { date: '27 Feb', views: 140, clicks: 22 },
-    { date: '28 Feb', views: 158, clicks: 25 },
-  ];
-
-  const totalViews = metrics.reduce((sum, m) => sum + m.views, 0);
-  const totalClicks = metrics.reduce((sum, m) => sum + m.clicks, 0);
-  const conversionRate = totalViews > 0 ? Number(((totalClicks / totalViews) * 100).toFixed(1)) : 0;
+  const series = getEventSeries([...listingIds], STATS_WINDOW_DAYS);
+  const totalViews = series.reduce((sum, p) => sum + p.views, 0);
+  const totalClicks = series.reduce((sum, p) => sum + p.clicks, 0);
+  const totalImpressions = series.reduce((sum, p) => sum + p.impressions, 0);
+  const hasEvents = totalViews + totalClicks + totalImpressions > 0;
 
   return {
     totalViews,
     totalClicks,
-    conversionRate,
+    totalImpressions,
+    conversionRate:
+      totalViews > 0
+        ? Number(((totalClicks / totalViews) * 100).toFixed(1))
+        : 0,
     totalListings: sellerListings.length,
-    activeListings: sellerListings.filter((l) => l.status === 'active').length,
+    activeListings: sellerListings.filter((l) => l.status === "active").length,
     inquiryCount: inquiries.length,
-    metrics,
+    metrics: hasEvents
+      ? series.map(({ date, views, clicks }) => ({ date, views, clicks }))
+      : [],
   };
+}
+
+export async function getSellerListingPerformance(
+  sellerId: string,
+): Promise<ListingPerformance[]> {
+  await simulateDelay();
+
+  const now = Date.now();
+  return mockListings
+    .filter((l) => l.sellerId === sellerId)
+    .map((l) => {
+      const series = getEventSeries([l.id], STATS_WINDOW_DAYS, now);
+      const views = series.reduce((sum, p) => sum + p.views, 0);
+      const clicks = series.reduce((sum, p) => sum + p.clicks, 0);
+      const impressions = series.reduce((sum, p) => sum + p.impressions, 0);
+      return {
+        listingId: l.id,
+        title: l.title,
+        slug: l.slug,
+        views,
+        clicks,
+        impressions,
+        conversionRate:
+          views > 0 ? Number(((clicks / views) * 100).toFixed(1)) : 0,
+        boostUntil: isActiveBoost(l, now) ? (l.boostUntil ?? null) : null,
+      };
+    })
+    .sort((a, b) => b.clicks - a.clicks || b.views - a.views);
 }
 
 /**
@@ -307,7 +388,7 @@ export async function getAdminStats(): Promise<AdminStats> {
   await simulateDelay();
 
   const monthlyRevenue = mockPayments
-    .filter((p) => p.status === 'paid')
+    .filter((p) => p.status === "paid")
     .reduce((sum, p) => sum + p.amount, 0);
 
   return {
@@ -330,7 +411,7 @@ export async function getInquiries(sellerId?: string): Promise<Inquiry[]> {
   }
 
   const sellerListingIds = new Set(
-    mockListings.filter((l) => l.sellerId === sellerId).map((l) => l.id)
+    mockListings.filter((l) => l.sellerId === sellerId).map((l) => l.id),
   );
 
   return mockInquiries.filter((inq) => sellerListingIds.has(inq.listingId));

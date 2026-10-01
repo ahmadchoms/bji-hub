@@ -3,6 +3,7 @@
 import { MessageCircle, FileText } from "lucide-react";
 import { buildWhatsAppUrl } from "@/components/shared/whatsapp-button";
 import { cn } from "@/lib/utils";
+import { trackEvent } from "@/lib/tracking";
 
 interface Props {
   phoneNumber: string;
@@ -19,17 +20,24 @@ export function ProductStickyCTA({
   sellerName,
   className,
 }: Props) {
-  const whatsappUrl = buildWhatsAppUrl({ phoneNumber, listingId, listingTitle, sellerName });
+  const whatsappUrl = buildWhatsAppUrl({
+    phoneNumber,
+    listingId,
+    listingTitle,
+    sellerName,
+  });
 
   const scrollToInquiry = () => {
-    document.getElementById("inquiry-form")?.scrollIntoView({ behavior: "smooth" });
+    document
+      .getElementById("inquiry-form")
+      ?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
     <div
       className={cn(
         "fixed bottom-0 inset-x-0 z-50 border-t border-neutral-300 bg-surface-base md:hidden",
-        className
+        className,
       )}
     >
       <div className="flex items-stretch divide-x divide-neutral-300">
@@ -37,6 +45,7 @@ export function ProductStickyCTA({
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => trackEvent(listingId, "contact_click")}
           className="flex-1 flex items-center justify-center gap-2 h-12 bg-primary-600 text-white text-sm font-medium"
         >
           <MessageCircle className="w-4 h-4 shrink-0" />

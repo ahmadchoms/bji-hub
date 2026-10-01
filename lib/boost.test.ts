@@ -334,8 +334,6 @@ describe("composeFeedPage", () => {
     const totalPages = Math.ceil(allFiltered.length / 12);
     const resultIds = new Set<string>();
 
-    let totalAds = 0;
-
     for (let p = 1; p <= totalPages; p++) {
       const page = composeFeedPage({
         allFiltered,
@@ -344,7 +342,6 @@ describe("composeFeedPage", () => {
         seed: SEED,
         pageSize: 12,
       });
-      totalAds += page.filter((i) => i.isAd).length;
       page.forEach((item) => {
         expect(resultIds.has(item.listing.id)).toBe(false);
         resultIds.add(item.listing.id);

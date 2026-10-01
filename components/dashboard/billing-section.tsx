@@ -13,7 +13,13 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -31,6 +37,12 @@ import { useState } from "react";
 import { ListingWithRelations } from "@/types";
 import { toast } from "sonner";
 import { isActiveBoost } from "@/lib/boost";
+import {
+  BOOST_OPTIONS,
+  boostOptionLabel,
+  describePlan,
+  PLANS,
+} from "@/lib/plans";
 
 interface BillingSectionProps {
   subscription?: Subscription;
@@ -39,19 +51,18 @@ interface BillingSectionProps {
   className?: string;
 }
 
-const TIER_ROWS = [
-  { tier: "free", name: "Gratis", price: "Rp 0", listings: "Maks. 3", verified: "—", analytics: "—", boost: "—", priority: "—" },
-  { tier: "growth", name: "Growth", price: "Rp 79.000", listings: "Maks. 15", verified: "Badge", analytics: "Dasar", boost: "—", priority: "Tinggi" },
-  { tier: "business", name: "Business", price: "Rp 149.000", listings: "Unlimited", verified: "Badge", analytics: "Lengkap", boost: "2/bulan", priority: "Tertinggi" },
-];
+const TIER_ROWS = PLANS.map(describePlan);
 
-const BOOST_DURATIONS = [
-  { value: "7", label: "7 hari — Rp25.000", price: 25000 },
-  { value: "14", label: "14 hari — Rp45.000", price: 45000 },
-  { value: "30", label: "30 hari — Rp75.000", price: 75000 },
-];
+const BOOST_DURATIONS = BOOST_OPTIONS.map((o) => ({
+  value: o.value,
+  label: boostOptionLabel(o),
+  price: o.price,
+}));
 
-const PAYMENT_STATUS_MAP: Record<string, { label: string; variant: "default" | "outline" | "destructive" }> = {
+const PAYMENT_STATUS_MAP: Record<
+  string,
+  { label: string; variant: "default" | "outline" | "destructive" }
+> = {
   paid: { label: "Lunas", variant: "default" },
   pending: { label: "Pending", variant: "outline" },
   failed: { label: "Gagal", variant: "destructive" },
@@ -79,7 +90,8 @@ export function BillingSection({
     setBoostLoading(true);
     await new Promise((r) => setTimeout(r, 800));
     toast.success("Boost berhasil diaktifkan!", {
-      description: "Listing Anda akan tampil di slot iklan pada pencarian yang cocok.",
+      description:
+        "Listing Anda akan tampil di slot iklan pada pencarian yang cocok.",
     });
     setBoostLoading(false);
     setBoostDialogOpen(false);
@@ -92,7 +104,9 @@ export function BillingSection({
       {/* Pricing Ledger Table */}
       <div className="space-y-3">
         <div className="pb-2 border-b border-neutral-300">
-          <h3 className="font-display text-lg text-neutral-900 font-semibold">Skema Langganan</h3>
+          <h3 className="font-display text-lg text-neutral-900 font-semibold">
+            Skema Langganan
+          </h3>
         </div>
         <div className="overflow-x-auto">
           <Table>
@@ -111,14 +125,24 @@ export function BillingSection({
               {TIER_ROWS.map((row) => {
                 const isCurrent = subscription?.tier === row.tier;
                 return (
-                  <TableRow key={row.tier} className={isCurrent ? "bg-primary-50" : ""}>
+                  <TableRow
+                    key={row.tier}
+                    className={isCurrent ? "bg-primary-50" : ""}
+                  >
                     <TableCell className="font-medium text-neutral-900">
                       <div className="flex items-center gap-2">
                         {row.name}
-                        {isCurrent && <Badge variant="default" className="text-[10px]">Aktif</Badge>}
+                        {isCurrent && (
+                          <Badge variant="default" className="text-[10px]">
+                            Aktif
+                          </Badge>
+                        )}
                       </div>
                     </TableCell>
-                    <TableCell className="font-mono tabular-nums font-medium text-primary-900">{row.price}<span className="text-neutral-500 font-sans">/bln</span></TableCell>
+                    <TableCell className="font-mono tabular-nums font-medium text-primary-900">
+                      {row.price}
+                      <span className="text-neutral-500 font-sans">/bln</span>
+                    </TableCell>
                     <TableCell>{row.listings}</TableCell>
                     <TableCell>{row.verified}</TableCell>
                     <TableCell>{row.analytics}</TableCell>
@@ -135,7 +159,9 @@ export function BillingSection({
       {/* Boost */}
       <div className="space-y-3">
         <div className="flex items-center justify-between pb-2 border-b border-neutral-300">
-          <h3 className="font-display text-lg text-neutral-900 font-semibold">Boost Listing</h3>
+          <h3 className="font-display text-lg text-neutral-900 font-semibold">
+            Boost Listing
+          </h3>
           <Dialog open={boostDialogOpen} onOpenChange={setBoostDialogOpen}>
             <DialogTrigger
               render={
@@ -148,18 +174,24 @@ export function BillingSection({
               <DialogHeader>
                 <DialogTitle>Boost Listing</DialogTitle>
                 <DialogDescription>
-                  Tampilkan produk Anda di posisi teratas katalog untuk meningkatkan visibilitas.
+                  Tampilkan produk Anda di posisi teratas katalog untuk
+                  meningkatkan visibilitas.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-2">
                 <FormField label="Pilih Listing" required>
-                  <Select value={selectedListing} onValueChange={(val) => setSelectedListing(val ?? "")}>
+                  <Select
+                    value={selectedListing}
+                    onValueChange={(val) => setSelectedListing(val ?? "")}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih listing untuk boost" />
                     </SelectTrigger>
                     <SelectContent>
                       {listings
-                        .filter((l) => l.status === "active" && !isActiveBoost(l))
+                        .filter(
+                          (l) => l.status === "active" && !isActiveBoost(l),
+                        )
                         .map((l) => (
                           <SelectItem key={l.id} value={l.id}>
                             {l.title}
@@ -169,7 +201,10 @@ export function BillingSection({
                   </Select>
                 </FormField>
                 <FormField label="Durasi Boost" required>
-                  <Select value={selectedDuration} onValueChange={(val) => setSelectedDuration(val ?? "")}>
+                  <Select
+                    value={selectedDuration}
+                    onValueChange={(val) => setSelectedDuration(val ?? "")}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih durasi" />
                     </SelectTrigger>
@@ -187,7 +222,9 @@ export function BillingSection({
                 <Button
                   variant="primary"
                   onClick={handleBoost}
-                  disabled={!selectedListing || !selectedDuration || boostLoading}
+                  disabled={
+                    !selectedListing || !selectedDuration || boostLoading
+                  }
                 >
                   {boostLoading ? "Memproses..." : "Bayar & Aktifkan"}
                 </Button>
@@ -200,7 +237,9 @@ export function BillingSection({
       {/* Payment History */}
       <div className="space-y-3">
         <div className="pb-2 border-b border-neutral-300">
-          <h3 className="font-display text-lg text-neutral-900 font-semibold">Riwayat Pembayaran</h3>
+          <h3 className="font-display text-lg text-neutral-900 font-semibold">
+            Riwayat Pembayaran
+          </h3>
         </div>
         {payments.length === 0 ? (
           <div className="p-8">
@@ -224,22 +263,33 @@ export function BillingSection({
                 </TableHeader>
                 <TableBody>
                   {payments.map((pay) => {
-                    const statusConf = PAYMENT_STATUS_MAP[pay.status] ?? PAYMENT_STATUS_MAP.pending;
+                    const statusConf =
+                      PAYMENT_STATUS_MAP[pay.status] ??
+                      PAYMENT_STATUS_MAP.pending;
                     return (
                       <TableRow key={pay.id}>
                         <TableCell className="font-mono text-xs text-neutral-700">
                           {pay.midtransOrderId}
                         </TableCell>
-                        <TableCell>{PAYMENT_TYPE_MAP[pay.type] ?? pay.type}</TableCell>
+                        <TableCell>
+                          {PAYMENT_TYPE_MAP[pay.type] ?? pay.type}
+                        </TableCell>
                         <TableCell className="font-mono tabular-nums font-medium text-primary-900">
                           {formatRupiah(pay.amount)}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={statusConf.variant} className="text-xs">{statusConf.label}</Badge>
+                          <Badge
+                            variant={statusConf.variant}
+                            className="text-xs"
+                          >
+                            {statusConf.label}
+                          </Badge>
                         </TableCell>
                         <TableCell className="text-neutral-500 font-mono text-xs">
                           {pay.paidAt
-                            ? format(new Date(pay.paidAt), "d MMM yyyy", { locale: idLocale })
+                            ? format(new Date(pay.paidAt), "d MMM yyyy", {
+                                locale: idLocale,
+                              })
                             : "-"}
                         </TableCell>
                       </TableRow>
@@ -251,19 +301,26 @@ export function BillingSection({
 
             <div className="md:hidden divide-y divide-neutral-200 border border-neutral-300 rounded-sm">
               {payments.map((pay) => {
-                const statusConf = PAYMENT_STATUS_MAP[pay.status] ?? PAYMENT_STATUS_MAP.pending;
+                const statusConf =
+                  PAYMENT_STATUS_MAP[pay.status] ?? PAYMENT_STATUS_MAP.pending;
                 return (
                   <div key={pay.id} className="p-3 space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium">{PAYMENT_TYPE_MAP[pay.type] ?? pay.type}</span>
-                      <Badge variant={statusConf.variant} className="text-xs">{statusConf.label}</Badge>
+                      <span className="text-xs font-medium">
+                        {PAYMENT_TYPE_MAP[pay.type] ?? pay.type}
+                      </span>
+                      <Badge variant={statusConf.variant} className="text-xs">
+                        {statusConf.label}
+                      </Badge>
                     </div>
                     <p className="font-mono tabular-nums font-medium text-primary-900 text-sm">
                       {formatRupiah(pay.amount)}
                     </p>
                     <p className="text-[11px] text-neutral-500 font-mono">
                       {pay.paidAt
-                        ? format(new Date(pay.paidAt), "d MMM yyyy HH:mm", { locale: idLocale })
+                        ? format(new Date(pay.paidAt), "d MMM yyyy HH:mm", {
+                            locale: idLocale,
+                          })
                         : pay.midtransOrderId}
                     </p>
                   </div>

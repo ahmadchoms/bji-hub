@@ -1,129 +1,135 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import { Logo } from "@/components/shared/logo";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { useSession } from "@/lib/mock/session";
+import { logoutAction } from "@/actions/auth.actions";
+import { getNavModel, type NavItem } from "@/lib/auth/nav";
+import type { Role } from "@/lib/auth/roles";
 
-interface NavLink {
-  label: string;
-  href: string;
-  roles: ("guest" | "buyer" | "seller" | "admin")[];
-}
+const focusRing =
+  "outline-none focus-visible:ring-2 focus-visible:ring-primary-600 rounded-sm";
 
-const links: NavLink[] = [
-  { label: "Paket Penjual", href: "/pricing", roles: ["guest", "buyer", "seller", "admin"] },
-];
-
-function getJualKopiHref(role: string): string {
-  if (role === "seller") return "/dashboard/listing";
-  return "/register?role=seller";
-}
-
-function getJualKopiLabel(role: string): string {
-  if (role === "seller") return "Dashboard";
-  return "Jual Kopi";
-}
-
-function getMasukHref(role: string): string {
-  if (role === "seller") return "/dashboard";
-  if (role === "admin") return "/admin";
-  if (role === "buyer") return "/dashboard";
-  return "/login";
-}
-
-function getMasukLabel(role: string): string {
-  if (role === "seller") return "Dashboard";
-  if (role === "admin") return "Admin";
-  if (role === "buyer") return "Akun Saya";
-  return "Masuk";
-}
-
-export function NavbarInner() {
+function useIsActive() {
   const pathname = usePathname();
-  const router = useRouter();
-  const { role, logout } = useSession();
-  const isLoggedIn = role !== "guest";
-
-  const filteredLinks = links.filter((link) => link.roles.includes(role as "guest" | "buyer" | "seller" | "admin"));
-  const jualKopi = { label: getJualKopiLabel(role), href: getJualKopiHref(role) };
-  const masuk = { label: getMasukLabel(role), href: getMasukHref(role) };
-
-  const isActive = (href: string) => {
-    if (href === "/") return pathname === "/";
-    return pathname.startsWith(href);
+  return (href: string) => {
+    const path = href.split("?")[0];
+    return path === "/" ? pathname === "/" : pathname.startsWith(path);
   };
+}
 
-  const handleNavClick = () => {
-    router.refresh();
-  };
+function DesktopLink({ item, active }: { item: NavItem; active: boolean }) {
+  return (
+    <Link
+      href={item.href}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "py-1 text-sm transition-colors",
+        focusRing,
+        active
+          ? "border-b-2 border-primary-600 font-medium text-primary-900"
+          : "text-neutral-700 hover:text-neutral-900",
+      )}
+    >
+      {item.label}
+    </Link>
+  );
+}
+
+function LogoutForm({ className }: { className?: string }) {
+  return (
+    <form action={logoutAction}>
+      <button type="submit" className={cn(focusRing, className)}>
+        Keluar
+      </button>
+    </form>
+  );
+}
+
+export function NavbarInner({ role }: { role: Role }) {
+  const pathname = usePathname();
+  const isActive = useIsActive();
+  const [open, setOpen] = useState(false);
+  const nav = getNavModel(role);
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  const mobileRow =
+    "flex min-h-12 w-full items-center border-b border-neutral-200 px-3 py-3 text-left text-sm";
 
   return (
     <>
-      {/* Desktop */}
       <header className="sticky top-0 z-40 hidden border-b border-neutral-300 bg-surface-base md:block">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-10">
-            <Link href="/" aria-label="Biji — Beranda" className="outline-none focus-visible:ring-2 focus-visible:ring-primary-600 rounded-sm">
+            <Link href="/" aria-label="Biji — Beranda" className={focusRing}>
               <Logo size="md" />
             </Link>
-            <nav className="flex items-center gap-6" aria-label="Navigasi utama">
-              {filteredLinks.map((link) => (
-                <Link
+            <nav
+              className="flex items-center gap-6"
+              aria-label="Navigasi utama"
+            >
+              {nav.links.map((link) => (
+                <DesktopLink
                   key={link.href}
-                  href={link.href}
-                  aria-current={isActive(link.href) ? "page" : undefined}
-                  className={cn(
-                    "py-1 text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary-600 rounded-sm",
-                    isActive(link.href)
-                      ? "border-b-2 border-primary-600 text-primary-900 font-medium"
-                      : "text-neutral-700 hover:text-neutral-900"
-                  )}
-                >
-                  {link.label}
-                </Link>
+                  item={link}
+                  active={isActive(link.href)}
+                />
               ))}
             </nav>
           </div>
           <div className="flex items-center gap-6">
-            {isLoggedIn && (
-              <button
-                type="button"
-                onClick={() => { logout(); handleNavClick(); }}
-                className="text-sm text-neutral-600 hover:text-neutral-900 outline-none focus-visible:ring-2 focus-visible:ring-primary-600 rounded-sm"
-              >
-                Keluar
-              </button>
+            {nav.account && (
+              <DesktopLink
+                item={nav.account}
+                active={isActive(nav.account.href)}
+              />
             )}
-            {!isLoggedIn && (
+            {nav.canLogout && (
+              <LogoutForm className="text-sm text-neutral-600 hover:text-neutral-900" />
+            )}
+            {nav.cta && (
               <Link
-                href={masuk.href}
-                className="text-sm text-neutral-700 hover:text-neutral-900 outline-none focus-visible:ring-2 focus-visible:ring-primary-600 rounded-sm"
+                href={nav.cta.href}
+                className={cn(
+                  buttonVariants({ variant: "primary", size: "sm" }),
+                  "min-h-10",
+                )}
               >
-                {masuk.label}
+                {nav.cta.label}
               </Link>
             )}
-            <Button variant="primary" size="sm" onClick={() => { router.push(jualKopi.href); handleNavClick(); }}>
-              {jualKopi.label}
-            </Button>
           </div>
         </div>
       </header>
 
-      {/* Mobile */}
       <header className="sticky top-0 z-40 border-b border-neutral-300 bg-surface-base md:hidden">
         <div className="flex h-14 items-center justify-between px-4">
-          <Link href="/" aria-label="Biji — Beranda" className="outline-none focus-visible:ring-2 focus-visible:ring-primary-600 rounded-sm">
+          <Link href="/" aria-label="Biji — Beranda" className={focusRing}>
             <Logo size="md" />
           </Link>
-          <Sheet>
+          <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger
               render={
-                <Button variant="ghost" size="icon-sm" aria-label="Menu" className="min-h-11 min-w-11" />
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Menu"
+                  className="min-h-11 min-w-11"
+                />
               }
             >
               <Menu className="h-5 w-5" />
@@ -132,51 +138,44 @@ export function NavbarInner() {
               <SheetHeader className="border-b border-neutral-300 p-4">
                 <SheetTitle className="text-sm font-medium">Menu</SheetTitle>
               </SheetHeader>
-              <nav className="flex flex-col p-4 gap-1" aria-label="Navigasi mobile">
-                {filteredLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    aria-current={isActive(link.href) ? "page" : undefined}
-                    onClick={handleNavClick}
-                    className={cn(
-                      "flex items-center min-h-12 px-3 py-3 text-sm border-b border-neutral-200 outline-none focus-visible:ring-2 focus-visible:ring-primary-600 rounded-sm",
-                      isActive(link.href)
-                        ? "border-l-2 border-l-primary-600 border-b-0 text-primary-900 font-medium"
-                        : "text-neutral-700"
-                    )}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-                {isLoggedIn && (
-                  <button
-                    type="button"
-                    onClick={() => { logout(); handleNavClick(); }}
-                    className="flex items-center min-h-12 px-3 py-3 text-sm text-neutral-700 border-b border-neutral-200 outline-none focus-visible:ring-2 focus-visible:ring-primary-600 rounded-sm text-left"
-                  >
-                    Keluar
-                  </button>
+              <nav
+                className="flex flex-col gap-1 p-4"
+                aria-label="Navigasi mobile"
+              >
+                {[...nav.links, ...(nav.account ? [nav.account] : [])].map(
+                  (item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      aria-current={isActive(item.href) ? "page" : undefined}
+                      className={cn(
+                        mobileRow,
+                        focusRing,
+                        isActive(item.href)
+                          ? "border-b-0 border-l-2 border-l-primary-600 font-medium text-primary-900"
+                          : "text-neutral-700",
+                      )}
+                    >
+                      {item.label}
+                    </Link>
+                  ),
                 )}
-                {!isLoggedIn && (
-                  <Link
-                    href={masuk.href}
-                    onClick={handleNavClick}
-                    className="flex items-center min-h-12 px-3 py-3 text-sm text-neutral-700 border-b border-neutral-200 outline-none focus-visible:ring-2 focus-visible:ring-primary-600 rounded-sm"
-                  >
-                    {masuk.label}
-                  </Link>
+                {nav.canLogout && (
+                  <LogoutForm className={cn(mobileRow, "text-neutral-700")} />
                 )}
-                <div className="pt-4">
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    className="w-full"
-                    onClick={() => { router.push(jualKopi.href); handleNavClick(); }}
-                  >
-                    {jualKopi.label}
-                  </Button>
-                </div>
+                {nav.cta && (
+                  <div className="pt-4">
+                    <Link
+                      href={nav.cta.href}
+                      className={cn(
+                        buttonVariants({ variant: "primary", size: "lg" }),
+                        "w-full",
+                      )}
+                    >
+                      {nav.cta.label}
+                    </Link>
+                  </div>
+                )}
               </nav>
             </SheetContent>
           </Sheet>

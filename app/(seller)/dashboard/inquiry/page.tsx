@@ -1,11 +1,11 @@
 import { getInquiries } from "@/lib/mock/repository";
 import { SectionHeader } from "@/components/shared/section-header";
 import { InquiryList } from "@/components/dashboard/inquiry-list";
-
-const MOCK_SELLER_ID = "seller-1";
+import { requireSeller } from "@/lib/auth/session";
 
 export default async function DashboardInquiryPage() {
-  const inquiries = await getInquiries(MOCK_SELLER_ID);
+  const { sellerId } = await requireSeller();
+  const inquiries = await getInquiries(sellerId);
 
   return (
     <div className="space-y-6">

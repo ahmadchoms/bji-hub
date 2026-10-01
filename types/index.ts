@@ -1,5 +1,5 @@
 // Core Role Enum
-export type Role = 'BUYER' | 'SELLER' | 'ADMIN';
+export type Role = "BUYER" | "SELLER" | "ADMIN";
 
 // Base Models mirroring Prisma Schema
 export interface User {
@@ -21,7 +21,7 @@ export interface SellerProfile {
   address: string;
   whatsappNumber: string;
   isVerified: boolean;
-  tier: 'free' | 'growth' | 'business';
+  tier: "free" | "growth" | "business";
   bio?: string;
   avatarUrl?: string;
   createdAt: string;
@@ -38,14 +38,14 @@ export interface TasteProfile {
   id: string;
   listingId: string;
   originRegion: string;
-  processMethod: 'Wash' | 'Natural' | 'Honey' | 'Wet Hulled' | 'Anaerobic';
-  roastLevel: 'Light' | 'Medium-Light' | 'Medium' | 'Medium-Dark' | 'Dark';
+  processMethod: "Wash" | "Natural" | "Honey" | "Wet Hulled" | "Anaerobic";
+  roastLevel: "Light" | "Medium-Light" | "Medium" | "Medium-Dark" | "Dark";
   flavorNotes: string; // Comma-separated or tag string
   acidityScore: number; // 0 - 5
-  bodyScore: number;    // 0 - 5
+  bodyScore: number; // 0 - 5
   sweetnessScore?: number; // Optional phase 2 expansion (0 - 5)
-  aromaScore?: number;     // Optional phase 2 expansion (0 - 5)
-  aftertasteScore?: number;// Optional phase 2 expansion (0 - 5)
+  aromaScore?: number; // Optional phase 2 expansion (0 - 5)
+  aftertasteScore?: number; // Optional phase 2 expansion (0 - 5)
   roastDate: string;
 }
 
@@ -66,7 +66,7 @@ export interface Listing {
   price: number;
   unit: string; // e.g. "kg", "250g", "box", "unit"
   minOrderQty: number;
-  status: 'active' | 'draft' | 'archived' | 'suspended';
+  status: "active" | "draft" | "archived" | "suspended";
   isBoosted: boolean;
   boostUntil?: string | null;
   createdAt: string;
@@ -75,8 +75,8 @@ export interface Listing {
 export interface Subscription {
   id: string;
   sellerId: string;
-  tier: 'free' | 'growth' | 'business';
-  status: 'active' | 'past_due' | 'canceled';
+  tier: "free" | "growth" | "business";
+  status: "active" | "past_due" | "canceled";
   startedAt: string;
   expiresAt: string;
 }
@@ -86,9 +86,9 @@ export interface Payment {
   sellerId: string;
   subscriptionId?: string | null;
   listingId?: string | null;
-  type: 'subscription' | 'boost' | 'verification';
+  type: "subscription" | "boost" | "verification";
   amount: number;
-  status: 'paid' | 'pending' | 'failed';
+  status: "paid" | "pending" | "failed";
   midtransOrderId: string;
   paidAt?: string | null;
   createdAt: string;
@@ -97,7 +97,7 @@ export interface Payment {
 export interface AnalyticsEvent {
   id: string;
   listingId: string;
-  eventType: 'view' | 'contact_click';
+  eventType: "impression" | "view" | "contact_click";
   createdAt: string;
 }
 
@@ -138,7 +138,7 @@ export interface ListingFilters {
   isVerified?: boolean;
   isBoosted?: boolean;
   search?: string;
-  sort?: 'newest' | 'price_asc' | 'price_desc' | 'popular';
+  sort?: "newest" | "price_asc" | "price_desc" | "popular";
 }
 
 export interface ListingFeedResult {
@@ -172,11 +172,23 @@ export interface DailyMetric {
 export interface SellerStats {
   totalViews: number;
   totalClicks: number;
+  totalImpressions: number;
   conversionRate: number; // percentage (e.g. 5.4)
   totalListings: number;
   activeListings: number;
   inquiryCount: number;
   metrics: DailyMetric[];
+}
+
+export interface ListingPerformance {
+  listingId: string;
+  title: string;
+  slug: string;
+  views: number;
+  clicks: number;
+  impressions: number;
+  conversionRate: number;
+  boostUntil: string | null; // set only while the boost is active
 }
 
 export interface AdminStats {

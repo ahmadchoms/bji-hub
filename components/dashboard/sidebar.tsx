@@ -20,6 +20,7 @@ import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { logoutAction } from "@/actions/auth.actions";
 
 const SELLER_NAV: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/dashboard", label: "Ringkasan", icon: LayoutDashboard },
@@ -48,19 +49,22 @@ export function DashboardSidebar({ children }: { children: React.ReactNode }) {
         className={cn(
           "hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 z-30 border-r border-neutral-300 bg-surface-alt",
           "transition-[width] duration-300 ease-in-out",
-          collapsed ? "lg:w-16" : "lg:w-56"
+          collapsed ? "lg:w-16" : "lg:w-56",
         )}
       >
         <div
           className={cn(
             "flex h-14 items-center border-b border-neutral-300",
-            collapsed ? "justify-center px-2" : "px-4"
+            collapsed ? "justify-center px-2" : "px-4",
           )}
         >
           <Logo size="sm" iconOnly={collapsed} />
         </div>
 
-        <nav className="flex flex-1 flex-col gap-0.5 px-2 py-3" aria-label="Menu Dashboard Seller">
+        <nav
+          className="flex flex-1 flex-col gap-0.5 px-2 py-3"
+          aria-label="Menu Dashboard Seller"
+        >
           {SELLER_NAV.map((item) => {
             const active = isNavActive(pathname, item.href);
             const Icon = item.icon;
@@ -70,12 +74,12 @@ export function DashboardSidebar({ children }: { children: React.ReactNode }) {
                 href={item.href}
                 title={collapsed ? item.label : undefined}
                 className={cn(
-                  "group relative flex w-full items-center min-h-[44px] border-l-2 rounded-sm text-sm font-medium transition-colors",
+                  "group relative flex w-full items-center min-h-11 border-l-2 rounded-sm text-sm font-medium transition-colors",
                   "outline-none focus-visible:underline",
                   collapsed ? "justify-center px-0" : "gap-3 px-3 py-2.5",
                   active
                     ? "border-primary-600 bg-primary text-neutral-50 font-semibold"
-                    : "border-transparent text-neutral-700 hover:bg-secondary hover:text-primary"
+                    : "border-transparent text-neutral-700 hover:bg-secondary hover:text-primary",
                 )}
                 aria-current={active ? "page" : undefined}
               >
@@ -83,7 +87,7 @@ export function DashboardSidebar({ children }: { children: React.ReactNode }) {
                 <span
                   className={cn(
                     "overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out",
-                    collapsed ? "max-w-0 opacity-0" : "max-w-[160px] opacity-100"
+                    collapsed ? "max-w-0 opacity-0" : "max-w-40 opacity-100",
                   )}
                 >
                   {item.label}
@@ -101,8 +105,8 @@ export function DashboardSidebar({ children }: { children: React.ReactNode }) {
             aria-label={collapsed ? "Perluas sidebar" : "Ciutkan sidebar"}
             aria-expanded={!collapsed}
             className={cn(
-              "flex w-full items-center min-h-[44px] rounded-sm text-sm font-medium text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900",
-              collapsed ? "justify-center px-0" : "gap-3 px-3 py-2.5"
+              "flex w-full items-center min-h-11 rounded-sm text-sm font-medium text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900",
+              collapsed ? "justify-center px-0" : "gap-3 px-3 py-2.5",
             )}
           >
             {collapsed ? (
@@ -113,31 +117,33 @@ export function DashboardSidebar({ children }: { children: React.ReactNode }) {
             <span
               className={cn(
                 "overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out",
-                collapsed ? "max-w-0 opacity-0" : "max-w-[160px] opacity-100"
+                collapsed ? "max-w-0 opacity-0" : "max-w-40 opacity-100",
               )}
             >
               Ciutkan
             </span>
           </button>
 
-          <Link
-            href="/"
-            title={collapsed ? "Keluar" : undefined}
-            className={cn(
-              "flex w-full items-center min-h-[44px] rounded-sm text-sm font-medium text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900",
-              collapsed ? "justify-center px-0" : "gap-3 px-3 py-2.5"
-            )}
-          >
-            <LogOut className="size-4 shrink-0" aria-hidden />
-            <span
+          <form action={logoutAction}>
+            <button
+              type="submit"
+              title={collapsed ? "Keluar" : undefined}
               className={cn(
-                "overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out",
-                collapsed ? "max-w-0 opacity-0" : "max-w-[160px] opacity-100"
+                "flex w-full items-center min-h-11 rounded-sm text-sm font-medium text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900",
+                collapsed ? "justify-center px-0" : "gap-3 px-3 py-2.5",
               )}
             >
-              Keluar
-            </span>
-          </Link>
+              <LogOut className="size-4 shrink-0" aria-hidden />
+              <span
+                className={cn(
+                  "overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out",
+                  collapsed ? "max-w-0 opacity-0" : "max-w-40 opacity-100",
+                )}
+              >
+                Keluar
+              </span>
+            </button>
+          </form>
         </div>
       </aside>
 
@@ -150,7 +156,11 @@ export function DashboardSidebar({ children }: { children: React.ReactNode }) {
           aria-label={drawerOpen ? "Tutup menu" : "Buka menu"}
           aria-expanded={drawerOpen}
         >
-          {drawerOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          {drawerOpen ? (
+            <X className="w-5 h-5" />
+          ) : (
+            <Menu className="w-5 h-5" />
+          )}
         </Button>
       </header>
 
@@ -163,7 +173,10 @@ export function DashboardSidebar({ children }: { children: React.ReactNode }) {
             className="w-full bg-surface-base border-b border-neutral-300 p-3"
             onClick={(e) => e.stopPropagation()}
           >
-            <nav className="flex flex-col gap-0.5" aria-label="Menu Dashboard Mobile">
+            <nav
+              className="flex flex-col gap-0.5"
+              aria-label="Menu Dashboard Mobile"
+            >
               {SELLER_NAV.map((item) => {
                 const active = isNavActive(pathname, item.href);
                 const Icon = item.icon;
@@ -173,10 +186,10 @@ export function DashboardSidebar({ children }: { children: React.ReactNode }) {
                     href={item.href}
                     onClick={() => setDrawerOpen(false)}
                     className={cn(
-                      "flex w-full items-center gap-3 min-h-[48px] border-l-2 px-3 py-3 rounded-sm text-sm font-medium transition-colors",
+                      "flex w-full items-center gap-3 min-h-12 border-l-2 px-3 py-3 rounded-sm text-sm font-medium transition-colors",
                       active
                         ? "border-primary-600 bg-primary-100 text-primary-900 font-bold"
-                        : "border-transparent text-neutral-700 hover:bg-neutral-100"
+                        : "border-transparent text-neutral-700 hover:bg-neutral-100",
                     )}
                   >
                     <Icon className="size-4 shrink-0" aria-hidden />
@@ -202,16 +215,21 @@ export function DashboardSidebar({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 min-w-[48px] min-h-[48px] px-2 py-1 rounded-sm transition-colors text-center",
+                  "flex flex-col items-center justify-center gap-0.5 min-w-12 min-h-12 px-2 py-1 rounded-sm transition-colors text-center",
                   "outline-none focus-visible:ring-2 focus-visible:ring-primary-400",
                   active
                     ? "text-primary-600"
-                    : "text-neutral-500 hover:text-neutral-900"
+                    : "text-neutral-500 hover:text-neutral-900",
                 )}
                 aria-current={active ? "page" : undefined}
               >
                 <Icon className="size-4 shrink-0" aria-hidden />
-                <span className={cn("text-[10px] font-medium leading-tight", active && "font-semibold")}>
+                <span
+                  className={cn(
+                    "text-[10px] font-medium leading-tight",
+                    active && "font-semibold",
+                  )}
+                >
                   {item.label}
                 </span>
               </Link>
@@ -223,7 +241,7 @@ export function DashboardSidebar({ children }: { children: React.ReactNode }) {
       <div
         className={cn(
           "transition-[padding] duration-300 ease-in-out",
-          collapsed ? "lg:pl-16" : "lg:pl-56"
+          collapsed ? "lg:pl-16" : "lg:pl-56",
         )}
       >
         {children}

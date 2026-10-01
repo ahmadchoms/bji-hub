@@ -1,10 +1,13 @@
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
+import { requireRole } from "@/lib/auth/session";
 
-export default function SellerDashboardLayout({
+export default async function SellerDashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  await requireRole(["seller"], "/dashboard");
+
   return (
     <div className="min-h-screen bg-surface-alt">
       <DashboardSidebar>

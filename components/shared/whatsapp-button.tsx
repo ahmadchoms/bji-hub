@@ -1,5 +1,6 @@
 import { MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { trackEvent } from "@/lib/tracking";
 
 interface WhatsAppButtonProps {
   phoneNumber: string;
@@ -57,13 +58,21 @@ export function WhatsAppButton({
   className,
   children,
 }: WhatsAppButtonProps) {
-  const url = buildWhatsAppUrl({ phoneNumber, listingId, listingTitle, sellerName, customMessage });
+  const url = buildWhatsAppUrl({
+    phoneNumber,
+    listingId,
+    listingTitle,
+    sellerName,
+    customMessage,
+  });
 
   const variantStyles = {
     primary: "bg-primary-600 hover:bg-primary-700 text-white",
-    secondary: "bg-transparent border border-primary-600 text-primary-600 hover:bg-primary-50",
+    secondary:
+      "bg-transparent border border-primary-600 text-primary-600 hover:bg-primary-50",
     accent: "bg-accent-500 hover:bg-accent-700 text-white",
-    outline: "border border-neutral-300 bg-surface-base text-neutral-900 hover:bg-neutral-100",
+    outline:
+      "border border-neutral-300 bg-surface-base text-neutral-900 hover:bg-neutral-100",
   };
 
   const sizeStyles = {
@@ -77,11 +86,12 @@ export function WhatsAppButton({
       href={url}
       target="_blank"
       rel="noopener noreferrer"
+      onClick={() => trackEvent(listingId, "contact_click")}
       className={cn(
         "inline-flex items-center justify-center font-medium transition-colors select-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 outline-none",
         variantStyles[variant],
         sizeStyles[size],
-        className
+        className,
       )}
       aria-label={`Hubungi penjual via WhatsApp untuk listing ${listingTitle}`}
     >

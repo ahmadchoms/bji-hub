@@ -1,4 +1,4 @@
-import { getCategories } from "@/lib/mock/repository";
+import { getCategories } from "@/lib/data";
 import { SectionHeader } from "@/components/shared/section-header";
 import { ListingForm } from "@/components/dashboard/listing-form";
 

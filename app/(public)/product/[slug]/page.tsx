@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getListingBySlug, getListingFeed } from "@/lib/mock/repository";
+import { getListingBySlug, getListingFeed } from "@/lib/data";
 import { PageContainer } from "@/components/layout/page-container";
 import { ImageGallery } from "@/components/catalog/image-gallery";
 import { FlavorProfile } from "@/components/catalog/flavor-profile";
@@ -68,7 +68,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
         </nav>
 
         {/* Product Detail — 2 column editorial */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
           {/* Left: Images + Description */}
           <div className="lg:col-span-7 space-y-8">
             <ImageGallery images={listing.images} title={listing.title} />
@@ -84,11 +84,20 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                   "Biji kopi pilihan yang diproses dengan dedikasi tinggi oleh petani lokal untuk menghadirkan cita rasa terbaik khas tanah Nusantara."}
               </p>
             </div>
+            <FlavorProfile tasteProfile={listing.tasteProfile} />
+
+            <div id="inquiry-form">
+              <InquiryForm
+                listingId={listing.id}
+                listingTitle={listing.title}
+                sellerName={listing.seller.businessName}
+              />
+            </div>
           </div>
 
           {/* Right: Buying Info (sticky) */}
-          <div className="lg:col-span-5 space-y-6">
-            <div className="lg:sticky lg:top-24 space-y-6">
+          <div className="order-first lg:order-0 lg:col-span-5">
+            <div className="space-y-6 lg:sticky lg:top-24">
               {/* Badges */}
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-mono text-neutral-500 uppercase tracking-wider">
@@ -169,18 +178,6 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                 >
                   Kunjungi Toko
                 </Link>
-              </div>
-
-              {/* Flavor Profile */}
-              <FlavorProfile tasteProfile={listing.tasteProfile} />
-
-              {/* B2B Inquiry */}
-              <div id="inquiry-form">
-                <InquiryForm
-                  listingId={listing.id}
-                  listingTitle={listing.title}
-                  sellerName={listing.seller.businessName}
-                />
               </div>
             </div>
           </div>

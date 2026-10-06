@@ -1,5 +1,17 @@
 import type { ListingWithRelations, FeedItem } from "@/types";
 
+export interface BoostCandidate {
+  id: string;
+  sellerId: string;
+  isBoosted: boolean;
+  boostUntil?: string | null;
+}
+
+export interface PlacedItem<T> {
+  listing: T;
+  isAd: boolean;
+}
+
 // ─── Single source of truth for active-boost check ─────────────────────────
 
 export function isActiveBoost(

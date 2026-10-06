@@ -1,41 +1,29 @@
 import Link from "next/link";
 import {
-  getSellerById,
   getSellerListingPerformance,
+  getSellerPlanState,
   getSellerStats,
-} from "@/lib/mock/repository";
+} from "@/lib/data";
 import { SectionHeader } from "@/components/shared/section-header";
 import { MetricsChart } from "@/components/dashboard/metrics-chart";
 import { ListingPerformanceTable } from "@/components/dashboard/listing-performance-table";
-import { PLANS } from "@/lib/plans";
+import { getPlan } from "@/lib/plans";
 import { requireSeller } from "@/lib/auth/session";
+import { StatList } from "@/components/dashboard/stat-list";
 
 export const dynamic = "force-dynamic";
 
 const nf = new Intl.NumberFormat("id-ID");
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="border-b border-neutral-300 pb-2">
-      <p className="text-[10px] font-mono uppercase tracking-widest text-neutral-500">
-        {label}
-      </p>
-      <p className="mt-1 font-mono text-2xl font-bold tabular-nums text-primary-900">
-        {value}
-      </p>
-    </div>
-  );
-}
-
 export default async function DashboardAnalyticsPage() {
   const { sellerId } = await requireSeller();
-  const [seller, stats, performance] = await Promise.all([
-    getSellerById(sellerId),
+  const [planState, stats, performance] = await Promise.all([
+    getSellerPlanState(sellerId),
     getSellerStats(sellerId),
     getSellerListingPerformance(sellerId),
   ]);
 
-  const plan = PLANS.find((p) => p.tier === seller?.tier) ?? PLANS[0];
+  const plan = getPlan(planState.tier);
   const showPerListing = plan.analytics !== "summary";
   const showAds = plan.analytics === "full";
 
@@ -46,21 +34,25 @@ export default async function DashboardAnalyticsPage() {
         subtitle="Performa listing dan klik kontak toko Anda dalam 30 hari terakhir."
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Klik Kontak" value={nf.format(stats.totalClicks)} />
-        {showPerListing && (
-          <Stat label="Dilihat" value={nf.format(stats.totalViews)} />
-        )}
-        {showPerListing && (
-          <Stat label="Rasio Kontak" value={`${stats.conversionRate}%`} />
-        )}
-        {showAds && (
-          <Stat
-            label="Tayangan Iklan"
-            value={nf.format(stats.totalImpressions)}
-          />
-        )}
-      </div>
+      <StatList
+        items={[
+          { label: "Klik Kontak", value: nf.format(stats.totalClicks) },
+          ...(showPerListing
+            ? [
+                { label: "Dilihat", value: nf.format(stats.totalViews) },
+                { label: "Rasio Kontak", value: `${stats.conversionRate}%` },
+              ]
+            : []),
+          ...(showAds
+            ? [
+                {
+                  label: "Tayangan Iklan",
+                  value: nf.format(stats.totalImpressions),
+                },
+              ]
+            : []),
+        ]}
+      />
 
       {showPerListing ? (
         <>

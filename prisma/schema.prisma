@@ -11,3 +11,225 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum Role {
+  BUYER
+  SELLER
+  ADMIN
+}
+
+enum Tier {
+  free
+  growth
+  business
+}
+
+enum ListingStatus {
+  active
+  draft
+  archived
+  suspended
+}
+
+enum SubscriptionStatus {
+  active
+  past_due
+  canceled
+}
+
+enum PaymentType {
+  subscription
+  boost
+  verification
+}
+
+enum PaymentStatus {
+  paid
+  pending
+  failed
+}
+
+enum EventType {
+  impression
+  view
+  contact_click
+}
+
+enum VerificationStatus {
+  pending
+  approved
+  rejected
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  passwordHash  String?
+  role          Role           @default(BUYER)
+  createdAt     DateTime       @default(now())
+  sellerProfile SellerProfile?
+
+  @@map("users")
+}
+
+model SellerProfile {
+  id                 String             @id @default(uuid())
+  userId             String             @unique
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessName       String
+  slug               String             @unique
+  province           String
+  city               String
+  address            String
+  whatsappNumber     String
+  bio                String?
+  avatarUrl          String?
+  isVerified         Boolean            @default(false)
+  verificationStatus VerificationStatus @default(pending)
+  /// Cached plan tier. The effective tier is derived from subscriptions at read time.
+  tier               Tier               @default(free)
+  createdAt          DateTime           @default(now())
+
+  listings      Listing[]
+  subscriptions Subscription[]
+  payments      Payment[]
+
+  @@map("seller_profiles")
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String
+  slug        String    @unique
+  description String?
+  sortOrder   Int       @default(0)
+  listings    Listing[]
+
+  @@map("categories")
+}
+
+model Listing {
+  id          String        @id @default(uuid())
+  slug        String        @unique
+  sellerId    String
+  seller      SellerProfile @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  categoryId  String
+  category    Category      @relation(fields: [categoryId], references: [id])
+  title       String
+  description String?
+  price       Decimal       @db.Decimal(14, 2)
+  unit        String
+  minOrderQty Int           @default(1)
+  status      ListingStatus @default(draft)
+  isBoosted   Boolean       @default(false)
+  boostUntil  DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  tasteProfile TasteProfile?
+  images       ListingImage[]
+  events       AnalyticsEvent[]
+  inquiries    Inquiry[]
+  payments     Payment[]
+
+  @@index([status, createdAt])
+  @@index([sellerId])
+  @@index([categoryId])
+  @@index([isBoosted, boostUntil])
+  @@map("listings")
+}
+
+model TasteProfile {
+  id              String   @id @default(uuid())
+  listingId       String   @unique
+  listing         Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  originRegion    String
+  /// Wash | Natural | Honey | Wet Hulled | Anaerobic (validated in listingSchema, kept open for new methods)
+  processMethod   String
+  /// Light | Medium-Light | Medium | Medium-Dark | Dark
+  roastLevel      String
+  flavorNotes     String
+  acidityScore    Decimal  @db.Decimal(3, 1)
+  bodyScore       Decimal  @db.Decimal(3, 1)
+  sweetnessScore  Decimal? @db.Decimal(3, 1)
+  aromaScore      Decimal? @db.Decimal(3, 1)
+  aftertasteScore Decimal? @db.Decimal(3, 1)
+  roastDate       DateTime
+
+  @@index([originRegion])
+  @@map("taste_profiles")
+}
+
+model ListingImage {
+  id        String  @id @default(uuid())
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  url       String
+  sortOrder Int     @default(0)
+
+  @@index([listingId, sortOrder])
+  @@map("listing_images")
+}
+
+model Subscription {
+  id                String             @id @default(uuid())
+  sellerId          String
+  seller            SellerProfile      @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  tier              Tier
+  status            SubscriptionStatus @default(active)
+  startedAt         DateTime
+  expiresAt         DateTime
+  cancelAtPeriodEnd Boolean            @default(false)
+  payments          Payment[]
+
+  @@index([sellerId, status])
+  @@map("subscriptions")
+}
+
+model Payment {
+  id              String        @id @default(uuid())
+  sellerId        String
+  seller          SellerProfile @relation(fields: [sellerId], references: [id])
+  subscriptionId  String?
+  subscription    Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  listingId       String?
+  listing         Listing?      @relation(fields: [listingId], references: [id], onDelete: SetNull)
+  type            PaymentType
+  /// 0 for a boost activated with a free monthly credit.
+  amount          Decimal       @db.Decimal(14, 2)
+  status          PaymentStatus @default(pending)
+  midtransOrderId String        @unique
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+
+  @@index([sellerId, createdAt])
+  @@map("payments")
+}
+
+model AnalyticsEvent {
+  id        String    @id @default(uuid())
+  listingId String
+  listing   Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  eventType EventType
+  /// Anonymous per-browser-session id used for de-duplication and rate limiting.
+  sessionId String?
+  createdAt DateTime  @default(now())
+
+  @@index([listingId, createdAt])
+  @@index([sessionId, createdAt])
+  @@map("analytics_events")
+}
+
+model Inquiry {
+  id           String   @id @default(uuid())
+  listingId    String
+  listing      Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyerName    String
+  buyerContact String
+  quantity     String
+  message      String
+  createdAt    DateTime @default(now())
+
+  @@index([listingId, createdAt])
+  @@map("inquiries")
+}

@@ -13,6 +13,19 @@ export interface Plan {
 
 export const FREE_BOOST_DAYS = 7;
 
+export const TIER_RANK: Record<PlanTier, number> = {
+  free: 0,
+  growth: 1,
+  business: 2,
+};
+
+export const PLAN_PERIODS = [
+  { months: 1, label: "1 bulan" },
+  { months: 12, label: "12 bulan (bayar 10 bulan)" },
+] as const;
+
+export type PlanMonths = (typeof PLAN_PERIODS)[number]["months"];
+
 export const PLANS: readonly Plan[] = [
   {
     tier: "free",
@@ -88,3 +101,15 @@ export function describePlan(plan: Plan) {
 export const BOOST_FAQ_ANSWER = `Listing Anda tampil di slot iklan pada hasil pencarian yang cocok, dengan label "Iklan". Harga: ${BOOST_OPTIONS.map(
   (o) => `${formatIdr(o.price)} (${o.days} hari)`,
 ).join(", ")}.`;
+
+export function getPlan(tier: PlanTier): Plan {
+  return PLANS.find((p) => p.tier === tier) ?? PLANS[0];
+}
+
+/** 12 months are billed as 10. */
+export function planTotal(plan: Plan, months: number): number {
+  return months === 12 ? plan.priceMonthly * 10 : plan.priceMonthly * months;
+}
+
+export const FREE_PLAN_LISTING_NOTE = (count: number): string =>
+  `Anda punya ${count} listing, lebih dari batas paket Gratis (${PLANS[0].maxListings}). Listing yang ada tetap tampil, tetapi Anda tidak bisa menambah listing baru sampai jumlahnya di bawah batas.`;

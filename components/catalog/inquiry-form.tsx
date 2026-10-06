@@ -5,11 +5,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Send, Loader2 } from "lucide-react";
-import { inquirySchema, InquiryFormValues } from "@/lib/validations/inquiry.schema";
-import { submitInquiry } from "@/lib/mock/repository";
+import {
+  inquirySchema,
+  InquiryFormValues,
+} from "@/lib/validations/inquiry.schema";
 import { FormField } from "@/components/shared/form-field";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { submitInquiryAction } from "@/actions/inquiry.actions";
 
 interface InquiryFormProps {
   listingId: string;
@@ -31,6 +34,7 @@ export function InquiryForm({
     register,
     handleSubmit,
     reset,
+    setError,
     formState: { errors },
   } = useForm<InquiryFormValues>({
     resolver: zodResolver(inquirySchema),
@@ -46,7 +50,19 @@ export function InquiryForm({
   const onSubmit = async (values: InquiryFormValues) => {
     try {
       setIsSubmitting(true);
-      await submitInquiry(values);
+      const result = await submitInquiryAction(values);
+      if (!result.success) {
+        for (const [field, messages] of Object.entries(
+          result.fieldErrors ?? {},
+        )) {
+          if (field in values)
+            setError(field as keyof InquiryFormValues, {
+              message: messages[0],
+            });
+        }
+        toast.error("Gagal mengirim permintaan", { description: result.error });
+        return;
+      }
       setIsSuccess(true);
       toast.success("Permintaan Penawaran Terkirim!", {
         description: `Pesan RFQ Anda telah diteruskan ke ${sellerName}. Penjual akan menghubungi Anda melalui kontak yang dicantumkan.`,
@@ -63,7 +79,12 @@ export function InquiryForm({
 
   if (isSuccess) {
     return (
-      <div className={cn("border border-accent-500/30 bg-accent-100/60 rounded-sm p-6 text-center space-y-3", className)}>
+      <div
+        className={cn(
+          "border border-accent-500/30 bg-accent-100/60 rounded-sm p-6 text-center space-y-3",
+          className,
+        )}
+      >
         <h4 className="font-display text-lg text-accent-700 font-semibold">
           Inquiry B2B Berhasil Terkirim!
         </h4>
@@ -86,7 +107,12 @@ export function InquiryForm({
   }
 
   return (
-    <div className={cn("border border-neutral-300 bg-surface-base rounded-sm p-5 space-y-4", className)}>
+    <div
+      className={cn(
+        "border border-neutral-300 bg-surface-base rounded-sm p-5 space-y-4",
+        className,
+      )}
+    >
       <div className="pb-3 border-b border-neutral-200">
         <h4 className="font-display text-lg text-neutral-900 font-semibold">
           Formulir Inquiry Grosir / RFQ B2B
@@ -100,7 +126,11 @@ export function InquiryForm({
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <input type="hidden" {...register("listingId")} value={listingId} />
 
-        <FormField label="Nama Lengkap / Nama Bisnis Kafe" required error={errors.buyerName?.message}>
+        <FormField
+          label="Nama Lengkap / Nama Bisnis Kafe"
+          required
+          error={errors.buyerName?.message}
+        >
           <input
             type="text"
             {...register("buyerName")}
@@ -109,7 +139,12 @@ export function InquiryForm({
           />
         </FormField>
 
-        <FormField label="Nomor WhatsApp / Email Aktif" required helperText="Penjual akan merespons langsung ke kontak ini." error={errors.buyerContact?.message}>
+        <FormField
+          label="Nomor WhatsApp / Email Aktif"
+          required
+          helperText="Penjual akan merespons langsung ke kontak ini."
+          error={errors.buyerContact?.message}
+        >
           <input
             type="text"
             {...register("buyerContact")}
@@ -118,7 +153,11 @@ export function InquiryForm({
           />
         </FormField>
 
-        <FormField label="Perkiraan Jumlah Kebutuhan Pesanan" required error={errors.quantity?.message}>
+        <FormField
+          label="Perkiraan Jumlah Kebutuhan Pesanan"
+          required
+          error={errors.quantity?.message}
+        >
           <input
             type="text"
             {...register("quantity")}
@@ -127,7 +166,12 @@ export function InquiryForm({
           />
         </FormField>
 
-        <FormField label="Pesan & Spesifikasi yang Dibutuhkan" required helperText="Tuliskan spesifikasi roasting, profil rasa, atau permintaan penawaran harga kontrak." error={errors.message?.message}>
+        <FormField
+          label="Pesan & Spesifikasi yang Dibutuhkan"
+          required
+          helperText="Tuliskan spesifikasi roasting, profil rasa, atau permintaan penawaran harga kontrak."
+          error={errors.message?.message}
+        >
           <textarea
             rows={3}
             {...register("message")}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Payment, Subscription } from "@/types";
+import { ListingWithRelations, Payment, Subscription } from "@/types";
 import { formatRupiah } from "@/components/shared/price-text";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,24 +34,21 @@ import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { ListingWithRelations } from "@/types";
 import { toast } from "sonner";
 import { isActiveBoost } from "@/lib/boost";
-import {
-  BOOST_OPTIONS,
-  boostOptionLabel,
-  describePlan,
-  PLANS,
-} from "@/lib/plans";
+import { BOOST_OPTIONS, boostOptionLabel } from "@/lib/plans";
+import { useRouter } from "next/navigation";
+import { purchaseBoostAction } from "@/actions/seller.actions";
+import { BoostCredits } from "@/lib/boost-credits";
+import { formatWib } from "@/lib/format-date";
 
 interface BillingSectionProps {
   subscription?: Subscription;
   payments: Payment[];
   listings: ListingWithRelations[];
+  credits: BoostCredits;
   className?: string;
 }
-
-const TIER_ROWS = PLANS.map(describePlan);
 
 const BOOST_DURATIONS = BOOST_OPTIONS.map((o) => ({
   value: o.value,
@@ -75,93 +72,79 @@ const PAYMENT_TYPE_MAP: Record<string, string> = {
 };
 
 export function BillingSection({
-  subscription,
   payments,
   listings,
+  credits,
   className,
 }: BillingSectionProps) {
+  const router = useRouter();
   const [boostDialogOpen, setBoostDialogOpen] = useState(false);
   const [selectedListing, setSelectedListing] = useState("");
   const [selectedDuration, setSelectedDuration] = useState("");
   const [boostLoading, setBoostLoading] = useState(false);
+  const [payWith, setPayWith] = useState<"credit" | "cash">("credit");
+
+  const hasCredit = credits.remaining > 0;
+  const useCredit = hasCredit && payWith === "credit";
+  const duration = useCredit ? String(credits.days) : selectedDuration;
+  const activeBoosts = listings.filter(isActiveBoost).length;
+  const resetDate = formatWib(credits.resetsAt, "dayMonth");
 
   const handleBoost = async () => {
-    if (!selectedListing || !selectedDuration) return;
+    if (!selectedListing || !duration) return;
     setBoostLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
-    toast.success("Boost berhasil diaktifkan!", {
-      description:
-        "Listing Anda akan tampil di slot iklan pada pencarian yang cocok.",
-    });
-    setBoostLoading(false);
-    setBoostDialogOpen(false);
-    setSelectedListing("");
-    setSelectedDuration("");
+    try {
+      const result = await purchaseBoostAction({
+        listingId: selectedListing,
+        duration,
+        useCredit,
+      });
+      if (!result.success) {
+        toast.error("Boost gagal diproses", { description: result.error });
+        return;
+      }
+      if (result.data.status === "paid") {
+        toast.success("Boost berhasil diaktifkan", {
+          description:
+            "Listing Anda akan tampil di slot iklan pada pencarian yang cocok.",
+        });
+      } else {
+        toast.info("Menunggu pembayaran", {
+          description: "Boost aktif setelah pembayaran dikonfirmasi.",
+        });
+      }
+      setBoostDialogOpen(false);
+      setSelectedListing("");
+      setSelectedDuration("");
+      router.refresh();
+    } catch {
+      toast.error("Boost gagal diproses", {
+        description: "Terjadi kesalahan. Coba lagi.",
+      });
+    } finally {
+      setBoostLoading(false);
+    }
   };
 
   return (
     <div className={cn("space-y-10", className)}>
-      {/* Pricing Ledger Table */}
-      <div className="space-y-3">
-        <div className="pb-2 border-b border-neutral-300">
-          <h3 className="font-display text-lg text-neutral-900 font-semibold">
-            Skema Langganan
-          </h3>
-        </div>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Paket</TableHead>
-                <TableHead>Harga</TableHead>
-                <TableHead>Listing</TableHead>
-                <TableHead>Verified</TableHead>
-                <TableHead>Analitik</TableHead>
-                <TableHead>Boost</TableHead>
-                <TableHead>Prioritas</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {TIER_ROWS.map((row) => {
-                const isCurrent = subscription?.tier === row.tier;
-                return (
-                  <TableRow
-                    key={row.tier}
-                    className={isCurrent ? "bg-primary-50" : ""}
-                  >
-                    <TableCell className="font-medium text-neutral-900">
-                      <div className="flex items-center gap-2">
-                        {row.name}
-                        {isCurrent && (
-                          <Badge variant="default" className="text-[10px]">
-                            Aktif
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-mono tabular-nums font-medium text-primary-900">
-                      {row.price}
-                      <span className="text-neutral-500 font-sans">/bln</span>
-                    </TableCell>
-                    <TableCell>{row.listings}</TableCell>
-                    <TableCell>{row.verified}</TableCell>
-                    <TableCell>{row.analytics}</TableCell>
-                    <TableCell>{row.boost}</TableCell>
-                    <TableCell>{row.priority}</TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-
       {/* Boost */}
       <div className="space-y-3">
         <div className="flex items-center justify-between pb-2 border-b border-neutral-300">
-          <h3 className="font-display text-lg text-neutral-900 font-semibold">
-            Boost Listing
-          </h3>
+          <div>
+            <h3 className="font-display text-lg text-neutral-900 font-semibold">
+              Boost Listing
+            </h3>
+            {credits.total > 0 && (
+              <p className="mt-0.5 text-xs text-neutral-600">
+                Kredit boost gratis bulan ini:{" "}
+                <span className="font-mono tabular-nums">
+                  {credits.remaining} dari {credits.total}
+                </span>
+                {credits.remaining === 0 && `, kembali ${resetDate}`}
+              </p>
+            )}
+          </div>
           <Dialog open={boostDialogOpen} onOpenChange={setBoostDialogOpen}>
             <DialogTrigger
               render={
@@ -174,8 +157,8 @@ export function BillingSection({
               <DialogHeader>
                 <DialogTitle>Boost Listing</DialogTitle>
                 <DialogDescription>
-                  Tampilkan produk Anda di posisi teratas katalog untuk
-                  meningkatkan visibilitas.
+                  Tampilkan produk Anda sebagai iklan di hasil pencarian yang
+                  cocok.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-2">
@@ -200,33 +183,73 @@ export function BillingSection({
                     </SelectContent>
                   </Select>
                 </FormField>
-                <FormField label="Durasi Boost" required>
-                  <Select
-                    value={selectedDuration}
-                    onValueChange={(val) => setSelectedDuration(val ?? "")}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih durasi" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {BOOST_DURATIONS.map((d) => (
-                        <SelectItem key={d.value} value={d.value}>
-                          {d.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormField>
+                {hasCredit && (
+                  <fieldset className="space-y-2">
+                    <legend className="sr-only">Cara pembayaran</legend>
+                    {(
+                      [
+                        [
+                          "credit",
+                          `Pakai kredit gratis (sisa ${credits.remaining}, ${credits.days} hari)`,
+                        ],
+                        ["cash", "Bayar"],
+                      ] as const
+                    ).map(([value, label]) => (
+                      <label
+                        key={value}
+                        className="flex min-h-11 cursor-pointer items-center gap-3 border border-neutral-300 px-3 text-sm has-checked:border-primary-600"
+                      >
+                        <input
+                          type="radio"
+                          name="boost-pay"
+                          checked={payWith === value}
+                          onChange={() => setPayWith(value)}
+                          className="accent-primary-600"
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </fieldset>
+                )}
+                {!useCredit && (
+                  <FormField label="Durasi Boost" required>
+                    <Select
+                      value={selectedDuration}
+                      onValueChange={(val) => setSelectedDuration(val ?? "")}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih durasi" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {BOOST_DURATIONS.map((d) => (
+                          <SelectItem key={d.value} value={d.value}>
+                            {d.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormField>
+                )}
+                {activeBoosts > 0 && (
+                  <p className="text-xs text-neutral-600">
+                    Anda punya {activeBoosts} boost aktif. Di satu halaman hanya
+                    satu listing Anda yang tampil sebagai iklan, jadi boost
+                    tambahan bergantian dengan yang lain dan paling berguna saat
+                    pembeli memfilter kategori atau asal yang berbeda.
+                  </p>
+                )}
               </div>
               <DialogFooter>
                 <Button
                   variant="primary"
                   onClick={handleBoost}
-                  disabled={
-                    !selectedListing || !selectedDuration || boostLoading
-                  }
+                  disabled={!selectedListing || !duration || boostLoading}
                 >
-                  {boostLoading ? "Memproses..." : "Bayar & Aktifkan"}
+                  {boostLoading
+                    ? "Memproses..."
+                    : useCredit
+                      ? "Aktifkan dengan Kredit"
+                      : "Bayar & Aktifkan"}
                 </Button>
               </DialogFooter>
             </DialogContent>

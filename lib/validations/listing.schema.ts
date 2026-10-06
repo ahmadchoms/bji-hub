@@ -1,6 +1,12 @@
 import { z } from "zod";
+import { IMAGE_RULES } from "../storage";
 
-export const listingSchema = z.object({
+export const listingImageSchema = z.object({
+  url: z.string().min(1).max(500),
+  path: z.string().min(1).max(200),
+});
+
+const listingBaseSchema = z.object({
   title: z
     .string()
     .min(5, "Judul produk minimal 5 karakter")
@@ -22,12 +28,18 @@ export const listingSchema = z.object({
     message: "Status listing tidak valid",
   }),
   originRegion: z.string().min(1, "Daerah asal wajib diisi"),
-  processMethod: z.enum(["Wash", "Natural", "Honey", "Wet Hulled", "Anaerobic"], {
-    message: "Metode proses tidak valid",
-  }),
-  roastLevel: z.enum(["Light", "Medium-Light", "Medium", "Medium-Dark", "Dark"], {
-    message: "Tingkat sangrai tidak valid",
-  }),
+  processMethod: z.enum(
+    ["Wash", "Natural", "Honey", "Wet Hulled", "Anaerobic"],
+    {
+      message: "Metode proses tidak valid",
+    },
+  ),
+  roastLevel: z.enum(
+    ["Light", "Medium-Light", "Medium", "Medium-Dark", "Dark"],
+    {
+      message: "Tingkat sangrai tidak valid",
+    },
+  ),
   flavorNotes: z
     .string()
     .min(3, "Catatan rasa minimal 3 karakter")
@@ -38,6 +50,19 @@ export const listingSchema = z.object({
   aromaScore: z.number().min(0).max(5).optional(),
   aftertasteScore: z.number().min(0).max(5).optional(),
   roastDate: z.string().min(1, "Tanggal sangrai wajib diisi"),
+  images: z
+    .array(listingImageSchema)
+    .max(IMAGE_RULES.maxCount, `Maksimal ${IMAGE_RULES.maxCount} foto`),
+});
+
+export const listingSchema = listingBaseSchema.superRefine((value, ctx) => {
+  if (value.status === "active" && value.images.length === 0) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["images"],
+      message: "Listing aktif minimal punya 1 foto",
+    });
+  }
 });
 
 export type ListingFormValues = z.infer<typeof listingSchema>;

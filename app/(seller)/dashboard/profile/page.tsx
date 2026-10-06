@@ -1,4 +1,4 @@
-import { getSellerById } from "@/lib/mock/repository";
+import { getSellerById } from "@/lib/data";
 import { SectionHeader } from "@/components/shared/section-header";
 import { ProfileForm } from "@/components/dashboard/profile-form";
 import { requireSeller } from "@/lib/auth/session";

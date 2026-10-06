@@ -1,0 +1,35 @@
+import * as repo from "@/lib/mock/repository";
+import { recordEvent } from "@/lib/mock/analytics-store";
+import type { DataRepository } from "@/lib/data/contract";
+
+export const mockRepository: DataRepository = {
+  getCategories: repo.getCategories,
+  getCategoryBySlug: repo.getCategoryBySlug,
+  getListings: repo.getListings,
+  getListingFeed: repo.getListingFeed,
+  getCatalogFeed: repo.getCatalogFeed,
+  getFilterOptions: repo.getFilterOptions,
+  getListingBySlug: repo.getListingBySlug,
+  getListingById: repo.getListingById,
+  getSellerBySlug: repo.getSellerBySlug,
+  getSellerById: repo.getSellerById,
+  getSellers: repo.getSellers,
+  getSellerStats: repo.getSellerStats,
+  getSellerListingPerformance: repo.getSellerListingPerformance,
+  getInquiries: repo.getInquiries,
+  createInquiry: repo.submitInquiry,
+  updateSellerProfile: repo.updateSellerProfile,
+  createListing: repo.createListing,
+  updateListing: repo.updateListing,
+  getSellerPayments: repo.getSellerPayments,
+  activateBoost: repo.activateBoost,
+  getSellerPlanState: repo.getSellerPlanState,
+  startSubscription: repo.startSubscription,
+  setCancelAtPeriodEnd: repo.setCancelAtPeriodEnd,
+  getAdminStats: repo.getAdminStats,
+  getAdminListings: repo.getAdminListings,
+  getPendingVerifications: repo.getPendingVerifications,
+  reviewVerification: repo.reviewVerification,
+  moderateListing: repo.moderateListing,
+  recordTrackEvent: async (payload) => recordEvent(payload),
+};

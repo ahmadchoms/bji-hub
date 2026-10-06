@@ -19,75 +19,97 @@ export function ListingPerformanceTable({
 }: ListingPerformanceTableProps) {
   if (rows.length === 0) {
     return (
-      <p className="font-display text-sm italic text-neutral-500">
-        Belum ada listing.
-      </p>
+      <div className="rounded-lg border border-dashed border-neutral-300 p-8 text-center">
+        <p className="text-xs font-medium text-neutral-500">
+          Belum ada data performa listing.
+        </p>
+      </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-130 border-collapse text-sm">
-        <caption className="sr-only">Performa listing 30 hari terakhir</caption>
-        <thead>
-          <tr className="border-b border-neutral-300 text-left text-[10px] font-mono uppercase tracking-widest text-neutral-500">
-            <th scope="col" className="py-2 pr-4 font-normal">
-              Listing
-            </th>
-            <th scope="col" className="px-3 py-2 text-right font-normal">
-              Dilihat
-            </th>
-            <th scope="col" className="px-3 py-2 text-right font-normal">
-              Klik kontak
-            </th>
-            <th scope="col" className="px-3 py-2 text-right font-normal">
-              Rasio
-            </th>
-            {showAds && (
-              <th scope="col" className="py-2 pl-3 text-right font-normal">
-                Tayangan iklan
+    <div className="overflow-hidden shadow-2xs">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-130 border-collapse text-xs">
+          <caption className="sr-only">
+            Performa listing 30 hari terakhir
+          </caption>
+          <thead>
+            <tr className="border-b border-neutral-200/80 bg-neutral-50/50 text-left text-[11px] font-semibold tracking-wider text-neutral-500 uppercase">
+              <th scope="col" className="py-3 px-4 font-semibold">
+                Listing
               </th>
-            )}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr
-              key={row.listingId}
-              className="border-b border-neutral-300 align-top"
-            >
-              <td className="py-3 pr-4">
-                <Link
-                  href={`/product/${row.slug}`}
-                  className="font-medium text-neutral-900 hover:underline"
-                >
-                  {row.title}
-                </Link>
-                {row.boostUntil && (
-                  <p className="mt-0.5 text-xs text-neutral-500">
-                    Iklan aktif sampai{" "}
-                    {dateFmt.format(new Date(row.boostUntil))}
-                  </p>
-                )}
-              </td>
-              <td className="px-3 py-3 text-right font-mono tabular-nums">
-                {nf.format(row.views)}
-              </td>
-              <td className="px-3 py-3 text-right font-mono tabular-nums">
-                {nf.format(row.clicks)}
-              </td>
-              <td className="px-3 py-3 text-right font-mono tabular-nums">
-                {row.conversionRate}%
-              </td>
+              <th scope="col" className="px-4 py-3 text-right font-semibold">
+                Dilihat
+              </th>
+              <th scope="col" className="px-4 py-3 text-right font-semibold">
+                Klik Kontak
+              </th>
+              <th scope="col" className="px-4 py-3 text-right font-semibold">
+                Rasio
+              </th>
               {showAds && (
-                <td className="py-3 pl-3 text-right font-mono tabular-nums">
-                  {row.impressions > 0 ? nf.format(row.impressions) : "—"}
-                </td>
+                <th scope="col" className="py-3 px-4 text-right font-semibold">
+                  Tayangan Iklan
+                </th>
               )}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-neutral-100">
+            {rows.map((row) => (
+              <tr
+                key={row.listingId}
+                className="transition-colors hover:bg-neutral-50/50"
+              >
+                {/* Kolom Judul & Badge Iklan */}
+                <td className="py-3.5 px-4 min-h-13">
+                  <div className="flex flex-col justify-center gap-1">
+                    <Link
+                      href={`/product/${row.slug}`}
+                      className="font-medium text-neutral-900 transition-colors hover:text-primary-700 hover:underline line-clamp-1"
+                    >
+                      {row.title}
+                    </Link>
+                    {row.boostUntil ? (
+                      <div className="flex items-center gap-1.5">
+                        <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700 ring-1 ring-amber-600/20 ring-inset">
+                          Iklan aktif s/d{" "}
+                          {dateFmt.format(new Date(row.boostUntil))}
+                        </span>
+                      </div>
+                    ) : (
+                      /* Spacer transparan agar tinggi baris tetap simetris & seimbang */
+                      <div className="h-4.5 aria-hidden:true" />
+                    )}
+                  </div>
+                </td>
+
+                {/* Kolom Angka (Menggunakan Alignment Center / Middle Vertikal Bawaan Table) */}
+                <td className="px-4 py-3.5 text-right font-mono text-xs font-semibold tabular-nums text-neutral-800 align-middle">
+                  {nf.format(row.views)}
+                </td>
+                <td className="px-4 py-3.5 text-right font-mono text-xs font-semibold tabular-nums text-neutral-800 align-middle">
+                  {nf.format(row.clicks)}
+                </td>
+                <td className="px-4 py-3.5 text-right font-mono text-xs font-semibold tabular-nums text-neutral-800 align-middle">
+                  <span className="inline-block rounded-md bg-neutral-100/80 px-1.5 py-0.5 text-neutral-700">
+                    {row.conversionRate}%
+                  </span>
+                </td>
+                {showAds && (
+                  <td className="py-3.5 px-4 text-right font-mono text-xs font-semibold tabular-nums text-neutral-800 align-middle">
+                    {row.impressions > 0 ? (
+                      nf.format(row.impressions)
+                    ) : (
+                      <span className="text-neutral-300">—</span>
+                    )}
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

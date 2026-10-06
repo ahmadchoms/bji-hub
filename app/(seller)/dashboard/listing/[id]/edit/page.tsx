@@ -1,32 +1,34 @@
-import { getListingById, getCategories } from "@/lib/mock/repository";
+import { getListingById, getCategories } from "@/lib/data";
 import { SectionHeader } from "@/components/shared/section-header";
 import { ListingForm } from "@/components/dashboard/listing-form";
 import { notFound } from "next/navigation";
+import { requireSeller } from "@/lib/auth/session";
 
 interface EditListingPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function EditListingPage({ params }: EditListingPageProps) {
+export default async function EditListingPage({
+  params,
+}: EditListingPageProps) {
   const { id } = await params;
+  const { sellerId } = await requireSeller(`/dashboard/listing/${id}`);
   const [listing, categories] = await Promise.all([
     getListingById(id),
     getCategories(),
   ]);
 
-  if (!listing) {
+  if (!listing || listing.sellerId !== sellerId) {
     notFound();
   }
 
   return (
     <div className="space-y-6">
-      <SectionHeader
-        title="Edit Produk"
-        subtitle={listing.title}
-      />
+      <SectionHeader title="Edit Produk" subtitle={listing.title} />
       <ListingForm
         categories={categories}
         isEditing
+        listingId={listing.id}
         defaultValues={{
           title: listing.title,
           categoryId: listing.categoryId,
@@ -44,8 +46,13 @@ export default async function EditListingPage({ params }: EditListingPageProps) 
           sweetnessScore: listing.tasteProfile?.sweetnessScore,
           aromaScore: listing.tasteProfile?.aromaScore,
           aftertasteScore: listing.tasteProfile?.aftertasteScore,
+          images: [...listing.images]
+            .sort((a, b) => a.sortOrder - b.sortOrder)
+            .map((image) => ({ url: image.url, path: image.id })),
           roastDate: listing.tasteProfile?.roastDate
-            ? new Date(listing.tasteProfile.roastDate).toISOString().split("T")[0]
+            ? new Date(listing.tasteProfile.roastDate)
+                .toISOString()
+                .split("T")[0]
             : "",
         }}
       />

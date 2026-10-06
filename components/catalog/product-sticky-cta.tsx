@@ -1,6 +1,5 @@
 "use client";
 
-import { MessageCircle, FileText } from "lucide-react";
 import { buildWhatsAppUrl } from "@/components/shared/whatsapp-button";
 import { cn } from "@/lib/utils";
 import { trackEvent } from "@/lib/tracking";
@@ -46,17 +45,15 @@ export function ProductStickyCTA({
           target="_blank"
           rel="noopener noreferrer"
           onClick={() => trackEvent(listingId, "contact_click")}
-          className="flex-1 flex items-center justify-center gap-2 h-12 bg-primary-600 text-white text-sm font-medium"
+          className="flex min-h-12 flex-1 items-center justify-center bg-primary-600 text-white text-sm font-medium"
         >
-          <MessageCircle className="w-4 h-4 shrink-0" />
           WhatsApp
         </a>
         <button
           type="button"
           onClick={scrollToInquiry}
-          className="flex-1 flex items-center justify-center gap-2 h-12 bg-transparent text-primary-700 text-sm font-medium border border-primary-700"
+          className="flex min-h-12 flex-1 items-center justify-center bg-transparent text-sm font-medium text-primary-700"
         >
-          <FileText className="w-4 h-4 shrink-0" />
           Inquiry B2B
         </button>
       </div>

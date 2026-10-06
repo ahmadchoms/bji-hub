@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Menu } from "lucide-react";
+import { Menu, LogOut } from "lucide-react";
 import { Logo } from "@/components/shared/logo";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -19,7 +19,7 @@ import { getNavModel, type NavItem } from "@/lib/auth/nav";
 import type { Role } from "@/lib/auth/roles";
 
 const focusRing =
-  "outline-none focus-visible:ring-2 focus-visible:ring-primary-600 rounded-sm";
+  "outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30 focus-visible:ring-offset-2 rounded-md";
 
 function useIsActive() {
   const pathname = usePathname();
@@ -35,11 +35,11 @@ function DesktopLink({ item, active }: { item: NavItem; active: boolean }) {
       href={item.href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "py-1 text-sm transition-colors",
+        "relative px-3 py-1.5 text-xs font-semibold tracking-wide transition-all duration-150 rounded-md select-none",
         focusRing,
         active
-          ? "border-b-2 border-primary-600 font-medium text-primary-900"
-          : "text-neutral-700 hover:text-neutral-900",
+          ? "bg-primary-50/80 text-primary-900 font-bold"
+          : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100/70",
       )}
     >
       {item.label}
@@ -50,8 +50,16 @@ function DesktopLink({ item, active }: { item: NavItem; active: boolean }) {
 function LogoutForm({ className }: { className?: string }) {
   return (
     <form action={logoutAction}>
-      <button type="submit" className={cn(focusRing, className)}>
-        Keluar
+      <button
+        type="submit"
+        className={cn(
+          "flex items-center gap-2 text-xs font-medium text-neutral-500 transition-colors hover:text-status-error cursor-pointer",
+          focusRing,
+          className,
+        )}
+      >
+        <LogOut className="h-3.5 w-3.5" />
+        <span>Keluar</span>
       </button>
     </form>
   );
@@ -67,17 +75,14 @@ export function NavbarInner({ role }: { role: Role }) {
     setOpen(false);
   }, [pathname]);
 
-  const mobileRow =
-    "flex min-h-12 w-full items-center border-b border-neutral-200 px-3 py-3 text-left text-sm";
-
   return (
     <>
-      <header className="sticky top-0 z-40 hidden border-b border-neutral-300 bg-surface-base md:block">
+      <header className="sticky top-0 z-40 hidden border-b border-neutral-200/80 bg-surface-base/85 backdrop-blur-md transition-all md:block">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-10">
+          <div className="flex items-center gap-8">
             <Logo size="md" />
             <nav
-              className="flex items-center gap-6"
+              className="flex items-center gap-1"
               aria-label="Navigasi utama"
             >
               {nav.links.map((link) => (
@@ -89,22 +94,21 @@ export function NavbarInner({ role }: { role: Role }) {
               ))}
             </nav>
           </div>
-          <div className="flex items-center gap-6">
+
+          <div className="flex items-center gap-3">
             {nav.account && (
               <DesktopLink
                 item={nav.account}
                 active={isActive(nav.account.href)}
               />
             )}
-            {nav.canLogout && (
-              <LogoutForm className="text-sm text-neutral-600 hover:text-neutral-900" />
-            )}
+            {nav.canLogout && <LogoutForm className="px-2 py-1.5" />}
             {nav.cta && (
               <Link
                 href={nav.cta.href}
                 className={cn(
                   buttonVariants({ variant: "primary", size: "sm" }),
-                  "min-h-10",
+                  "ml-1 shadow-xs",
                 )}
               >
                 {nav.cta.label}
@@ -114,9 +118,11 @@ export function NavbarInner({ role }: { role: Role }) {
         </div>
       </header>
 
-      <header className="sticky top-0 z-40 border-b border-neutral-300 bg-surface-base md:hidden">
+      <header className="sticky top-0 z-40 border-b border-neutral-200/80 bg-surface-base/85 backdrop-blur-md md:hidden">
         <div className="flex h-14 items-center justify-between px-4">
-          <Logo size="md" />
+          <Link href="/" className={focusRing}>
+            <Logo size="md" />
+          </Link>
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger
               render={
@@ -124,55 +130,80 @@ export function NavbarInner({ role }: { role: Role }) {
                   variant="ghost"
                   size="icon-sm"
                   aria-label="Menu"
-                  className="min-h-11 min-w-11"
+                  className="rounded-md hover:bg-neutral-100"
                 />
               }
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-5 w-5 text-neutral-700" />
             </SheetTrigger>
-            <SheetContent side="right" className="w-72 p-0">
-              <SheetHeader className="border-b border-neutral-300 p-4">
-                <SheetTitle className="text-sm font-medium">Menu</SheetTitle>
+
+            <SheetContent side="right" className="w-80 p-0 sm:max-w-xs">
+              <SheetHeader className="border-b border-neutral-200/80 p-4 text-left">
+                <SheetTitle className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+                  Navigasi
+                </SheetTitle>
               </SheetHeader>
-              <nav
-                className="flex flex-col gap-1 p-4"
-                aria-label="Navigasi mobile"
-              >
-                {[...nav.links, ...(nav.account ? [nav.account] : [])].map(
-                  (item) => (
+
+              <div className="flex flex-col justify-between h-[calc(100vh-57px)] p-4">
+                <nav
+                  className="flex flex-col gap-1"
+                  aria-label="Navigasi mobile"
+                >
+                  {nav.links.map((item) => {
+                    const active = isActive(item.href);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        aria-current={active ? "page" : undefined}
+                        className={cn(
+                          "flex h-10 w-full items-center rounded-md px-3 text-xs font-semibold transition-colors",
+                          focusRing,
+                          active
+                            ? "bg-primary-50 text-primary-900"
+                            : "text-neutral-700 hover:bg-neutral-100/70 hover:text-neutral-900",
+                        )}
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </nav>
+
+                <div className="flex flex-col gap-3 pt-4 border-t border-neutral-200/80">
+                  {nav.account && (
                     <Link
-                      key={item.href}
-                      href={item.href}
-                      aria-current={isActive(item.href) ? "page" : undefined}
+                      href={nav.account.href}
                       className={cn(
-                        mobileRow,
+                        "flex h-10 w-full items-center justify-between rounded-md px-3 text-xs font-semibold text-neutral-700 hover:bg-neutral-100/70",
                         focusRing,
-                        isActive(item.href)
-                          ? "border-b-0 border-l-2 border-l-primary-600 font-medium text-primary-900"
-                          : "text-neutral-700",
+                        isActive(nav.account.href) &&
+                          "bg-primary-50 text-primary-900",
                       )}
                     >
-                      {item.label}
+                      <span>{nav.account.label}</span>
                     </Link>
-                  ),
-                )}
-                {nav.canLogout && (
-                  <LogoutForm className={cn(mobileRow, "text-neutral-700")} />
-                )}
-                {nav.cta && (
-                  <div className="pt-4">
+                  )}
+
+                  {nav.canLogout && (
+                    <div className="px-3 py-1">
+                      <LogoutForm />
+                    </div>
+                  )}
+
+                  {nav.cta && (
                     <Link
                       href={nav.cta.href}
                       className={cn(
                         buttonVariants({ variant: "primary", size: "lg" }),
-                        "w-full",
+                        "w-full text-xs font-semibold shadow-xs",
                       )}
                     >
                       {nav.cta.label}
                     </Link>
-                  </div>
-                )}
-              </nav>
+                  )}
+                </div>
+              </div>
             </SheetContent>
           </Sheet>
         </div>

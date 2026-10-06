@@ -11,6 +11,9 @@ import {
   AdminStats,
   Inquiry,
   ListingPerformance,
+  SellerProfile,
+  Payment,
+  Subscription,
 } from "@/types";
 import {
   mockCategories,
@@ -22,6 +25,11 @@ import {
 } from "./data";
 import { composeFeedPage, isActiveBoost } from "@/lib/boost";
 import { getEventSeries } from "./analytics-store";
+import { ListingFormValues } from "../validations/listing.schema";
+import { uniqueSlug } from "../slug";
+import { SellerProfileFormValues } from "../validations/seller-profile.schema";
+import { PlanState, resolvePlanState } from "../subscription";
+import { PlanTier } from "../plans";
 
 // Simulation Configuration for Testing States (Empty & Error)
 export interface MockSimulationConfig {
@@ -31,11 +39,13 @@ export interface MockSimulationConfig {
   forceEmptyListings: boolean;
 }
 
+const qaState = process.env.MOCK_STATE;
+
 const mockConfig: MockSimulationConfig = {
-  simulateLatencyMs: 200,
-  shouldFail: false,
+  simulateLatencyMs: qaState === "slow" ? 2000 : 200,
+  shouldFail: qaState === "error",
   errorMessage: "Gagal memuat data dari mock repository. Silakan coba lagi.",
-  forceEmptyListings: false,
+  forceEmptyListings: qaState === "empty",
 };
 
 export function configureMock(newConfig: Partial<MockSimulationConfig>) {
@@ -278,16 +288,21 @@ export async function getSellerBySlug(
   const seller = mockSellers.find((s) => s.slug === slug);
   if (!seller) return null;
 
-  const listings = mockListings.filter((l) => l.sellerId === seller.id);
+  const listings = mockConfig.forceEmptyListings
+    ? []
+    : mockListings.filter((l) => l.sellerId === seller.id);
   const subscriptions = mockSubscriptions.filter(
     (sub) => sub.sellerId === seller.id,
   );
-  const payments = mockPayments.filter((p) => p.sellerId === seller.id);
+  const payments = mockConfig.forceEmptyListings
+    ? []
+    : mockPayments.filter((p) => p.sellerId === seller.id);
 
   return {
     ...seller,
     listings,
     subscriptions,
+    tier: resolvePlanState(subscriptions).tier,
     payments,
   };
 }
@@ -302,16 +317,21 @@ export async function getSellerById(
   const seller = mockSellers.find((s) => s.id === id);
   if (!seller) return null;
 
-  const listings = mockListings.filter((l) => l.sellerId === seller.id);
+  const listings = mockConfig.forceEmptyListings
+    ? []
+    : mockListings.filter((l) => l.sellerId === seller.id);
   const subscriptions = mockSubscriptions.filter(
     (sub) => sub.sellerId === seller.id,
   );
-  const payments = mockPayments.filter((p) => p.sellerId === seller.id);
+  const payments = mockConfig.forceEmptyListings
+    ? []
+    : mockPayments.filter((p) => p.sellerId === seller.id);
 
   return {
     ...seller,
     listings,
     subscriptions,
+    tier: resolvePlanState(subscriptions).tier,
     payments,
   };
 }
@@ -324,7 +344,9 @@ export const STATS_WINDOW_DAYS = 30;
 export async function getSellerStats(sellerId: string): Promise<SellerStats> {
   await simulateDelay();
 
-  const sellerListings = mockListings.filter((l) => l.sellerId === sellerId);
+  const sellerListings = mockConfig.forceEmptyListings
+    ? []
+    : mockListings.filter((l) => l.sellerId === sellerId);
   const listingIds = new Set(sellerListings.map((l) => l.id));
   const inquiries = mockInquiries.filter((inq) =>
     listingIds.has(inq.listingId),
@@ -358,6 +380,8 @@ export async function getSellerListingPerformance(
 ): Promise<ListingPerformance[]> {
   await simulateDelay();
 
+  if (mockConfig.forceEmptyListings) return [];
+
   const now = Date.now();
   return mockListings
     .filter((l) => l.sellerId === sellerId)
@@ -387,16 +411,22 @@ export async function getSellerListingPerformance(
 export async function getAdminStats(): Promise<AdminStats> {
   await simulateDelay();
 
-  const monthlyRevenue = mockPayments
+  const empty = mockConfig.forceEmptyListings;
+  const payments = empty ? [] : mockPayments;
+  const totalRevenue = payments
     .filter((p) => p.status === "paid")
     .reduce((sum, p) => sum + p.amount, 0);
 
   return {
     totalSellers: mockSellers.length,
-    totalListings: mockListings.length,
-    pendingVerifications: mockSellers.filter((s) => !s.isVerified).length,
-    monthlyRevenue,
-    recentPayments: [...mockPayments],
+    totalListings: empty ? 0 : mockListings.length,
+    pendingVerifications: empty
+      ? 0
+      : mockSellers.filter(
+          (s) => !s.isVerified && !rejectedVerificationIds.has(s.id),
+        ).length,
+    monthlyRevenue: totalRevenue,
+    recentPayments: [...payments],
   };
 }
 
@@ -405,6 +435,8 @@ export async function getAdminStats(): Promise<AdminStats> {
  */
 export async function getInquiries(sellerId?: string): Promise<Inquiry[]> {
   await simulateDelay();
+
+  if (mockConfig.forceEmptyListings) return [];
 
   if (!sellerId) {
     return [...mockInquiries];
@@ -441,4 +473,265 @@ export async function submitInquiry(input: {
 
   mockInquiries.unshift(newInquiry);
   return newInquiry;
+}
+
+const rejectedVerificationIds = new Set<string>();
+
+export async function getSellers(): Promise<SellerProfile[]> {
+  await simulateDelay();
+  return [...mockSellers];
+}
+
+export async function getPendingVerifications(): Promise<SellerProfile[]> {
+  await simulateDelay();
+  if (mockConfig.forceEmptyListings) return [];
+  return mockSellers.filter(
+    (s) => !s.isVerified && !rejectedVerificationIds.has(s.id),
+  );
+}
+
+export async function getAdminListings(): Promise<ListingWithRelations[]> {
+  await simulateDelay();
+  if (mockConfig.forceEmptyListings) return [];
+  return [...mockListings];
+}
+
+export async function reviewVerification(
+  sellerId: string,
+  decision: "approve" | "reject",
+): Promise<boolean> {
+  await simulateDelay(200);
+  const seller = mockSellers.find((s) => s.id === sellerId);
+  if (!seller) return false;
+  if (decision === "approve") {
+    seller.isVerified = true;
+    rejectedVerificationIds.delete(sellerId);
+  } else {
+    rejectedVerificationIds.add(sellerId);
+  }
+  return true;
+}
+
+export async function moderateListing(
+  listingId: string,
+  decision: "approve" | "suspend",
+): Promise<boolean> {
+  await simulateDelay(200);
+  const listing = mockListings.find((l) => l.id === listingId);
+  if (!listing) return false;
+  listing.status = decision === "approve" ? "active" : "suspended";
+  return true;
+}
+
+export async function updateSellerProfile(
+  sellerId: string,
+  data: SellerProfileFormValues,
+): Promise<SellerProfile | null> {
+  await simulateDelay(300);
+  const seller = mockSellers.find((s) => s.id === sellerId);
+  if (!seller) return null;
+  Object.assign(seller, { ...data, bio: data.bio ?? seller.bio });
+  return seller;
+}
+
+function toImages(listingId: string, data: ListingFormValues) {
+  return data.images.map((image, index) => ({
+    id: `img-${listingId}-${index}`,
+    listingId,
+    url: image.url,
+    sortOrder: index,
+  }));
+}
+
+function toTasteProfile(
+  listingId: string,
+  data: ListingFormValues,
+  id: string,
+) {
+  return {
+    id,
+    listingId,
+    originRegion: data.originRegion,
+    processMethod: data.processMethod,
+    roastLevel: data.roastLevel,
+    flavorNotes: data.flavorNotes,
+    acidityScore: data.acidityScore,
+    bodyScore: data.bodyScore,
+    sweetnessScore: data.sweetnessScore,
+    aromaScore: data.aromaScore,
+    aftertasteScore: data.aftertasteScore,
+    roastDate: new Date(data.roastDate).toISOString(),
+  };
+}
+
+export async function createListing(
+  sellerId: string,
+  data: ListingFormValues,
+): Promise<ListingWithRelations | null> {
+  await simulateDelay(300);
+  const seller = mockSellers.find((s) => s.id === sellerId);
+  const category = mockCategories.find((c) => c.id === data.categoryId);
+  if (!seller || !category) return null;
+
+  const id = `list-${Date.now()}`;
+  const listing: ListingWithRelations = {
+    id,
+    slug: uniqueSlug(data.title, new Set(mockListings.map((l) => l.slug))),
+    sellerId,
+    categoryId: category.id,
+    title: data.title,
+    description: data.description,
+    price: data.price,
+    unit: data.unit,
+    minOrderQty: data.minOrderQty,
+    status: data.status,
+    isBoosted: false,
+    boostUntil: null,
+    createdAt: new Date().toISOString(),
+    seller,
+    category,
+    images: toImages(id, data),
+    tasteProfile: toTasteProfile(id, data, `taste-${id}`),
+  };
+  mockListings.unshift(listing);
+  return listing;
+}
+
+/** Returns null when the listing does not exist or belongs to another seller. */
+export async function updateListing(
+  sellerId: string,
+  listingId: string,
+  data: ListingFormValues,
+): Promise<ListingWithRelations | null> {
+  await simulateDelay(300);
+  const listing = mockListings.find((l) => l.id === listingId);
+  const category = mockCategories.find((c) => c.id === data.categoryId);
+  if (!listing || listing.sellerId !== sellerId || !category) return null;
+
+  Object.assign(listing, {
+    title: data.title,
+    description: data.description,
+    price: data.price,
+    unit: data.unit,
+    minOrderQty: data.minOrderQty,
+    categoryId: category.id,
+    category,
+    images: toImages(listing.id, data),
+    status: listing.status === "suspended" ? "suspended" : data.status,
+    tasteProfile: toTasteProfile(
+      listing.id,
+      data,
+      listing.tasteProfile?.id ?? `taste-${listing.id}`,
+    ),
+  });
+  return listing;
+}
+
+export async function activateBoost(
+  sellerId: string,
+  listingId: string,
+  days: number,
+  amount: number,
+): Promise<Payment | null> {
+  await simulateDelay(300);
+  const listing = mockListings.find((l) => l.id === listingId);
+  if (!listing || listing.sellerId !== sellerId) return null;
+
+  const now = Date.now();
+  listing.isBoosted = true;
+  listing.boostUntil = new Date(now + days * 86_400_000).toISOString();
+
+  const payment: Payment = {
+    id: `pay-${now}`,
+    sellerId,
+    listingId,
+    type: "boost",
+    amount,
+    status: "paid",
+    midtransOrderId: `${amount === 0 ? "CREDIT" : "MOCK"}-BOOST-${now}`,
+    paidAt: new Date(now).toISOString(),
+    createdAt: new Date(now).toISOString(),
+  };
+  mockPayments.unshift(payment);
+  return payment;
+}
+
+export async function getSellerPlanState(sellerId: string): Promise<PlanState> {
+  await simulateDelay();
+  return resolvePlanState(
+    mockSubscriptions.filter((sub) => sub.sellerId === sellerId),
+  );
+}
+
+export async function getSellerPayments(sellerId: string): Promise<Payment[]> {
+  await simulateDelay();
+  if (mockConfig.forceEmptyListings) return [];
+  return mockPayments.filter((p) => p.sellerId === sellerId);
+}
+
+export async function startSubscription(input: {
+  sellerId: string;
+  tier: Exclude<PlanTier, "free">;
+  kind: "new" | "renew" | "upgrade";
+  expiresAt: string;
+  amount: number;
+}): Promise<{ subscription: Subscription; payment: Payment } | null> {
+  await simulateDelay(300);
+  const seller = mockSellers.find((s) => s.id === input.sellerId);
+  if (!seller) return null;
+
+  const now = Date.now();
+  const mine = mockSubscriptions.filter(
+    (sub) => sub.sellerId === input.sellerId,
+  );
+  let subscription: Subscription;
+
+  if (input.kind === "renew") {
+    const current = resolvePlanState(mine, now).subscription;
+    if (!current || current.tier !== input.tier) return null;
+    current.expiresAt = input.expiresAt;
+    current.cancelAtPeriodEnd = false;
+    subscription = current;
+  } else {
+    mine
+      .filter((sub) => sub.status === "active")
+      .forEach((sub) => (sub.status = "canceled"));
+    subscription = {
+      id: `sub-${now}`,
+      sellerId: input.sellerId,
+      tier: input.tier,
+      status: "active",
+      startedAt: new Date(now).toISOString(),
+      expiresAt: input.expiresAt,
+    };
+    mockSubscriptions.push(subscription);
+  }
+  seller.tier = input.tier;
+
+  const payment: Payment = {
+    id: `pay-${now}`,
+    sellerId: input.sellerId,
+    subscriptionId: subscription.id,
+    type: "subscription",
+    amount: input.amount,
+    status: "paid",
+    midtransOrderId: `MOCK-SUB-${now}`,
+    paidAt: new Date(now).toISOString(),
+    createdAt: new Date(now).toISOString(),
+  };
+  mockPayments.unshift(payment);
+  return { subscription, payment };
+}
+
+export async function setCancelAtPeriodEnd(
+  sellerId: string,
+  value: boolean,
+): Promise<boolean> {
+  await simulateDelay(200);
+  const current = resolvePlanState(
+    mockSubscriptions.filter((sub) => sub.sellerId === sellerId),
+  ).subscription;
+  if (!current) return false;
+  current.cancelAtPeriodEnd = value;
+  return true;
 }

@@ -15,6 +15,8 @@ import { toast } from "sonner";
 import { Loader2, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VerifiedBadge } from "@/components/shared/verified-badge";
+import { useRouter } from "next/navigation";
+import { updateProfileAction } from "@/actions/seller.actions";
 
 interface ProfileFormProps {
   seller: SellerProfile;
@@ -22,9 +24,11 @@ interface ProfileFormProps {
 }
 
 export function ProfileForm({ seller, className }: ProfileFormProps) {
+  const router = useRouter();
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<SellerProfileFormValues>({
     resolver: zodResolver(sellerProfileSchema),
@@ -39,11 +43,29 @@ export function ProfileForm({ seller, className }: ProfileFormProps) {
   });
 
   const onSubmit = async (data: SellerProfileFormValues) => {
-    await new Promise((r) => setTimeout(r, 800));
-    toast.success("Profil toko berhasil diperbarui!", {
-      description: data.businessName,
-    });
-    console.log("Profile form data:", data);
+    try {
+      const result = await updateProfileAction(data);
+      if (!result.success) {
+        for (const [field, messages] of Object.entries(
+          result.fieldErrors ?? {},
+        )) {
+          if (field in data)
+            setError(field as keyof SellerProfileFormValues, {
+              message: messages[0],
+            });
+        }
+        toast.error("Gagal memperbarui profil", { description: result.error });
+        return;
+      }
+      toast.success("Profil toko berhasil diperbarui", {
+        description: data.businessName,
+      });
+      router.refresh();
+    } catch {
+      toast.error("Gagal memperbarui profil", {
+        description: "Terjadi kesalahan. Coba lagi.",
+      });
+    }
   };
 
   return (
@@ -54,20 +76,36 @@ export function ProfileForm({ seller, className }: ProfileFormProps) {
             Informasi Toko
           </h3>
 
-          <FormField label="Nama Usaha" required error={errors.businessName?.message}>
+          <FormField
+            label="Nama Usaha"
+            required
+            error={errors.businessName?.message}
+          >
             <Input {...register("businessName")} />
           </FormField>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <FormField label="Provinsi" required error={errors.province?.message}>
+            <FormField
+              label="Provinsi"
+              required
+              error={errors.province?.message}
+            >
               <Input {...register("province")} />
             </FormField>
-            <FormField label="Kota / Kabupaten" required error={errors.city?.message}>
+            <FormField
+              label="Kota / Kabupaten"
+              required
+              error={errors.city?.message}
+            >
               <Input {...register("city")} />
             </FormField>
           </div>
 
-          <FormField label="Alamat Lengkap" required error={errors.address?.message}>
+          <FormField
+            label="Alamat Lengkap"
+            required
+            error={errors.address?.message}
+          >
             <Textarea {...register("address")} rows={2} />
           </FormField>
 
@@ -90,7 +128,12 @@ export function ProfileForm({ seller, className }: ProfileFormProps) {
         </div>
 
         <div className="flex items-center justify-end gap-3 pt-2 border-t border-neutral-300">
-          <Button type="submit" variant="primary" disabled={isSubmitting} className="gap-2">
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={isSubmitting}
+            className="gap-2"
+          >
             {isSubmitting ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
@@ -116,7 +159,8 @@ export function ProfileForm({ seller, className }: ProfileFormProps) {
         ) : (
           <div className="space-y-4">
             <p className="text-sm text-neutral-600 leading-relaxed">
-              Verifikasi toko untuk mendapat badge kepercayaan dan meningkatkan kredibilitas di mata pembeli.
+              Verifikasi toko untuk mendapat badge kepercayaan dan meningkatkan
+              kredibilitas di mata pembeli.
             </p>
 
             <div className="border-2 border-dashed border-neutral-300 rounded-sm p-8 text-center hover:border-neutral-500 transition-colors cursor-pointer">

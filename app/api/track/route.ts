@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { trackPayloadSchema } from "@/lib/validations/track.schema";
-import { recordEvent } from "@/lib/mock/analytics-store";
+import { recordTrackEvent } from "@/lib/data";
 
 const BOT_PATTERN = /bot|crawl|spider|slurp|preview|headless/i;
 
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  const result = recordEvent(parsed.data);
+  const result = recordTrackEvent(parsed.data);
   if (result === "rate_limited") {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }

@@ -9,17 +9,24 @@ interface CategoryTabsProps {
   currentParams?: URLSearchParams;
 }
 
-// Bug 2 fix: category tabs now preserve all current filters (q, asal, proses, etc.)
-// by using buildCatalogHref which merges overrides into the current param set.
-export function CategoryTabs({ categories, active, currentParams }: CategoryTabsProps) {
+export function CategoryTabs({
+  categories,
+  active,
+  currentParams,
+}: CategoryTabsProps) {
   const base = currentParams ?? new URLSearchParams();
   const items = [{ slug: "", name: "Semua" }, ...categories];
   return (
-    <nav aria-label="Kategori" className="overflow-x-auto border-b border-neutral-300 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <nav
+      aria-label="Kategori"
+      className="overflow-x-auto border-b border-neutral-300 scrollbar-none [&::-webkit-scrollbar]:hidden"
+    >
       <div className="mx-auto flex min-w-max max-w-7xl px-4 sm:px-6 lg:px-8">
         {items.map((item) => {
           const selected = active === item.slug;
-          const href = buildCatalogHref(base, { kategori: item.slug || undefined });
+          const href = buildCatalogHref(base, {
+            kategori: item.slug || undefined,
+          });
           return (
             <Link
               key={item.slug || "all"}
@@ -36,17 +43,39 @@ export function CategoryTabs({ categories, active, currentParams }: CategoryTabs
   );
 }
 
-export function ResultMeta({ total, params }: { total: number; params: URLSearchParams }) {
+export function ResultMeta({
+  total,
+  params,
+}: {
+  total: number;
+  params: URLSearchParams;
+}) {
   const active = [
-    params.get("q"), params.get("kategori"), params.get("asal"), params.get("proses"), params.get("sangrai"), params.get("harga_min") || params.get("harga_max") ? "Harga" : "", params.get("verified") === "true" ? "Terverifikasi" : "",
+    params.get("q"),
+    params.get("kategori"),
+    params.get("asal"),
+    params.get("proses"),
+    params.get("sangrai"),
+    params.get("harga_min") || params.get("harga_max") ? "Harga" : "",
+    params.get("verified") === "true" ? "Terverifikasi" : "",
   ].filter(Boolean);
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 py-4" aria-live="polite">
-      <p className="font-mono text-sm tabular-nums text-neutral-900">{total} produk</p>
+    <div
+      className="flex flex-wrap items-center justify-between gap-3 py-4"
+      aria-live="polite"
+    >
+      <p className="font-mono text-sm tabular-nums text-neutral-900">
+        {total} produk
+      </p>
       {active.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-600">
           <span>{active.join(" · ")}</span>
-          <Link href="/" className="font-medium text-primary-600 hover:underline">Hapus filter</Link>
+          <Link
+            href="/"
+            className="font-medium text-primary-600 hover:underline"
+          >
+            Hapus filter
+          </Link>
         </div>
       )}
     </div>
@@ -55,9 +84,18 @@ export function ResultMeta({ total, params }: { total: number; params: URLSearch
 
 export function ProductList({ items }: { items: FeedItem[] }) {
   return (
-    <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4" aria-label="Daftar produk kopi">
+    <ul
+      className="columns-2 gap-3 md:columns-3 lg:columns-4 [column-fill:balance]"
+      aria-label="Daftar produk kopi"
+    >
       {items.map((item, index) => (
-        <ListingCard key={item.listing.id} listing={item.listing} priority={index < 4} isAd={item.isAd} />
+        <ListingCard
+          key={item.listing.id}
+          listing={item.listing}
+          priority={index < 4}
+          isAd={item.isAd}
+          className="mb-3 break-inside-avoid"
+        />
       ))}
     </ul>
   );

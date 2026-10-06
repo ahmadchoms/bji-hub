@@ -1,10 +1,21 @@
 import Link from "next/link";
 import { PageContainer } from "@/components/layout/page-container";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { BOOST_FAQ_ANSWER, describePlan, PLANS } from "@/lib/plans";
+import { cn } from "@/lib/utils";
+import { getSession } from "@/lib/auth/session";
 
-export default function PricingPage() {
-  const tiers = PLANS.map(describePlan);
+export default async function PricingPage() {
+  const { role } = await getSession();
+  const tiers = PLANS.map(describePlan).map((t) =>
+    role === "seller" ? { ...t, cta: "/dashboard/billing" } : t,
+  );
 
   const features = [
     { label: "Listing Produk", key: "listings" as const },
@@ -33,58 +44,66 @@ export default function PricingPage() {
   return (
     <div className="py-8 md:py-12 space-y-16">
       <PageContainer className="space-y-12">
-        {/* Header */}
-        <div className="max-w-2xl">
+        <div className="max-w-2xl space-y-2">
           <h1 className="font-display text-3xl md:text-4xl text-neutral-900 tracking-tight font-semibold">
             Skema Langganan
           </h1>
-          <p className="text-sm text-neutral-600 mt-2 leading-relaxed">
+          <p className="text-sm text-neutral-600 leading-relaxed">
             Pilih paket sesuai kapasitas produksi kebun atau roastery Anda.
             Tanpa komisi transaksi, batalkan kapan saja.
           </p>
         </div>
 
-        {/* Comparison Ledger Table */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-lg border border-neutral-200/80 bg-surface-base shadow-xs">
           <table className="w-full text-sm border-collapse">
             <thead>
-              <tr className="border-b border-neutral-300">
-                <th className="text-left py-3 pr-4 text-[10px] font-mono text-neutral-500 uppercase tracking-wider">
+              <tr className="border-b border-neutral-200 bg-neutral-50/50">
+                <th className="text-left py-3.5 px-4 text-[10px] font-semibold text-neutral-500 uppercase tracking-wider">
                   Fitur
                 </th>
                 {tiers.map((t) => (
                   <th
                     key={t.tier}
-                    className="text-left py-3 px-4 text-[10px] font-mono text-neutral-500 uppercase tracking-wider"
+                    className="text-left py-3.5 px-4 text-[10px] font-semibold text-neutral-500 uppercase tracking-wider"
                   >
-                    {t.name}
+                    <div className="flex items-center gap-2">
+                      <span>{t.name}</span>
+                      {t.tier === "growth" && (
+                        <span className="rounded-full bg-primary-100 px-2 py-0.5 text-[9px] font-bold text-primary-700 uppercase">
+                          Populer
+                        </span>
+                      )}
+                    </div>
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              <tr className="border-b border-neutral-300">
-                <td className="py-3 pr-4 text-[10px] font-mono text-neutral-500 uppercase tracking-wider">
+              <tr className="border-b border-neutral-200/80">
+                <td className="py-3.5 px-4 text-[10px] font-semibold text-neutral-500 uppercase tracking-wider">
                   Harga / bulan
                 </td>
                 {tiers.map((t) => (
                   <td
                     key={t.tier}
-                    className="py-3 px-4 font-mono font-bold text-primary-900"
+                    className="py-3.5 px-4 font-mono font-bold text-base text-primary-900"
                   >
                     {t.price}
                   </td>
                 ))}
               </tr>
               {features.map((f) => (
-                <tr key={f.key} className="border-b border-neutral-200">
-                  <td className="py-3 pr-4 text-xs text-neutral-700">
+                <tr
+                  key={f.key}
+                  className="border-b border-neutral-100 hover:bg-neutral-50/40 transition-colors"
+                >
+                  <td className="py-3 px-4 text-xs font-medium text-neutral-700">
                     {f.label}
                   </td>
                   {tiers.map((t) => (
                     <td
                       key={t.tier}
-                      className="py-3 px-4 text-xs text-neutral-700"
+                      className="py-3 px-4 text-xs text-neutral-600"
                     >
                       {t[f.key]}
                     </td>
@@ -92,20 +111,24 @@ export default function PricingPage() {
                 </tr>
               ))}
               <tr>
-                <td className="py-4"></td>
+                <td className="py-5 px-4"></td>
                 {tiers.map((t) => (
-                  <td key={t.tier} className="py-4 px-4">
-                    <Link href={t.cta}>
-                      <Button
-                        variant={t.tier === "growth" ? "primary" : "secondary"}
-                        size="sm"
-                      >
-                        {t.tier === "free"
-                          ? "Mulai Gratis"
-                          : t.tier === "growth"
-                            ? "Pilih Growth"
-                            : "Pilih Business"}
-                      </Button>
+                  <td key={t.tier} className="py-5 px-4">
+                    <Link
+                      href={t.cta}
+                      className={cn(
+                        buttonVariants({
+                          variant: t.tier === "growth" ? "primary" : "outline",
+                          size: "sm",
+                        }),
+                        "w-full justify-center shadow-2xs",
+                      )}
+                    >
+                      {t.tier === "free"
+                        ? "Mulai Gratis"
+                        : t.tier === "growth"
+                          ? "Pilih Growth"
+                          : "Pilih Business"}
                     </Link>
                   </td>
                 ))}
@@ -114,44 +137,55 @@ export default function PricingPage() {
           </table>
         </div>
 
-        {/* Add-on Boost */}
-        <div className="border border-neutral-300 rounded-sm p-6 md:p-8">
+        <div className="border border-neutral-200/80 rounded-xl bg-surface-base p-6 md:p-8 shadow-xs hover:border-neutral-300 transition-all">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="space-y-2">
-              <h3 className="font-display text-xl font-semibold text-neutral-900">
+            <div className="space-y-1.5">
+              <h3 className="font-display text-lg font-semibold text-neutral-900">
                 Boost Listing Satuan
               </h3>
-              <p className="text-sm text-neutral-600 leading-relaxed">
-                Punya panen baru? Tampilkan lot kopi di urutan teratas katalog
-                tanpa upgrade paket. Harga mulai{" "}
-                <strong className="font-mono">Rp 25.000 / 7 hari</strong>.
+              <p className="text-xs text-neutral-600 leading-relaxed max-w-2xl">
+                Punya panen baru? Tampilkan lot kopi sebagai iklan di hasil
+                pencarian yang cocok, tanpa upgrade paket. Harga mulai{" "}
+                <strong className="font-mono text-neutral-900 font-semibold">
+                  Rp 25.000 / 7 hari
+                </strong>
+                .
               </p>
             </div>
-            <Link href="/register" className="shrink-0">
-              <Button variant="primary" size="lg">
-                Buka Toko & Coba Boost
-              </Button>
+            <Link
+              href="/register?role=seller"
+              className={cn(
+                buttonVariants({ variant: "primary", size: "md" }),
+                "shrink-0 w-full md:w-auto justify-center shadow-xs",
+              )}
+            >
+              Buka Toko & Coba Boost
             </Link>
           </div>
         </div>
 
-        {/* FAQ */}
-        <div className="max-w-2xl space-y-6">
-          <h2 className="font-display text-xl text-neutral-900 font-semibold pb-3 border-b border-neutral-300">
-            Pertanyaan Umum
-          </h2>
-          <div className="space-y-4">
-            {faqs.map((faq, idx) => (
-              <div key={idx} className="space-y-1">
-                <h4 className="text-sm font-semibold text-neutral-900">
-                  {faq.q}
-                </h4>
-                <p className="text-xs text-neutral-600 leading-relaxed">
-                  {faq.a}
-                </p>
-              </div>
-            ))}
+        <div className="max-w-2xl space-y-4">
+          <div className="border-b border-neutral-200 pb-3">
+            <h2 className="font-display text-xl text-neutral-900 font-semibold">
+              Pertanyaan Umum
+            </h2>
+            <p className="text-xs text-neutral-500 mt-1">
+              Segala hal yang perlu Anda ketahui tentang keanggotaan Biji.
+            </p>
           </div>
+
+          <Accordion className="w-full">
+            {faqs.map((faq, idx) => (
+              <AccordionItem key={idx} value={`faq-${idx}`}>
+                <AccordionTrigger className="text-xs md:text-sm font-semibold text-neutral-800 hover:text-neutral-900">
+                  {faq.q}
+                </AccordionTrigger>
+                <AccordionContent className="text-xs text-neutral-600 leading-relaxed">
+                  {faq.a}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </div>
       </PageContainer>
     </div>

@@ -79,6 +79,7 @@ export interface Subscription {
   status: "active" | "past_due" | "canceled";
   startedAt: string;
   expiresAt: string;
+  cancelAtPeriodEnd?: boolean;
 }
 
 export interface Payment {

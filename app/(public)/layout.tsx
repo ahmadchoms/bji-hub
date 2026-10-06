@@ -1,22 +1,9 @@
-import { Navbar } from "@/components/layout/navbar";
-import { Footer } from "@/components/layout/footer";
+import { PublicShell } from "@/components/layout/public-shell";
 
 export default function PublicLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <div className="flex min-h-screen flex-col bg-surface-alt">
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-primary-600 focus:text-white focus:px-4 focus:py-2 focus:text-sm focus:rounded-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
-      >
-        Langsung ke konten
-      </a>
-      <Navbar />
-      <main id="main-content" className="flex-1">{children}</main>
-      <Footer />
-    </div>
-  );
+  return <PublicShell>{children}</PublicShell>;
 }

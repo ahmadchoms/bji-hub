@@ -5,6 +5,7 @@ export const boostSchema = z.object({
   duration: z.enum(["7", "14", "30"], {
     message: "Durasi boost tidak valid",
   }),
+  useCredit: z.boolean().default(false),
 });
 
 export type BoostFormValues = z.infer<typeof boostSchema>;

@@ -2,19 +2,22 @@ import {
   getSellerById,
   getSellerStats,
   getInquiries,
-} from "@/lib/mock/repository";
+  getSellerPlanState,
+} from "@/lib/data";
 import { SectionHeader } from "@/components/shared/section-header";
 import { MetricsChart } from "@/components/dashboard/metrics-chart";
 import { SubscriptionStatus } from "@/components/dashboard/subscription-status";
 import { InquiryList } from "@/components/dashboard/inquiry-list";
 import { requireSeller } from "@/lib/auth/session";
+import { StatList } from "@/components/dashboard/stat-list";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardOverviewPage() {
   const { sellerId } = await requireSeller();
-  const [seller, stats, inquiries] = await Promise.all([
+  const [seller, planState, stats, inquiries] = await Promise.all([
     getSellerById(sellerId),
+    getSellerPlanState(sellerId),
     getSellerStats(sellerId),
     getInquiries(sellerId),
   ]);
@@ -27,10 +30,6 @@ export default async function DashboardOverviewPage() {
     );
   }
 
-  const activeSubscription = seller.subscriptions?.find(
-    (s) => s.status === "active",
-  );
-
   return (
     <div className="space-y-8">
       <SectionHeader
@@ -38,60 +37,27 @@ export default async function DashboardOverviewPage() {
         subtitle={`30 hari terakhir: listing dilihat ${stats.totalViews.toLocaleString("id-ID")}x, ${stats.totalClicks.toLocaleString("id-ID")} klik kontak`}
       />
 
-      {/* Summary row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="border border-neutral-300 rounded-sm p-4">
-          <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest">
-            Dilihat
-          </p>
-          <p className="font-mono tabular-nums text-2xl text-primary-900 font-bold mt-1">
-            {stats.totalViews.toLocaleString("id-ID")}
-          </p>
-        </div>
-        <div className="border border-neutral-300 rounded-sm p-4">
-          <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest">
-            Klik Kontak
-          </p>
-          <p className="font-mono tabular-nums text-2xl text-primary-900 font-bold mt-1">
-            {stats.totalClicks.toLocaleString("id-ID")}
-          </p>
-        </div>
-        <div className="border border-neutral-300 rounded-sm p-4">
-          <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest">
-            Rasio Kontak
-          </p>
-          <p className="font-mono tabular-nums text-2xl text-primary-900 font-bold mt-1">
-            {stats.conversionRate}%
-          </p>
-        </div>
-        <div className="border border-neutral-300 rounded-sm p-4">
-          <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest">
-            Produk Aktif
-          </p>
-          <p className="font-mono tabular-nums text-2xl text-primary-900 font-bold mt-1">
-            {stats.activeListings} / {stats.totalListings}
-          </p>
-        </div>
-      </div>
+      <StatList
+        items={[
+          { label: "Dilihat", value: stats.totalViews.toLocaleString("id-ID") },
+          {
+            label: "Klik Kontak",
+            value: stats.totalClicks.toLocaleString("id-ID"),
+          },
+          { label: "Rasio Kontak", value: `${stats.conversionRate}%` },
+          {
+            label: "Produk Aktif",
+            value: `${stats.activeListings} / ${stats.totalListings}`,
+          },
+          { label: "Pesan Masuk", value: String(inquiries.length) },
+        ]}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <MetricsChart data={stats.metrics} />
         </div>
-        <div className="space-y-6">
-          <SubscriptionStatus subscription={activeSubscription} />
-          <div className="border border-neutral-300 rounded-sm p-4">
-            <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest">
-              Pesan Masuk
-            </p>
-            <p className="font-mono tabular-nums text-2xl text-primary-900 font-bold mt-1">
-              {inquiries.length}
-            </p>
-            <p className="text-xs text-neutral-500 mt-1">
-              Inquiry dari calon pembeli
-            </p>
-          </div>
-        </div>
+        <SubscriptionStatus state={planState} />
       </div>
 
       {inquiries.length > 0 && (

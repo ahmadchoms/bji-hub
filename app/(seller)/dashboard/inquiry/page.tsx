@@ -1,4 +1,4 @@
-import { getInquiries } from "@/lib/mock/repository";
+import { getInquiries } from "@/lib/data";
 import { SectionHeader } from "@/components/shared/section-header";
 import { InquiryList } from "@/components/dashboard/inquiry-list";
 import { requireSeller } from "@/lib/auth/session";

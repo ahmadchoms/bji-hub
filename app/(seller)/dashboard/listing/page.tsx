@@ -1,7 +1,7 @@
-import { getSellerById } from "@/lib/mock/repository";
+import { getSellerById } from "@/lib/data";
 import { SectionHeader } from "@/components/shared/section-header";
 import { ListingTable } from "@/components/dashboard/listing-table";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import Link from "next/link";
 import { requireSeller } from "@/lib/auth/session";
 
@@ -19,7 +19,10 @@ export default async function DashboardListingPage() {
         title="Produk Saya"
         subtitle={`${seller.listings.length} listing terdaftar di toko Anda.`}
         action={
-          <Link href="/dashboard/listing/create">
+          <Link
+            href="/dashboard/listing/create"
+            className={buttonVariants({ variant: "primary", size: "sm" })}
+          >
             <Button variant="primary" size="sm">
               Tambah Produk
             </Button>

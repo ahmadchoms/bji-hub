@@ -7,7 +7,7 @@ import { formatRupiah } from "@/components/shared/price-text";
 import { VerifiedBadge } from "@/components/shared/verified-badge";
 import { isActiveBoost } from "@/lib/boost";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -25,7 +25,13 @@ interface ListingTableProps {
   className?: string;
 }
 
-const STATUS_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
+const STATUS_LABELS: Record<
+  string,
+  {
+    label: string;
+    variant: "default" | "secondary" | "outline" | "destructive";
+  }
+> = {
   active: { label: "Aktif", variant: "default" },
   draft: { label: "Draf", variant: "secondary" },
   archived: { label: "Arsip", variant: "outline" },
@@ -39,7 +45,10 @@ export function ListingTable({ listings, className }: ListingTableProps) {
         title="Belum Ada Produk"
         description="Mulai tambahkan produk kopi Anda untuk ditampilkan di katalog."
         action={
-          <Link href="/dashboard/listing/create">
+          <Link
+            href="/dashboard/listing/create"
+            className={buttonVariants({ variant: "primary" })}
+          >
             <Button variant="primary">Tambah Produk Pertama</Button>
           </Link>
         }
@@ -50,7 +59,12 @@ export function ListingTable({ listings, className }: ListingTableProps) {
 
   return (
     <>
-      <div className={cn("hidden md:block border border-neutral-300 bg-surface-base rounded-sm overflow-hidden", className)}>
+      <div
+        className={cn(
+          "hidden md:block border border-neutral-300 bg-surface-base rounded-sm overflow-hidden",
+          className,
+        )}
+      >
         <Table>
           <TableHeader>
             <TableRow>
@@ -64,7 +78,8 @@ export function ListingTable({ listings, className }: ListingTableProps) {
           </TableHeader>
           <TableBody>
             {listings.map((listing) => {
-              const statusConf = STATUS_LABELS[listing.status] ?? STATUS_LABELS.active;
+              const statusConf =
+                STATUS_LABELS[listing.status] ?? STATUS_LABELS.active;
               const img = listing.images[0]?.url;
               return (
                 <TableRow key={listing.id}>
@@ -82,36 +97,72 @@ export function ListingTable({ listings, className }: ListingTableProps) {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="max-w-[220px]">
-                      <Link href={`/product/${listing.slug}`} className="font-medium text-neutral-900 truncate block hover:underline">
+                    <div className="max-w-55">
+                      <Link
+                        href={`/product/${listing.slug}`}
+                        className="font-medium text-neutral-900 truncate block hover:underline"
+                      >
                         {listing.title}
                       </Link>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         {isActiveBoost(listing) && (
                           <span className="text-[10px] font-mono text-neutral-500">
-                            Boost aktif sampai {new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric" }).format(new Date(listing.boostUntil!))}
+                            Boost aktif sampai{" "}
+                            {new Intl.DateTimeFormat("id-ID", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            }).format(new Date(listing.boostUntil!))}
                           </span>
                         )}
-                        {listing.seller.isVerified && <VerifiedBadge size="sm" showLabel={false} />}
+                        {listing.seller.isVerified && (
+                          <VerifiedBadge size="sm" showLabel={false} />
+                        )}
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-neutral-700">{listing.category.name}</TableCell>
+                  <TableCell className="text-neutral-700">
+                    {listing.category.name}
+                  </TableCell>
                   <TableCell className="font-mono tabular-nums font-medium text-primary-900">
                     {formatRupiah(listing.price)}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={statusConf.variant} className="text-xs">{statusConf.label}</Badge>
+                    <Badge variant={statusConf.variant} className="text-xs">
+                      {statusConf.label}
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Link href={`/product/${listing.slug}`}>
-                        <Button variant="ghost" size="icon-sm" aria-label="Lihat produk">
+                      <Link
+                        href={`/product/${listing.slug}`}
+                        aria-label="Lihat produk"
+                        className={buttonVariants({
+                          variant: "ghost",
+                          size: "icon-sm",
+                        })}
+                      >
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label="Lihat produk"
+                        >
                           <Eye className="w-4 h-4" />
                         </Button>
                       </Link>
-                      <Link href={`/dashboard/listing/${listing.id}/edit`}>
-                        <Button variant="ghost" size="icon-sm" aria-label="Edit produk">
+                      <Link
+                        href={`/dashboard/listing/${listing.id}/edit`}
+                        aria-label="Edit produk"
+                        className={buttonVariants({
+                          variant: "ghost",
+                          size: "icon-sm",
+                        })}
+                      >
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label="Edit produk"
+                        >
                           <Pencil className="w-4 h-4" />
                         </Button>
                       </Link>
@@ -126,7 +177,8 @@ export function ListingTable({ listings, className }: ListingTableProps) {
 
       <div className={cn("md:hidden space-y-3", className)}>
         {listings.map((listing) => {
-          const statusConf = STATUS_LABELS[listing.status] ?? STATUS_LABELS.active;
+          const statusConf =
+            STATUS_LABELS[listing.status] ?? STATUS_LABELS.active;
           const img = listing.images[0]?.url;
           return (
             <div
@@ -146,15 +198,22 @@ export function ListingTable({ listings, className }: ListingTableProps) {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <Link href={`/product/${listing.slug}`} className="font-medium text-neutral-900 text-sm truncate block hover:underline">
+                  <Link
+                    href={`/product/${listing.slug}`}
+                    className="font-medium text-neutral-900 text-sm truncate block hover:underline"
+                  >
                     {listing.title}
                   </Link>
-                  <p className="text-[11px] text-neutral-500 mt-0.5">{listing.category.name}</p>
+                  <p className="text-[11px] text-neutral-500 mt-0.5">
+                    {listing.category.name}
+                  </p>
                   <div className="flex items-center gap-2 mt-1.5">
                     <span className="font-mono tabular-nums text-sm text-primary-900">
                       {formatRupiah(listing.price)}
                     </span>
-                    <Badge variant={statusConf.variant} className="text-xs">{statusConf.label}</Badge>
+                    <Badge variant={statusConf.variant} className="text-xs">
+                      {statusConf.label}
+                    </Badge>
                   </div>
                 </div>
               </div>
@@ -162,19 +221,34 @@ export function ListingTable({ listings, className }: ListingTableProps) {
                 <div className="flex items-center gap-1.5">
                   {isActiveBoost(listing) && (
                     <span className="text-[10px] font-mono text-neutral-500">
-                      Boost aktif sampai {new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric" }).format(new Date(listing.boostUntil!))}
+                      Boost aktif sampai{" "}
+                      {new Intl.DateTimeFormat("id-ID", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      }).format(new Date(listing.boostUntil!))}
                     </span>
                   )}
-                  {listing.seller.isVerified && <VerifiedBadge size="sm" showLabel={false} />}
+                  {listing.seller.isVerified && (
+                    <VerifiedBadge size="sm" showLabel={false} />
+                  )}
                 </div>
                 <div className="flex items-center gap-1">
                   <Link href={`/product/${listing.slug}`}>
-                    <Button variant="ghost" size="icon-sm" aria-label="Lihat produk">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label="Lihat produk"
+                    >
                       <Eye className="w-4 h-4" />
                     </Button>
                   </Link>
                   <Link href={`/dashboard/listing/${listing.id}/edit`}>
-                    <Button variant="ghost" size="icon-sm" aria-label="Edit produk">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label="Edit produk"
+                    >
                       <Pencil className="w-4 h-4" />
                     </Button>
                   </Link>

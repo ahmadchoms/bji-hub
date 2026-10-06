@@ -1,21 +1,10 @@
 "use client";
 
-import { ErrorState } from "@/components/shared/error-state";
+import { RouteError } from "@/components/shared/route-error";
 
-export default function DashboardError({
-  error,
-  reset,
-}: {
+export default function DashboardError(props: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <ErrorState
-        title="Gagal Memuat Dashboard"
-        message={error.message}
-        onRetry={reset}
-      />
-    </div>
-  );
+  return <RouteError {...props} title="Gagal Memuat Dashboard" />;
 }

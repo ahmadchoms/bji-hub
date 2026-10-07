@@ -1,4 +1,4 @@
-import { PrismaClient } from "@/lib/generated/prisma/client";
+import type { PrismaClient } from "../lib/generated/prisma/client";
 import {
   mockCategories,
   mockInquiries,
@@ -7,6 +7,7 @@ import {
   mockSellers,
   mockSubscriptions,
 } from "../lib/mock/data";
+import { generateDemoEvents } from "../lib/mock/analytics-store";
 
 const TABLES = [
   "analytics_events",
@@ -21,25 +22,15 @@ const TABLES = [
   "users",
 ];
 
-const date = (value: string | null | undefined): Date | null =>
-  value ? new Date(value) : null;
+const date = (value: string | null | undefined): Date | null => (value ? new Date(value) : null);
 
-async function createInChunks<T>(
-  rows: T[],
-  create: (chunk: T[]) => Promise<unknown>,
-  size = 1000,
-): Promise<void> {
-  for (let i = 0; i < rows.length; i += size)
-    await create(rows.slice(i, i + size));
+async function createInChunks<T>(rows: T[], create: (chunk: T[]) => Promise<unknown>, size = 1000): Promise<void> {
+  for (let i = 0; i < rows.length; i += size) await create(rows.slice(i, i + size));
 }
 
 /** Wipes every table and loads the demo data (the same data the mock repository serves). */
-export async function seedDatabase(
-  prisma: PrismaClient,
-): Promise<Record<string, number>> {
-  await prisma.$executeRawUnsafe(
-    `TRUNCATE ${TABLES.map((t) => `"${t}"`).join(", ")} RESTART IDENTITY CASCADE`,
-  );
+export async function seedDatabase(prisma: PrismaClient): Promise<Record<string, number>> {
+  await prisma.$executeRawUnsafe(`TRUNCATE ${TABLES.map((t) => `"${t}"`).join(", ")} RESTART IDENTITY CASCADE`);
 
   await prisma.user.createMany({
     data: [
@@ -66,9 +57,7 @@ export async function seedDatabase(
       bio: seller.bio ?? null,
       avatarUrl: seller.avatarUrl ?? null,
       isVerified: seller.isVerified,
-      verificationStatus: seller.isVerified
-        ? ("approved" as const)
-        : ("pending" as const),
+      verificationStatus: seller.isVerified ? ("approved" as const) : ("pending" as const),
       tier: seller.tier,
       createdAt: new Date(seller.createdAt),
     })),
@@ -121,7 +110,7 @@ export async function seedDatabase(
               roastDate: new Date(listing.tasteProfile.roastDate),
             },
           ]
-        : [],
+        : []
     ),
   });
 
@@ -132,7 +121,7 @@ export async function seedDatabase(
         listingId: listing.id,
         url: image.url,
         sortOrder: image.sortOrder,
-      })),
+      }))
     ),
   });
 
@@ -184,7 +173,7 @@ export async function seedDatabase(
         eventType: event.eventType,
         createdAt: new Date(event.createdAt),
       })),
-    }),
+    })
   );
 
   return {

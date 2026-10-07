@@ -1,5 +1,4 @@
-import type { ListingWithRelations, FeedItem } from "@/types";
-
+/** The minimum a listing needs to take part in ad-slot placement (so callers can pass slim rows). */
 export interface BoostCandidate {
   id: string;
   sellerId: string;
@@ -15,7 +14,7 @@ export interface PlacedItem<T> {
 // ─── Single source of truth for active-boost check ─────────────────────────
 
 export function isActiveBoost(
-  listing: ListingWithRelations,
+  listing: Pick<BoostCandidate, "isBoosted" | "boostUntil">,
   now: number = Date.now(),
 ): boolean {
   return (
@@ -51,8 +50,8 @@ export function seededShuffle<T>(items: T[], seed: number): T[] {
 
 // ─── Feed-page composition ──────────────────────────────────────────────────
 
-export interface ComposeFeedPageArgs {
-  allFiltered: ListingWithRelations[];
+export interface ComposeFeedPageArgs<T extends BoostCandidate> {
+  allFiltered: T[];
   isPriceSort: boolean;
   page: number;
   pageSize?: number;
@@ -60,13 +59,13 @@ export interface ComposeFeedPageArgs {
   seed: number;
 }
 
-function buildFullFeed({
+function buildFullFeed<T extends BoostCandidate>({
   allFiltered,
   isPriceSort,
   pageSize = 12,
   adSlotIndexes = [0, 5, 10],
   seed,
-}: Omit<ComposeFeedPageArgs, "page">): FeedItem[] {
+}: Omit<ComposeFeedPageArgs<T>, "page">): PlacedItem<T>[] {
   if (isPriceSort || allFiltered.length === 0) {
     return allFiltered.map((listing) => ({ listing, isAd: false }));
   }
@@ -81,7 +80,7 @@ function buildFullFeed({
 
   const total = allFiltered.length;
   const totalPages = Math.ceil(total / pageSize);
-  const adsByPage: ListingWithRelations[][] = [];
+  const adsByPage: T[][] = [];
   const adIds = new Set<string>();
 
   // Assign ads page by page: no wrap-around, max 1 ad per seller per page.
@@ -89,7 +88,7 @@ function buildFullFeed({
     const itemsOnPage = Math.min(pageSize, total - p * pageSize);
     const slots = adSlotIndexes.filter((s) => s < itemsOnPage);
     const usedSellers = new Set<string>();
-    const pageAds: ListingWithRelations[] = [];
+    const pageAds: T[] = [];
 
     for (let s = 0; s < slots.length; s++) {
       const idx = remaining.findIndex((c) => !usedSellers.has(c.sellerId));
@@ -104,7 +103,7 @@ function buildFullFeed({
 
   // Unassigned boosts stay in the organic list without the ad flag.
   const organic = allFiltered.filter((l) => !adIds.has(l.id));
-  const feed: FeedItem[] = [];
+  const feed: PlacedItem<T>[] = [];
   let organicIdx = 0;
 
   for (let p = 0; p < totalPages; p++) {
@@ -125,7 +124,7 @@ function buildFullFeed({
   return feed;
 }
 
-export function composeFeedPage(args: ComposeFeedPageArgs): FeedItem[] {
+export function composeFeedPage<T extends BoostCandidate>(args: ComposeFeedPageArgs<T>): PlacedItem<T>[] {
   const { page, pageSize = 12 } = args;
   if (page < 1) return [];
   const start = (page - 1) * pageSize;

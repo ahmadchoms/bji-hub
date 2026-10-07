@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  const result = recordTrackEvent(parsed.data);
+  const result = await recordTrackEvent(parsed.data);
   if (result === "rate_limited") {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }

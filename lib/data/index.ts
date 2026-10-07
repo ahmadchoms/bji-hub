@@ -1,15 +1,21 @@
 import "server-only";
 
+import type { DataRepository } from "@/lib/data/contract";
+import { mockRepository } from "@/lib/data/mock";
+import { prismaRepository } from "@/lib/data/prisma";
+
 /**
  * The only module pages, actions and route handlers may import data from.
- * Swap these re-exports for the real implementation (Prisma) without touching callers.
+ * DATA_SOURCE=prisma uses the database; anything else uses the in-memory mock.
  */
-export {
+const repository: DataRepository = process.env.DATA_SOURCE === "prisma" ? prismaRepository : mockRepository;
+
+export const {
   getCategories,
   getCategoryBySlug,
-  getCatalogFeed,
   getListings,
   getListingFeed,
+  getCatalogFeed,
   getFilterOptions,
   getListingBySlug,
   getListingById,
@@ -19,25 +25,22 @@ export {
   getSellerStats,
   getSellerListingPerformance,
   getInquiries,
-  submitInquiry as createInquiry,
+  createInquiry,
+  updateSellerProfile,
+  createListing,
+  updateListing,
+  getSellerPayments,
+  activateBoost,
+  getSellerPlanState,
+  startSubscription,
+  setCancelAtPeriodEnd,
   getAdminStats,
   getAdminListings,
   getPendingVerifications,
   reviewVerification,
   moderateListing,
-  updateListing,
-  createListing,
-  updateSellerProfile,
-  activateBoost,
-  getSellerPlanState,
-  getSellerPayments,
-  startSubscription,
-  setCancelAtPeriodEnd,
-} from "@/lib/mock/repository";
-export {
-  createImageUploadTarget,
-  storeUploadedImage,
-  readStoredImage,
-} from "@/lib/mock/storage-store";
+  recordTrackEvent,
+} = repository;
 
-export { recordEvent as recordTrackEvent } from "@/lib/mock/analytics-store";
+// File storage stays on the mock until Supabase Storage is connected.
+export { createImageUploadTarget, storeUploadedImage, readStoredImage } from "@/lib/mock/storage-store";

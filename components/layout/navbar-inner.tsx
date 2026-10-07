@@ -120,9 +120,7 @@ export function NavbarInner({ role }: { role: Role }) {
 
       <header className="sticky top-0 z-40 border-b border-neutral-200/80 bg-surface-base/85 backdrop-blur-md md:hidden">
         <div className="flex h-14 items-center justify-between px-4">
-          <Link href="/" className={focusRing}>
-            <Logo size="md" />
-          </Link>
+          <Logo size="md" />
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger
               render={

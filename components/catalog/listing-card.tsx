@@ -30,6 +30,16 @@ export function ListingCard({
         className="group block rounded-sm border border-neutral-300 bg-surface-base outline-none transition-colors hover:border-neutral-900 focus-visible:ring-2 focus-visible:ring-primary-600"
       >
         <div className="relative aspect-square overflow-hidden border-b border-neutral-300 bg-secondary-50">
+          {isAd && (
+            <span className="absolute top-2 right-2 z-10 text-[10px] font-mono font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-xs bg-amber-600 text-white shadow-xs">
+              Iklan
+            </span>
+          )}
+          {listing.minOrderQty >= 30 && (
+            <span className="absolute top-2 left-2 z-10 text-[10px] font-mono font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-xs bg-primary-900/90 text-white backdrop-blur-xs shadow-xs">
+              Partai B2B
+            </span>
+          )}
           {image ? (
             <Image
               src={image}
@@ -54,8 +64,15 @@ export function ListingCard({
           </h2>
           <p className="truncate text-[11px] font-mono uppercase tracking-tight text-neutral-500">
             {origin} · {process} · {roast}
-            {isAd ? " · Iklan" : ""}
           </p>
+
+          {listing.tasteProfile?.flavorNotes && (
+            <p className="line-clamp-1 text-[11px] text-neutral-600 bg-neutral-100 px-1.5 py-0.5 rounded-xs w-fit">
+              <span className="font-medium text-neutral-500">Notes:</span>{" "}
+              {listing.tasteProfile.flavorNotes}
+            </p>
+          )}
+
           <p className="font-mono text-base font-bold tabular-nums text-primary-900">
             {new Intl.NumberFormat("id-ID", {
               style: "currency",
@@ -69,10 +86,14 @@ export function ListingCard({
               Min. order {listing.minOrderQty} {listing.unit}
             </p>
           )}
-          <p className="truncate text-xs text-neutral-600">
-            {listing.seller.businessName}
-            {listing.seller.isVerified ? " · Terverifikasi" : ""}
-          </p>
+          <div className="flex items-center gap-1.5 text-xs text-neutral-600 truncate">
+            <span className="truncate">{listing.seller.businessName}</span>
+            {listing.seller.isVerified && (
+              <span className="inline-block text-[10px] font-semibold text-accent-700 bg-accent-100 px-1 py-0.2 rounded-xs border border-accent-500/20 shrink-0">
+                ✓
+              </span>
+            )}
+          </div>
         </div>
       </Link>
     </li>

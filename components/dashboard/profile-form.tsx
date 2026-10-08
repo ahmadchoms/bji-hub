@@ -1,6 +1,7 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useEffect, useState, useRef } from "react";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   sellerProfileSchema,
@@ -11,12 +12,20 @@ import { FormField } from "@/components/shared/form-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { Loader2, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VerifiedBadge } from "@/components/shared/verified-badge";
 import { useRouter } from "next/navigation";
 import { updateProfileAction } from "@/actions/seller.actions";
+import { fetchProvinces, fetchRegencies, type RegionItem } from "@/lib/regions";
 
 interface ProfileFormProps {
   seller: SellerProfile;
@@ -25,9 +34,19 @@ interface ProfileFormProps {
 
 export function ProfileForm({ seller, className }: ProfileFormProps) {
   const router = useRouter();
+  const isInitialMount = useRef(true);
+
+  const [provinces, setProvinces] = useState<RegionItem[]>([]);
+  const [cities, setCities] = useState<RegionItem[]>([]);
+  const [selectedProvinceId, setSelectedProvinceId] = useState<string>("");
+  const [loadingProvinces, setLoadingProvinces] = useState(false);
+  const [loadingCities, setLoadingCities] = useState(false);
+
   const {
     register,
     handleSubmit,
+    control,
+    setValue,
     setError,
     formState: { errors, isSubmitting },
   } = useForm<SellerProfileFormValues>({
@@ -42,6 +61,94 @@ export function ProfileForm({ seller, className }: ProfileFormProps) {
     },
   });
 
+  // 1. Fetch daftar provinsi saat komponen mount
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadProvinces() {
+      setLoadingProvinces(true);
+      try {
+        const data = await fetchProvinces();
+        if (ignore) return;
+        setProvinces(data);
+
+        if (seller.province) {
+          const matched = data.find(
+            (p) =>
+              p.name.toLowerCase() === seller.province.trim().toLowerCase(),
+          );
+          if (matched) {
+            setSelectedProvinceId(matched.id);
+            setValue("province", matched.name);
+          }
+        }
+      } catch {
+        if (!ignore) toast.error("Gagal memuat data provinsi");
+      } finally {
+        if (!ignore) setLoadingProvinces(false);
+      }
+    }
+
+    loadProvinces();
+    return () => {
+      ignore = true;
+    };
+  }, [seller.province, setValue]);
+
+  // 2. Fetch kota/kabupaten ketika selectedProvinceId berubah
+  useEffect(() => {
+    if (!selectedProvinceId) {
+      setCities([]);
+      return;
+    }
+
+    let ignore = false;
+
+    async function loadCities() {
+      setLoadingCities(true);
+      try {
+        const data = await fetchRegencies(selectedProvinceId);
+        if (ignore) return;
+        setCities(data);
+
+        if (isInitialMount.current && seller.city) {
+          isInitialMount.current = false;
+          const matchedCity = data.find(
+            (c) => c.name.toLowerCase() === seller.city.trim().toLowerCase(),
+          );
+          if (matchedCity) {
+            setValue("city", matchedCity.name);
+          }
+        }
+      } catch {
+        if (!ignore) toast.error("Gagal memuat data kota/kabupaten");
+      } finally {
+        if (!ignore) setLoadingCities(false);
+      }
+    }
+
+    loadCities();
+    return () => {
+      ignore = true;
+    };
+  }, [selectedProvinceId, seller.city, setValue]);
+
+  const handleProvinceChange = (provinceName: string | null) => {
+    const val = provinceName ?? "";
+    setValue("province", val, { shouldValidate: true });
+    // Reset kota setiap kali provinsi berganti
+    setValue("city", "", { shouldValidate: true });
+
+    if (!val) {
+      setSelectedProvinceId("");
+      setCities([]);
+      return;
+    }
+
+    const selected = provinces.find((p) => p.name === val);
+    setSelectedProvinceId(selected ? selected.id : "");
+  };
+
   const onSubmit = async (data: SellerProfileFormValues) => {
     try {
       const result = await updateProfileAction(data);
@@ -49,10 +156,11 @@ export function ProfileForm({ seller, className }: ProfileFormProps) {
         for (const [field, messages] of Object.entries(
           result.fieldErrors ?? {},
         )) {
-          if (field in data)
+          if (field in data) {
             setError(field as keyof SellerProfileFormValues, {
               message: messages[0],
             });
+          }
         }
         toast.error("Gagal memperbarui profil", { description: result.error });
         return;
@@ -85,19 +193,87 @@ export function ProfileForm({ seller, className }: ProfileFormProps) {
           </FormField>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Field Provinsi */}
             <FormField
               label="Provinsi"
               required
               error={errors.province?.message}
             >
-              <Input {...register("province")} />
+              <Controller
+                name="province"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    value={field.value || undefined}
+                    onValueChange={handleProvinceChange}
+                    disabled={loadingProvinces}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue
+                        placeholder={
+                          loadingProvinces
+                            ? "Memuat provinsi..."
+                            : "Pilih Provinsi"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {provinces.map((province) => (
+                        <SelectItem key={province.id} value={province.name}>
+                          {province.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </FormField>
+
+            {/* Field Kota / Kabupaten */}
             <FormField
               label="Kota / Kabupaten"
               required
               error={errors.city?.message}
             >
-              <Input {...register("city")} />
+              <Controller
+                name="city"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    value={field.value || undefined}
+                    onValueChange={(val) =>
+                      setValue("city", val ?? "", { shouldValidate: true })
+                    }
+                    disabled={!selectedProvinceId || loadingCities}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue
+                        placeholder={
+                          loadingCities
+                            ? "Memuat kota/kabupaten..."
+                            : !selectedProvinceId
+                              ? "Pilih provinsi dahulu"
+                              : "Pilih Kota / Kabupaten"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {/* Tampilkan nilai lama sebagai opsi jika belum ada di daftar hasil fetch */}
+                      {field.value &&
+                        !cities.some((c) => c.name === field.value) && (
+                          <SelectItem value={field.value}>
+                            {field.value}
+                          </SelectItem>
+                        )}
+                      {cities.map((city) => (
+                        <SelectItem key={city.id} value={city.name}>
+                          {city.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </FormField>
           </div>
 

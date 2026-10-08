@@ -44,7 +44,7 @@ export default async function PricingPage() {
   return (
     <div className="py-8 md:py-12 space-y-16">
       <PageContainer className="space-y-12">
-        <div className="max-w-2xl space-y-2">
+        <div className="space-y-2">
           <h1 className="font-display text-3xl md:text-4xl text-neutral-900 tracking-tight font-semibold">
             Skema Langganan
           </h1>
@@ -143,7 +143,7 @@ export default async function PricingPage() {
               <h3 className="font-display text-lg font-semibold text-neutral-900">
                 Boost Listing Satuan
               </h3>
-              <p className="text-xs text-neutral-600 leading-relaxed max-w-2xl">
+              <p className="text-xs text-neutral-600 leading-relaxed max-w-3xl">
                 Punya panen baru? Tampilkan lot kopi sebagai iklan di hasil
                 pencarian yang cocok, tanpa upgrade paket. Harga mulai{" "}
                 <strong className="font-mono text-neutral-900 font-semibold">

@@ -3,9 +3,8 @@
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { reviewVerificationAction } from "@/actions/admin.actions";
-
-const btn =
-  "cursor-pointer text-xs font-medium hover:underline disabled:cursor-not-allowed disabled:opacity-40";
+import { Button } from "../ui/button";
+import { CheckCircle2, X } from "lucide-react";
 
 export function VerificationActions({
   sellerId,
@@ -30,22 +29,24 @@ export function VerificationActions({
 
   return (
     <>
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="sm"
         disabled={pending}
+        className="gap-1 text-status-success hover:bg-green-50 hover:text-green-600"
         onClick={() => run("approve")}
-        className={`${btn} mr-3 text-status-success`}
       >
-        Setujui
-      </button>
-      <button
-        type="button"
+        <CheckCircle2 className="h-3.5 w-3.5" /> Setujui
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
         disabled={pending}
+        className="gap-1 text-status-error hover:bg-red-50 hover:text-red-600"
         onClick={() => run("reject")}
-        className={`${btn} text-status-error`}
       >
-        Tolak
-      </button>
+        <X className="h-3.5 w-3.5" /> Tolak
+      </Button>
     </>
   );
 }

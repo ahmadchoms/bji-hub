@@ -59,7 +59,7 @@ function NavLinks({
             onClick={onNavigate}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "font-mono group relative flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm font-semibold tracking-wide transition-all duration-150 select-none",
+              "font-mono group relative flex h-11 w-full items-center gap-3 rounded-md px-3 text-sm font-semibold tracking-wide transition-all duration-150 select-none",
               focusRing,
               active
                 ? "bg-primary-50/80 text-primary-900 font-bold"
@@ -91,11 +91,11 @@ function NavLinks({
 
 function LogoutButton() {
   return (
-    <form action={logoutAction}>
+    <form className="px-2" action={logoutAction}>
       <button
         type="submit"
         className={cn(
-          "flex min-h-11 w-full items-center px-4 text-left text-sm text-neutral-600 hover:text-neutral-900",
+          "cursor-pointer font-mono font-semibold flex min-h-11 w-full items-center px-4 text-left text-sm text-neutral-600 hover:text-red-600 hover:bg-red-100 transition-colors ease-in-out delay-75 rounded-md",
           focusRing,
         )}
       >

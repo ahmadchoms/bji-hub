@@ -24,7 +24,7 @@ export function SectionHeader({
       className={cn(
         "flex flex-col gap-2 md:flex-row md:items-end md:justify-between mb-8 pb-4 border-b border-neutral-300",
         isCenter && "text-center md:flex-col md:items-center",
-        className
+        className,
       )}
     >
       <div className={cn("space-y-1", isCenter && "max-w-2xl mx-auto")}>
@@ -33,7 +33,7 @@ export function SectionHeader({
           {title}
         </h2>
         {subtitle && (
-          <p className="text-xs md:text-sm text-neutral-600 leading-relaxed font-sans">
+          <p className="text-xs md:text-sm text-neutral-600 leading-relaxed font-mono font-medium">
             {subtitle}
           </p>
         )}

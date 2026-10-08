@@ -116,7 +116,7 @@ export function ListingTable({ listings, className }: ListingTableProps) {
                           </span>
                         )}
                         {listing.seller.isVerified && (
-                          <VerifiedBadge size="sm" showLabel={false} />
+                          <VerifiedBadge size="sm" />
                         )}
                       </div>
                     </div>

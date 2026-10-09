@@ -103,7 +103,24 @@ export function BillingSection({
         toast.error("Boost gagal diproses", { description: result.error });
         return;
       }
-      if (result.data.status === "paid") {
+
+      // If Midtrans Snap token was returned, open Midtrans popup
+      if (result.data.snapToken && typeof window !== "undefined" && (window as unknown as { snap?: { pay: (token: string, options: unknown) => void } }).snap) {
+        const snap = (window as unknown as { snap: { pay: (token: string, options: unknown) => void } }).snap;
+        snap.pay(result.data.snapToken, {
+          onSuccess: () => {
+            toast.success("Pembayaran berhasil!");
+            router.refresh();
+          },
+          onPending: () => {
+            toast.info("Menunggu pembayaran diselesaikan.");
+            router.refresh();
+          },
+          onError: () => {
+            toast.error("Pembayaran gagal.");
+          },
+        });
+      } else if (result.data.status === "paid") {
         toast.success("Boost berhasil diaktifkan", {
           description:
             "Listing Anda akan tampil di slot iklan pada pencarian yang cocok.",

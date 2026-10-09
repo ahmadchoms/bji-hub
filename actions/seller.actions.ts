@@ -137,9 +137,18 @@ export async function purchaseBoostAction(
   );
   if (!payment) return fail("Gagal memproses boost");
 
+  let snapToken: string | null = null;
+  if (charge.amount > 0 && process.env.MIDTRANS_SERVER_KEY) {
+    const { createMidtransSnapToken } = await import("@/lib/midtrans");
+    snapToken = await createMidtransSnapToken({
+      orderId: payment.midtransOrderId,
+      grossAmount: charge.amount,
+    });
+  }
+
   revalidatePath("/dashboard/billing");
   revalidatePath("/dashboard/listing");
   revalidatePath("/dashboard/analytics");
   revalidatePath("/");
-  return ok({ paymentId: payment.id, status: payment.status });
+  return ok({ paymentId: payment.id, status: payment.status, snapToken });
 }

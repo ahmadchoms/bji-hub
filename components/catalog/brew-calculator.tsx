@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Droplets, Minus, Plus, Scale, Thermometer } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Minus, Plus } from "lucide-react";
 
 const PRESET_RATIOS = [
   { label: "1:15 (V60 Standar)", ratio: 15, desc: "Seimbang & Ekstraksi Optimal" },
@@ -25,17 +24,11 @@ export function BrewCalculator() {
   return (
     <div className="rounded-xl border border-neutral-200/80 bg-white p-5 shadow-xs space-y-4">
       <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
-        <div className="space-y-0.5">
-          <div className="flex items-center gap-2">
-            <Badge
-              variant="outline"
-              className="gap-1.5 border-neutral-200 bg-neutral-50 text-neutral-700 text-[10px] font-mono tracking-wide"
-            >
-              <Scale className="w-3 h-3 text-amber-600" />
-              BREW GUIDE
-            </Badge>
-          </div>
-          <h4 className="font-display text-base font-semibold text-neutral-900 pt-1">
+        <div>
+          <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400">
+            Brew Guide
+          </span>
+          <h4 className="font-display text-base font-semibold text-neutral-900">
             Kalkulator Rasio Seduh
           </h4>
         </div>
@@ -116,10 +109,9 @@ export function BrewCalculator() {
       {/* Hasil Perhitungan Seduh */}
       <div className="grid grid-cols-3 gap-2.5 pt-1">
         <div className="p-3 bg-neutral-50/70 rounded-lg border border-neutral-200/70 space-y-1">
-          <div className="flex items-center gap-1.5 text-neutral-500 text-[10px] font-mono uppercase tracking-wider">
-            <Droplets className="w-3 h-3 text-sky-600" />
-            <span>Air Total</span>
-          </div>
+          <span className="block text-neutral-400 text-[10px] font-mono uppercase tracking-wider">
+            Air Total
+          </span>
           <p className="font-mono text-lg font-bold text-neutral-900 tabular-nums">
             {totalWater}{" "}
             <span className="text-xs font-normal text-neutral-500">ml</span>
@@ -127,27 +119,25 @@ export function BrewCalculator() {
         </div>
 
         <div className="p-3 bg-neutral-50/70 rounded-lg border border-neutral-200/70 space-y-1">
-          <div className="flex items-center gap-1.5 text-neutral-500 text-[10px] font-mono uppercase tracking-wider">
-            <Droplets className="w-3 h-3 text-amber-600" />
-            <span>Blooming</span>
-          </div>
+          <span className="block text-neutral-400 text-[10px] font-mono uppercase tracking-wider">
+            Blooming
+          </span>
           <p className="font-mono text-lg font-bold text-neutral-900 tabular-nums">
             {bloomWater}{" "}
             <span className="text-xs font-normal text-neutral-500">ml</span>
           </p>
-          <p className="text-[10px] text-neutral-400 font-mono">Tunggu 40 detik</p>
+          <p className="text-[10px] text-neutral-400 font-mono">Tunggu 40 dtk</p>
         </div>
 
         <div className="p-3 bg-neutral-50/70 rounded-lg border border-neutral-200/70 space-y-1">
-          <div className="flex items-center gap-1.5 text-neutral-500 text-[10px] font-mono uppercase tracking-wider">
-            <Thermometer className="w-3 h-3 text-rose-600" />
-            <span>Suhu Ideal</span>
-          </div>
+          <span className="block text-neutral-400 text-[10px] font-mono uppercase tracking-wider">
+            Suhu Ideal
+          </span>
           <p className="font-mono text-lg font-bold text-neutral-900 tabular-nums">
             91°–93°{" "}
             <span className="text-xs font-normal text-neutral-500">C</span>
           </p>
-          <p className="text-[10px] text-neutral-400 font-mono">Air mendidih diamkan 1m</p>
+          <p className="text-[10px] text-neutral-400 font-mono">Diamkan 1m</p>
         </div>
       </div>
     </div>

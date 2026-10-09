@@ -10,6 +10,7 @@ import { SubscriptionStatus } from "@/components/dashboard/subscription-status";
 import { InquiryList } from "@/components/dashboard/inquiry-list";
 import { requireSeller } from "@/lib/auth/session";
 import { StatList } from "@/components/dashboard/stat-list";
+import { OnboardingCard } from "@/components/dashboard/onboarding-card";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,8 @@ export default async function DashboardOverviewPage() {
         title={`Halo, ${seller.businessName}`}
         subtitle={`30 hari terakhir: listing dilihat ${stats.totalViews.toLocaleString("id-ID")}x, ${stats.totalClicks.toLocaleString("id-ID")} klik kontak`}
       />
+
+      <OnboardingCard seller={seller} totalListings={stats.totalListings} />
 
       <StatList
         items={[

@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, ArrowRight, RotateCcw, Coffee } from "lucide-react";
+import {
+  Sparkles,
+  ArrowRight,
+  RotateCcw,
+  Coffee,
+  Check,
+  ChevronLeft,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,6 +19,8 @@ import {
   DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface TasteQuizModalProps {
   className?: string;
@@ -41,7 +50,8 @@ const STEPS: QuizStep[] = [
     step: 1,
     key: "roast",
     question: "Alat seduh apa yang paling sering kamu pakai?",
-    subtitle: "Tiap metode butuh tingkat sangrai (roast profile) yang berbeda.",
+    subtitle:
+      "Tiap metode butuh profil sangrai yang tepat agar ekstraksi seimbang.",
     options: [
       {
         id: "manual",
@@ -69,14 +79,14 @@ const STEPS: QuizStep[] = [
   {
     step: 2,
     key: "process",
-    question: "Notes rasa seperti apa yang memanjakan lidahmu?",
-    subtitle: "Proses pascapanen menentukan dominasi rasa dalam cangkir.",
+    question: "Notes rasa seperti apa yang kamu sukai?",
+    subtitle: "Proses pascapanen menentukan dominasi karakter aroma dan rasa.",
     options: [
       {
         id: "fruity",
         icon: "🍓",
         title: "Fruity & Floral",
-        desc: "Asam buah berry, peach, mangga, wangi melati",
+        desc: "Asam buah berry, peach, mangga, aroma melati",
         value: "Natural",
       },
       {
@@ -98,28 +108,28 @@ const STEPS: QuizStep[] = [
   {
     step: 3,
     key: "acidity",
-    question: "Bagaimana preferensi keasaman (acidity) kamu?",
-    subtitle: "Tingkat sensasi asam segar buah saat diseruput.",
+    question: "Bagaimana preferensi keasaman (acidity)?",
+    subtitle: "Sensasi kesegaran fruity saat kopi pertama kali diseruput.",
     options: [
       {
         id: "high",
         icon: "🍋",
         title: "Suka Asam Segar",
-        desc: "Sensasi juicy seperti buah tropis menyegarkan",
+        desc: "Sensasi juicy menyegarkan seperti buah tropis",
         value: "Tinggi",
       },
       {
         id: "balanced",
         icon: "⚖️",
         title: "Seimbang (Medium)",
-        desc: "Harmonis antara manis, sedikit asam, dan pahit lembut",
+        desc: "Harmonis antara manis, keasaman lembut, dan body",
         value: "Sedang",
       },
       {
         id: "low",
         icon: "🛡️",
-        title: "Rendah Asam / Aman Perut",
-        desc: "Bold, tebal, rasa pekat tanpa rasa asam mencolok",
+        title: "Rendah Asam / Tebal",
+        desc: "Body pekat dan bold tanpa keasaman yang dominan",
         value: "Rendah",
       },
     ],
@@ -146,6 +156,12 @@ export function TasteQuizModal({
     setCurrentStep((prev) => prev + 1);
   };
 
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep((prev) => prev - 1);
+    }
+  };
+
   const handleReset = () => {
     setAnswers({});
     setCurrentStep(0);
@@ -167,153 +183,185 @@ export function TasteQuizModal({
           triggerVariant === "banner" ? (
             <button
               type="button"
-              className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-primary-900 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-sm transition-colors"
-            />
+              className="group inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-neutral-800 bg-amber-50 hover:bg-amber-100/80 border border-amber-200/80 rounded-md transition-all shadow-2xs"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-700 transition-transform group-hover:scale-110" />
+              <span>Kuis Karakter Rasa</span>
+            </button>
           ) : (
             <Button
               type="button"
               variant={triggerVariant === "default" ? "primary" : "outline"}
-              size="md"
-              className={className}
-            />
+              className={cn("gap-2 shadow-2xs font-medium", className)}
+            >
+              <Sparkles className="w-4 h-4 text-amber-600" />
+              <span>Cari Karakter Kopi</span>
+            </Button>
           )
         }
-      >
-        <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mr-1.5" />
-        <span>Kuis Rasa: Cari Kopi Pas</span>
-      </DialogTrigger>
+      />
 
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <div className="flex items-center justify-between pb-1 border-b border-neutral-200">
-            <div className="flex items-center gap-2 text-primary-700">
-              <Sparkles className="w-4 h-4 text-amber-600" />
-              <span className="text-[11px] font-mono uppercase tracking-wider font-semibold">
-                Taste Matchmaker
-              </span>
+      <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden border-neutral-200/80 bg-white shadow-xl rounded-xl">
+        <div className="p-6 pb-4 border-b border-neutral-100 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {currentStep > 0 && !isCompleted ? (
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  className="inline-flex items-center gap-1 text-xs text-neutral-500 hover:text-neutral-900 transition-colors pr-1"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Kembali</span>
+                </button>
+              ) : (
+                <Badge
+                  variant="outline"
+                  className="gap-1.5 border-neutral-200 bg-neutral-50 text-neutral-700 text-[11px] font-mono tracking-wide"
+                >
+                  <Sparkles className="w-3 h-3 text-amber-600" />
+                  TASTE MATCH
+                </Badge>
+              )}
             </div>
-            {!isCompleted && (
-              <span className="text-xs font-mono text-neutral-500">
-                Langkah {currentStep + 1} dari {STEPS.length}
-              </span>
+
+            <div className="flex items-center gap-1.5 pr-8">
+              {STEPS.map((_, idx) => (
+                <div
+                  key={idx}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all duration-300",
+                    isCompleted
+                      ? "w-4 bg-emerald-500"
+                      : idx === currentStep
+                        ? "w-6 bg-neutral-900"
+                        : idx < currentStep
+                          ? "w-4 bg-neutral-300"
+                          : "w-2 bg-neutral-100",
+                  )}
+                />
+              ))}
+            </div>
+          </div>
+
+          <DialogHeader className="text-left space-y-1">
+            {!isCompleted ? (
+              <>
+                <DialogTitle className="text-xl font-bold tracking-tight text-neutral-900 leading-snug">
+                  {STEPS[currentStep].question}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-neutral-500 leading-relaxed">
+                  {STEPS[currentStep].subtitle}
+                </DialogDescription>
+              </>
+            ) : (
+              <>
+                <DialogTitle className="text-xl font-bold tracking-tight text-neutral-900 leading-snug">
+                  Profil Seduhan Ditemukan
+                </DialogTitle>
+                <DialogDescription className="text-xs text-neutral-500 leading-relaxed">
+                  Berdasarkan preferensimu, berikut acuan filter biji kopi yang
+                  ideal untuk cangkir harianmu.
+                </DialogDescription>
+              </>
             )}
-          </div>
+          </DialogHeader>
+        </div>
 
+        <div className="p-6">
           {!isCompleted ? (
-            <>
-              <DialogTitle className="font-display text-lg text-primary-900 font-semibold pt-2">
-                {STEPS[currentStep].question}
-              </DialogTitle>
-              <DialogDescription className="text-xs text-neutral-600">
-                {STEPS[currentStep].subtitle}
-              </DialogDescription>
-            </>
+            <div className="space-y-2.5">
+              {STEPS[currentStep].options.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() =>
+                    handleSelect(STEPS[currentStep].key, opt.value)
+                  }
+                  className="w-full flex items-center justify-between gap-4 p-3.5 text-left rounded-lg border border-neutral-200/90 bg-white hover:border-neutral-900 hover:bg-neutral-50/70 transition-all duration-150 group"
+                >
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <span className="flex items-center justify-center w-10 h-10 rounded-lg bg-neutral-100 text-lg shrink-0 border border-neutral-200/60 group-hover:bg-white transition-colors">
+                      {opt.icon}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-neutral-900 group-hover:text-neutral-950">
+                        {opt.title}
+                      </p>
+                      <p className="text-xs text-neutral-500 truncate mt-0.5">
+                        {opt.desc}
+                      </p>
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-neutral-400 group-hover:text-neutral-900 group-hover:translate-x-0.5 transition-all shrink-0" />
+                </button>
+              ))}
+            </div>
           ) : (
-            <>
-              <DialogTitle className="font-display text-xl text-primary-900 font-semibold pt-2">
-                🎉 Profil Selera Kopimu Ditemukan!
-              </DialogTitle>
-              <DialogDescription className="text-xs text-neutral-600">
-                Berdasarkan pilihanmu, berikut karakter biji kopi yang paling cocok untuk seduhanmu:
-              </DialogDescription>
-            </>
+            <div className="space-y-5">
+              <div className="rounded-lg border border-neutral-200/80 bg-neutral-50/50 p-4 space-y-4">
+                <div className="flex items-center gap-2 text-xs font-semibold text-neutral-800">
+                  <div className="flex items-center justify-center w-4 h-4 rounded-full bg-emerald-600 text-white">
+                    <Check className="w-2.5 h-2.5 stroke-3" />
+                  </div>
+                  <span>Spesifikasi Rekomendasi</span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2.5">
+                  <div className="p-3 bg-white rounded-md border border-neutral-200/70 shadow-2xs space-y-1">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 block font-medium">
+                      Sangrai
+                    </span>
+                    <span className="text-xs font-bold text-neutral-900 block truncate">
+                      {answers.roast || "Semua"}
+                    </span>
+                  </div>
+                  <div className="p-3 bg-white rounded-md border border-neutral-200/70 shadow-2xs space-y-1">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 block font-medium">
+                      Proses
+                    </span>
+                    <span className="text-xs font-bold text-neutral-900 block truncate">
+                      {answers.process || "Semua"}
+                    </span>
+                  </div>
+                  <div className="p-3 bg-white rounded-md border border-neutral-200/70 shadow-2xs space-y-1">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 block font-medium">
+                      Acidity
+                    </span>
+                    <span className="text-xs font-bold text-neutral-900 block truncate">
+                      {answers.acidity || "Seimbang"}
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-xs text-neutral-500 leading-relaxed">
+                  Filter katalog telah disesuaikan agar kamu langsung menemukan
+                  biji kopi dengan variabel di atas.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2.5 pt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleReset}
+                  className="h-10 px-3.5 text-xs text-neutral-600 hover:text-neutral-900 border-neutral-200"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                  Ulangi
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleApplyFilter}
+                  className="h-10 flex-1 text-xs font-medium bg-neutral-900 hover:bg-neutral-800 text-white shadow-xs gap-2"
+                >
+                  <Coffee className="w-4 h-4" />
+                  <span>Terapkan & Lihat Kopi Cocok</span>
+                </Button>
+              </div>
+            </div>
           )}
-        </DialogHeader>
-
-        {/* Question Options */}
-        {!isCompleted ? (
-          <div className="grid grid-cols-1 gap-2.5 pt-2">
-            {STEPS[currentStep].options.map((opt) => (
-              <button
-                key={opt.id}
-                type="button"
-                onClick={() => handleSelect(STEPS[currentStep].key, opt.value)}
-                className="flex items-start gap-3.5 p-3.5 text-left rounded-sm border border-neutral-300 bg-surface-base hover:border-primary-600 hover:bg-primary-50/50 transition-all group"
-              >
-                <span className="text-2xl shrink-0 p-1 bg-neutral-100 rounded-xs group-hover:scale-110 transition-transform">
-                  {opt.icon}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-neutral-900 group-hover:text-primary-900">
-                    {opt.title}
-                  </p>
-                  <p className="text-xs text-neutral-600 leading-snug mt-0.5">
-                    {opt.desc}
-                  </p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-neutral-400 group-hover:text-primary-700 shrink-0 self-center group-hover:translate-x-1 transition-transform" />
-              </button>
-            ))}
-          </div>
-        ) : (
-          /* Result Summary Card */
-          <div className="space-y-4 pt-2">
-            <div className="p-4 rounded-sm bg-neutral-50 border border-neutral-300 space-y-3">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center justify-center size-6 rounded-full bg-accent-100 text-accent-700 text-xs font-bold">
-                  ✓
-                </span>
-                <span className="text-xs font-mono uppercase tracking-wider text-neutral-600 font-semibold">
-                  Rekomendasi Spesifikasi Kopi
-                </span>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2 pt-1 border-t border-neutral-200">
-                <div className="p-2 bg-surface-base rounded-xs border border-neutral-200">
-                  <span className="text-[10px] font-mono text-neutral-500 uppercase block">
-                    Sangrai
-                  </span>
-                  <span className="text-xs font-bold text-primary-900">
-                    {answers.roast || "Semua"}
-                  </span>
-                </div>
-                <div className="p-2 bg-surface-base rounded-xs border border-neutral-200">
-                  <span className="text-[10px] font-mono text-neutral-500 uppercase block">
-                    Proses
-                  </span>
-                  <span className="text-xs font-bold text-primary-900">
-                    {answers.process || "Semua"}
-                  </span>
-                </div>
-                <div className="p-2 bg-surface-base rounded-xs border border-neutral-200">
-                  <span className="text-[10px] font-mono text-neutral-500 uppercase block">
-                    Keasaman
-                  </span>
-                  <span className="text-xs font-bold text-primary-900">
-                    {answers.acidity || "Seimbang"}
-                  </span>
-                </div>
-              </div>
-
-              <p className="text-xs text-neutral-600 leading-relaxed">
-                Kami telah menyaring katalog untuk menampilkan biji kopi yang selaras dengan metode seduh dan preferensi rasamu.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="md"
-                onClick={handleReset}
-                className="gap-1.5"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Ulangi</span>
-              </Button>
-              <Button
-                type="button"
-                variant="primary"
-                size="md"
-                onClick={handleApplyFilter}
-                className="flex-1 gap-2"
-              >
-                <Coffee className="w-4 h-4" />
-                <span>Terapkan Filter & Lihat Kopi Cocok</span>
-              </Button>
-            </div>
-          </div>
-        )}
+        </div>
       </DialogContent>
     </Dialog>
   );

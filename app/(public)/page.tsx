@@ -44,7 +44,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           <div className="flex items-center gap-2 text-neutral-700">
             <span className="text-base">☕</span>
             <span>
-              <strong>Bingung pilih biji kopi?</strong> Ikuti kuis 30 detik untuk dapat rekomendasi beans sesuai alat seduh & seleramu.
+              <strong>Bingung pilih biji kopi?</strong> Ikuti kuis 30 detik
+              untuk dapat rekomendasi beans sesuai alat seduh & seleramu.
             </span>
           </div>
           <TasteQuizModal triggerVariant="banner" />

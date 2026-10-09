@@ -4,6 +4,7 @@ import { getListingBySlug, getListingFeed } from "@/lib/data";
 import { PageContainer } from "@/components/layout/page-container";
 import { ImageGallery } from "@/components/catalog/image-gallery";
 import { FlavorProfile } from "@/components/catalog/flavor-profile";
+import { BrewCalculator } from "@/components/catalog/brew-calculator";
 import { TasteSpecList } from "@/components/catalog/taste-spec-list";
 import { InquiryForm } from "@/components/catalog/inquiry-form";
 import { ListingGrid } from "@/components/catalog/listing-grid";
@@ -86,6 +87,8 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
               </p>
             </div>
             <FlavorProfile tasteProfile={listing.tasteProfile} />
+
+            <BrewCalculator />
 
             <div id="inquiry-form">
               <InquiryForm

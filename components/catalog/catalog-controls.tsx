@@ -97,6 +97,15 @@ export function CatalogControls({
   const activeSortLabel =
     sorts.find(([v]) => v === currentSort)?.[1] || "Urutkan";
 
+  // Helper untuk menghitung jumlah filter aktif
+  const activeFilterCount = [
+    searchParams.get("asal"),
+    searchParams.get("proses"),
+    searchParams.get("sangrai"),
+    searchParams.get("harga_min") || searchParams.get("harga_max"),
+    searchParams.get("verified"),
+  ].filter(Boolean).length;
+
   const FilterFields = (
     <>
       {/* Filter Asal */}
@@ -269,17 +278,22 @@ export function CatalogControls({
                 render={
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="outline"
                     size="md"
-                    className="min-h-11 md:hidden"
+                    className="min-h-11 md:hidden gap-1.5"
                   />
                 }
               >
-                Filter
+                <span>Filter</span>
+                {activeFilterCount > 0 && (
+                  <span className="size-4.5 rounded-full bg-neutral-900 text-white text-[10px] font-mono flex items-center justify-center">
+                    {activeFilterCount}
+                  </span>
+                )}
               </SheetTrigger>
-              <SheetContent side="bottom" className="p-4">
+              <SheetContent side="bottom" className="p-4 max-h-[85vh] overflow-y-auto">
                 <SheetHeader className="p-0 pb-4">
-                  <SheetTitle>Filter katalog</SheetTitle>
+                  <SheetTitle>Filter Katalog Kopi</SheetTitle>
                 </SheetHeader>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {FilterFields}
@@ -297,6 +311,38 @@ export function CatalogControls({
             <TasteQuizModal />
           </div>
         </form>
+
+        {/* Mobile Sticky Floating Filter Bar */}
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-30 md:hidden animate-in fade-in slide-in-from-bottom-2">
+          <Sheet>
+            <SheetTrigger
+              render={
+                <button
+                  type="button"
+                  className="px-4 py-2.5 bg-neutral-900 text-white rounded-full shadow-lg border border-neutral-800 text-xs font-mono font-medium flex items-center gap-2 hover:bg-neutral-800 transition-colors"
+                />
+              }
+            >
+              <span>Filter & Sortir</span>
+              {activeFilterCount > 0 && (
+                <span className="size-4 rounded-full bg-white text-neutral-900 text-[10px] font-mono font-bold flex items-center justify-center">
+                  {activeFilterCount}
+                </span>
+              )}
+            </SheetTrigger>
+            <SheetContent side="bottom" className="p-4 max-h-[85vh] overflow-y-auto">
+              <SheetHeader className="p-0 pb-4">
+                <SheetTitle>Filter & Sortir Katalog</SheetTitle>
+              </SheetHeader>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {FilterFields}
+              </div>
+              <div className="pt-3 border-t border-neutral-200 mt-2">
+                <TasteQuizModal className="w-full justify-center min-h-11" />
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
     </section>
   );

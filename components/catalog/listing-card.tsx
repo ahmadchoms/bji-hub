@@ -3,6 +3,7 @@ import Image from "next/image";
 import { ListingWithRelations } from "@/types";
 import { cn } from "@/lib/utils";
 import { TrackVisible } from "../shared/track-visible";
+import { CompareButton } from "./compare-button";
 
 interface ListingCardProps {
   listing: ListingWithRelations;
@@ -23,19 +24,22 @@ export function ListingCard({
   const roast = listing.tasteProfile?.roastLevel || "—";
 
   return (
-    <li className={cn("relative min-w-0", className)}>
+    <li className={cn("relative min-w-0 group/item", className)}>
       {isAd && <TrackVisible listingId={listing.id} type="impression" />}
+      <div className="absolute top-2 right-2 z-20">
+        <CompareButton listing={listing} variant="icon" />
+      </div>
       <Link
         href={`/product/${listing.slug}`}
         className="group block rounded-sm border border-neutral-300 bg-surface-base outline-none transition-colors hover:border-neutral-900 focus-visible:ring-2 focus-visible:ring-primary-600"
       >
         <div className="relative aspect-square overflow-hidden border-b border-neutral-300 bg-secondary-50">
           {isAd && (
-            <span className="absolute top-2 right-2 z-10 text-[10px] font-mono font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-xs bg-amber-600 text-white shadow-xs">
+            <span className="absolute top-2 left-2 z-10 text-[10px] font-mono font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-xs bg-amber-600 text-white shadow-xs">
               Iklan
             </span>
           )}
-          {listing.minOrderQty >= 30 && (
+          {listing.minOrderQty >= 30 && !isAd && (
             <span className="absolute top-2 left-2 z-10 text-[10px] font-mono font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-xs bg-primary-900/90 text-white backdrop-blur-xs shadow-xs">
               Partai B2B
             </span>

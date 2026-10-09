@@ -12,6 +12,8 @@ import { PriceText } from "@/components/shared/price-text";
 import { VerifiedBadge } from "@/components/shared/verified-badge";
 import { WhatsAppButton } from "@/components/shared/whatsapp-button";
 import { SampleRequestModal } from "@/components/catalog/sample-request-modal";
+import { CuppingSheetModal } from "@/components/catalog/cupping-sheet-modal";
+import { CompareButton } from "@/components/catalog/compare-button";
 import { ProductStickyCTA } from "@/components/catalog/product-sticky-cta";
 import { TrackOnMount } from "@/components/shared/track-visible";
 
@@ -169,6 +171,10 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                 size="lg"
                 className="w-full font-medium justify-center"
               />
+
+              <CuppingSheetModal listing={listing} />
+
+              <CompareButton listing={listing} variant="button" />
 
               {/* Seller card */}
               <div className="p-4 border border-neutral-300 rounded-sm flex items-center justify-between gap-3">

@@ -101,6 +101,9 @@ export function detectImageType(bytes: Uint8Array): ImageType | null {
 }
 
 export function isOwnedImageUrl(url: string): boolean {
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL && url.startsWith(process.env.NEXT_PUBLIC_SUPABASE_URL)) {
+    return true;
+  }
   return (
     url.startsWith(OWNED_IMAGE_URL_PREFIX) &&
     !url.includes("..") &&

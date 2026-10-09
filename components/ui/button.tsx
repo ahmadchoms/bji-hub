@@ -3,7 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "cn";
 
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center rounded-md font-medium whitespace-nowrap transition-all duration-150 ease-in-out outline-none select-none focus-visible:ring-2 focus-visible:ring-primary-500/30 focus-visible:ring-offset-2 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex shrink-0 items-center justify-center font-medium whitespace-nowrap transition-all duration-150 ease-in-out outline-none select-none focus-visible:ring-2 focus-visible:ring-primary-500/30 focus-visible:ring-offset-2 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -27,11 +27,11 @@ const buttonVariants = cva(
         default:
           "h-10 min-h-[40px] px-4 py-2 text-xs font-semibold tracking-wide gap-2",
         md: "h-10 min-h-[40px] px-4 py-2 text-xs font-semibold tracking-wide gap-2",
-        sm: "h-8 min-h-[32px] px-3 text-xs gap-1.5 rounded-md",
-        lg: "h-11 min-h-[44px] px-5 text-sm gap-2.5 rounded-lg",
-        icon: "size-10 min-w-[40px] min-h-[40px] rounded-md",
-        "icon-sm": "size-8 min-w-[32px] min-h-[32px] rounded-md",
-        "icon-lg": "size-11 min-w-[44px] min-h-[44px] rounded-lg",
+        sm: "h-8 min-h-[32px] px-3 text-xs gap-1.5",
+        lg: "h-11 min-h-[44px] px-5 text-sm gap-2.5",
+        icon: "size-10 min-w-[40px] min-h-[40px]",
+        "icon-sm": "size-8 min-w-[32px] min-h-[32px]",
+        "icon-lg": "size-11 min-w-[44px] min-h-[44px]",
       },
     },
     defaultVariants: {

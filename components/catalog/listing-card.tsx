@@ -90,7 +90,7 @@ export function ListingCard({
             <span className="truncate">{listing.seller.businessName}</span>
             {listing.seller.isVerified && (
               <span className="inline-block text-[10px] font-semibold text-accent-700 bg-accent-100 px-1 py-0.2 rounded-xs border border-accent-500/20 shrink-0">
-                ✓
+                Terverifikasi
               </span>
             )}
           </div>

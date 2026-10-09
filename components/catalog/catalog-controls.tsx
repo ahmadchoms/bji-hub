@@ -19,6 +19,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { TasteQuizModal } from "@/components/catalog/taste-quiz-modal";
 
 interface FilterControlsProps {
   origins: string[];
@@ -283,11 +284,17 @@ export function CatalogControls({
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {FilterFields}
                 </div>
+                <div className="pt-3 border-t border-neutral-200 mt-2">
+                  <TasteQuizModal className="w-full justify-center min-h-11" />
+                </div>
               </SheetContent>
             </Sheet>
           </div>
-          <div className="hidden flex-wrap items-center gap-2 md:flex">
-            {FilterFields}
+          <div className="hidden flex-wrap items-center justify-between gap-2 md:flex">
+            <div className="flex flex-wrap items-center gap-2 flex-1">
+              {FilterFields}
+            </div>
+            <TasteQuizModal />
           </div>
         </form>
       </div>

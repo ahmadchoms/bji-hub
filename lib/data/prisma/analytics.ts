@@ -173,23 +173,25 @@ export const analytics: AnalyticsMethods = {
     )
       return "ignored";
 
-    const recent = await prisma.analyticsEvent.count({
-      where: {
-        sessionId: payload.sessionId,
-        createdAt: { gt: new Date(now - DEFAULT_RATE_LIMIT.windowMs) },
-      },
-    });
-    if (recent >= DEFAULT_RATE_LIMIT.max) return "rate_limited";
+    const [recent, duplicate] = await Promise.all([
+      prisma.analyticsEvent.count({
+        where: {
+          sessionId: payload.sessionId,
+          createdAt: { gt: new Date(now - DEFAULT_RATE_LIMIT.windowMs) },
+        },
+      }),
+      prisma.analyticsEvent.findFirst({
+        where: {
+          sessionId: payload.sessionId,
+          listingId: payload.listingId,
+          eventType: payload.type,
+          createdAt: { gt: new Date(now - DEDUPE_MS[payload.type]) },
+        },
+        select: { id: true },
+      }),
+    ]);
 
-    const duplicate = await prisma.analyticsEvent.findFirst({
-      where: {
-        sessionId: payload.sessionId,
-        listingId: payload.listingId,
-        eventType: payload.type,
-        createdAt: { gt: new Date(now - DEDUPE_MS[payload.type]) },
-      },
-      select: { id: true },
-    });
+    if (recent >= DEFAULT_RATE_LIMIT.max) return "rate_limited";
     if (duplicate) return "duplicate";
 
     await prisma.analyticsEvent.create({

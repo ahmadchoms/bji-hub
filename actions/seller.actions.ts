@@ -56,8 +56,12 @@ export async function saveListingAction(
     );
 
   const existing = listingId ? await getListingById(listingId) : null;
+  if (listingId && (!existing || existing.sellerId !== sellerId)) {
+    return fail("Listing tidak ditemukan atau Anda tidak memiliki akses");
+  }
+
   const existingUrls = new Set(
-    existing?.sellerId === sellerId ? existing.images.map((i) => i.url) : [],
+    existing ? existing.images.map((i) => i.url) : [],
   );
 
   if (findInvalidImageUrl(parsed.data.images, existingUrls)) {

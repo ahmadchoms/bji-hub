@@ -11,7 +11,7 @@ import { InquiryForm } from "@/components/catalog/inquiry-form";
 import { ListingGrid } from "@/components/catalog/listing-grid";
 import { PriceText } from "@/components/shared/price-text";
 import { VerifiedBadge } from "@/components/shared/verified-badge";
-import { WhatsAppButton } from "@/components/shared/whatsapp-button";
+import { B2BNegotiationBox } from "@/components/catalog/b2b-negotiation-box";
 import { SampleRequestModal } from "@/components/catalog/sample-request-modal";
 import { CuppingSheetModal } from "@/components/catalog/cupping-sheet-modal";
 import { CompareButton } from "@/components/catalog/compare-button";
@@ -202,16 +202,12 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
               <p className="text-xs text-neutral-600">
                 Transaksi dilakukan langsung dengan penjual di luar platform.
               </p>
-              <WhatsAppButton
+              <B2BNegotiationBox
                 phoneNumber={listing.seller.whatsappNumber}
                 listingId={listing.id}
                 listingTitle={listing.title}
                 sellerName={listing.seller.businessName}
-                size="lg"
-                className="w-full font-medium justify-center"
-              >
-                Hubungi Penjual via WhatsApp
-              </WhatsAppButton>
+              />
 
               <SampleRequestModal
                 listingId={listing.id}

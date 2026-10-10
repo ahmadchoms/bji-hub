@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "smoke": "node scripts/smoke.mjs",
+    "deploy:check": "node scripts/deploy-check.mjs",
     "test:e2e": "playwright test",
     "format": "prettier --write .",
     "postinstall": "prisma generate",

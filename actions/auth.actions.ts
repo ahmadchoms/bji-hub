@@ -14,6 +14,7 @@ import { MOCK_SESSION_COOKIE } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { getPrisma } from "@/lib/data/prisma/client";
 import { slugify, uniqueSlug } from "@/lib/slug";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 async function setMockSession(role: Role): Promise<void> {
   const store = await cookies();
@@ -36,6 +37,15 @@ export async function loginAction(
       "Data tidak valid",
       parsed.error.flatten().fieldErrors as Record<string, string[]>,
     );
+  }
+
+  const rl = checkRateLimit(
+    `login:${parsed.data.email.toLowerCase().trim()}`,
+    5,
+    60_000,
+  );
+  if (!rl.success) {
+    return fail("Terlalu banyak percobaan login. Silakan tunggu 1 menit.");
   }
 
   // Real Supabase Auth when credentials exist
@@ -79,6 +89,15 @@ export async function registerAction(
       "Data tidak valid",
       parsed.error.flatten().fieldErrors as Record<string, string[]>,
     );
+  }
+
+  const rl = checkRateLimit(
+    `register:${parsed.data.email.toLowerCase().trim()}`,
+    3,
+    60_000,
+  );
+  if (!rl.success) {
+    return fail("Terlalu banyak pendaftaran. Silakan tunggu 1 menit.");
   }
 
   // Real Supabase Auth & Prisma record creation

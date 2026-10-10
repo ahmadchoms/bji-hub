@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getListingBySlug, getListingFeed } from "@/lib/data";
@@ -19,6 +20,55 @@ import { TrackOnMount } from "@/components/shared/track-visible";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: ProductPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const listing = await getListingBySlug(slug);
+
+  if (!listing) {
+    return { title: "Produk Tidak Ditemukan - Biji Corp" };
+  }
+
+  const primaryImage = listing.images?.[0]?.url;
+  const priceFormatted = new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(listing.price);
+
+  const title = `${listing.title} | ${listing.seller.businessName}`;
+  const origin = listing.tasteProfile?.originRegion
+    ? `Asal: ${listing.tasteProfile.originRegion}`
+    : "";
+  const process = listing.tasteProfile?.processMethod
+    ? `Proses: ${listing.tasteProfile.processMethod}`
+    : "";
+  const notes = listing.tasteProfile?.flavorNotes
+    ? `Notes: ${listing.tasteProfile.flavorNotes}`
+    : "";
+  const specs = [origin, process, notes].filter(Boolean).join(" • ");
+  const desc = listing.description ? `${listing.description.slice(0, 140)}...` : "";
+  const description = `${priceFormatted}/${listing.unit}.${specs ? ` ${specs}.` : ""}${desc ? ` ${desc}` : ""}`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      images: primaryImage ? [{ url: primaryImage, alt: listing.title }] : [],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: primaryImage ? [primaryImage] : [],
+    },
+  };
 }
 
 export default async function ProductDetailPage({ params }: ProductPageProps) {

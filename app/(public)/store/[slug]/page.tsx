@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -20,6 +21,41 @@ import { Badge } from "@/components/ui/badge";
 
 interface StorePageProps {
   params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: StorePageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const seller = await getSellerBySlug(slug);
+
+  if (!seller) {
+    return { title: "Toko Tidak Ditemukan - Biji Corp" };
+  }
+
+  const title = `${seller.businessName} | Toko Kopi di Biji Corp`;
+  const description =
+    seller.bio ||
+    `Temukan ragam kopi pilihan dari ${seller.businessName} di ${seller.city}. Terhubung langsung dengan produsen kopi terpercaya.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "profile",
+      images: seller.avatarUrl
+        ? [{ url: seller.avatarUrl, alt: seller.businessName }]
+        : [],
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+      images: seller.avatarUrl ? [seller.avatarUrl] : [],
+    },
+  };
 }
 
 function sanitizeWhatsApp(phone: string): string {

@@ -99,7 +99,13 @@ export async function saveListingAction(
 
 export async function purchaseBoostAction(
   input: unknown,
-): Promise<ActionResult<{ paymentId: string; status: Payment["status"] }>> {
+): Promise<
+  ActionResult<{
+    paymentId: string;
+    status: Payment["status"];
+    snapToken?: string | null;
+  }>
+> {
   const { sellerId } = await requireSeller("/dashboard/billing");
   const parsed = boostSchema.safeParse(input);
   if (!parsed.success)

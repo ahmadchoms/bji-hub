@@ -1,6 +1,5 @@
 import { createImageUploadAction } from "@/actions/upload.actions";
 import {
-  IMAGE_RULES,
   validateImageFile,
   validateRawImageFile,
   type UploadedImage,

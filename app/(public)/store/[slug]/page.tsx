@@ -17,7 +17,6 @@ import { getSellerBySlug } from "@/lib/data";
 import { PageContainer } from "@/components/layout/page-container";
 import { ListingGrid } from "@/components/catalog/listing-grid";
 import { VerifiedBadge } from "@/components/shared/verified-badge";
-import { Badge } from "@/components/ui/badge";
 
 interface StorePageProps {
   params: Promise<{ slug: string }>;
@@ -79,8 +78,6 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
     `Halo ${seller.businessName}, saya melihat profil toko Anda di Biji dan tertarik untuk berdiskusi lebih lanjut mengenai produk kopi Anda.`,
   );
   const waHref = `https://wa.me/${cleanPhone}?text=${waMessage}`;
-
-  const isPremiumTier = seller.tier === "business" || seller.tier === "growth";
 
   return (
     <div className="py-8 md:py-12 space-y-10">

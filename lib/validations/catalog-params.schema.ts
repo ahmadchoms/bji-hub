@@ -9,8 +9,10 @@ export const catalogParamsSchema = z.object({
   harga_min: z.coerce.number().int().nonnegative().optional(),
   harga_max: z.coerce.number().int().nonnegative().optional(),
   verified: z.preprocess((value) => value === true || value === "true", z.boolean()).default(false),
-  urut: z.enum(["terbaru", "harga_terendah", "harga_tertinggi"]).default("terbaru"),
-  halaman: z.coerce.number().int().min(1).default(1),
+  urut: z.enum(["newest", "price_asc", "price_desc", "terbaru", "harga_terendah", "harga_tertinggi"]).optional(),
+  halaman: z.coerce.number().int().min(1).optional(),
+  sort: z.enum(["newest", "price_asc", "price_desc", "terbaru", "harga_terendah", "harga_tertinggi"]).default("newest"),
+  page: z.coerce.number().int().min(1).default(1),
 });
 
 export type CatalogParams = z.infer<typeof catalogParamsSchema>;
@@ -21,6 +23,14 @@ export function parseCatalogParams(params: Record<string, string | string[] | un
     return Array.isArray(item) ? item[0] : item;
   };
 
+  const rawSort = value("sort") || value("urut") || "newest";
+  const normalizedSort =
+    rawSort === "harga_terendah" ? "price_asc" :
+    rawSort === "harga_tertinggi" ? "price_desc" :
+    rawSort === "terbaru" ? "newest" : rawSort;
+
+  const rawPage = value("page") || value("halaman") || 1;
+
   const parsed = catalogParamsSchema.safeParse({
     q: value("q"),
     kategori: value("kategori"),
@@ -30,8 +40,10 @@ export function parseCatalogParams(params: Record<string, string | string[] | un
     harga_min: value("harga_min"),
     harga_max: value("harga_max"),
     verified: value("verified"),
-    urut: value("urut"),
-    halaman: value("halaman"),
+    sort: normalizedSort,
+    page: rawPage,
+    urut: normalizedSort,
+    halaman: rawPage,
   });
 
   return parsed.success ? parsed.data : catalogParamsSchema.parse({});

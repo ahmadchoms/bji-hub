@@ -23,6 +23,7 @@ export function buildCatalogHref(
 
   // Always reset pagination on filter change
   p.delete("halaman");
+  p.delete("page");
 
   const qs = p.toString();
   return qs ? `/?${qs}` : "/";

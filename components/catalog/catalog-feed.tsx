@@ -20,24 +20,31 @@ export async function CatalogFeed({ params }: { params: CatalogParams }) {
         isVerified: params.verified,
         search: params.q,
         sort:
-          params.urut === "harga_terendah"
+          params.sort === "price_asc" || params.urut === "harga_terendah"
             ? "price_asc"
-            : params.urut === "harga_tertinggi"
+            : params.sort === "price_desc" || params.urut === "harga_tertinggi"
               ? "price_desc"
               : "newest",
       },
-      params.halaman,
+      params.page ?? params.halaman ?? 1,
     );
+    const currentPage = params.page ?? params.halaman ?? 1;
     const serialized = new URLSearchParams(
       Object.entries(params)
         .filter(
-          ([, value]) => value !== "" && value !== false && value !== undefined,
+          ([key, value]) =>
+            value !== "" &&
+            value !== false &&
+            value !== undefined &&
+            key !== "urut" &&
+            key !== "halaman",
         )
         .map(([key, value]) => [key, String(value)]),
     ).toString();
 
     const nextParams = new URLSearchParams(serialized);
-    nextParams.set("halaman", String(params.halaman + 1));
+    nextParams.set("page", String(currentPage + 1));
+    nextParams.delete("halaman");
     const nextUrl = feed.hasMore ? `/?${nextParams.toString()}` : null;
 
     return (

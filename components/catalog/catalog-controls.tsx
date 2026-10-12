@@ -28,9 +28,9 @@ interface FilterControlsProps {
 }
 
 const sorts = [
-  ["terbaru", "Terbaru"],
-  ["harga_terendah", "Harga Terendah"],
-  ["harga_tertinggi", "Harga Tertinggi"],
+  ["newest", "Terbaru"],
+  ["price_asc", "Harga Terendah"],
+  ["price_desc", "Harga Tertinggi"],
 ] as const;
 
 const priceRanges = [
@@ -67,6 +67,8 @@ export function CatalogControls({
       if (value) params.set(key, value);
       else params.delete(key);
       params.delete("halaman");
+      params.delete("page");
+      if (key === "sort") params.delete("urut");
       startTransition(() =>
         router.replace(`${pathname}?${params.toString()}`, { scroll: false }),
       );
@@ -93,7 +95,11 @@ export function CatalogControls({
     "Semua Harga";
 
   // Helper untuk menentukan label urutan aktif
-  const currentSort = searchParams.get("urut") || "terbaru";
+  const rawSort = searchParams.get("sort") || searchParams.get("urut") || "newest";
+  const currentSort =
+    rawSort === "harga_terendah" ? "price_asc" :
+    rawSort === "harga_tertinggi" ? "price_desc" :
+    rawSort === "terbaru" ? "newest" : rawSort;
   const activeSortLabel =
     sorts.find(([v]) => v === currentSort)?.[1] || "Urutkan";
 
@@ -185,7 +191,7 @@ export function CatalogControls({
         <Select
           value={currentSort}
           onValueChange={(val) => {
-            if (val) replaceParam("urut", val);
+            if (val) replaceParam("sort", val);
           }}
         >
           <SelectTrigger className="h-11 w-full text-xs">
@@ -214,6 +220,7 @@ export function CatalogControls({
             if (max) params.set("harga_max", max);
             else params.delete("harga_max");
             params.delete("halaman");
+            params.delete("page");
             startTransition(() =>
               router.replace(`${pathname}?${params.toString()}`, {
                 scroll: false,

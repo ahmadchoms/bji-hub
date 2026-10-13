@@ -364,3 +364,52 @@ export async function logoutAction(): Promise<void> {
   store.delete(MOCK_SESSION_COOKIE);
   redirect("/");
 }
+
+export async function updateBuyerProfileAction(input: {
+  name: string;
+  avatarUrl?: string;
+  phone?: string;
+  city?: string;
+  address?: string;
+}): Promise<ActionResult<{ success: boolean }>> {
+  if (!input.name || input.name.trim().length < 2) {
+    return fail("Nama minimal 2 karakter", {
+      name: ["Nama minimal 2 karakter"],
+    });
+  }
+
+  if (
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
+    try {
+      const supabase = await createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        return fail("Sesi tidak valid. Silakan masuk kembali.");
+      }
+
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          name: input.name.trim(),
+          avatar_url: input.avatarUrl?.trim() || null,
+          phone: input.phone?.trim() || null,
+          city: input.city?.trim() || null,
+          address: input.address?.trim() || null,
+        },
+      });
+
+      if (error) {
+        return fail(error.message || "Gagal memperbarui profil.");
+      }
+      return ok({ success: true });
+    } catch {
+      // Fall through for mock
+    }
+  }
+
+  return ok({ success: true });
+}
+

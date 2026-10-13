@@ -12,32 +12,33 @@ const Toaster = ({ ...props }: ToasterProps) => {
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
       icons={{
-        success: <CircleCheckIcon className="size-4.5 text-[#2F6D4F]" />,
-        info: <InfoIcon className="size-4.5 text-[#512615]" />,
-        warning: <TriangleAlertIcon className="size-4.5 text-[#C08552]" />,
-        error: <OctagonXIcon className="size-4.5 text-[#DC2626]" />,
-        loading: <Loader2Icon className="size-4.5 animate-spin text-[#512615]" />,
+        success: <CircleCheckIcon className="size-4.5 text-emerald-700 shrink-0" />,
+        info: <InfoIcon className="size-4.5 text-primary-700 shrink-0" />,
+        warning: <TriangleAlertIcon className="size-4.5 text-amber-700 shrink-0" />,
+        error: <OctagonXIcon className="size-4.5 text-red-700 shrink-0" />,
+        loading: <Loader2Icon className="size-4.5 animate-spin text-primary-700 shrink-0" />,
       }}
       toastOptions={{
         classNames: {
           toast:
-            "group font-sans text-xs sm:text-sm shadow-md rounded-sm border border-neutral-300 bg-surface-base text-neutral-900 p-4 gap-3",
-          title: "font-semibold text-neutral-900 text-sm",
-          description: "text-neutral-600 text-xs mt-0.5 leading-relaxed",
+            "group font-sans text-xs sm:text-sm shadow-lg rounded-sm border border-neutral-300 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 p-4 gap-3",
+          title: "!font-semibold !text-neutral-900 dark:!text-neutral-100 text-sm",
+          description:
+            "!text-neutral-700 dark:!text-neutral-300 !opacity-100 !block text-xs mt-1 leading-normal font-normal",
           actionButton:
-            "!bg-primary-600 !text-white hover:!bg-primary-700 text-xs px-3 py-1.5 rounded-sm font-medium transition-colors",
+            "!bg-primary-700 !text-white hover:!bg-primary-800 text-xs px-3 py-1.5 rounded-sm font-medium transition-colors",
           cancelButton:
             "!bg-neutral-100 !text-neutral-700 hover:!bg-neutral-200 text-xs px-3 py-1.5 rounded-sm transition-colors",
           closeButton:
-            "!border-neutral-300 !text-neutral-500 hover:!text-neutral-900 !bg-surface-base",
+            "!border-neutral-300 !text-neutral-500 hover:!text-neutral-900 !bg-white",
           success:
-            "!bg-[#F4F9F6] !border-[#BBE1CE] !text-[#1E4B36]",
+            "!bg-white dark:!bg-neutral-900 !border-emerald-600/40 !text-neutral-900 dark:!text-neutral-100",
           error:
-            "!bg-[#FDF3F2] !border-[#F6C3BF] !text-[#991B1B]",
+            "!bg-white dark:!bg-neutral-900 !border-red-600/40 !text-neutral-900 dark:!text-neutral-100",
           warning:
-            "!bg-[#FDF9F3] !border-[#F0D5BE] !text-[#8A5A2E]",
+            "!bg-white dark:!bg-neutral-900 !border-amber-600/40 !text-neutral-900 dark:!text-neutral-100",
           info:
-            "!bg-[#FBF6F3] !border-[#E8D4C8] !text-[#3D1D10]",
+            "!bg-white dark:!bg-neutral-900 !border-primary-600/40 !text-neutral-900 dark:!text-neutral-100",
         },
       }}
       {...props}

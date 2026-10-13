@@ -67,7 +67,7 @@ export default async function DashboardOverviewPage() {
         <div className="space-y-4">
           <div className="flex items-baseline justify-between pb-3 border-b border-neutral-300">
             <h2 className="font-display text-xl text-neutral-900 font-semibold">
-              Inquiry Terbaru
+              Pesan Penawaran Terbaru
             </h2>
             <a
               href="/dashboard/inquiry"

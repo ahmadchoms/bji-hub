@@ -144,13 +144,13 @@ export function BillingSection({
           },
         });
       } else if (result.data.status === "paid") {
-        toast.success("Boost berhasil diaktifkan", {
+        toast.success("Promosi produk berhasil diaktifkan", {
           description:
-            "Listing Anda akan tampil di slot iklan pada pencarian yang cocok.",
+            "Produk Anda akan tampil di posisi teratas pada hasil pencarian yang cocok.",
         });
       } else {
         toast.info("Menunggu pembayaran", {
-          description: "Boost aktif setelah pembayaran dikonfirmasi.",
+          description: "Promosi aktif setelah pembayaran dikonfirmasi.",
         });
       }
       setBoostDialogOpen(false);
@@ -168,17 +168,17 @@ export function BillingSection({
 
   return (
     <div className={cn("space-y-10", className)}>
-      {/* Boost */}
+      {/* Boost / Promosi Produk */}
       <div className="space-y-3">
         <div className="flex items-center justify-between pb-2 border-b border-neutral-300">
           <div>
             <h3 className="font-display text-lg text-neutral-900 font-semibold">
-              Boost Listing
+              Promosi Produk
             </h3>
             {credits.total > 0 && (
               <p className="mt-0.5 text-xs text-neutral-600">
-                Kredit boost gratis bulan ini:{" "}
-                <span className="font-mono tabular-nums">
+                Kredit promosi gratis bulan ini:{" "}
+                <span className="font-mono tabular-nums font-medium">
                   {credits.remaining} dari {credits.total}
                 </span>
                 {credits.remaining === 0 && `, kembali ${resetDate}`}
@@ -189,26 +189,30 @@ export function BillingSection({
             <DialogTrigger
               render={
                 <Button variant="primary" className="gap-2">
-                  <span className="text-xs">Boost Listing</span>
+                  <span className="text-xs">Promosikan Produk</span>
                 </Button>
               }
             />
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Boost Listing</DialogTitle>
+                <DialogTitle>Promosikan Produk</DialogTitle>
                 <DialogDescription>
-                  Tampilkan produk Anda sebagai iklan di hasil pencarian yang
-                  cocok.
+                  Tampilkan produk kopi Anda di posisi teratas pada hasil pencarian
+                  pembeli.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-2">
-                <FormField label="Pilih Listing" required>
+                <FormField label="Pilih Produk" required>
                   <Select
                     value={selectedListing}
                     onValueChange={(val) => setSelectedListing(val ?? "")}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih listing untuk boost" />
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Pilih produk untuk promosi">
+                        {(val) =>
+                          listings.find((l) => l.id === val)?.title ?? ""
+                        }
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {listings
@@ -234,7 +238,7 @@ export function BillingSection({
                         "credit",
                         `Pakai kredit gratis (sisa ${credits.remaining}, ${credits.days} hari)`,
                       ],
-                      ["cash", "Bayar"],
+                      ["cash", "Bayar langsung"],
                     ].map(([value, label]) => (
                       <label
                         key={value}
@@ -256,13 +260,17 @@ export function BillingSection({
                   </RadioGroup>
                 )}
                 {!useCredit && (
-                  <FormField label="Durasi Boost" required>
+                  <FormField label="Durasi Promosi" required>
                     <Select
                       value={selectedDuration}
                       onValueChange={(val) => setSelectedDuration(val ?? "")}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih durasi" />
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Pilih durasi">
+                          {(val) =>
+                            BOOST_DURATIONS.find((d) => d.value === val)?.label ?? ""
+                          }
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {BOOST_DURATIONS.map((d) => (
@@ -312,7 +320,7 @@ export function BillingSection({
           <div className="p-8">
             <EmptyState
               title="Belum Ada Transaksi"
-              description="Riwayat pembayaran langganan dan boost akan muncul di sini."
+              description="Riwayat pembayaran langganan dan promosi produk akan muncul di sini."
             />
           </div>
         ) : (
@@ -335,7 +343,10 @@ export function BillingSection({
                       PAYMENT_STATUS_MAP[pay.status] ??
                       PAYMENT_STATUS_MAP.pending;
                     return (
-                      <TableRow key={pay.id}>
+                      <TableRow
+                        key={pay.id}
+                        className="font-medium text-neutral-800"
+                      >
                         <TableCell className="font-mono text-xs text-neutral-700">
                           {pay.midtransOrderId}
                         </TableCell>

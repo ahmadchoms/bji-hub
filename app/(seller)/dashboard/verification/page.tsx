@@ -45,38 +45,24 @@ export default async function SellerVerificationPage() {
       </div>
 
       {seller.isVerified ? (
-        <Card className="border-emerald-200 bg-emerald-50/40">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-emerald-100 text-emerald-700">
-                <ShieldCheck className="h-6 w-6" />
+        <div className="border border-neutral-300 bg-surface-base rounded-sm p-6 space-y-3">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2.5">
+                <VerifiedBadge size="md" />
+                <h3 className="font-display text-lg font-semibold text-neutral-900">
+                  Toko Terverifikasi
+                </h3>
               </div>
-              <div>
-                <CardTitle className="text-emerald-900 text-lg">Toko Anda Telah Terverifikasi</CardTitle>
-                <CardDescription className="text-emerald-700">
-                  Status verifikasi aktif. Profil dan produk Anda memiliki kredibilitas terpercaya di platform Biji.
-                </CardDescription>
-              </div>
+              <p className="text-xs text-neutral-600 max-w-xl leading-relaxed">
+                Identitas dan operasional usaha Anda telah divalidasi oleh kurator Biji Hub. Profil dan seluruh katalog produk Anda memiliki tanda verifikasi resmi di direktori kopi.
+              </p>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-3 pt-2">
-            <h4 className="text-sm font-semibold text-emerald-900">Manfaat yang Anda Dapatkan:</h4>
-            <ul className="text-sm text-emerald-800 space-y-2">
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                Badge &quot;Verified&quot; otomatis tampil di seluruh katalog produk dan profil toko.
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                Prioritas visibilitas bagi calon pembeli B2B (kedai kopi & roastery rekanan).
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                Dukungan kurasi langsung dari tim Biji Hub saat peninjauan produk.
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
+            <span className="text-[11px] font-mono font-medium px-2.5 py-1 bg-neutral-100 border border-neutral-300 rounded text-neutral-700 shrink-0">
+              Status Aktif
+            </span>
+          </div>
+        </div>
       ) : isPendingReview ? (
         <Card className="border-amber-200 bg-amber-50/40">
           <CardHeader>

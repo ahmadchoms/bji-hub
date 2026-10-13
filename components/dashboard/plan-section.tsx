@@ -99,9 +99,17 @@ export function PlanSection({ state, listingCount }: PlanSectionProps) {
         if (
           result.data.snapToken &&
           typeof window !== "undefined" &&
-          (window as unknown as { snap?: { pay: (token: string, options: unknown) => void } }).snap
+          (
+            window as unknown as {
+              snap?: { pay: (token: string, options: unknown) => void };
+            }
+          ).snap
         ) {
-          const snap = (window as unknown as { snap: { pay: (token: string, options: unknown) => void } }).snap;
+          const snap = (
+            window as unknown as {
+              snap: { pay: (token: string, options: unknown) => void };
+            }
+          ).snap;
           snap.pay(result.data.snapToken, {
             onSuccess: () => {
               toast.success("Pembayaran langganan berhasil!");
@@ -257,12 +265,14 @@ export function PlanSection({ state, listingCount }: PlanSectionProps) {
             {ROWS.map((row) => (
               <TableRow
                 key={row.tier}
-                className={row.tier === state.tier ? "bg-primary-50" : ""}
+                className={`font-mono font-medium tabular-nums ${
+                  row.tier === state.tier ? "bg-primary-50" : ""
+                }`}
               >
                 <TableCell className="font-medium text-neutral-900">
                   {row.name}
                   {row.tier === state.tier && (
-                    <span className="ml-2 text-xs font-normal text-neutral-500">
+                    <span className="ml-2 text-xs font-mono text-neutral-500">
                       paket aktif
                     </span>
                   )}
@@ -316,7 +326,7 @@ export function PlanSection({ state, listingCount }: PlanSectionProps) {
                     "flex min-h-11 cursor-pointer items-center justify-between border px-3 text-sm rounded-sm transition-colors",
                     months === period.months
                       ? "border-primary-600 bg-primary-50/40 text-primary-900"
-                      : "border-neutral-300 hover:border-neutral-400 text-neutral-800"
+                      : "border-neutral-300 hover:border-neutral-400 text-neutral-800",
                   )}
                 >
                   <span className="flex items-center gap-3">

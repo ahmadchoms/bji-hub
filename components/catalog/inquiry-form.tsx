@@ -88,10 +88,10 @@ export function InquiryForm({
         )}
       >
         <h4 className="font-display text-lg text-accent-700 font-semibold">
-          Inquiry B2B Berhasil Terkirim!
+          Permintaan Penawaran Berhasil Terkirim!
         </h4>
         <p className="text-sm text-neutral-700 leading-relaxed max-w-sm mx-auto">
-          Terima kasih. Permintaan harga grosir & spesifikasi untuk{" "}
+          Terima kasih. Permintaan harga grosir & sampel kopi untuk{" "}
           <strong>{listingTitle}</strong> telah diterima oleh {sellerName}.
         </p>
         <div className="pt-2">
@@ -117,7 +117,7 @@ export function InquiryForm({
     >
       <div className="pb-3 border-b border-neutral-200">
         <h4 className="font-display text-lg text-neutral-900 font-semibold">
-          Formulir Inquiry Grosir / RFQ B2B
+          Formulir Permintaan Penawaran & Sampel
         </h4>
         <p className="text-xs text-neutral-600 leading-relaxed mt-1">
           Kirimkan penawaran harga khusus atau permintaan sampel langsung ke{" "}
@@ -198,7 +198,7 @@ export function InquiryForm({
           ) : (
             <>
               <Send className="w-4 h-4" />
-              <span>Kirim Inquiry B2B Sekarang</span>
+              <span>Kirim Permintaan Penawaran</span>
             </>
           )}
         </Button>

@@ -11,7 +11,7 @@ export default async function DashboardInquiryPage() {
     <div className="space-y-6">
       <SectionHeader
         title="Pesan Masuk"
-        subtitle={`${inquiries.length} inquiry dari calon pembeli.`}
+        subtitle={`${inquiries.length} pesan penawaran dari calon pembeli.`}
       />
       <InquiryList inquiries={inquiries} />
     </div>

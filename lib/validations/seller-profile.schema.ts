@@ -19,6 +19,11 @@ export const sellerProfileSchema = z.object({
     .string()
     .max(500, "Bio maksimal 500 karakter")
     .optional(),
+  avatarUrl: z
+    .string()
+    .url("URL logo/foto profil tidak valid")
+    .or(z.literal(""))
+    .optional(),
 });
 
 export type SellerProfileFormValues = z.infer<typeof sellerProfileSchema>;

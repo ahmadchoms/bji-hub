@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, Store } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VerifiedBadge } from "@/components/shared/verified-badge";
 import { useRouter } from "next/navigation";
@@ -48,6 +48,7 @@ export function ProfileForm({ seller, className }: ProfileFormProps) {
     control,
     setValue,
     setError,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<SellerProfileFormValues>({
     resolver: zodResolver(sellerProfileSchema),
@@ -58,6 +59,7 @@ export function ProfileForm({ seller, className }: ProfileFormProps) {
       address: seller.address,
       whatsappNumber: seller.whatsappNumber,
       bio: seller.bio ?? "",
+      avatarUrl: seller.avatarUrl ?? "",
     },
   });
 
@@ -183,6 +185,33 @@ export function ProfileForm({ seller, className }: ProfileFormProps) {
           <h3 className="font-display text-lg text-neutral-900 font-semibold pb-3 border-b border-neutral-300">
             Informasi Toko
           </h3>
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pb-4 border-b border-neutral-200">
+            <div className="w-16 h-16 rounded-full border border-neutral-300 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0">
+              {watch("avatarUrl") ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={watch("avatarUrl")}
+                  alt="Logo Toko"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Store className="w-7 h-7 text-neutral-400" />
+              )}
+            </div>
+            <div className="flex-1 w-full space-y-1">
+              <FormField
+                label="URL Logo / Foto Toko"
+                error={errors.avatarUrl?.message}
+                helperText="Tautan langsung ke logo atau foto toko (JPG/PNG/WebP)."
+              >
+                <Input
+                  {...register("avatarUrl")}
+                  placeholder="https://example.com/logo.jpg"
+                />
+              </FormField>
+            </div>
+          </div>
 
           <FormField
             label="Nama Usaha"

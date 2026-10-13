@@ -129,12 +129,18 @@ export function ListingForm({
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className={cn("space-y-8", className)}
+      className={cn("space-y-6", className)}
     >
-      <div className="space-y-5">
-        <h3 className="font-display text-2xl text-neutral-900 font-semibold">
-          Foto Produk
-        </h3>
+      {/* 1. Foto Produk */}
+      <div className="border border-neutral-300 bg-surface-base rounded-sm p-6 space-y-4">
+        <div>
+          <h3 className="font-display text-lg text-neutral-900 font-semibold">
+            Foto Produk
+          </h3>
+          <p className="text-xs text-neutral-600 mt-0.5">
+            Unggah foto kemasan atau biji kopi (maksimal 3 foto, format JPG/PNG/WebP).
+          </p>
+        </div>
         <ImageUploader
           value={watch("images")}
           onChange={(images) =>
@@ -148,10 +154,17 @@ export function ListingForm({
           disabled={isSubmitting}
         />
       </div>
-      <div className="space-y-5">
-        <h3 className="font-display text-2xl text-neutral-900 font-semibold">
-          Informasi Produk
-        </h3>
+
+      {/* 2. Informasi Utama Produk */}
+      <div className="border border-neutral-300 bg-surface-base rounded-sm p-6 space-y-5">
+        <div>
+          <h3 className="font-display text-lg text-neutral-900 font-semibold">
+            Informasi Produk
+          </h3>
+          <p className="text-xs text-neutral-600 mt-0.5">
+            Detail utama varian kopi yang akan ditampilkan di katalog publik.
+          </p>
+        </div>
 
         <FormField label="Judul Produk" required error={errors.title?.message}>
           <Input
@@ -160,7 +173,7 @@ export function ListingForm({
           />
         </FormField>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             label="Kategori"
             required
@@ -172,7 +185,7 @@ export function ListingForm({
                 setValue("categoryId", v ?? "", { shouldValidate: true })
               }
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Pilih kategori">
                   {selectedCategoryName || "Pilih kategori"}
                 </SelectValue>
@@ -187,7 +200,7 @@ export function ListingForm({
             </Select>
           </FormField>
 
-          <FormField label="Status" required error={errors.status?.message}>
+          <FormField label="Status Publikasi" required error={errors.status?.message}>
             <Select
               value={selectedStatus ?? "draft"}
               onValueChange={(v) =>
@@ -200,7 +213,7 @@ export function ListingForm({
                 )
               }
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Pilih status">
                   {selectedStatusLabel || "Pilih status"}
                 </SelectValue>
@@ -224,11 +237,11 @@ export function ListingForm({
           <Textarea
             {...register("description")}
             rows={4}
-            placeholder="Jelaskan karakter, proses pengolahan, dan keunggulan kopi Anda..."
+            placeholder="Jelaskan karakter rasa, proses pengolahan, varietas tanaman, dan keunggulan biji kopi Anda..."
           />
         </FormField>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <FormField label="Harga (Rp)" required error={errors.price?.message}>
             <Input
               type="number"
@@ -237,12 +250,12 @@ export function ListingForm({
             />
           </FormField>
 
-          <FormField label="Satuan" required error={errors.unit?.message}>
-            <Input {...register("unit")} placeholder="kg, 250g, box" />
+          <FormField label="Satuan Kemasan" required error={errors.unit?.message}>
+            <Input {...register("unit")} placeholder="kg, 250g, 500g, box" />
           </FormField>
 
           <FormField
-            label="Min. Order"
+            label="Min. Pemesanan"
             required
             error={errors.minOrderQty?.message}
           >
@@ -255,20 +268,26 @@ export function ListingForm({
         </div>
       </div>
 
-      <div className="space-y-5">
-        <h3 className="font-display text-2xl text-neutral-900 font-semibold">
-          Profil Rasa
-        </h3>
+      {/* 3. Spesifikasi & Profil Rasa */}
+      <div className="border border-neutral-300 bg-surface-base rounded-sm p-6 space-y-5">
+        <div>
+          <h3 className="font-display text-lg text-neutral-900 font-semibold">
+            Spesifikasi & Karakter Rasa
+          </h3>
+          <p className="text-xs text-neutral-600 mt-0.5">
+            Data origin, sangrai, dan skor evaluasi cupping untuk visualisasi radar chart rasa.
+          </p>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
-            label="Daerah Asal"
+            label="Daerah Asal (Origin)"
             required
             error={errors.originRegion?.message}
           >
             <Input
               {...register("originRegion")}
-              placeholder="Gayo, Toraja, Kintamani..."
+              placeholder="Gayo, Toraja, Kintamani, Ijen..."
             />
           </FormField>
 
@@ -287,7 +306,7 @@ export function ListingForm({
                 )
               }
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Pilih metode">
                   {watch("processMethod") || "Pilih metode"}
                 </SelectValue>
@@ -303,7 +322,7 @@ export function ListingForm({
           </FormField>
 
           <FormField
-            label="Tingkat Sangrai"
+            label="Tingkat Sangrai (Roast Level)"
             required
             error={errors.roastLevel?.message}
           >
@@ -317,7 +336,7 @@ export function ListingForm({
                 )
               }
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Pilih tingkat">
                   {watch("roastLevel") || "Pilih tingkat"}
                 </SelectValue>
@@ -342,71 +361,82 @@ export function ListingForm({
         </div>
 
         <FormField
-          label="Catatan Rasa"
+          label="Catatan Rasa (Flavor Notes)"
           required
           error={errors.flavorNotes?.message}
-          helperText="Pisahkan dengan koma, misal: Nangka, Anggur Merah, Gula Aren"
+          helperText="Pisahkan dengan tanda koma, contoh: Nangka, Madu, Gula Aren, Floral"
         >
           <Input
             {...register("flavorNotes")}
-            placeholder="Nangka, Anggur Merah, Gula Aren"
+            placeholder="Nangka, Madu, Gula Aren, Floral"
           />
         </FormField>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          <FormField
-            label="Acidity"
-            required
-            error={errors.acidityScore?.message}
-          >
-            <Input
-              type="number"
-              step="0.1"
-              min="0"
-              max="5"
-              {...register("acidityScore", { valueAsNumber: true })}
-            />
-          </FormField>
-          <FormField label="Body" required error={errors.bodyScore?.message}>
-            <Input
-              type="number"
-              step="0.1"
-              min="0"
-              max="5"
-              {...register("bodyScore", { valueAsNumber: true })}
-            />
-          </FormField>
-          <FormField label="Sweetness" error={errors.sweetnessScore?.message}>
-            <Input
-              type="number"
-              step="0.1"
-              min="0"
-              max="5"
-              {...register("sweetnessScore", { valueAsNumber: true })}
-            />
-          </FormField>
-          <FormField label="Aroma" error={errors.aromaScore?.message}>
-            <Input
-              type="number"
-              step="0.1"
-              min="0"
-              max="5"
-              {...register("aromaScore", { valueAsNumber: true })}
-            />
-          </FormField>
-          <FormField label="Aftertaste" error={errors.aftertasteScore?.message}>
-            <Input
-              type="number"
-              step="0.1"
-              min="0"
-              max="5"
-              {...register("aftertasteScore", { valueAsNumber: true })}
-            />
-          </FormField>
+        <div className="space-y-2 pt-3 border-t border-neutral-200">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-neutral-900 uppercase tracking-wide">
+              Skor Karakter Rasa (0.0 - 5.0)
+            </span>
+            <span className="text-[11px] text-neutral-500 font-mono">
+              Skala 0 hingga 5
+            </span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+            <FormField
+              label="Acidity"
+              required
+              error={errors.acidityScore?.message}
+            >
+              <Input
+                type="number"
+                step="0.1"
+                min="0"
+                max="5"
+                {...register("acidityScore", { valueAsNumber: true })}
+              />
+            </FormField>
+            <FormField label="Body" required error={errors.bodyScore?.message}>
+              <Input
+                type="number"
+                step="0.1"
+                min="0"
+                max="5"
+                {...register("bodyScore", { valueAsNumber: true })}
+              />
+            </FormField>
+            <FormField label="Sweetness" error={errors.sweetnessScore?.message}>
+              <Input
+                type="number"
+                step="0.1"
+                min="0"
+                max="5"
+                {...register("sweetnessScore", { valueAsNumber: true })}
+              />
+            </FormField>
+            <FormField label="Aroma" error={errors.aromaScore?.message}>
+              <Input
+                type="number"
+                step="0.1"
+                min="0"
+                max="5"
+                {...register("aromaScore", { valueAsNumber: true })}
+              />
+            </FormField>
+            <FormField label="Aftertaste" error={errors.aftertasteScore?.message}>
+              <Input
+                type="number"
+                step="0.1"
+                min="0"
+                max="5"
+                {...register("aftertasteScore", { valueAsNumber: true })}
+              />
+            </FormField>
+          </div>
         </div>
       </div>
 
-      <div className="flex items-center justify-end gap-3 pt-2 border-t border-neutral-300">
+      {/* Action Buttons */}
+      <div className="flex items-center justify-end gap-3 pt-2">
         <Button
           type="button"
           variant="secondary"
@@ -419,14 +449,16 @@ export function ListingForm({
           type="submit"
           variant="primary"
           disabled={isSubmitting || uploading}
-          className="gap-2"
+          className="min-w-[140px] justify-center gap-2"
         >
           {isSubmitting ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
-            <Save className="w-4 h-4" />
+            <>
+              <Save className="w-4 h-4" />
+              <span>{isEditing ? "Simpan Perubahan" : "Tambah Produk"}</span>
+            </>
           )}
-          {isEditing ? "Simpan Perubahan" : "Tambah Produk"}
         </Button>
       </div>
     </form>

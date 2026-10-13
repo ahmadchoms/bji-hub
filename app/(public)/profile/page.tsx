@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { User, Store, ArrowRight, Compass, ShieldCheck } from "lucide-react";
 import { logoutAction } from "@/actions/auth.actions";
 
+import { createClient } from "@/lib/supabase/server";
+import { BuyerProfileForm } from "@/components/profile/buyer-profile-form";
+
 export const metadata = {
   title: "Profil Akun - Biji Hub",
   description: "Kelola akun pengguna dan akses direktori kopi specialty Indonesia.",
@@ -24,6 +27,43 @@ export default async function ProfilePage() {
     redirect("/dashboard/profile");
   }
 
+  let userEmail = "";
+  let userName = "";
+  let userAvatarUrl = "";
+  let userPhone = "";
+  let userCity = "";
+  let userAddress = "";
+
+  if (
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
+    try {
+      const supabase = await createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        userEmail = user.email || "";
+        userName =
+          ((user.user_metadata?.name ||
+            user.user_metadata?.full_name ||
+            user.email?.split("@")[0]) as string) || "";
+        userAvatarUrl = (user.user_metadata?.avatar_url as string) || "";
+        userPhone = (user.user_metadata?.phone as string) || "";
+        userCity = (user.user_metadata?.city as string) || "";
+        userAddress = (user.user_metadata?.address as string) || "";
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  if (!userEmail) {
+    userEmail = "pembeli@bijihub.com";
+    userName = "Akbar Hakim";
+  }
+
   return (
     <PageContainer className="py-10 md:py-16 max-w-2xl space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -32,44 +72,28 @@ export default async function ProfilePage() {
             Akun Pembeli
           </h1>
           <p className="text-xs text-neutral-500 mt-0.5">
-            Kelola preferensi dan jelajahi direktori kopi specialty langsung dari petani & roastery lokal.
+            Kelola profil diri, alamat pengiriman, dan jelajahi direktori kopi specialty Indonesia.
           </p>
         </div>
-        <Badge variant="outline" className="w-fit text-xs font-semibold px-2.5 py-1 text-primary-800 border-primary-200 bg-primary-50">
+        <Badge
+          variant="outline"
+          className="w-fit text-xs font-semibold px-2.5 py-1 text-primary-800 border-primary-200 bg-primary-50"
+        >
           Akun Pembeli
         </Badge>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-full bg-neutral-100 text-neutral-600">
-              <User className="h-5 w-5" />
-            </div>
-            <div>
-              <CardTitle className="text-base">Informasi Pengguna</CardTitle>
-              <CardDescription className="text-xs">
-                Status akun aktif sebagai penikmat / pembeli B2B kopi specialty.
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4 pt-2 border-t border-neutral-100">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-sm">
-            <div>
-              <p className="text-neutral-500 text-xs">Akses Akun</p>
-              <p className="font-medium text-neutral-900">Pembeli / Roastery Buyer</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Link href="/catalog">
-                <Button variant="outline" size="sm" className="gap-1.5 text-xs">
-                  <Compass className="h-3.5 w-3.5" /> Jelajahi Katalog
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Form Profil Pembeli */}
+      <BuyerProfileForm
+        initialData={{
+          email: userEmail,
+          name: userName,
+          avatarUrl: userAvatarUrl,
+          phone: userPhone,
+          city: userCity,
+          address: userAddress,
+        }}
+      />
 
       <Card className="border-primary-200 bg-primary-50/40">
         <CardHeader>

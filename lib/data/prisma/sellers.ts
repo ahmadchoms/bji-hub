@@ -97,6 +97,7 @@ export const sellers: SellerMethods = {
           address: data.address,
           whatsappNumber: data.whatsappNumber,
           bio: data.bio,
+          avatarUrl: data.avatarUrl || null,
         },
       });
       return toSeller(row);

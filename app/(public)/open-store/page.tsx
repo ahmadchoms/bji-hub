@@ -32,7 +32,7 @@ export default async function BukaTokoPage() {
             Buka Toko Kopi Anda
           </h1>
           <p className="text-sm text-neutral-600 max-w-md mx-auto leading-relaxed">
-            Lengkapi profil toko Anda untuk langsung mengunggah varian biji kopi dan menerima inquiry dari roastery & kedai kopi.
+            Lengkapi profil toko Anda untuk langsung mengunggah varian biji kopi dan menerima pesan penawaran langsung dari roastery & kedai kopi.
           </p>
         </div>
 

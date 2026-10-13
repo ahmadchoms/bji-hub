@@ -54,7 +54,7 @@ export function ProductStickyCTA({
           onClick={scrollToInquiry}
           className="flex min-h-12 flex-1 items-center justify-center bg-transparent text-sm font-medium text-primary-700"
         >
-          Inquiry B2B
+          Ajukan Penawaran
         </button>
       </div>
     </div>

@@ -25,7 +25,8 @@ export function CategoryTabs({
         {items.map((item) => {
           const selected = active === item.slug;
           const href = buildCatalogHref(base, {
-            kategori: item.slug || undefined,
+            category: item.slug || undefined,
+            kategori: undefined,
           });
           return (
             <Link
@@ -52,11 +53,11 @@ export function ResultMeta({
 }) {
   const active = [
     params.get("q"),
-    params.get("kategori"),
-    params.get("asal"),
-    params.get("proses"),
-    params.get("sangrai"),
-    params.get("harga_min") || params.get("harga_max") ? "Harga" : "",
+    params.get("category") || params.get("kategori"),
+    params.get("origin") || params.get("asal"),
+    params.get("process") || params.get("proses"),
+    params.get("roast") || params.get("sangrai"),
+    params.get("min_price") || params.get("max_price") || params.get("harga_min") || params.get("harga_max") ? "Harga" : "",
     params.get("verified") === "true" ? "Terverifikasi" : "",
   ].filter(Boolean);
   return (

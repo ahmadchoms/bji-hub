@@ -11,40 +11,38 @@ export async function CatalogFeed({ params }: { params: CatalogParams }) {
   try {
     const feed = await getCatalogFeed(
       {
-        categorySlug: params.kategori,
-        originRegion: params.asal,
-        processMethod: params.proses,
-        roastLevel: params.sangrai,
-        minPrice: params.harga_min,
-        maxPrice: params.harga_max,
+        categorySlug: params.category || params.kategori,
+        originRegion: params.origin || params.asal,
+        processMethod: params.process || params.proses,
+        roastLevel: params.roast || params.sangrai,
+        minPrice: params.min_price ?? params.harga_min,
+        maxPrice: params.max_price ?? params.harga_max,
         isVerified: params.verified,
         search: params.q,
-        sort:
-          params.sort === "price_asc" || params.urut === "harga_terendah"
-            ? "price_asc"
-            : params.sort === "price_desc" || params.urut === "harga_tertinggi"
-              ? "price_desc"
-              : "newest",
+        sort: params.sort,
       },
-      params.page ?? params.halaman ?? 1,
+      params.page,
     );
-    const currentPage = params.page ?? params.halaman ?? 1;
+    const currentPage = params.page;
+    const cleanParams: Record<string, string | undefined> = {
+      q: params.q || undefined,
+      category: params.category || params.kategori || undefined,
+      origin: params.origin || params.asal || undefined,
+      process: params.process || params.proses || undefined,
+      roast: params.roast || params.sangrai || undefined,
+      min_price: params.min_price !== undefined ? String(params.min_price) : params.harga_min !== undefined ? String(params.harga_min) : undefined,
+      max_price: params.max_price !== undefined ? String(params.max_price) : params.harga_max !== undefined ? String(params.harga_max) : undefined,
+      verified: params.verified ? "true" : undefined,
+      sort: params.sort !== "newest" ? params.sort : undefined,
+    };
     const serialized = new URLSearchParams(
-      Object.entries(params)
-        .filter(
-          ([key, value]) =>
-            value !== "" &&
-            value !== false &&
-            value !== undefined &&
-            key !== "urut" &&
-            key !== "halaman",
-        )
+      Object.entries(cleanParams)
+        .filter(([, value]) => value !== undefined && value !== "")
         .map(([key, value]) => [key, String(value)]),
     ).toString();
 
     const nextParams = new URLSearchParams(serialized);
     nextParams.set("page", String(currentPage + 1));
-    nextParams.delete("halaman");
     const nextUrl = feed.hasMore ? `/?${nextParams.toString()}` : null;
 
     return (

@@ -18,7 +18,7 @@ export default async function BukaTokoPage() {
   }
 
   if (session.role === "guest") {
-    redirect(`/login?next=${encodeURIComponent("/buka-toko")}`);
+    redirect(`/login?next=${encodeURIComponent("/open-store")}`);
   }
 
   return (

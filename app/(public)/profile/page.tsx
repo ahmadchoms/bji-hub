@@ -99,7 +99,7 @@ export default async function ProfilePage() {
             </li>
           </ul>
           <div className="pt-2">
-            <Link href="/buka-toko">
+            <Link href="/open-store">
               <Button variant="primary" size="sm" className="gap-1.5 text-xs">
                 Buka Toko Mitra Sekarang <ArrowRight className="h-3.5 w-3.5" />
               </Button>

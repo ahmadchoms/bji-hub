@@ -15,7 +15,7 @@ export interface NavModel {
 const LINKS: NavItem[] = [{ label: "Paket Penjual", href: "/pricing" }];
 const BECOME_SELLER: NavItem = {
   label: "Buka Toko",
-  href: "/buka-toko",
+  href: "/open-store",
 };
 
 export function getNavModel(role: Role): NavModel {

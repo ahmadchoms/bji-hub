@@ -53,7 +53,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       </div>
       <CategoryTabs
         categories={categories}
-        active={params.kategori}
+        active={params.category || params.kategori || ""}
         currentParams={serialized}
       />
       <PageContainer>

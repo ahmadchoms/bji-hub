@@ -2,17 +2,24 @@ import { z } from "zod";
 
 export const catalogParamsSchema = z.object({
   q: z.string().trim().max(100).default(""),
-  kategori: z.string().trim().default(""),
-  asal: z.string().trim().default(""),
-  proses: z.string().trim().default(""),
-  sangrai: z.string().trim().default(""),
+  category: z.string().trim().default(""),
+  origin: z.string().trim().default(""),
+  process: z.string().trim().default(""),
+  roast: z.string().trim().default(""),
+  min_price: z.coerce.number().int().nonnegative().optional(),
+  max_price: z.coerce.number().int().nonnegative().optional(),
+  verified: z.preprocess((value) => value === true || value === "true", z.boolean()).default(false),
+  sort: z.enum(["newest", "price_asc", "price_desc"]).default("newest"),
+  page: z.coerce.number().int().min(1).default(1),
+  // Backward compatibility aliases
+  kategori: z.string().trim().optional(),
+  asal: z.string().trim().optional(),
+  proses: z.string().trim().optional(),
+  sangrai: z.string().trim().optional(),
   harga_min: z.coerce.number().int().nonnegative().optional(),
   harga_max: z.coerce.number().int().nonnegative().optional(),
-  verified: z.preprocess((value) => value === true || value === "true", z.boolean()).default(false),
-  urut: z.enum(["newest", "price_asc", "price_desc", "terbaru", "harga_terendah", "harga_tertinggi"]).optional(),
+  urut: z.string().optional(),
   halaman: z.coerce.number().int().min(1).optional(),
-  sort: z.enum(["newest", "price_asc", "price_desc", "terbaru", "harga_terendah", "harga_tertinggi"]).default("newest"),
-  page: z.coerce.number().int().min(1).default(1),
 });
 
 export type CatalogParams = z.infer<typeof catalogParamsSchema>;
@@ -27,23 +34,37 @@ export function parseCatalogParams(params: Record<string, string | string[] | un
   const normalizedSort =
     rawSort === "harga_terendah" ? "price_asc" :
     rawSort === "harga_tertinggi" ? "price_desc" :
-    rawSort === "terbaru" ? "newest" : rawSort;
+    rawSort === "terbaru" ? "newest" :
+    (rawSort === "price_asc" || rawSort === "price_desc" ? rawSort : "newest");
 
-  const rawPage = value("page") || value("halaman") || 1;
+  const page = Math.max(1, Number(value("page") || value("halaman")) || 1);
+  const category = value("category") || value("kategori") || "";
+  const origin = value("origin") || value("asal") || "";
+  const processMethod = value("process") || value("proses") || "";
+  const roast = value("roast") || value("sangrai") || "";
+  const minPrice = value("min_price") || value("harga_min");
+  const maxPrice = value("max_price") || value("harga_max");
+  const verified = value("verified") === "true";
 
   const parsed = catalogParamsSchema.safeParse({
-    q: value("q"),
-    kategori: value("kategori"),
-    asal: value("asal"),
-    proses: value("proses"),
-    sangrai: value("sangrai"),
-    harga_min: value("harga_min"),
-    harga_max: value("harga_max"),
-    verified: value("verified"),
+    q: value("q") || "",
+    category,
+    origin,
+    process: processMethod,
+    roast,
+    min_price: minPrice,
+    max_price: maxPrice,
+    verified,
     sort: normalizedSort,
-    page: rawPage,
+    page,
+    kategori: category,
+    asal: origin,
+    proses: processMethod,
+    sangrai: roast,
+    harga_min: minPrice,
+    harga_max: maxPrice,
     urut: normalizedSort,
-    halaman: rawPage,
+    halaman: page,
   });
 
   return parsed.success ? parsed.data : catalogParamsSchema.parse({});

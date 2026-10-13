@@ -169,8 +169,8 @@ export function TasteQuizModal({
 
   const handleApplyFilter = () => {
     const params = new URLSearchParams();
-    if (answers.process) params.set("proses", answers.process);
-    if (answers.roast) params.set("sangrai", answers.roast);
+    if (answers.process) params.set("process", answers.process);
+    if (answers.roast) params.set("roast", answers.roast);
 
     setOpen(false);
     router.push(`/?${params.toString()}`);

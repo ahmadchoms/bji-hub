@@ -192,7 +192,7 @@ export default function RegisterPage() {
                 Buka toko dan pasang katalog kopi specialty Anda gratis.
               </p>
               <Link
-                href="/buka-toko"
+                href="/open-store"
                 className="text-xs font-semibold text-primary-700 hover:underline mt-1.5 inline-block"
               >
                 Buka Toko Mitra di sini →

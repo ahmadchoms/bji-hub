@@ -69,6 +69,10 @@ export function CatalogControls({
       params.delete("halaman");
       params.delete("page");
       if (key === "sort") params.delete("urut");
+      if (key === "origin") params.delete("asal");
+      if (key === "process") params.delete("proses");
+      if (key === "roast") params.delete("sangrai");
+      if (key === "category") params.delete("kategori");
       startTransition(() =>
         router.replace(`${pathname}?${params.toString()}`, { scroll: false }),
       );
@@ -87,8 +91,8 @@ export function CatalogControls({
   }, [query, searchParams, replaceParam]);
 
   // Helper untuk menentukan label rentang harga aktif
-  const currentMinPrice = searchParams.get("harga_min") || "";
-  const currentMaxPrice = searchParams.get("harga_max") || "";
+  const currentMinPrice = searchParams.get("min_price") || searchParams.get("harga_min") || "";
+  const currentMaxPrice = searchParams.get("max_price") || searchParams.get("harga_max") || "";
   const currentPriceValue = `${currentMinPrice}:${currentMaxPrice}`;
   const activePriceLabel =
     priceRanges.find((p) => `${p.min}:${p.max}` === currentPriceValue)?.label ||
@@ -103,12 +107,16 @@ export function CatalogControls({
   const activeSortLabel =
     sorts.find(([v]) => v === currentSort)?.[1] || "Urutkan";
 
+  const currentOrigin = searchParams.get("origin") || searchParams.get("asal") || "";
+  const currentProcess = searchParams.get("process") || searchParams.get("proses") || "";
+  const currentRoast = searchParams.get("roast") || searchParams.get("sangrai") || "";
+
   // Helper untuk menghitung jumlah filter aktif
   const activeFilterCount = [
-    searchParams.get("asal"),
-    searchParams.get("proses"),
-    searchParams.get("sangrai"),
-    searchParams.get("harga_min") || searchParams.get("harga_max"),
+    currentOrigin,
+    currentProcess,
+    currentRoast,
+    currentMinPrice || currentMaxPrice,
     searchParams.get("verified"),
   ].filter(Boolean).length;
 
@@ -117,14 +125,14 @@ export function CatalogControls({
       {/* Filter Asal */}
       <div className="min-w-0 flex-1">
         <Select
-          value={searchParams.get("asal") || "ALL"}
+          value={currentOrigin || "ALL"}
           onValueChange={(val) =>
-            replaceParam("asal", !val || val === "ALL" ? "" : val)
+            replaceParam("origin", !val || val === "ALL" ? "" : val)
           }
         >
           <SelectTrigger className="h-11 w-full text-xs">
             <SelectValue placeholder="Asal Kopi">
-              {searchParams.get("asal") || "Semua Asal"}
+              {currentOrigin || "Semua Asal"}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -141,14 +149,14 @@ export function CatalogControls({
       {/* Filter Proses */}
       <div className="min-w-0 flex-1">
         <Select
-          value={searchParams.get("proses") || "ALL"}
+          value={currentProcess || "ALL"}
           onValueChange={(val) =>
-            replaceParam("proses", !val || val === "ALL" ? "" : val)
+            replaceParam("process", !val || val === "ALL" ? "" : val)
           }
         >
           <SelectTrigger className="h-11 w-full text-xs">
             <SelectValue placeholder="Proses Olah">
-              {searchParams.get("proses") || "Semua Proses"}
+              {currentProcess || "Semua Proses"}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -165,14 +173,14 @@ export function CatalogControls({
       {/* Filter Sangrai */}
       <div className="min-w-0 flex-1">
         <Select
-          value={searchParams.get("sangrai") || "ALL"}
+          value={currentRoast || "ALL"}
           onValueChange={(val) =>
-            replaceParam("sangrai", !val || val === "ALL" ? "" : val)
+            replaceParam("roast", !val || val === "ALL" ? "" : val)
           }
         >
           <SelectTrigger className="h-11 w-full text-xs">
             <SelectValue placeholder="Tingkat Sangrai">
-              {searchParams.get("sangrai") || "Semua Sangrai"}
+              {currentRoast || "Semua Sangrai"}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -215,10 +223,12 @@ export function CatalogControls({
             if (!val) return;
             const [min, max] = val.split(":");
             const params = new URLSearchParams(searchParams.toString());
-            if (min) params.set("harga_min", min);
-            else params.delete("harga_min");
-            if (max) params.set("harga_max", max);
-            else params.delete("harga_max");
+            if (min) params.set("min_price", min);
+            else params.delete("min_price");
+            params.delete("harga_min");
+            if (max) params.set("max_price", max);
+            else params.delete("max_price");
+            params.delete("harga_max");
             params.delete("halaman");
             params.delete("page");
             startTransition(() =>

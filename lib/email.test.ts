@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { sendOrderPaidEmail, sendOrderShippedEmail } from "./email";
+import {
+  sendOrderPaidEmail,
+  sendOrderShippedEmail,
+  sendLowStockAlertEmail,
+} from "./email";
 import type { Order } from "@/types";
 
 const mockOrder: Order = {
@@ -48,6 +52,18 @@ describe("Transactional Email Handler", () => {
   it("gracefully handles orders with missing buyerEmail", async () => {
     const orderNoEmail = { ...mockOrder, buyerEmail: "" };
     const result = await sendOrderPaidEmail(orderNoEmail);
+    expect(result.success).toBe(true);
+    expect(result.mocked).toBe(true);
+  });
+
+  it("handles low stock alert mock when RESEND_API_KEY is not defined", async () => {
+    const result = await sendLowStockAlertEmail({
+      sellerEmail: "seller@example.com",
+      sellerName: "Pak Hendra",
+      listingTitle: "Gayo Bourbon Anaerobic",
+      remainingStock: 3,
+      unit: "200g",
+    });
     expect(result.success).toBe(true);
     expect(result.mocked).toBe(true);
   });

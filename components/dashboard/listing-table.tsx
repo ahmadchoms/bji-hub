@@ -72,6 +72,7 @@ export function ListingTable({ listings, className }: ListingTableProps) {
               <TableHead>Produk</TableHead>
               <TableHead>Kategori</TableHead>
               <TableHead>Harga</TableHead>
+              <TableHead>Stok</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
@@ -81,6 +82,7 @@ export function ListingTable({ listings, className }: ListingTableProps) {
               const statusConf =
                 STATUS_LABELS[listing.status] ?? STATUS_LABELS.active;
               const img = listing.images[0]?.url;
+              const stock = listing.stock ?? 50;
               return (
                 <TableRow key={listing.id}>
                   <TableCell>
@@ -126,6 +128,21 @@ export function ListingTable({ listings, className }: ListingTableProps) {
                   </TableCell>
                   <TableCell className="font-mono tabular-nums font-medium text-primary-900">
                     {formatRupiah(listing.price)}
+                  </TableCell>
+                  <TableCell>
+                    {stock === 0 ? (
+                      <span className="inline-flex items-center text-[11px] font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded">
+                        Habis (0)
+                      </span>
+                    ) : stock <= 5 ? (
+                      <span className="inline-flex items-center text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
+                        Menipis ({stock} {listing.unit})
+                      </span>
+                    ) : (
+                      <span className="font-mono text-xs text-neutral-800 font-medium">
+                        {stock} {listing.unit}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Badge variant={statusConf.variant} className="text-xs">
@@ -207,13 +224,26 @@ export function ListingTable({ listings, className }: ListingTableProps) {
                   <p className="text-[11px] text-neutral-500 mt-0.5">
                     {listing.category.name}
                   </p>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <span className="font-mono tabular-nums text-sm text-primary-900">
+                  <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                    <span className="font-mono tabular-nums text-sm text-primary-900 font-semibold">
                       {formatRupiah(listing.price)}
                     </span>
                     <Badge variant={statusConf.variant} className="text-xs">
                       {statusConf.label}
                     </Badge>
+                    {(listing.stock ?? 50) === 0 ? (
+                      <span className="text-[10px] font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded">
+                        Habis (0)
+                      </span>
+                    ) : (listing.stock ?? 50) <= 5 ? (
+                      <span className="text-[10px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
+                        Stok Menipis ({listing.stock ?? 50} {listing.unit})
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-neutral-600 bg-neutral-100 px-1.5 py-0.5 rounded font-mono">
+                        Stok: {listing.stock ?? 50} {listing.unit}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

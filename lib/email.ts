@@ -192,3 +192,85 @@ export async function sendOrderShippedEmail(order: Order): Promise<EmailResult> 
     };
   }
 }
+
+/**
+ * Sends low stock warning alert email to seller when inventory drops <= 5.
+ */
+export async function sendLowStockAlertEmail({
+  sellerEmail,
+  sellerName,
+  listingTitle,
+  remainingStock,
+  unit,
+}: {
+  sellerEmail: string;
+  sellerName: string;
+  listingTitle: string;
+  remainingStock: number;
+  unit: string;
+}): Promise<EmailResult> {
+  const resend = getResend();
+  const dashboardUrl = `${APP_URL}/dashboard/listing`;
+
+  if (!resend || !sellerEmail) {
+    console.log(`[EMAIL MOCK] Low Stock Alert to ${sellerEmail || "no-email"}:`, {
+      sellerName,
+      listingTitle,
+      remainingStock,
+      unit,
+    });
+    return { success: true, mocked: true };
+  }
+
+  try {
+    const isSoldOut = remainingStock <= 0;
+    const htmlContent = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1F1815; background-color: #FAF6F1; border-radius: 8px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h1 style="color: #2E150C; margin: 0; font-size: 26px; font-weight: 800;">BIJI HUB</h1>
+          <p style="color: #7A4A34; font-size: 13px; margin: 4px 0 0;">Peringatan Stok Inventaris Penjual</p>
+        </div>
+
+        <div style="background-color: #ffffff; padding: 24px; border-radius: 8px; border: 1px solid #D8CFC5;">
+          <span style="background-color: ${isSoldOut ? "#FEE2E2" : "#FEF3C7"}; color: ${isSoldOut ? "#991B1B" : "#92400E"}; font-size: 11px; font-weight: bold; padding: 4px 10px; border-radius: 4px; text-transform: uppercase;">
+            ${isSoldOut ? "Stok Produk Habis" : "Stok Produk Menipis"}
+          </span>
+          <h2 style="margin: 12px 0 4px; font-size: 18px; color: #1F1815;">Halo ${sellerName},</h2>
+          <p style="color: #4A403A; font-size: 14px; margin: 0 0 16px; line-height: 1.5;">
+            ${
+              isSoldOut
+                ? `Stok untuk produk <strong>"${listingTitle}"</strong> telah habis (0 ${unit}) dan produk telah dinonaktifkan sementara dari katalog publik.`
+                : `Stok untuk produk <strong>"${listingTitle}"</strong> tersisa hanya <strong>${remainingStock} ${unit}</strong>. Segera perbarui kuota panen/sangrai Anda.`
+            }
+          </p>
+
+          <div style="text-align: center; margin-top: 20px;">
+            <a href="${dashboardUrl}" style="display: inline-block; background-color: #2E150C; color: #ffffff; text-decoration: none; font-size: 13px; font-weight: bold; padding: 12px 24px; border-radius: 6px;">Kelola Stok di Dashboard</a>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px; font-size: 11px; color: #8C8078;">
+          <p style="margin: 0;">Biji Hub Merchant Services</p>
+        </div>
+      </div>
+    `;
+
+    const res = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: sellerEmail,
+      subject: `[Biji Hub] ${isSoldOut ? "STOK HABIS" : "PERINGATAN STOK MENIPIS"}: ${listingTitle}`,
+      html: htmlContent,
+    });
+
+    return {
+      success: true,
+      messageId: res.data?.id,
+    };
+  } catch (error) {
+    console.error("Failed to send low stock alert email:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to send email",
+    };
+  }
+}

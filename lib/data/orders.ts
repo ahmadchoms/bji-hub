@@ -387,10 +387,25 @@ export async function updateOrderStatus(
       currentOrder.listingId &&
       currentOrder.quantity
     ) {
-      await decrementListingStock(
+      const dec = await decrementListingStock(
         currentOrder.listingId,
         currentOrder.quantity,
       );
+      if (dec.success && typeof dec.remainingStock === "number" && dec.remainingStock <= 5) {
+        import("@/lib/email")
+          .then(({ sendLowStockAlertEmail }) => {
+            sendLowStockAlertEmail({
+              sellerEmail: "roastery@bijihub.id",
+              sellerName: currentOrder.sellerName || "Penjual",
+              listingTitle: currentOrder.listingTitle || "Biji Kopi",
+              remainingStock: dec.remainingStock!,
+              unit: "unit",
+            }).catch((err) =>
+              console.error("Failed to send low stock notification:", err),
+            );
+          })
+          .catch(() => {});
+      }
     }
   }
 

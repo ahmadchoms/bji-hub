@@ -2,7 +2,11 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { loginSchema, registerSchema } from "@/lib/validations/auth.schema";
+import {
+  loginSchema,
+  registerSchema,
+  sellerOnboardingSchema,
+} from "@/lib/validations/auth.schema";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 import {
   homeFor,
@@ -10,10 +14,10 @@ import {
   safeNextPath,
   type Role,
 } from "@/lib/auth/roles";
-import { MOCK_SESSION_COOKIE } from "@/lib/auth/session";
+import { MOCK_SESSION_COOKIE, getSession } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { getPrisma } from "@/lib/data/prisma/client";
-import { slugify, uniqueSlug } from "@/lib/slug";
+import { slugify } from "@/lib/slug";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 async function setMockSession(role: Role): Promise<void> {
@@ -110,7 +114,7 @@ export async function registerAction(
         options: {
           data: {
             name: parsed.data.name,
-            role: parsed.data.role,
+            role: "buyer",
           },
         },
       });
@@ -118,57 +122,20 @@ export async function registerAction(
       if (!error && data.user) {
         if (process.env.DATA_SOURCE === "prisma") {
           const prisma = getPrisma();
-          const roleEnum = parsed.data.role === "seller" ? "SELLER" : "BUYER";
-
-          // Create User row
           await prisma.user.upsert({
             where: { id: data.user.id },
             create: {
               id: data.user.id,
               email: parsed.data.email,
-              role: roleEnum,
+              role: "BUYER",
             },
             update: {
               email: parsed.data.email,
-              role: roleEnum,
+              role: "BUYER",
             },
           });
-
-          // Create SellerProfile if role is seller
-          if (parsed.data.role === "seller") {
-            const baseSlug = slugify(parsed.data.businessName);
-            let slug = baseSlug;
-            let counter = 1;
-
-            while (await prisma.sellerProfile.findUnique({ where: { slug } })) {
-              slug = `${baseSlug}-${counter++}`;
-            }
-
-            await prisma.sellerProfile.upsert({
-              where: { userId: data.user.id },
-              create: {
-                userId: data.user.id,
-                businessName: parsed.data.businessName,
-                slug,
-                province: parsed.data.province,
-                city: parsed.data.city,
-                address: parsed.data.address,
-                whatsappNumber: parsed.data.whatsappNumber,
-                tier: "free",
-                isVerified: false,
-              },
-              update: {
-                businessName: parsed.data.businessName,
-                province: parsed.data.province,
-                city: parsed.data.city,
-                address: parsed.data.address,
-                whatsappNumber: parsed.data.whatsappNumber,
-              },
-            });
-          }
         }
-
-        return ok({ redirectTo: homeFor(parsed.data.role) });
+        return ok({ redirectTo: "/" });
       }
     } catch {
       // Fall through to mock session if Supabase throws or offline
@@ -176,8 +143,82 @@ export async function registerAction(
   }
 
   // Fallback mock session for local demo/testing
-  await setMockSession(parsed.data.role);
-  return ok({ redirectTo: homeFor(parsed.data.role) });
+  await setMockSession("buyer");
+  return ok({ redirectTo: "/" });
+}
+
+export async function becomeSellerAction(
+  input: unknown,
+): Promise<ActionResult<{ redirectTo: string }>> {
+  const session = await getSession();
+  if (session.role === "seller") {
+    return ok({ redirectTo: "/dashboard" });
+  }
+
+  const parsed = sellerOnboardingSchema.safeParse(input);
+  if (!parsed.success) {
+    return fail(
+      "Data tidak valid",
+      parsed.error.flatten().fieldErrors as Record<string, string[]>,
+    );
+  }
+
+  // Real Supabase Auth & Prisma seller creation
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    try {
+      const supabase = await createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user && process.env.DATA_SOURCE === "prisma") {
+        const prisma = getPrisma();
+        const baseSlug = slugify(parsed.data.businessName);
+        let slug = baseSlug;
+        let counter = 1;
+
+        while (await prisma.sellerProfile.findUnique({ where: { slug } })) {
+          slug = `${baseSlug}-${counter++}`;
+        }
+
+        await prisma.$transaction([
+          prisma.user.update({
+            where: { id: user.id },
+            data: { role: "SELLER" },
+          }),
+          prisma.sellerProfile.upsert({
+            where: { userId: user.id },
+            create: {
+              userId: user.id,
+              businessName: parsed.data.businessName,
+              slug,
+              province: parsed.data.province,
+              city: parsed.data.city,
+              address: parsed.data.address,
+              whatsappNumber: parsed.data.whatsappNumber,
+              tier: "free",
+              isVerified: false,
+            },
+            update: {
+              businessName: parsed.data.businessName,
+              province: parsed.data.province,
+              city: parsed.data.city,
+              address: parsed.data.address,
+              whatsappNumber: parsed.data.whatsappNumber,
+            },
+          }),
+        ]);
+
+        return ok({ redirectTo: "/dashboard" });
+      }
+    } catch {
+      // Fall through to mock session
+    }
+  }
+
+  // Fallback mock session for local demo/testing
+  await setMockSession("seller");
+  return ok({ redirectTo: "/dashboard" });
 }
 
 export async function logoutAction(): Promise<void> {

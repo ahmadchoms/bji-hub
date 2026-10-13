@@ -14,8 +14,8 @@ export interface NavModel {
 
 const LINKS: NavItem[] = [{ label: "Paket Penjual", href: "/pricing" }];
 const BECOME_SELLER: NavItem = {
-  label: "Jual Kopi",
-  href: "/register?role=seller",
+  label: "Buka Toko",
+  href: "/buka-toko",
 };
 
 export function getNavModel(role: Role): NavModel {
@@ -37,7 +37,7 @@ export function getNavModel(role: Role): NavModel {
     case "buyer":
       return {
         links: LINKS,
-        account: null,
+        account: { label: "Akun Saya", href: "/profile" },
         cta: BECOME_SELLER,
         canLogout: true,
       };

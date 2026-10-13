@@ -1,12 +1,12 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 import {
   registerSchema,
   RegisterFormValues,
@@ -14,96 +14,26 @@ import {
 import { FormField } from "@/components/shared/form-field";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/shared/logo";
-import { cn } from "@/lib/utils";
 import { registerAction } from "@/actions/auth.actions";
-import { fetchProvinces, fetchRegencies, type RegionItem } from "@/lib/regions";
 
-function RegisterForm() {
+export default function RegisterPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
-  const [provinces, setProvinces] = useState<RegionItem[]>([]);
-  const [cities, setCities] = useState<RegionItem[]>([]);
-  const [selectedProvinceId, setSelectedProvinceId] = useState<string>("");
-  const [loadingProvinces, setLoadingProvinces] = useState(false);
-  const [loadingCities, setLoadingCities] = useState(false);
-
-  const initialRole =
-    searchParams.get("role") === "seller" ? "seller" : "buyer";
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
     handleSubmit,
-    watch,
-    setValue,
     formState: { errors },
-  } = useForm({
+  } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       name: "",
-      businessName: "",
       email: "",
-      whatsappNumber: "",
-      province: "",
-      city: "",
-      address: "",
       password: "",
       termsAccepted: true,
-      role: initialRole as "buyer" | "seller",
     },
   });
-
-  useEffect(() => {
-    let ignore = false;
-    async function loadProvinces() {
-      setLoadingProvinces(true);
-      try {
-        const data = await fetchProvinces();
-        if (!ignore) setProvinces(data);
-      } catch {
-        if (!ignore) toast.error("Gagal memuat daftar provinsi");
-      } finally {
-        if (!ignore) setLoadingProvinces(false);
-      }
-    }
-    loadProvinces();
-    return () => {
-      ignore = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!selectedProvinceId) {
-      setCities([]);
-      return;
-    }
-    let ignore = false;
-    async function loadCities() {
-      setLoadingCities(true);
-      try {
-        const data = await fetchRegencies(selectedProvinceId);
-        if (!ignore) setCities(data);
-      } catch {
-        if (!ignore) toast.error("Gagal memuat daftar kota/kabupaten");
-      } finally {
-        if (!ignore) setLoadingCities(false);
-      }
-    }
-    loadCities();
-    return () => {
-      ignore = true;
-    };
-  }, [selectedProvinceId]);
-
-  const handleProvinceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const provinceName = e.target.value;
-    setValue("province", provinceName, { shouldValidate: true });
-    setValue("city", "", { shouldValidate: true });
-    const matched = provinces.find((p) => p.name === provinceName);
-    setSelectedProvinceId(matched ? matched.id : "");
-  };
-
-  const selectedRole = watch("role");
 
   const onSubmit = async (values: RegisterFormValues) => {
     setIsLoading(true);
@@ -113,8 +43,8 @@ function RegisterForm() {
         toast.error("Pendaftaran gagal", { description: result.error });
         return;
       }
-      toast.success("Pendaftaran berhasil", {
-        description: `Selamat datang, ${values.businessName}.`,
+      toast.success("Pendaftaran berhasil!", {
+        description: `Selamat datang, ${values.name}. Akun pembeli Anda telah aktif.`,
       });
       router.push(result.data.redirectTo);
       router.refresh();
@@ -129,67 +59,21 @@ function RegisterForm() {
 
   return (
     <div className="py-12 md:py-16 flex items-center justify-center">
-      <div className="w-full max-w-xl mx-auto px-4">
+      <div className="w-full max-w-md mx-auto px-4">
         <div className="border border-neutral-300 bg-surface-base rounded-sm p-6 sm:p-8 space-y-6">
           <div className="text-center space-y-2">
             <div className="flex justify-center mb-2">
               <Logo size="md" />
             </div>
             <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest">
-              Pendaftaran Kopi Biji
+              Pendaftaran Akun
             </p>
             <h1 className="font-display text-2xl text-neutral-900 font-semibold">
-              Buka Akun
+              Buka Akun Pembeli
             </h1>
-            <p className="text-sm text-neutral-600 max-w-md mx-auto leading-relaxed">
-              Daftar sebagai penjual untuk menjual biji kopi, atau sebagai
-              pembeli untuk mencari kopi specialty.
+            <p className="text-sm text-neutral-600 max-w-sm mx-auto leading-relaxed">
+              Daftar untuk mencari, membandingkan profil rasa, dan terhubung langsung dengan petani & roaster kopi lokal.
             </p>
-          </div>
-
-          {/* Role selector */}
-          <div>
-            <span className="text-xs text-neutral-700 block mb-2">
-              Saya ingin
-            </span>
-            <div
-              className="grid grid-cols-2 gap-2"
-              role="radiogroup"
-              aria-label="Pilih tipe akun"
-            >
-              <label
-                className={cn(
-                  "flex items-center justify-center rounded-sm border px-3 py-3 text-sm font-medium cursor-pointer transition-colors",
-                  selectedRole === "buyer"
-                    ? "border-primary-600 bg-primary-50 text-primary-900"
-                    : "border-neutral-300 bg-surface-base text-neutral-700 hover:border-neutral-400",
-                )}
-              >
-                <input
-                  type="radio"
-                  value="buyer"
-                  {...register("role")}
-                  className="sr-only"
-                />
-                Membeli Kopi
-              </label>
-              <label
-                className={cn(
-                  "flex items-center justify-center rounded-sm border px-3 py-3 text-sm font-medium cursor-pointer transition-colors",
-                  selectedRole === "seller"
-                    ? "border-primary-600 bg-primary-50 text-primary-900"
-                    : "border-neutral-300 bg-surface-base text-neutral-700 hover:border-neutral-400",
-                )}
-              >
-                <input
-                  type="radio"
-                  value="seller"
-                  {...register("role")}
-                  className="sr-only"
-                />
-                Menjual Kopi
-              </label>
-            </div>
           </div>
 
           <form
@@ -197,117 +81,24 @@ function RegisterForm() {
             className="space-y-4"
             noValidate
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                label="Nama Pemilik"
-                required
-                error={errors.name?.message}
-              >
-                <input
-                  type="text"
-                  {...register("name")}
-                  placeholder="Budi Santoso"
-                  className="w-full h-10 px-3 text-sm bg-surface-base border border-neutral-300 rounded-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
-                />
-              </FormField>
-              <FormField
-                label="Nama Toko / Roastery"
-                required
-                error={errors.businessName?.message}
-              >
-                <input
-                  type="text"
-                  {...register("businessName")}
-                  placeholder="Puntang Highland Coffee"
-                  className="w-full h-10 px-3 text-sm bg-surface-base border border-neutral-300 rounded-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
-                />
-              </FormField>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Email" required error={errors.email?.message}>
-                <input
-                  type="email"
-                  {...register("email")}
-                  placeholder="budi@roastery.com"
-                  className="w-full h-10 px-3 text-sm bg-surface-base border border-neutral-300 rounded-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
-                />
-              </FormField>
-              <FormField
-                label="WhatsApp"
-                required
-                error={errors.whatsappNumber?.message}
-                helperText="Untuk chat & order langsung"
-              >
-                <input
-                  type="tel"
-                  {...register("whatsappNumber")}
-                  placeholder="081234567890"
-                  className="w-full h-10 px-3 text-sm bg-surface-base border border-neutral-300 rounded-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
-                />
-              </FormField>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                label="Provinsi"
-                required
-                error={errors.province?.message}
-              >
-                <select
-                  {...register("province")}
-                  onChange={(e) => {
-                    register("province").onChange(e);
-                    handleProvinceChange(e);
-                  }}
-                  disabled={loadingProvinces}
-                  className="w-full h-10 px-3 text-sm bg-surface-base border border-neutral-300 rounded-sm text-neutral-900 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600 disabled:opacity-50"
-                >
-                  <option value="">
-                    {loadingProvinces ? "Memuat provinsi..." : "Pilih Provinsi"}
-                  </option>
-                  {provinces.map((prov) => (
-                    <option key={prov.id} value={prov.name}>
-                      {prov.name}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-              <FormField
-                label="Kota / Kabupaten"
-                required
-                error={errors.city?.message}
-              >
-                <select
-                  {...register("city")}
-                  disabled={!selectedProvinceId || loadingCities}
-                  className="w-full h-10 px-3 text-sm bg-surface-base border border-neutral-300 rounded-sm text-neutral-900 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600 disabled:opacity-50"
-                >
-                  <option value="">
-                    {loadingCities
-                      ? "Memuat kota/kabupaten..."
-                      : !selectedProvinceId
-                        ? "Pilih provinsi dahulu"
-                        : "Pilih Kota / Kabupaten"}
-                  </option>
-                  {cities.map((city) => (
-                    <option key={city.id} value={city.name}>
-                      {city.name}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-            </div>
-
             <FormField
-              label="Alamat Lengkap"
+              label="Nama Lengkap"
               required
-              error={errors.address?.message}
+              error={errors.name?.message}
             >
               <input
                 type="text"
-                {...register("address")}
-                placeholder="Jl. Raya Perkebunan No. 12"
+                {...register("name")}
+                placeholder="Budi Santoso"
+                className="w-full h-10 px-3 text-sm bg-surface-base border border-neutral-300 rounded-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+              />
+            </FormField>
+
+            <FormField label="Email" required error={errors.email?.message}>
+              <input
+                type="email"
+                {...register("email")}
+                placeholder="budi@email.com"
                 className="w-full h-10 px-3 text-sm bg-surface-base border border-neutral-300 rounded-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
               />
             </FormField>
@@ -317,33 +108,48 @@ function RegisterForm() {
               required
               error={errors.password?.message}
             >
-              <input
-                type="password"
-                {...register("password")}
-                placeholder="Minimal 6 karakter"
-                className="w-full h-10 px-3 text-sm bg-surface-base border border-neutral-300 rounded-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  {...register("password")}
+                  placeholder="Minimal 6 karakter"
+                  className="w-full h-10 pl-3 pr-10 text-sm bg-surface-base border border-neutral-300 rounded-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-700"
+                  aria-label={showPassword ? "Sembunyikan sandi" : "Tampilkan sandi"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
             </FormField>
 
             <div className="pt-1">
-              <label className="flex items-start gap-2 cursor-pointer text-xs text-neutral-700">
+              <label className="flex items-start gap-2.5 cursor-pointer">
                 <input
                   type="checkbox"
                   {...register("termsAccepted")}
-                  className="mt-0.5 w-4 h-4 rounded text-primary-600 focus:ring-primary-400 border-neutral-300"
+                  className="mt-0.5 h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-600"
                 />
-                <span className="leading-relaxed">
-                  Saya setuju dengan{" "}
+                <span className="text-xs text-neutral-600 leading-snug">
+                  Saya menyetujui{" "}
                   <Link
                     href="/terms"
-                    className="text-primary-600 hover:underline"
+                    target="_blank"
+                    className="text-primary-600 underline hover:text-primary-700"
                   >
                     Syarat & Ketentuan
                   </Link>{" "}
-                  Direktori Kopi Biji.
+                  platform direktori Biji Hub.
                 </span>
               </label>
-              {errors.termsAccepted?.message && (
+              {errors.termsAccepted && (
                 <p className="text-xs text-status-error mt-1">
                   {errors.termsAccepted.message}
                 </p>
@@ -353,46 +159,48 @@ function RegisterForm() {
             <Button
               type="submit"
               variant="primary"
-              size="lg"
+              size="default"
               disabled={isLoading}
-              className="w-full justify-center gap-2"
+              className="w-full h-10"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Mendaftarkan...</span>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Mendaftarkan...
                 </>
               ) : (
-                <span>Daftarkan Akun</span>
+                "Daftar Sekarang"
               )}
             </Button>
           </form>
 
-          <div className="text-center text-xs text-neutral-600 pt-2 border-t border-neutral-300">
-            <span>Sudah punya akun? </span>
-            <Link
-              href="/login"
-              className="font-medium text-primary-600 hover:underline"
-            >
-              Masuk
-            </Link>
+          <div className="pt-2 border-t border-neutral-200/80 space-y-3 text-center">
+            <p className="text-xs text-neutral-600">
+              Sudah punya akun?{" "}
+              <Link
+                href="/login"
+                className="font-semibold text-primary-600 hover:text-primary-700 hover:underline"
+              >
+                Masuk di sini
+              </Link>
+            </p>
+            <div className="p-3 rounded-md bg-primary-50/60 border border-primary-200/70 text-left">
+              <p className="text-xs font-semibold text-primary-900">
+                Punya kebun kopi atau roastery?
+              </p>
+              <p className="text-[11px] text-primary-800 mt-0.5">
+                Buka toko dan pasang katalog kopi specialty Anda gratis.
+              </p>
+              <Link
+                href="/buka-toko"
+                className="text-xs font-semibold text-primary-700 hover:underline mt-1.5 inline-block"
+              >
+                Buka Toko Mitra di sini →
+              </Link>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  );
-}
-
-export default function RegisterPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="py-12 flex justify-center">
-          <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
-        </div>
-      }
-    >
-      <RegisterForm />
-    </Suspense>
   );
 }

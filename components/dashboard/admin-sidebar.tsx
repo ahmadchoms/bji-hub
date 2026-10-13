@@ -6,7 +6,7 @@ import {
 const ADMIN_NAV: readonly DashboardNavItem[] = [
   { href: "/admin", label: "Ringkasan" },
   { href: "/admin/verification", label: "Antrean Verifikasi" },
-  { href: "/admin/moderation", label: "Moderasi Listing" },
+  { href: "/admin/moderation", label: "Moderasi Produk" },
   { href: "/admin/transactions", label: "Riwayat Transaksi" },
 ];
 

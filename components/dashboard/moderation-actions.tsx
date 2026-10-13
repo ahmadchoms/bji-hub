@@ -27,8 +27,8 @@ export function ModerationActions({
         return;
       }
       if (decision === "approve")
-        toast.success(`Listing "${title}" disetujui.`);
-      else toast.error(`Listing "${title}" ditangguhkan.`);
+        toast.success(`Produk "${title}" disetujui.`);
+      else toast.error(`Produk "${title}" ditangguhkan.`);
     });
 
   if (variant === "icon") {

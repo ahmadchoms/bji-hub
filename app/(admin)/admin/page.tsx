@@ -31,13 +31,13 @@ export default async function AdminOverviewPage() {
     <div className="space-y-8">
       <SectionHeader
         title="Admin Panel"
-        subtitle="Pantau platform, verifikasi seller, dan kelola listing."
+        subtitle="Pantau platform, verifikasi toko penjual, dan kelola produk."
       />
 
       <StatList
         items={[
-          { label: "Total Seller", value: String(stats.totalSellers) },
-          { label: "Total Listing", value: String(stats.totalListings) },
+          { label: "Total Penjual", value: String(stats.totalSellers) },
+          { label: "Total Produk", value: String(stats.totalListings) },
           {
             label: "Menunggu Verifikasi",
             value: String(stats.pendingVerifications),

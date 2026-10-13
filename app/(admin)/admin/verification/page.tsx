@@ -21,7 +21,7 @@ export default async function AdminVerificationPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <SectionHeader
           title="Antrean Verifikasi"
-          subtitle="Tinjau dan proses permohonan status terverifikasi mitra seller."
+          subtitle="Tinjau dan proses permohonan status terverifikasi mitra toko penjual."
         />
         {pendingSellers.length > 0 && (
           <Badge
@@ -35,7 +35,7 @@ export default async function AdminVerificationPage() {
 
       {pendingSellers.length === 0 ? (
         <EmptyState
-          title="Semua Seller Terverifikasi"
+          title="Semua Toko Terverifikasi"
           description="Tidak ada antrean verifikasi yang membutuhkan tindakan saat ini."
         />
       ) : (

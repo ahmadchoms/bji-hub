@@ -37,14 +37,14 @@ export default async function AdminModerationPage() {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Moderasi Listing"
-        subtitle={`${listings.length} listing terdaftar di platform.`}
+        title="Moderasi Produk"
+        subtitle={`${listings.length} produk terdaftar di katalog platform.`}
       />
 
       {listings.length === 0 ? (
         <EmptyState
-          title="Belum Ada Listing"
-          description="Listing dari seller akan muncul di sini untuk dimoderasi."
+          title="Belum Ada Produk"
+          description="Produk yang diunggah oleh penjual akan muncul di sini untuk dimoderasi."
         />
       ) : (
         <>
@@ -53,8 +53,8 @@ export default async function AdminModerationPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-14">Foto</TableHead>
-                  <TableHead>Judul Listing</TableHead>
-                  <TableHead>Seller</TableHead>
+                  <TableHead>Nama Produk</TableHead>
+                  <TableHead>Toko Penjual</TableHead>
                   <TableHead>Harga</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Aksi</TableHead>

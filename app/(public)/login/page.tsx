@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -14,7 +14,6 @@ import { Logo } from "@/components/shared/logo";
 import { loginAction } from "@/actions/auth.actions";
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -36,16 +35,17 @@ function LoginForm() {
       );
       if (!result.success) {
         toast.error("Gagal masuk", { description: result.error });
+        setIsLoading(false);
         return;
       }
-      toast.success("Berhasil masuk");
-      router.push(result.data.redirectTo);
-      router.refresh();
+      toast.success("Berhasil masuk!", {
+        description: "Mengalihkan ke akun Anda...",
+      });
+      window.location.href = result.data.redirectTo;
     } catch {
       toast.error("Gagal masuk", {
         description: "Terjadi kesalahan. Coba lagi.",
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -126,7 +126,7 @@ function LoginForm() {
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Memverifikasi...</span>
+                  <span>Mengalihkan...</span>
                 </>
               ) : (
                 <>

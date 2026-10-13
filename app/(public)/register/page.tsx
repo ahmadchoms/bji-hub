@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -17,7 +16,6 @@ import { Logo } from "@/components/shared/logo";
 import { registerAction } from "@/actions/auth.actions";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -41,18 +39,17 @@ export default function RegisterPage() {
       const result = await registerAction(values);
       if (!result.success) {
         toast.error("Pendaftaran gagal", { description: result.error });
+        setIsLoading(false);
         return;
       }
       toast.success("Pendaftaran berhasil!", {
-        description: `Selamat datang, ${values.name}. Akun pembeli Anda telah aktif.`,
+        description: `Selamat datang, ${values.name}. Mengalihkan...`,
       });
-      router.push(result.data.redirectTo);
-      router.refresh();
+      window.location.href = result.data.redirectTo;
     } catch {
       toast.error("Pendaftaran gagal", {
         description: "Terjadi kesalahan. Coba lagi.",
       });
-    } finally {
       setIsLoading(false);
     }
   };

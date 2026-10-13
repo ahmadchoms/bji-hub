@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   Loader2,
   Lock,
+  MapPin,
 } from "lucide-react";
 import { ListingWithRelations } from "@/types";
 import { formatRupiah } from "@/components/shared/price-text";
@@ -44,34 +45,16 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
   const [buyerName, setBuyerName] = useState(initialBuyer.name);
   const [buyerEmail, setBuyerEmail] = useState(initialBuyer.email);
   const [buyerPhone, setBuyerPhone] = useState(initialBuyer.phone);
-  const [buyerCity, setBuyerCity] = useState(initialBuyer.city || "Jakarta");
+  const [buyerCity, setBuyerCity] = useState(initialBuyer.city || "");
   const [buyerAddress, setBuyerAddress] = useState(initialBuyer.address);
   const [notes, setNotes] = useState("");
 
-  const [shippingRates, setShippingRates] = useState<ShippingRate[]>([
-    {
-      id: "jne-reg",
-      courierCode: "jne",
-      courierName: "JNE",
-      service: "Reguler",
-      cost: 15000,
-      etd: "2-3 hari",
-      description: "Pengiriman standar kilat.",
-    },
-    {
-      id: "jnt-cargo",
-      courierCode: "jnt_cargo",
-      courierName: "J&T Cargo",
-      service: "Kargo Hemat B2B",
-      cost: 25000,
-      etd: "3-5 hari",
-      description: "Rekomendasi terbaik untuk karung & pesanan grosir (≥ 5 kg).",
-    },
-  ]);
-  const [selectedCourierId, setSelectedCourierId] = useState<string>("jne-reg");
+  const [shippingRates, setShippingRates] = useState<ShippingRate[]>([]);
+  const [selectedCourierId, setSelectedCourierId] = useState<string>("");
+  const [isLoadingShipping, setIsLoadingShipping] = useState<boolean>(false);
 
   const selectedCourier =
-    shippingRates.find((r) => r.id === selectedCourierId) || shippingRates[0];
+    shippingRates.find((r) => r.id === selectedCourierId) || null;
 
   const itemPrice = Number(listing.price);
   const subtotal = itemPrice * quantity;
@@ -81,25 +64,42 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
 
   useEffect(() => {
     let canceled = false;
-    const fetchRates = async () => {
-      if (buyerCity.trim().length >= 3) {
+    const cleanCity = buyerCity.trim();
+
+    if (cleanCity.length < 3) {
+      setShippingRates([]);
+      setSelectedCourierId("");
+      setIsLoadingShipping(false);
+      return;
+    }
+
+    setIsLoadingShipping(true);
+    const timer = setTimeout(async () => {
+      try {
         const rates = await calculateShippingRates({
           originCity: listing.seller.city,
           originProvince: listing.seller.province,
-          destinationCity: buyerCity,
+          destinationCity: cleanCity,
           weightGrams: quantity * 1000,
         });
-        if (!canceled && rates.length > 0) {
+        if (!canceled) {
           setShippingRates(rates);
-          setSelectedCourierId((prev) =>
-            rates.some((r) => r.id === prev) ? prev : rates[0].id,
-          );
+          if (rates.length > 0) {
+            setSelectedCourierId((prev) =>
+              rates.some((r) => r.id === prev) ? prev : rates[0].id,
+            );
+          } else {
+            setSelectedCourierId("");
+          }
         }
+      } finally {
+        if (!canceled) setIsLoadingShipping(false);
       }
-    };
-    fetchRates();
+    }, 350);
+
     return () => {
       canceled = true;
+      clearTimeout(timer);
     };
   }, [quantity, buyerCity, listing.seller.city, listing.seller.province]);
 
@@ -116,8 +116,16 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
       toast.error("Nomor WhatsApp/HP penerima wajib diisi");
       return;
     }
+    if (!buyerCity.trim()) {
+      toast.error("Kota / Kabupaten tujuan pengiriman wajib diisi");
+      return;
+    }
     if (!buyerAddress.trim()) {
       toast.error("Alamat pengiriman lengkap wajib diisi");
+      return;
+    }
+    if (!selectedCourier) {
+      toast.error("Silakan masukkan kota dan pilih opsi pengiriman terlebih dahulu");
       return;
     }
 
@@ -320,43 +328,65 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
             </div>
           </div>
 
-          <RadioGroup
-            value={selectedCourierId}
-            onValueChange={setSelectedCourierId}
-            className="grid grid-cols-1 gap-2 pt-1"
-          >
-            {shippingRates.map((rate) => (
-              <label
-                key={rate.id}
-                htmlFor={`courier-${rate.id}`}
-                className={cn(
-                  "flex items-start justify-between border p-3 rounded-sm cursor-pointer transition-colors text-xs",
-                  selectedCourierId === rate.id
-                    ? "border-primary-600 bg-primary-50/40 text-primary-950"
-                    : "border-neutral-300 hover:border-neutral-400 text-neutral-800",
-                )}
-              >
-                <div className="flex items-start gap-3">
-                  <RadioGroupItem
-                    id={`courier-${rate.id}`}
-                    value={rate.id}
-                    className="mt-0.5"
-                  />
-                  <div>
-                    <p className="font-semibold text-sm">
-                      {rate.courierName} — {rate.service}
-                    </p>
-                    <p className="text-[11px] text-neutral-600 mt-0.5">
-                      Estimasi: {rate.etd} • {rate.description}
-                    </p>
+          {isLoadingShipping ? (
+            <div className="p-6 border border-dashed border-neutral-300 rounded-sm text-center text-xs text-neutral-600 space-y-2 bg-neutral-50/50">
+              <Loader2 className="w-5 h-5 mx-auto animate-spin text-primary-600" />
+              <p>Menghubungkan ke ekspedisi & menghitung tarif pengiriman...</p>
+            </div>
+          ) : !buyerCity.trim() || buyerCity.trim().length < 3 ? (
+            <div className="p-6 border border-dashed border-neutral-300 rounded-sm text-center text-xs text-neutral-500 space-y-1.5 bg-neutral-50/60">
+              <MapPin className="w-5 h-5 mx-auto text-neutral-400" />
+              <p className="font-semibold text-neutral-800">Tujuan Belum Diisi</p>
+              <p className="text-[11px] text-neutral-500 max-w-sm mx-auto">
+                Silakan isi Kota / Kabupaten tujuan pada formulir di atas untuk menampilkan daftar ekspedisi dan tarif ongkir.
+              </p>
+            </div>
+          ) : shippingRates.length === 0 ? (
+            <div className="p-6 border border-dashed border-amber-300 bg-amber-50/40 rounded-sm text-center text-xs text-amber-900 space-y-1">
+              <p className="font-semibold">Opsi Pengiriman Tidak Ditemukan</p>
+              <p className="text-[11px] text-amber-700">
+                Pastikan nama kota sudah benar (contoh: "Bandung", "Surabaya", "Jakarta Selatan").
+              </p>
+            </div>
+          ) : (
+            <RadioGroup
+              value={selectedCourierId}
+              onValueChange={setSelectedCourierId}
+              className="grid grid-cols-1 gap-2 pt-1"
+            >
+              {shippingRates.map((rate) => (
+                <label
+                  key={rate.id}
+                  htmlFor={`courier-${rate.id}`}
+                  className={cn(
+                    "flex items-start justify-between border p-3 rounded-sm cursor-pointer transition-colors text-xs",
+                    selectedCourierId === rate.id
+                      ? "border-primary-600 bg-primary-50/40 text-primary-950"
+                      : "border-neutral-300 hover:border-neutral-400 text-neutral-800",
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    <RadioGroupItem
+                      id={`courier-${rate.id}`}
+                      value={rate.id}
+                      className="mt-0.5"
+                    />
+                    <div>
+                      <p className="font-semibold text-sm">
+                        {rate.courierName} — {rate.service}
+                      </p>
+                      <p className="text-[11px] text-neutral-600 mt-0.5">
+                        Estimasi: {rate.etd} • {rate.description}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <span className="font-mono tabular-nums font-bold text-sm text-neutral-900 shrink-0 ml-2">
-                  {formatRupiah(rate.cost)}
-                </span>
-              </label>
-            ))}
-          </RadioGroup>
+                  <span className="font-mono tabular-nums font-bold text-sm text-neutral-900 shrink-0 ml-2">
+                    {formatRupiah(rate.cost)}
+                  </span>
+                </label>
+              ))}
+            </RadioGroup>
+          )}
         </div>
       </div>
 
@@ -375,9 +405,17 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
               </span>
             </div>
             <div className="flex justify-between">
-              <span>Ongkos Kirim ({selectedCourier.courierName}):</span>
+              <span>
+                Ongkos Kirim {selectedCourier ? `(${selectedCourier.courierName})` : ""}:
+              </span>
               <span className="font-mono tabular-nums font-medium text-neutral-900">
-                {formatRupiah(shippingCost)}
+                {selectedCourier ? (
+                  formatRupiah(shippingCost)
+                ) : (
+                  <span className="text-neutral-400 font-sans font-normal italic">
+                    Belum dihitung
+                  </span>
+                )}
               </span>
             </div>
             <div className="flex justify-between">
@@ -401,7 +439,7 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
             type="button"
             variant="primary"
             size="lg"
-            disabled={isPending}
+            disabled={isPending || !selectedCourier}
             onClick={handlePay}
             className="w-full justify-center gap-2 font-semibold"
           >
@@ -409,6 +447,11 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
                 <span>Memproses Transaksi...</span>
+              </>
+            ) : !selectedCourier ? (
+              <>
+                <MapPin className="w-4 h-4" />
+                <span>Pilih Kurir Terlebih Dahulu</span>
               </>
             ) : (
               <>

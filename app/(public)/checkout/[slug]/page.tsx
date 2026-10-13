@@ -68,7 +68,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
     name: userName,
     email: userEmail,
     phone: userPhone,
-    city: userCity || "Jakarta",
+    city: userCity || "",
     address: userAddress,
   };
 

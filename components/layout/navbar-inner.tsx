@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { logoutAction } from "@/actions/auth.actions";
 import { getNavModel, type NavItem } from "@/lib/auth/nav";
 import type { Role } from "@/lib/auth/roles";
+import { CartNavBadge } from "@/components/cart/cart-nav-badge";
 
 const focusRing =
   "outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30 focus-visible:ring-offset-2 rounded-md";
@@ -96,6 +97,7 @@ export function NavbarInner({ role }: { role: Role }) {
           </div>
 
           <div className="flex items-center gap-3">
+            <CartNavBadge />
             {nav.account && (
               <DesktopLink
                 item={nav.account}
@@ -121,19 +123,21 @@ export function NavbarInner({ role }: { role: Role }) {
       <header className="sticky top-0 z-40 border-b border-neutral-200/80 bg-surface-base/85 backdrop-blur-md md:hidden">
         <div className="flex h-14 items-center justify-between px-4">
           <Logo size="md" />
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Menu"
-                  className="rounded-md hover:bg-neutral-100"
-                />
-              }
-            >
-              <Menu className="h-5 w-5 text-neutral-700" />
-            </SheetTrigger>
+          <div className="flex items-center gap-1.5">
+            <CartNavBadge />
+            <Sheet open={open} onOpenChange={setOpen}>
+              <SheetTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Menu"
+                    className="rounded-md hover:bg-neutral-100"
+                  />
+                }
+              >
+                <Menu className="h-5 w-5 text-neutral-700" />
+              </SheetTrigger>
 
             <SheetContent side="right" className="w-80 p-0 sm:max-w-xs">
               <SheetHeader className="border-b border-neutral-200/80 p-4 text-left">
@@ -204,6 +208,7 @@ export function NavbarInner({ role }: { role: Role }) {
               </div>
             </SheetContent>
           </Sheet>
+          </div>
         </div>
       </header>
     </>

@@ -14,8 +14,10 @@ import {
   MapPin,
   ArrowRight,
   HelpCircle,
+  MessageCircle,
 } from "lucide-react";
 import { ConfirmOrderButton } from "@/components/order/confirm-order-button";
+import { buildOrderPaidNotificationUrl } from "@/lib/notifications";
 
 export const metadata: Metadata = {
   title: "Status Pesanan - Biji Hub",
@@ -244,14 +246,37 @@ export default async function OrderSuccessPage({
             Lanjut Belanja di Katalog
           </Link>
 
-          <Link
-            href="/profile"
-            className={buttonVariants({
-              className: "w-full sm:w-auto bg-primary-600 hover:bg-primary-700 text-white",
-            })}
-          >
-            Lihat Akun & Profil <ArrowRight className="w-4 h-4 ml-1" />
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+            {isPaid && (
+              <a
+                href={buildOrderPaidNotificationUrl({
+                  sellerPhone: "081220001234",
+                  sellerName: order.sellerName,
+                  buyerName: order.buyerName,
+                  orderNumber: order.orderNumber,
+                  listingTitle: order.listingTitle || "Biji Kopi",
+                  quantity: order.quantity,
+                  totalAmount: order.totalAmount,
+                })}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonVariants({
+                  className: "w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 text-xs",
+                })}
+              >
+                <MessageCircle className="w-3.5 h-3.5" /> Konfirmasi ke WA Penjual
+              </a>
+            )}
+
+            <Link
+              href="/profile"
+              className={buttonVariants({
+                className: "w-full sm:w-auto bg-neutral-900 hover:bg-neutral-800 text-white text-xs",
+              })}
+            >
+              Lihat Akun & Profil <ArrowRight className="w-3.5 h-3.5 ml-1" />
+            </Link>
+          </div>
         </div>
       </PageContainer>
     </div>

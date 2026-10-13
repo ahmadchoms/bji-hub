@@ -21,7 +21,9 @@ import {
   AlertCircle,
   Copy,
   ExternalLink,
+  MessageCircle,
 } from "lucide-react";
+import { buildShipmentNotificationUrl } from "@/lib/notifications";
 
 interface SellerOrderListProps {
   orders: Order[];
@@ -261,6 +263,24 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
                             >
                               <Copy className="w-3.5 h-3.5" />
                             </button>
+                            <a
+                              href={buildShipmentNotificationUrl({
+                                buyerPhone: order.buyerPhone,
+                                buyerName: order.buyerName,
+                                sellerName: order.sellerName || "Roastery",
+                                orderNumber: order.orderNumber,
+                                listingTitle: order.listingTitle || "Biji Kopi",
+                                courier: order.shippingCourier || "JNE",
+                                trackingNumber: order.trackingNumber,
+                              })}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-[11px] text-emerald-700 hover:text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-medium"
+                              title="Kirim notifikasi resi ke WhatsApp pembeli"
+                            >
+                              <MessageCircle className="w-3 h-3" />
+                              Kirim WA
+                            </a>
                           </div>
                         </div>
                       ) : null}

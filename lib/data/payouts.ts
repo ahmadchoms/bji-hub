@@ -204,3 +204,83 @@ export async function getSellerBalanceSummary(sellerId: string): Promise<{
     totalEarned,
   };
 }
+
+export async function getAllPayoutRequests(): Promise<
+  (PayoutRequest & { sellerName?: string; whatsappNumber?: string })[]
+> {
+  const pool = getPool();
+  if (pool) {
+    try {
+      const res = await pool.query(
+        `SELECT p.*, s."businessName" as seller_name, s."whatsappNumber" as whatsapp_number
+         FROM public.payout_requests p
+         LEFT JOIN public.seller_profiles s ON p.seller_id = s.id
+         ORDER BY p.created_at DESC`,
+      );
+      return res.rows.map((row) => ({
+        id: row.id,
+        sellerId: row.seller_id,
+        sellerName: row.seller_name,
+        whatsappNumber: row.whatsapp_number,
+        amount: Number(row.amount),
+        bankName: row.bank_name,
+        bankAccountNumber: row.bank_account_number,
+        bankAccountHolder: row.bank_account_holder,
+        status: row.status as PayoutStatus,
+        notes: row.notes,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      }));
+    } catch {
+      // Fall through
+    }
+  }
+
+  return mockPayoutRequests.map((p) => ({
+    ...p,
+    sellerName: "Klasik Preanger Roastery",
+    whatsappNumber: "081234567890",
+  }));
+}
+
+export async function updatePayoutStatus(
+  payoutId: string,
+  status: PayoutStatus,
+  notes?: string,
+): Promise<boolean> {
+  const pool = getPool();
+  const now = new Date().toISOString();
+
+  if (pool) {
+    try {
+      if (notes) {
+        await pool.query(
+          `UPDATE public.payout_requests
+           SET status = $1, notes = $2, updated_at = $3
+           WHERE id = $4`,
+          [status, notes, now, payoutId],
+        );
+      } else {
+        await pool.query(
+          `UPDATE public.payout_requests
+           SET status = $1, updated_at = $2
+           WHERE id = $3`,
+          [status, now, payoutId],
+        );
+      }
+      return true;
+    } catch {
+      // Fall through
+    }
+  }
+
+  const existing = mockPayoutRequests.find((p) => p.id === payoutId);
+  if (existing) {
+    existing.status = status;
+    if (notes) existing.notes = notes;
+    existing.updatedAt = now;
+    return true;
+  }
+  return false;
+}
+

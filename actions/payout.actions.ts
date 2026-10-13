@@ -3,12 +3,13 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
-import { requireSeller } from "@/lib/auth/session";
+import { requireSeller, requireRole } from "@/lib/auth/session";
 import {
   getSellerBankDetails,
   updateSellerBankDetails,
   getSellerBalanceSummary,
   createPayoutRequest,
+  updatePayoutStatus,
   type SellerBankDetails,
 } from "@/lib/data/payouts";
 
@@ -85,3 +86,36 @@ export async function requestPayoutAction(
     amount: payout.amount,
   });
 }
+
+const updatePayoutSchema = z.object({
+  payoutId: z.string().min(1, "ID penarikan dana wajib diisi"),
+  status: z.enum(["processed", "rejected"]),
+  notes: z.string().max(200).optional(),
+});
+
+export async function updatePayoutStatusAction(
+  input: unknown,
+): Promise<ActionResult<{ success: boolean }>> {
+  await requireRole(["admin"], "/admin/payouts");
+
+  const parsed = updatePayoutSchema.safeParse(input);
+  if (!parsed.success) {
+    return fail("Data status tidak valid");
+  }
+
+  const success = await updatePayoutStatus(
+    parsed.data.payoutId,
+    parsed.data.status,
+    parsed.data.notes,
+  );
+
+  if (!success) {
+    return fail("Pengajuan penarikan dana tidak ditemukan");
+  }
+
+  revalidatePath("/admin/payouts");
+  revalidatePath("/dashboard/orders");
+
+  return ok({ success: true });
+}
+

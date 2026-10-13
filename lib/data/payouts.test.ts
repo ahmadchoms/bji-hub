@@ -10,6 +10,8 @@ import {
   updateSellerBankDetails,
   createPayoutRequest,
   getPayoutRequestsBySeller,
+  getAllPayoutRequests,
+  updatePayoutStatus,
 } from "./payouts";
 
 describe("payouts and balance summary", () => {
@@ -54,5 +56,20 @@ describe("payouts and balance summary", () => {
     const history = await getPayoutRequestsBySeller(testSellerId);
     expect(history.length).toBeGreaterThanOrEqual(1);
     expect(history[0].id).toBe(payout.id);
+  });
+
+  it("allows admin to retrieve and update payout status", async () => {
+    const all = await getAllPayoutRequests();
+    expect(Array.isArray(all)).toBe(true);
+
+    if (all.length > 0) {
+      const target = all[0];
+      const updated = await updatePayoutStatus(target.id, "processed");
+      expect(updated).toBe(true);
+
+      const refreshed = await getAllPayoutRequests();
+      const match = refreshed.find((p) => p.id === target.id);
+      expect(match?.status).toBe("processed");
+    }
   });
 });

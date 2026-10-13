@@ -17,6 +17,8 @@ import { CuppingSheetModal } from "@/components/catalog/cupping-sheet-modal";
 import { CompareButton } from "@/components/catalog/compare-button";
 import { ProductStickyCTA } from "@/components/catalog/product-sticky-cta";
 import { TrackOnMount } from "@/components/shared/track-visible";
+import { Button } from "@/components/ui/button";
+import { ShieldCheck } from "lucide-react";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
@@ -120,6 +122,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
         listingId={listing.id}
         listingTitle={listing.title}
         sellerName={listing.seller.businessName}
+        listingSlug={listing.slug}
       />
       <PageContainer className="space-y-8">
         {/* Breadcrumb */}
@@ -224,10 +227,33 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                 </div>
               </div>
 
-              {/* CTA */}
-              <p className="text-xs text-neutral-600">
-                Transaksi dilakukan langsung dengan penjual di luar platform.
-              </p>
+              {/* Primary Online Checkout CTA */}
+              <div className="space-y-2">
+                <Link
+                  href={`/checkout/${listing.slug}`}
+                  className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-4 rounded-sm text-base shadow-xs flex items-center justify-center transition-colors"
+                >
+                  <ShieldCheck className="w-5 h-5 mr-2 text-primary-200" />
+                  Beli Langsung (Garansi Escrow)
+                </Link>
+                <div className="flex items-center justify-center gap-1.5 text-xs text-emerald-800 bg-emerald-50/80 py-1 px-2 rounded border border-emerald-200">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>Dana ditampung aman oleh sistem hingga pesanan diterima</span>
+                </div>
+              </div>
+
+              {/* B2B WhatsApp Negotiation Alternative */}
+              <div className="relative my-3">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-neutral-300" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-neutral-500 font-mono">
+                    atau negosiasi langsung
+                  </span>
+                </div>
+              </div>
+
               <B2BNegotiationBox
                 phoneNumber={listing.seller.whatsappNumber}
                 listingId={listing.id}

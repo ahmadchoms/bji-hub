@@ -5,6 +5,7 @@ import {
 
 const SELLER_NAV: readonly DashboardNavItem[] = [
   { href: "/dashboard", label: "Ringkasan" },
+  { href: "/dashboard/orders", label: "Pesanan Masuk" },
   { href: "/dashboard/listing", label: "Produk Saya" },
   { href: "/dashboard/analytics", label: "Analitik" },
   { href: "/dashboard/billing", label: "Langganan" },

@@ -200,3 +200,40 @@ export interface AdminStats {
   monthlyRevenue: number;
   recentPayments: Payment[];
 }
+
+export type OrderStatus =
+  | "pending_payment"
+  | "paid"
+  | "shipped"
+  | "completed"
+  | "canceled";
+
+export interface Order {
+  id: string;
+  orderNumber: string;
+  buyerId?: string | null;
+  buyerName: string;
+  buyerEmail: string;
+  buyerPhone: string;
+  buyerAddress: string;
+  buyerCity: string;
+  sellerId: string;
+  sellerName?: string;
+  listingId: string;
+  listingTitle?: string;
+  quantity: number;
+  itemPrice: number;
+  subtotal: number;
+  shippingCost: number;
+  serviceFee: number;
+  totalAmount: number;
+  shippingCourier?: string | null;
+  trackingNumber?: string | null;
+  status: OrderStatus;
+  snapToken?: string | null;
+  midtransOrderId?: string | null;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+

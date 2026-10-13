@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { buildWhatsAppUrl } from "@/components/shared/whatsapp-button";
 import { cn } from "@/lib/utils";
 import { trackEvent } from "@/lib/tracking";
@@ -9,6 +10,7 @@ interface Props {
   listingId: string;
   listingTitle: string;
   sellerName: string;
+  listingSlug?: string;
   className?: string;
 }
 
@@ -17,6 +19,7 @@ export function ProductStickyCTA({
   listingId,
   listingTitle,
   sellerName,
+  listingSlug,
   className,
 }: Props) {
   const whatsappUrl = buildWhatsAppUrl({
@@ -40,22 +43,31 @@ export function ProductStickyCTA({
       )}
     >
       <div className="flex items-stretch divide-x divide-neutral-300">
+        {listingSlug ? (
+          <Link
+            href={`/checkout/${listingSlug}`}
+            className="flex min-h-12 flex-1 items-center justify-center bg-primary-600 text-white text-sm font-medium"
+          >
+            Beli Langsung
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={scrollToInquiry}
+            className="flex min-h-12 flex-1 items-center justify-center bg-transparent text-sm font-medium text-primary-700"
+          >
+            Ajukan Penawaran
+          </button>
+        )}
         <a
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
           onClick={() => trackEvent(listingId, "contact_click")}
-          className="flex min-h-12 flex-1 items-center justify-center bg-primary-600 text-white text-sm font-medium"
+          className="flex min-h-12 flex-1 items-center justify-center bg-emerald-700 text-white text-sm font-medium"
         >
           WhatsApp
         </a>
-        <button
-          type="button"
-          onClick={scrollToInquiry}
-          className="flex min-h-12 flex-1 items-center justify-center bg-transparent text-sm font-medium text-primary-700"
-        >
-          Ajukan Penawaran
-        </button>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import { Fraunces, Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/shared/providers";
 import { Toaster } from "@/components/ui/sonner";
+import Script from "next/script";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -61,6 +62,12 @@ export const metadata: Metadata = {
   },
 };
 
+const snapScriptUrl =
+  process.env.MIDTRANS_IS_PRODUCTION === "true"
+    ? "https://app.midtrans.com/snap/snap.js"
+    : "https://app.sandbox.midtrans.com/snap/snap.js";
+const clientKey = process.env.MIDTRANS_CLIENT_KEY;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -76,6 +83,13 @@ export default function RootLayout({
           {children}
           <Toaster position="top-right" />
         </Providers>
+        {clientKey && (
+          <Script
+            src={snapScriptUrl}
+            data-client-key={clientKey}
+            strategy="lazyOnload"
+          />
+        )}
       </body>
     </html>
   );

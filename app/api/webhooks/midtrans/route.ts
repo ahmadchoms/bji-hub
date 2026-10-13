@@ -37,6 +37,22 @@ export async function POST(req: NextRequest) {
   });
 
   if (!payment) {
+    // Check if it is a marketplace product order
+    const { updateOrderStatus } = await import("@/lib/data/orders");
+    const nextStatus = mapMidtransStatus(
+      body.transaction_status,
+      body.fraud_status
+    );
+    const orderStatus =
+      nextStatus === "paid"
+        ? "paid"
+        : nextStatus === "failed"
+          ? "canceled"
+          : "pending_payment";
+    const updated = await updateOrderStatus(body.order_id, orderStatus);
+    if (updated) {
+      return NextResponse.json({ received: true, type: "order" });
+    }
     return NextResponse.json({ error: "Payment not found" }, { status: 404 });
   }
 

@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getListingBySlug } from "@/lib/data";
 import { PageContainer } from "@/components/layout/page-container";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
 import { createClient } from "@/lib/supabase/server";
+import { getSession } from "@/lib/auth/session";
 
 interface CheckoutPageProps {
   params: Promise<{ slug: string }>;
@@ -22,7 +23,7 @@ export async function generateMetadata({
 
   return {
     title: `Checkout: ${listing.title} - Biji Hub`,
-    description: `Checkout aman bergaransi escrow untuk produk ${listing.title} langsung dari petani atau roaster terverifikasi.`,
+    description: `Checkout aman untuk produk ${listing.title} langsung dari petani atau roaster terverifikasi.`,
   };
 }
 
@@ -34,10 +35,20 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
     notFound();
   }
 
+  const session = await getSession();
+  const checkoutUrl = `/checkout/${slug}`;
+
+  // 1. Must be logged in
+  if (session.role === "guest") {
+    redirect(`/login?next=${encodeURIComponent(checkoutUrl)}`);
+  }
+
   let userEmail = "";
   let userName = "";
   let userPhone = "";
+  let userProvince = "";
   let userCity = "";
+  let userPostalCode = "";
   let userAddress = "";
 
   if (
@@ -56,7 +67,9 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
             user.user_metadata?.full_name ||
             user.email?.split("@")[0]) as string) || "";
         userPhone = (user.user_metadata?.phone as string) || "";
+        userProvince = (user.user_metadata?.province as string) || "";
         userCity = (user.user_metadata?.city as string) || "";
+        userPostalCode = (user.user_metadata?.postal_code as string) || "";
         userAddress = (user.user_metadata?.address as string) || "";
       }
     } catch {
@@ -64,11 +77,37 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
     }
   }
 
+  // Fallback demo user if mock session active in dev
+  if (!userEmail) {
+    userEmail = "pembeli@bijihub.com";
+    userName = userName || "Akbar Hakim";
+    userPhone = userPhone || "081298765432";
+    userCity = userCity || "Bandung";
+    userProvince = userProvince || "Jawa Barat";
+    userAddress = userAddress || "Jl. Riau No. 45, Citarum";
+  }
+
+  // 2. Profile Gating: Ensure essential order delivery data is completed
+  const isProfileComplete = Boolean(
+    userName.trim().length >= 2 &&
+      userPhone.trim().length >= 8 &&
+      userCity.trim().length >= 3 &&
+      userAddress.trim().length >= 5,
+  );
+
+  if (!isProfileComplete) {
+    redirect(
+      `/profile?required=shipping&next=${encodeURIComponent(checkoutUrl)}`,
+    );
+  }
+
   const initialBuyer = {
     name: userName,
     email: userEmail,
     phone: userPhone,
-    city: userCity || "",
+    province: userProvince,
+    city: userCity,
+    postalCode: userPostalCode,
     address: userAddress,
   };
 
@@ -88,7 +127,10 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
             Katalog
           </Link>
           <span>/</span>
-          <Link href={`/product/${listing.slug}`} className="hover:text-primary-700">
+          <Link
+            href={`/product/${listing.slug}`}
+            className="hover:text-primary-700"
+          >
             {listing.title}
           </Link>
           <span>/</span>

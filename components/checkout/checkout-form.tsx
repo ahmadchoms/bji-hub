@@ -14,12 +14,12 @@ import {
   Loader2,
   Lock,
   MapPin,
+  ExternalLink,
 } from "lucide-react";
 import { ListingWithRelations } from "@/types";
 import { formatRupiah } from "@/components/shared/price-text";
 import { FormField } from "@/components/shared/form-field";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { calculateShippingRates, ShippingRate } from "@/lib/shipping";
@@ -32,7 +32,9 @@ interface CheckoutFormProps {
     name: string;
     email: string;
     phone: string;
+    province?: string;
     city: string;
+    postalCode?: string;
     address: string;
   };
 }
@@ -102,10 +104,6 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
       clearTimeout(timer);
     };
   }, [quantity, buyerCity, listing.seller.city, listing.seller.province]);
-
-  const handleCityChange = (newCity: string) => {
-    setBuyerCity(newCity);
-  };
 
   const handlePay = () => {
     if (!buyerName.trim()) {
@@ -251,68 +249,52 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
           </div>
         </div>
 
-        {/* Informasi Penerima & Alamat */}
-        <div className="border border-neutral-300 bg-surface-base rounded-sm p-5 space-y-4">
-          <div>
-            <h3 className="font-display text-base font-semibold text-neutral-900">
-              Alamat Pengiriman
+        {/* Alamat Pengiriman Tersimpan (Checking Data) */}
+        <div className="border border-neutral-300 bg-surface-base rounded-sm p-5 space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-neutral-200">
+            <h3 className="font-display text-base font-semibold text-neutral-900 flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-primary-600" /> Alamat Pengiriman Penerima
             </h3>
-            <p className="text-xs text-neutral-600 mt-0.5">
-              Pastikan alamat dan nomor kontak aktif untuk koordinasi kurir.
+            <Link
+              href={`/profile?next=${encodeURIComponent(`/checkout/${listing.slug}`)}`}
+              className="text-xs font-semibold text-primary-700 hover:text-primary-800 hover:underline flex items-center gap-1"
+            >
+              Ubah Alamat <ExternalLink className="w-3 h-3" />
+            </Link>
+          </div>
+
+          <div className="text-xs space-y-1.5 text-neutral-700">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-sm text-neutral-900">
+                {buyerName}
+              </span>
+              <span className="font-mono text-neutral-500 font-normal">
+                • {buyerPhone}
+              </span>
+            </div>
+            <p className="leading-relaxed text-neutral-800">
+              {buyerAddress}
+            </p>
+            <p className="text-neutral-600 font-medium">
+              {buyerCity}
+              {initialBuyer.province ? `, ${initialBuyer.province}` : ""}
+              {initialBuyer.postalCode ? ` (${initialBuyer.postalCode})` : ""}
+            </p>
+            <p className="text-neutral-500 text-[11px] font-mono pt-1">
+              Konfirmasi transaksi dikirim ke: {buyerEmail}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField label="Nama Penerima" required>
+          <div className="pt-2 border-t border-neutral-100">
+            <FormField label="Catatan Tambahan untuk Penjual (Opsional)">
               <Input
-                value={buyerName}
-                onChange={(e) => setBuyerName(e.target.value)}
-                placeholder="Budi Pratama"
-              />
-            </FormField>
-            <FormField label="Nomor WhatsApp / HP" required>
-              <Input
-                value={buyerPhone}
-                onChange={(e) => setBuyerPhone(e.target.value)}
-                placeholder="08123456789"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Misal: Request giling medium, titip ke satpam, dll."
+                className="text-xs"
               />
             </FormField>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField label="Email Konfirmasi" required>
-              <Input
-                type="email"
-                value={buyerEmail}
-                onChange={(e) => setBuyerEmail(e.target.value)}
-                placeholder="budi@example.com"
-              />
-            </FormField>
-            <FormField label="Kota / Kabupaten Tujuan" required>
-              <Input
-                value={buyerCity}
-                onChange={(e) => handleCityChange(e.target.value)}
-                placeholder="Jakarta Selatan, Bandung, dll"
-              />
-            </FormField>
-          </div>
-
-          <FormField label="Alamat Lengkap" required>
-            <Textarea
-              value={buyerAddress}
-              onChange={(e) => setBuyerAddress(e.target.value)}
-              rows={2}
-              placeholder="Nama jalan, nomor rumah/kantor/kedai, RT/RW, kelurahan, kode pos..."
-            />
-          </FormField>
-
-          <FormField label="Catatan Tambahan (Opsional)">
-            <Input
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Misal: Titipkan ke pos satpam, request giling halus, dll."
-            />
-          </FormField>
         </div>
 
         {/* Pilihan Ekspedisi / Kurir */}

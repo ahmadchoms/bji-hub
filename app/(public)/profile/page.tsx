@@ -12,18 +12,26 @@ import { createClient } from "@/lib/supabase/server";
 import { BuyerProfileForm } from "@/components/profile/buyer-profile-form";
 import { getOrdersByBuyer } from "@/lib/data/orders";
 import { formatRupiah } from "@/components/shared/price-text";
-import { Package, Truck, Clock, CheckCircle2 } from "lucide-react";
+import { Package, Truck, Clock, CheckCircle2, AlertCircle, MapPin } from "lucide-react";
 
 export const metadata = {
   title: "Profil Akun - Biji Hub",
   description: "Kelola akun pengguna dan akses direktori kopi specialty Indonesia.",
 };
 
-export default async function ProfilePage() {
+interface ProfilePageProps {
+  searchParams: Promise<{
+    required?: string;
+    next?: string;
+  }>;
+}
+
+export default async function ProfilePage({ searchParams }: ProfilePageProps) {
+  const { required, next } = await searchParams;
   const session = await getSession();
 
   if (session.role === "guest") {
-    redirect(`/login?next=${encodeURIComponent("/profile")}`);
+    redirect(`/login?next=${encodeURIComponent(next || "/profile")}`);
   }
 
   if (session.role === "seller") {
@@ -34,7 +42,9 @@ export default async function ProfilePage() {
   let userName = "";
   let userAvatarUrl = "";
   let userPhone = "";
+  let userProvince = "";
   let userCity = "";
+  let userPostalCode = "";
   let userAddress = "";
 
   if (
@@ -54,7 +64,9 @@ export default async function ProfilePage() {
             user.email?.split("@")[0]) as string) || "";
         userAvatarUrl = (user.user_metadata?.avatar_url as string) || "";
         userPhone = (user.user_metadata?.phone as string) || "";
+        userProvince = (user.user_metadata?.province as string) || "";
         userCity = (user.user_metadata?.city as string) || "";
+        userPostalCode = (user.user_metadata?.postal_code as string) || "";
         userAddress = (user.user_metadata?.address as string) || "";
       }
     } catch {
@@ -88,6 +100,21 @@ export default async function ProfilePage() {
         </Badge>
       </div>
 
+      {/* Alert banner if redirected from checkout gate */}
+      {required === "shipping" && (
+        <div className="p-4 rounded-sm border border-amber-300 bg-amber-50/70 text-amber-900 text-xs flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="space-y-0.5">
+            <p className="font-semibold text-sm text-amber-950">
+              Lengkapi Alamat Pengiriman Terlebih Dahulu
+            </p>
+            <p className="leading-relaxed">
+              Sebelum melanjutkan ke pemesanan, silakan isi data penerima dan alamat pengiriman di bawah ini. Data Anda akan tersimpan otomatis untuk transaksi berikutnya.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Form Profil Pembeli */}
       <BuyerProfileForm
         initialData={{
@@ -95,9 +122,12 @@ export default async function ProfilePage() {
           name: userName,
           avatarUrl: userAvatarUrl,
           phone: userPhone,
+          province: userProvince,
           city: userCity,
+          postalCode: userPostalCode,
           address: userAddress,
         }}
+        nextUrl={next}
       />
 
       {/* Riwayat Pesanan Saya */}

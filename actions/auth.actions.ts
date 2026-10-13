@@ -369,7 +369,9 @@ export async function updateBuyerProfileAction(input: {
   name: string;
   avatarUrl?: string;
   phone?: string;
+  province?: string;
   city?: string;
+  postalCode?: string;
   address?: string;
 }): Promise<ActionResult<{ success: boolean }>> {
   if (!input.name || input.name.trim().length < 2) {
@@ -396,7 +398,9 @@ export async function updateBuyerProfileAction(input: {
           name: input.name.trim(),
           avatar_url: input.avatarUrl?.trim() || null,
           phone: input.phone?.trim() || null,
+          province: input.province?.trim() || null,
           city: input.city?.trim() || null,
+          postal_code: input.postalCode?.trim() || null,
           address: input.address?.trim() || null,
         },
       });

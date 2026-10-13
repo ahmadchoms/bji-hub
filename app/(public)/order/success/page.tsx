@@ -20,6 +20,7 @@ import {
 import { ConfirmOrderButton } from "@/components/order/confirm-order-button";
 import { OrderDisputeModal } from "@/components/order/order-dispute-modal";
 import { OrderReviewModal } from "@/components/order/order-review-modal";
+import { ShipmentTrackingModal } from "@/components/order/shipment-tracking-modal";
 import { buildOrderPaidNotificationUrl } from "@/lib/notifications";
 
 export const metadata: Metadata = {
@@ -194,9 +195,16 @@ export default async function OrderSuccessPage({
                   <span className="text-sm font-medium text-neutral-900">{order.shippingCourier}</span>
                 </div>
                 {order.trackingNumber ? (
-                  <div className="mt-2 p-2 bg-neutral-50 rounded border border-neutral-200 text-xs">
-                    <span className="text-neutral-500">Nomor Resi:</span>{" "}
-                    <span className="font-mono font-bold text-primary-700">{order.trackingNumber}</span>
+                  <div className="mt-2 p-2.5 bg-neutral-50 rounded border border-neutral-200 text-xs flex items-center justify-between gap-2">
+                    <div>
+                      <span className="text-neutral-500">Nomor Resi:</span>{" "}
+                      <span className="font-mono font-bold text-primary-700">{order.trackingNumber}</span>
+                    </div>
+                    <ShipmentTrackingModal
+                      trackingNumber={order.trackingNumber}
+                      courierCode={order.shippingCourier || "jne"}
+                      orderNumber={order.orderNumber}
+                    />
                   </div>
                 ) : (
                   <p className="text-[11px] text-neutral-400 mt-1 italic">

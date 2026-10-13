@@ -22,9 +22,11 @@ import {
   Copy,
   ExternalLink,
   MessageCircle,
+  Search,
 } from "lucide-react";
 import { buildShipmentNotificationUrl } from "@/lib/notifications";
 import { ExportCsvButton, type CsvColumn } from "@/components/shared/export-csv-button";
+import { ShipmentTrackingModal } from "@/components/order/shipment-tracking-modal";
 
 interface SellerOrderListProps {
   orders: Order[];
@@ -33,17 +35,30 @@ interface SellerOrderListProps {
 export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps) {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [filter, setFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [activeTrackingInput, setActiveTrackingInput] = useState<{
     [orderId: string]: string;
   }>({});
   const [isPending, startTransition] = useTransition();
 
   const filteredOrders = orders.filter((order) => {
-    if (filter === "all") return true;
-    if (filter === "paid") return order.status === "paid";
-    if (filter === "shipped") return order.status === "shipped";
-    if (filter === "completed") return order.status === "completed";
-    if (filter === "disputed") return order.status === "disputed";
+    if (filter === "paid" && order.status !== "paid") return false;
+    if (filter === "shipped" && order.status !== "shipped") return false;
+    if (filter === "completed" && order.status !== "completed") return false;
+    if (filter === "disputed" && order.status !== "disputed") return false;
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const matchNumber = order.orderNumber.toLowerCase().includes(q);
+      const matchBuyer = order.buyerName.toLowerCase().includes(q);
+      const matchResi = order.trackingNumber?.toLowerCase().includes(q);
+      const matchTitle = order.listingTitle?.toLowerCase().includes(q);
+      const matchCourier = order.shippingCourier?.toLowerCase().includes(q);
+      if (!matchNumber && !matchBuyer && !matchResi && !matchTitle && !matchCourier) {
+        return false;
+      }
+    }
+
     return true;
   });
 
@@ -206,6 +221,18 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
         />
       </div>
 
+      {/* Search Bar */}
+      <div className="relative">
+        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+        <Input
+          type="text"
+          placeholder="Cari no. pesanan, nama pembeli, no. resi, atau produk..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9 h-9 text-xs bg-white"
+        />
+      </div>
+
       {/* Orders List */}
       <div className="space-y-4">
         {filteredOrders.length === 0 ? (
@@ -327,6 +354,11 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
                               <MessageCircle className="w-3 h-3" />
                               Kirim WA
                             </a>
+                            <ShipmentTrackingModal
+                              trackingNumber={order.trackingNumber}
+                              courierCode={order.shippingCourier || "jne"}
+                              orderNumber={order.orderNumber}
+                            />
                           </div>
                         </div>
                       ) : null}

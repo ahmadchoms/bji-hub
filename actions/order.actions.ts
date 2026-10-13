@@ -13,6 +13,7 @@ import {
 import { createReview } from "@/lib/data/reviews";
 import { createMidtransSnapToken } from "@/lib/midtrans";
 import { getSession, requireRole } from "@/lib/auth/session";
+import { trackShipmentWaybill, type WaybillTrackingResult } from "@/lib/shipping";
 
 const checkoutSchema = z.object({
   listingId: z.string().min(1, "Produk wajib dipilih"),
@@ -274,4 +275,17 @@ export async function submitReviewAction(
 
   return ok({ reviewId: review.id });
 }
+
+export async function trackShipmentAction(
+  trackingNumber: string,
+  courierCode?: string,
+): Promise<ActionResult<WaybillTrackingResult>> {
+  if (!trackingNumber || trackingNumber.trim().length < 3) {
+    return fail("Nomor resi tidak valid");
+  }
+
+  const result = await trackShipmentWaybill(trackingNumber.trim(), courierCode);
+  return ok(result);
+}
+
 

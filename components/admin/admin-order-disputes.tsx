@@ -5,9 +5,11 @@ import type { Order, OrderStatus } from "@/types";
 import { formatRupiah } from "@/components/shared/price-text";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ExportCsvButton, type CsvColumn } from "@/components/shared/export-csv-button";
 import { resolveDisputeAction, autoCompleteOrdersAction } from "@/actions/order.actions";
 import { buildDisputeResolvedNotificationUrl } from "@/lib/notifications";
+import { ShipmentTrackingModal } from "@/components/order/shipment-tracking-modal";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
@@ -25,6 +27,7 @@ import {
   MessageCircle,
   Sparkles,
   Loader2,
+  Search,
 } from "lucide-react";
 
 interface AdminOrderDisputesProps {
@@ -59,18 +62,39 @@ const ORDER_COLUMNS: CsvColumn<Order>[] = [
 export function AdminOrderDisputes({ orders: initialOrders }: AdminOrderDisputesProps) {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [filter, setFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [isPending, startTransition] = useTransition();
   const [isAutoCompleting, setIsAutoCompleting] = useState(false);
 
   const disputedCount = orders.filter((o) => o.status === "disputed").length;
 
   const filteredOrders = orders.filter((order) => {
-    if (filter === "all") return true;
-    if (filter === "disputed") return order.status === "disputed";
-    if (filter === "paid") return order.status === "paid";
-    if (filter === "shipped") return order.status === "shipped";
-    if (filter === "completed") return order.status === "completed";
-    if (filter === "canceled") return order.status === "canceled";
+    if (filter === "disputed" && order.status !== "disputed") return false;
+    if (filter === "paid" && order.status !== "paid") return false;
+    if (filter === "shipped" && order.status !== "shipped") return false;
+    if (filter === "completed" && order.status !== "completed") return false;
+    if (filter === "canceled" && order.status !== "canceled") return false;
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const matchNumber = order.orderNumber.toLowerCase().includes(q);
+      const matchBuyer = order.buyerName.toLowerCase().includes(q);
+      const matchSeller = order.sellerName?.toLowerCase().includes(q);
+      const matchResi = order.trackingNumber?.toLowerCase().includes(q);
+      const matchTitle = order.listingTitle?.toLowerCase().includes(q);
+      const matchCourier = order.shippingCourier?.toLowerCase().includes(q);
+      if (
+        !matchNumber &&
+        !matchBuyer &&
+        !matchSeller &&
+        !matchResi &&
+        !matchTitle &&
+        !matchCourier
+      ) {
+        return false;
+      }
+    }
+
     return true;
   });
 
@@ -264,6 +288,18 @@ export function AdminOrderDisputes({ orders: initialOrders }: AdminOrderDisputes
         </div>
       </div>
 
+      {/* Search Bar */}
+      <div className="relative">
+        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+        <Input
+          type="text"
+          placeholder="Cari no. pesanan, nama pembeli, penjual, kurir, resi, atau produk..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9 h-9 text-xs bg-white"
+        />
+      </div>
+
       {/* Orders List */}
       <div className="space-y-3">
         {filteredOrders.length === 0 ? (
@@ -394,12 +430,19 @@ export function AdminOrderDisputes({ orders: initialOrders }: AdminOrderDisputes
                       <Store className="w-3 h-3 text-neutral-400" />
                       {order.sellerName || "Mitra Roastery"}
                     </p>
-                    <p className="text-neutral-500 text-[11px] mt-0.5">
-                      Kurir: {order.shippingCourier}{" "}
+                    <div className="text-neutral-500 text-[11px] mt-0.5 flex flex-wrap items-center gap-1.5">
+                      <span>Kurir: {order.shippingCourier}</span>
                       {order.trackingNumber && (
-                        <span className="font-mono text-neutral-700">({order.trackingNumber})</span>
+                        <>
+                          <span className="font-mono text-neutral-700">({order.trackingNumber})</span>
+                          <ShipmentTrackingModal
+                            trackingNumber={order.trackingNumber}
+                            courierCode={order.shippingCourier || "jne"}
+                            orderNumber={order.orderNumber}
+                          />
+                        </>
                       )}
-                    </p>
+                    </div>
                   </div>
                 </div>
               </div>

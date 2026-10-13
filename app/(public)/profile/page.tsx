@@ -16,6 +16,7 @@ import { Package, Truck, Clock, CheckCircle2, AlertCircle, MapPin, AlertTriangle
 import { ConfirmOrderButton } from "@/components/order/confirm-order-button";
 import { OrderReviewModal } from "@/components/order/order-review-modal";
 import { OrderDisputeModal } from "@/components/order/order-dispute-modal";
+import { ShipmentTrackingModal } from "@/components/order/shipment-tracking-modal";
 
 export const metadata = {
   title: "Profil Akun - Biji Hub",
@@ -205,11 +206,20 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
                     {formatRupiah(ord.totalAmount)}
                   </span>
                 </div>
-                <div className="flex items-center justify-between pt-1 border-t border-neutral-100 text-[11px] text-neutral-500">
-                  <span>
-                    Kurir: {ord.shippingCourier}{" "}
-                    {ord.trackingNumber && `(Resi: ${ord.trackingNumber})`}
-                  </span>
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-neutral-100 text-[11px] text-neutral-500">
+                  <div className="flex items-center gap-2">
+                    <span>
+                      Kurir: {ord.shippingCourier}{" "}
+                      {ord.trackingNumber && `(Resi: ${ord.trackingNumber})`}
+                    </span>
+                    {ord.trackingNumber && (
+                      <ShipmentTrackingModal
+                        trackingNumber={ord.trackingNumber}
+                        courierCode={ord.shippingCourier || "jne"}
+                        orderNumber={ord.orderNumber}
+                      />
+                    )}
+                  </div>
                   <Link
                     href={`/order/success?orderNumber=${ord.orderNumber}`}
                     className="font-medium text-primary-600 hover:text-primary-800"

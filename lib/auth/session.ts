@@ -26,10 +26,21 @@ export async function getSession(): Promise<Session> {
       const supabase = await createClient();
       const { data: { user } } = await supabase.auth.getUser();
 
-      if (user && process.env.DATA_SOURCE === "prisma") {
+      if (user && process.env.DATA_SOURCE !== "mock") {
         const prisma = getPrisma();
-        const dbUser = await prisma.user.findUnique({
+        const dbUser = await prisma.user.upsert({
           where: { id: user.id },
+          create: {
+            id: user.id,
+            email: user.email ?? "",
+            role:
+              user.user_metadata?.role === "seller"
+                ? "SELLER"
+                : user.user_metadata?.role === "admin"
+                  ? "ADMIN"
+                  : "BUYER",
+          },
+          update: {},
           include: { sellerProfile: { select: { id: true } } },
         });
 

@@ -16,6 +16,7 @@ import {
 } from "@/lib/auth/roles";
 import { MOCK_SESSION_COOKIE, getSession } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getPrisma } from "@/lib/data/prisma/client";
 import { slugify } from "@/lib/slug";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -56,20 +57,61 @@ export async function loginAction(
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     try {
       const supabase = await createClient();
-      const { data, error } = await supabase.auth.signInWithPassword({
+      let { data, error } = await supabase.auth.signInWithPassword({
         email: parsed.data.email,
         password: parsed.data.password,
       });
 
+      // If user is unconfirmed, auto-confirm via admin API and retry
+      if (
+        error &&
+        (error.message?.includes("Email not confirmed") ||
+          (error as unknown as { code?: string }).code === "email_not_confirmed")
+      ) {
+        const admin = createAdminClient();
+        if (admin) {
+          const { data: userList } = await admin.auth.admin.listUsers();
+          const target = userList?.users?.find(
+            (u) => u.email?.toLowerCase() === parsed.data.email.toLowerCase()
+          );
+          if (target) {
+            await admin.auth.admin.updateUserById(target.id, { email_confirm: true });
+            const retry = await supabase.auth.signInWithPassword({
+              email: parsed.data.email,
+              password: parsed.data.password,
+            });
+            data = retry.data;
+            error = retry.error;
+          }
+        }
+      }
+
       if (error) {
+        if (
+          error.message?.includes("Email not confirmed") ||
+          (error as unknown as { code?: string }).code === "email_not_confirmed"
+        ) {
+          return fail("Email belum dikonfirmasi. Silakan periksa inbox email Anda.");
+        }
         return fail("Email atau kata sandi tidak sesuai. Silakan periksa kembali.");
       }
 
       if (data.user) {
-        if (process.env.DATA_SOURCE === "prisma") {
+        if (process.env.DATA_SOURCE !== "mock") {
           const prisma = getPrisma();
-          const dbUser = await prisma.user.findUnique({
+          const dbUser = await prisma.user.upsert({
             where: { id: data.user.id },
+            create: {
+              id: data.user.id,
+              email: parsed.data.email,
+              role:
+                data.user.user_metadata?.role === "seller"
+                  ? "SELLER"
+                  : data.user.user_metadata?.role === "admin"
+                    ? "ADMIN"
+                    : "BUYER",
+            },
+            update: {},
             include: { sellerProfile: { select: { id: true } } },
           });
           const role = (dbUser?.role?.toLowerCase() as Role) || "buyer";
@@ -113,32 +155,66 @@ export async function registerAction(
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     try {
       const supabase = await createClient();
-      const { data, error } = await supabase.auth.signUp({
-        email: parsed.data.email,
-        password: parsed.data.password,
-        options: {
-          data: {
+      const admin = createAdminClient();
+      let userId: string | null = null;
+
+      if (admin) {
+        // Create user with pre-confirmed email via Admin API
+        const { data, error } = await admin.auth.admin.createUser({
+          email: parsed.data.email,
+          password: parsed.data.password,
+          email_confirm: true,
+          user_metadata: {
             name: parsed.data.name,
             role: "buyer",
           },
-        },
-      });
+        });
 
-      if (error) {
-        return fail(
-          error.message?.includes("already registered")
-            ? "Email sudah terdaftar. Silakan login."
-            : error.message || "Pendaftaran gagal. Silakan coba lagi."
-        );
+        if (error) {
+          if (
+            error.message?.includes("already been registered") ||
+            (error as unknown as { code?: string }).code === "email_exists"
+          ) {
+            return fail("Email sudah terdaftar. Silakan login.");
+          }
+          return fail(error.message || "Pendaftaran gagal. Silakan coba lagi.");
+        }
+        userId = data.user?.id ?? null;
+
+        // Auto sign-in so user is instantly authenticated in cookieStore
+        await supabase.auth.signInWithPassword({
+          email: parsed.data.email,
+          password: parsed.data.password,
+        });
+      } else {
+        const { data, error } = await supabase.auth.signUp({
+          email: parsed.data.email,
+          password: parsed.data.password,
+          options: {
+            data: {
+              name: parsed.data.name,
+              role: "buyer",
+            },
+          },
+        });
+
+        if (error) {
+          return fail(
+            error.message?.includes("already registered")
+              ? "Email sudah terdaftar. Silakan login."
+              : error.message || "Pendaftaran gagal. Silakan coba lagi."
+          );
+        }
+        userId = data.user?.id ?? null;
       }
 
-      if (data.user) {
-        if (process.env.DATA_SOURCE === "prisma") {
+      if (userId) {
+        if (process.env.DATA_SOURCE !== "mock") {
           const prisma = getPrisma();
           await prisma.user.upsert({
-            where: { id: data.user.id },
+            where: { id: userId },
             create: {
-              id: data.user.id,
+              id: userId,
               email: parsed.data.email,
               role: "BUYER",
             },
@@ -184,7 +260,7 @@ export async function becomeSellerAction(
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (user && process.env.DATA_SOURCE === "prisma") {
+      if (user && process.env.DATA_SOURCE !== "mock") {
         const prisma = getPrisma();
         const baseSlug = slugify(parsed.data.businessName);
         let slug = baseSlug;

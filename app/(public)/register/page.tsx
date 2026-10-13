@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -16,25 +16,18 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/shared/logo";
 import { cn } from "@/lib/utils";
 import { registerAction } from "@/actions/auth.actions";
-
-const PROVINCES = [
-  "Aceh",
-  "Sumatera Utara",
-  "Sumatera Barat",
-  "Jawa Barat",
-  "Jawa Tengah",
-  "Jawa Timur",
-  "Bali",
-  "Nusa Tenggara Barat",
-  "Nusa Tenggara Timur",
-  "Sulawesi Selatan",
-  "Papua",
-];
+import { fetchProvinces, fetchRegencies, type RegionItem } from "@/lib/regions";
 
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
+  const [provinces, setProvinces] = useState<RegionItem[]>([]);
+  const [cities, setCities] = useState<RegionItem[]>([]);
+  const [selectedProvinceId, setSelectedProvinceId] = useState<string>("");
+  const [loadingProvinces, setLoadingProvinces] = useState(false);
+  const [loadingCities, setLoadingCities] = useState(false);
+
   const initialRole =
     searchParams.get("role") === "seller" ? "seller" : "buyer";
 
@@ -42,6 +35,7 @@ function RegisterForm() {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(registerSchema),
@@ -58,6 +52,56 @@ function RegisterForm() {
       role: initialRole as "buyer" | "seller",
     },
   });
+
+  useEffect(() => {
+    let ignore = false;
+    async function loadProvinces() {
+      setLoadingProvinces(true);
+      try {
+        const data = await fetchProvinces();
+        if (!ignore) setProvinces(data);
+      } catch {
+        if (!ignore) toast.error("Gagal memuat daftar provinsi");
+      } finally {
+        if (!ignore) setLoadingProvinces(false);
+      }
+    }
+    loadProvinces();
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedProvinceId) {
+      setCities([]);
+      return;
+    }
+    let ignore = false;
+    async function loadCities() {
+      setLoadingCities(true);
+      try {
+        const data = await fetchRegencies(selectedProvinceId);
+        if (!ignore) setCities(data);
+      } catch {
+        if (!ignore) toast.error("Gagal memuat daftar kota/kabupaten");
+      } finally {
+        if (!ignore) setLoadingCities(false);
+      }
+    }
+    loadCities();
+    return () => {
+      ignore = true;
+    };
+  }, [selectedProvinceId]);
+
+  const handleProvinceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const provinceName = e.target.value;
+    setValue("province", provinceName, { shouldValidate: true });
+    setValue("city", "", { shouldValidate: true });
+    const matched = provinces.find((p) => p.name === provinceName);
+    setSelectedProvinceId(matched ? matched.id : "");
+  };
 
   const selectedRole = watch("role");
 
@@ -212,12 +256,19 @@ function RegisterForm() {
               >
                 <select
                   {...register("province")}
-                  className="w-full h-10 px-3 text-sm bg-surface-base border border-neutral-300 rounded-sm text-neutral-900 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+                  onChange={(e) => {
+                    register("province").onChange(e);
+                    handleProvinceChange(e);
+                  }}
+                  disabled={loadingProvinces}
+                  className="w-full h-10 px-3 text-sm bg-surface-base border border-neutral-300 rounded-sm text-neutral-900 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600 disabled:opacity-50"
                 >
-                  <option value="">Pilih Provinsi</option>
-                  {PROVINCES.map((prov) => (
-                    <option key={prov} value={prov}>
-                      {prov}
+                  <option value="">
+                    {loadingProvinces ? "Memuat provinsi..." : "Pilih Provinsi"}
+                  </option>
+                  {provinces.map((prov) => (
+                    <option key={prov.id} value={prov.name}>
+                      {prov.name}
                     </option>
                   ))}
                 </select>
@@ -227,12 +278,24 @@ function RegisterForm() {
                 required
                 error={errors.city?.message}
               >
-                <input
-                  type="text"
+                <select
                   {...register("city")}
-                  placeholder="Bandung Barat"
-                  className="w-full h-10 px-3 text-sm bg-surface-base border border-neutral-300 rounded-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
-                />
+                  disabled={!selectedProvinceId || loadingCities}
+                  className="w-full h-10 px-3 text-sm bg-surface-base border border-neutral-300 rounded-sm text-neutral-900 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600 disabled:opacity-50"
+                >
+                  <option value="">
+                    {loadingCities
+                      ? "Memuat kota/kabupaten..."
+                      : !selectedProvinceId
+                        ? "Pilih provinsi dahulu"
+                        : "Pilih Kota / Kabupaten"}
+                  </option>
+                  {cities.map((city) => (
+                    <option key={city.id} value={city.name}>
+                      {city.name}
+                    </option>
+                  ))}
+                </select>
               </FormField>
             </div>
 

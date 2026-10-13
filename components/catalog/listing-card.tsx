@@ -66,13 +66,21 @@ export function ListingCard({
           <h2 className="line-clamp-2 min-h-10 font-display text-base font-semibold leading-snug text-neutral-900 group-hover:underline">
             {listing.title}
           </h2>
-          <p className="truncate text-[11px] font-mono uppercase tracking-tight text-neutral-500">
-            {origin} · {process} · {roast}
-          </p>
+          <div className="flex flex-wrap items-center gap-1 text-[10px] font-mono">
+            <span className="bg-neutral-100 text-neutral-800 px-1.5 py-0.5 rounded font-medium truncate max-w-[120px]">
+              {origin}
+            </span>
+            <span className="bg-secondary-50 text-secondary-800 border border-secondary-200/60 px-1.5 py-0.5 rounded font-medium">
+              {process}
+            </span>
+            <span className="bg-amber-50 text-amber-800 border border-amber-200/60 px-1.5 py-0.5 rounded font-medium">
+              {roast}
+            </span>
+          </div>
 
           {listing.tasteProfile?.flavorNotes && (
-            <p className="line-clamp-1 text-[11px] text-neutral-600 bg-neutral-100 px-1.5 py-0.5 rounded-xs w-fit">
-              <span className="font-medium text-neutral-500">Notes:</span>{" "}
+            <p className="line-clamp-1 text-[11px] text-neutral-600 bg-neutral-50 px-1.5 py-0.5 rounded border border-neutral-200 w-fit">
+              <span className="font-semibold text-neutral-500">Notes:</span>{" "}
               {listing.tasteProfile.flavorNotes}
             </p>
           )}

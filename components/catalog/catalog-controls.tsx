@@ -329,6 +329,107 @@ export function CatalogControls({
           </div>
         </form>
 
+        {/* Active Filter Chips & Reset Button */}
+        {(activeFilterCount > 0 || query) && (
+          <div className="flex flex-wrap items-center gap-1.5 pt-3">
+            <span className="text-[11px] text-neutral-400 font-medium">Filter Aktif:</span>
+            {query && (
+              <span className="inline-flex items-center gap-1 text-[11px] bg-neutral-200/80 text-neutral-800 px-2 py-0.5 rounded-full">
+                &ldquo;{query}&rdquo;
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuery("");
+                    replaceParam("q", "");
+                  }}
+                  className="hover:text-neutral-900 ml-0.5"
+                >
+                  &times;
+                </button>
+              </span>
+            )}
+            {currentOrigin && (
+              <span className="inline-flex items-center gap-1 text-[11px] bg-primary-100 text-primary-900 px-2 py-0.5 rounded-full">
+                Asal: {currentOrigin}
+                <button
+                  type="button"
+                  onClick={() => replaceParam("origin", "")}
+                  className="hover:text-primary-950 ml-0.5"
+                >
+                  &times;
+                </button>
+              </span>
+            )}
+            {currentProcess && (
+              <span className="inline-flex items-center gap-1 text-[11px] bg-secondary-100 text-secondary-900 px-2 py-0.5 rounded-full">
+                Proses: {currentProcess}
+                <button
+                  type="button"
+                  onClick={() => replaceParam("process", "")}
+                  className="hover:text-secondary-950 ml-0.5"
+                >
+                  &times;
+                </button>
+              </span>
+            )}
+            {currentRoast && (
+              <span className="inline-flex items-center gap-1 text-[11px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full">
+                Sangrai: {currentRoast}
+                <button
+                  type="button"
+                  onClick={() => replaceParam("roast", "")}
+                  className="hover:text-amber-950 ml-0.5"
+                >
+                  &times;
+                </button>
+              </span>
+            )}
+            {(currentMinPrice || currentMaxPrice) && (
+              <span className="inline-flex items-center gap-1 text-[11px] bg-neutral-200/80 text-neutral-800 px-2 py-0.5 rounded-full">
+                {activePriceLabel}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const p = new URLSearchParams(searchParams.toString());
+                    p.delete("min_price");
+                    p.delete("max_price");
+                    p.delete("harga_min");
+                    p.delete("harga_max");
+                    startTransition(() =>
+                      router.replace(`${pathname}?${p.toString()}`, { scroll: false }),
+                    );
+                  }}
+                  className="hover:text-neutral-900 ml-0.5"
+                >
+                  &times;
+                </button>
+              </span>
+            )}
+            {searchParams.get("verified") === "true" && (
+              <span className="inline-flex items-center gap-1 text-[11px] bg-accent-100 text-accent-800 px-2 py-0.5 rounded-full">
+                Terverifikasi
+                <button
+                  type="button"
+                  onClick={() => replaceParam("verified", "")}
+                  className="hover:text-accent-950 ml-0.5"
+                >
+                  &times;
+                </button>
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                startTransition(() => router.replace(pathname, { scroll: false }));
+              }}
+              className="text-[11px] text-rose-600 hover:text-rose-800 underline font-medium ml-1 cursor-pointer"
+            >
+              Reset Semua
+            </button>
+          </div>
+        )}
+
         {/* Mobile Sticky Floating Filter Bar */}
         <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-30 md:hidden animate-in fade-in slide-in-from-bottom-2">
           <Sheet>

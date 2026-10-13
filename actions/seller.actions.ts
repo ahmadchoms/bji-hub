@@ -15,6 +15,7 @@ import {
   getSellerPayments,
   getSellerPlanState,
   getSellerStats,
+  requestVerification,
   updateListing,
   updateSellerProfile,
 } from "@/lib/data";
@@ -157,4 +158,15 @@ export async function purchaseBoostAction(
   revalidatePath("/dashboard/analytics");
   revalidatePath("/");
   return ok({ paymentId: payment.id, status: payment.status, snapToken });
+}
+
+export async function requestVerificationAction(): Promise<ActionResult> {
+  const { sellerId } = await requireSeller("/dashboard/verification");
+  const success = await requestVerification(sellerId);
+  if (!success) return fail("Gagal mengajukan verifikasi toko");
+
+  revalidatePath("/dashboard/verification");
+  revalidatePath("/dashboard");
+  revalidatePath("/admin/verification");
+  return ok(undefined);
 }

@@ -9,6 +9,7 @@ const SELLER_NAV: readonly DashboardNavItem[] = [
   { href: "/dashboard/analytics", label: "Analitik" },
   { href: "/dashboard/billing", label: "Langganan" },
   { href: "/dashboard/profile", label: "Profil Toko" },
+  { href: "/dashboard/verification", label: "Verifikasi Toko" },
   { href: "/dashboard/inquiry", label: "Pesan Masuk" },
 ];
 

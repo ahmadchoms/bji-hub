@@ -27,6 +27,7 @@ export const {
   getInquiries,
   createInquiry,
   updateSellerProfile,
+  requestVerification,
   createListing,
   updateListing,
   getSellerPayments,

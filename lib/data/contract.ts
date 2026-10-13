@@ -61,6 +61,7 @@ export interface DataRepository {
   getInquiries(sellerId?: string): Promise<Inquiry[]>;
   createInquiry(input: InquiryInput): Promise<Inquiry>;
   updateSellerProfile(sellerId: string, data: SellerProfileFormValues): Promise<SellerProfile | null>;
+  requestVerification(sellerId: string): Promise<boolean>;
   createListing(sellerId: string, data: ListingFormValues): Promise<ListingWithRelations | null>;
   updateListing(sellerId: string, listingId: string, data: ListingFormValues): Promise<ListingWithRelations | null>;
 

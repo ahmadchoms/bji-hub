@@ -496,6 +496,15 @@ export async function getAdminListings(): Promise<ListingWithRelations[]> {
   return [...mockListings];
 }
 
+export async function requestVerification(sellerId: string): Promise<boolean> {
+  await simulateDelay(200);
+  const seller = mockSellers.find((s) => s.id === sellerId);
+  if (!seller || seller.isVerified) return false;
+  seller.verificationStatus = "pending";
+  rejectedVerificationIds.delete(sellerId);
+  return true;
+}
+
 export async function reviewVerification(
   sellerId: string,
   decision: "approve" | "reject",
@@ -505,8 +514,10 @@ export async function reviewVerification(
   if (!seller) return false;
   if (decision === "approve") {
     seller.isVerified = true;
+    seller.verificationStatus = "approved";
     rejectedVerificationIds.delete(sellerId);
   } else {
+    seller.verificationStatus = "rejected";
     rejectedVerificationIds.add(sellerId);
   }
   return true;

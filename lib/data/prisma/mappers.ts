@@ -42,6 +42,7 @@ export function toSeller(row: SellerRow): SellerProfile {
     bio: row.bio ?? undefined,
     avatarUrl: row.avatarUrl ?? undefined,
     isVerified: row.isVerified,
+    verificationStatus: row.verificationStatus,
     tier: row.tier,
     createdAt: iso(row.createdAt),
   };

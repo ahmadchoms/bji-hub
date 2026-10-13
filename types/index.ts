@@ -21,6 +21,7 @@ export interface SellerProfile {
   address: string;
   whatsappNumber: string;
   isVerified: boolean;
+  verificationStatus?: "pending" | "approved" | "rejected";
   tier: "free" | "growth" | "business";
   bio?: string;
   avatarUrl?: string;

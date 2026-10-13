@@ -26,6 +26,7 @@ export async function subscribePlanAction(input: unknown): Promise<
     status: Payment["status"];
     tier: PlanTier;
     expiresAt: string;
+    snapToken?: string | null;
   }>
 > {
   const { sellerId } = await requireSeller("/dashboard/billing");
@@ -50,12 +51,22 @@ export async function subscribePlanAction(input: unknown): Promise<
   });
   if (!result) return fail("Gagal memproses langganan");
 
+  let snapToken: string | null = null;
+  if (amount > 0 && process.env.MIDTRANS_SERVER_KEY) {
+    const { createMidtransSnapToken } = await import("@/lib/midtrans");
+    snapToken = await createMidtransSnapToken({
+      orderId: result.payment.midtransOrderId,
+      grossAmount: amount,
+    });
+  }
+
   refresh();
   return ok({
     paymentId: result.payment.id,
     status: result.payment.status,
     tier: result.subscription.tier,
     expiresAt: result.subscription.expiresAt,
+    snapToken,
   });
 }
 

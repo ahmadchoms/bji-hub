@@ -19,6 +19,7 @@ export const mockRepository: DataRepository = {
   getInquiries: repo.getInquiries,
   createInquiry: repo.submitInquiry,
   updateSellerProfile: repo.updateSellerProfile,
+  requestVerification: repo.requestVerification,
   createListing: repo.createListing,
   updateListing: repo.updateListing,
   getSellerPayments: repo.getSellerPayments,

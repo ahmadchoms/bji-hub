@@ -93,6 +93,28 @@ export function PlanSection({ state, listingCount }: PlanSectionProps) {
       async () => {
         const result = await subscribePlanAction({ tier: target, months });
         if (!result.success) return { ok: false, message: result.error };
+
+        if (
+          result.data.snapToken &&
+          typeof window !== "undefined" &&
+          (window as unknown as { snap?: { pay: (token: string, options: unknown) => void } }).snap
+        ) {
+          const snap = (window as unknown as { snap: { pay: (token: string, options: unknown) => void } }).snap;
+          snap.pay(result.data.snapToken, {
+            onSuccess: () => {
+              toast.success("Pembayaran langganan berhasil!");
+              router.refresh();
+            },
+            onPending: () => {
+              toast.info("Menunggu pembayaran diselesaikan.");
+              router.refresh();
+            },
+            onError: () => {
+              toast.error("Pembayaran gagal.");
+            },
+          });
+        }
+
         return result.data.status === "paid"
           ? {
               ok: true,

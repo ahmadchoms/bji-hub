@@ -13,7 +13,7 @@ export function OnboardingCard({ seller, totalListings }: OnboardingCardProps) {
       id: "profile",
       label: "Lengkapi profil bisnis & kontak",
       done: Boolean(seller.businessName && seller.whatsappNumber && seller.city && seller.bio),
-      href: "/dashboard/settings",
+      href: "/dashboard/profile",
     },
     {
       id: "listing",

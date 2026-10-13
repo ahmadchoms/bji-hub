@@ -52,6 +52,7 @@ type SellerMethods = Pick<
   | "getInquiries"
   | "createInquiry"
   | "updateSellerProfile"
+  | "requestVerification"
   | "createListing"
   | "updateListing"
 >;
@@ -103,6 +104,14 @@ export const sellers: SellerMethods = {
       if (isNotFound(error)) return null;
       throw error;
     }
+  },
+
+  async requestVerification(sellerId) {
+    const result = await getPrisma().sellerProfile.updateMany({
+      where: { id: sellerId, isVerified: false },
+      data: { verificationStatus: "pending" },
+    });
+    return result.count > 0;
   },
 
   async createListing(sellerId, data) {

@@ -218,6 +218,57 @@ export async function getOrdersBySeller(sellerId: string): Promise<Order[]> {
   return mockOrders.filter((o) => o.sellerId === sellerId);
 }
 
+export async function getOrdersByBuyer(buyerIdOrEmail: string): Promise<Order[]> {
+  const pool = getPool();
+  if (pool) {
+    try {
+      const res = await pool.query(
+        `SELECT o.*, l.title as listing_title, s.business_name as seller_name
+         FROM public.orders o
+         LEFT JOIN public.listings l ON o.listing_id = l.id
+         LEFT JOIN public.seller_profiles s ON o.seller_id = s.id
+         WHERE o.buyer_id = $1 OR o.buyer_email = $1
+         ORDER BY o.created_at DESC`,
+        [buyerIdOrEmail],
+      );
+      return res.rows.map((row) => ({
+        id: row.id,
+        orderNumber: row.order_number,
+        buyerId: row.buyer_id,
+        buyerName: row.buyer_name,
+        buyerEmail: row.buyer_email,
+        buyerPhone: row.buyer_phone,
+        buyerAddress: row.buyer_address,
+        buyerCity: row.buyer_city,
+        sellerId: row.seller_id,
+        sellerName: row.seller_name,
+        listingId: row.listing_id,
+        listingTitle: row.listing_title,
+        quantity: row.quantity,
+        itemPrice: Number(row.item_price),
+        subtotal: Number(row.subtotal),
+        shippingCost: Number(row.shipping_cost),
+        serviceFee: Number(row.service_fee),
+        totalAmount: Number(row.total_amount),
+        shippingCourier: row.shipping_courier,
+        trackingNumber: row.tracking_number,
+        status: row.status as OrderStatus,
+        snapToken: row.snap_token,
+        midtransOrderId: row.midtrans_order_id,
+        notes: row.notes,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      }));
+    } catch {
+      // Fall through
+    }
+  }
+
+  return mockOrders.filter(
+    (o) => o.buyerId === buyerIdOrEmail || o.buyerEmail === buyerIdOrEmail,
+  );
+}
+
 export async function updateOrderStatus(
   orderId: string,
   status: OrderStatus,

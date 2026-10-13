@@ -88,6 +88,91 @@ function getFallbackRates(params: CalculateShippingParams): ShippingRate[] {
   return rates;
 }
 
+let cachedCities: { city_id: string; city_name: string; type: string }[] | null = null;
+
+async function getRajaOngkirCityId(
+  cityName: string,
+  apiKey: string,
+): Promise<string | null> {
+  const clean = cityName
+    .toLowerCase()
+    .replace(/^(kota|kabupaten|kab\.|adm\.)\s+/i, "")
+    .trim();
+  if (!clean) return null;
+
+  try {
+    if (!cachedCities) {
+      const res = await fetch("https://api.rajaongkir.com/starter/city", {
+        headers: { key: apiKey },
+        signal: AbortSignal.timeout(4000),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        cachedCities = json?.rajaongkir?.results || [];
+      }
+    }
+
+    if (cachedCities && cachedCities.length > 0) {
+      const found = cachedCities.find(
+        (c) =>
+          c.city_name.toLowerCase() === clean ||
+          c.city_name.toLowerCase().includes(clean) ||
+          clean.includes(c.city_name.toLowerCase()),
+      );
+      return found ? found.city_id : null;
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+async function fetchRajaOngkirCost(
+  originId: string,
+  destId: string,
+  weightGrams: number,
+  courier: string,
+  apiKey: string,
+): Promise<ShippingRate[]> {
+  const body = new URLSearchParams({
+    origin: originId,
+    destination: destId,
+    weight: String(Math.max(1000, weightGrams)),
+    courier,
+  });
+
+  const res = await fetch("https://api.rajaongkir.com/starter/cost", {
+    method: "POST",
+    headers: {
+      key: apiKey,
+      "content-type": "application/x-www-form-urlencoded",
+    },
+    body: body.toString(),
+    signal: AbortSignal.timeout(5000),
+  });
+
+  if (!res.ok) return [];
+  const json = await res.json();
+  const results = json?.rajaongkir?.results?.[0];
+  if (!results?.costs) return [];
+
+  return results.costs.map(
+    (c: {
+      service: string;
+      description?: string;
+      cost: { value: number; etd: string }[];
+    }) => ({
+      id: `${courier}-${c.service.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
+      courierCode: courier,
+      courierName: results.name || courier.toUpperCase(),
+      service: c.service,
+      cost: Number(c.cost?.[0]?.value || 0),
+      etd: c.cost?.[0]?.etd ? `${c.cost[0].etd} hari` : "2-3 hari",
+      description: c.description || `Layanan ${c.service}`,
+    }),
+  );
+}
+
 export async function calculateShippingRates(
   params: CalculateShippingParams,
 ): Promise<ShippingRate[]> {
@@ -95,10 +180,35 @@ export async function calculateShippingRates(
 
   if (apiKey) {
     try {
-      // Optional: Hit RajaOngkir Starter API if configured
-      // Fallback is used if API key is invalid or rate limited
+      const originId = await getRajaOngkirCityId(params.originCity, apiKey);
+      const destId = await getRajaOngkirCityId(params.destinationCity, apiKey);
+
+      if (originId && destId) {
+        const [jneRates, posRates] = await Promise.all([
+          fetchRajaOngkirCost(originId, destId, params.weightGrams, "jne", apiKey),
+          fetchRajaOngkirCost(originId, destId, params.weightGrams, "pos", apiKey),
+        ]);
+
+        const combined = [...jneRates, ...posRates].filter((r) => r.cost > 0);
+        if (combined.length > 0) {
+          if (params.weightGrams >= 5000) {
+            const kg = Math.ceil(params.weightGrams / 1000);
+            combined.unshift({
+              id: "jnt-cargo",
+              courierCode: "jnt_cargo",
+              courierName: "J&T Cargo",
+              service: "Kargo Hemat B2B",
+              cost: Math.max(25000, 7000 * kg),
+              etd: "3-5 hari",
+              description:
+                "Rekomendasi terbaik untuk karung & pesanan grosir (≥ 5 kg).",
+            });
+          }
+          return combined;
+        }
+      }
     } catch {
-      // Fall back to intelligent matrix
+      // Fall through to fallback
     }
   }
 

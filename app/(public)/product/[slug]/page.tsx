@@ -228,19 +228,13 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
               </div>
 
               {/* Primary Online Checkout CTA */}
-              <div className="space-y-2">
-                <Link
-                  href={`/checkout/${listing.slug}`}
-                  className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-4 rounded-sm text-base shadow-xs flex items-center justify-center transition-colors"
-                >
-                  <ShieldCheck className="w-5 h-5 mr-2 text-primary-200" />
-                  Beli Langsung (Garansi Escrow)
-                </Link>
-                <div className="flex items-center justify-center gap-1.5 text-xs text-emerald-800 bg-emerald-50/80 py-1 px-2 rounded border border-emerald-200">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>Dana ditampung aman oleh sistem hingga pesanan diterima</span>
-                </div>
-              </div>
+              <Link
+                href={`/checkout/${listing.slug}`}
+                className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-4 rounded-sm text-base shadow-xs flex items-center justify-center transition-colors"
+              >
+                <ShieldCheck className="w-5 h-5 mr-2 text-primary-200" />
+                Beli Langsung
+              </Link>
 
               {/* B2B WhatsApp Negotiation Alternative */}
               <div className="relative my-3">

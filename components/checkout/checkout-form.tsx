@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -79,20 +79,32 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
   const serviceFee = 1500;
   const totalAmount = subtotal + shippingCost + serviceFee;
 
-  const handleCityChange = async (newCity: string) => {
-    setBuyerCity(newCity);
-    if (newCity.trim().length >= 3) {
-      const rates = await calculateShippingRates({
-        originCity: listing.seller.city,
-        originProvince: listing.seller.province,
-        destinationCity: newCity,
-        weightGrams: quantity * 1000,
-      });
-      setShippingRates(rates);
-      if (!rates.some((r) => r.id === selectedCourierId)) {
-        setSelectedCourierId(rates[0]?.id || "jne-reg");
+  useEffect(() => {
+    let canceled = false;
+    const fetchRates = async () => {
+      if (buyerCity.trim().length >= 3) {
+        const rates = await calculateShippingRates({
+          originCity: listing.seller.city,
+          originProvince: listing.seller.province,
+          destinationCity: buyerCity,
+          weightGrams: quantity * 1000,
+        });
+        if (!canceled && rates.length > 0) {
+          setShippingRates(rates);
+          setSelectedCourierId((prev) =>
+            rates.some((r) => r.id === prev) ? prev : rates[0].id,
+          );
+        }
       }
-    }
+    };
+    fetchRates();
+    return () => {
+      canceled = true;
+    };
+  }, [quantity, buyerCity, listing.seller.city, listing.seller.province]);
+
+  const handleCityChange = (newCity: string) => {
+    setBuyerCity(newCity);
   };
 
   const handlePay = () => {
@@ -385,17 +397,6 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
             </span>
           </div>
 
-          {/* Garansi Rekening Bersama (Escrow) */}
-          <div className="p-3 rounded bg-emerald-50/60 border border-emerald-200 text-xs space-y-1">
-            <div className="flex items-center gap-1.5 font-semibold text-emerald-900">
-              <ShieldCheck className="w-4 h-4 text-emerald-700" />
-              <span>Garansi Aman Rekening Bersama</span>
-            </div>
-            <p className="text-[11px] text-emerald-800 leading-relaxed">
-              Dana Anda disimpan aman oleh Biji Hub dan baru diteruskan ke {listing.seller.businessName} setelah kopi sampai dengan selamat.
-            </p>
-          </div>
-
           <Button
             type="button"
             variant="primary"
@@ -407,7 +408,7 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
             {isPending ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Menghubungkan Pembayaran...</span>
+                <span>Memproses Transaksi...</span>
               </>
             ) : (
               <>
@@ -416,10 +417,6 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
               </>
             )}
           </Button>
-
-          <p className="text-[11px] text-neutral-500 text-center leading-normal">
-            Mendukung QRIS, GoPay, BCA/Mandiri/BRI Virtual Account, & Kartu Kredit via Midtrans.
-          </p>
         </div>
       </div>
     </div>

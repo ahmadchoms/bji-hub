@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { getOrderById } from "@/lib/data/orders";
 import { PageContainer } from "@/components/layout/page-container";
 import { formatRupiah } from "@/components/shared/price-text";
@@ -26,20 +25,20 @@ interface OrderSuccessPageProps {
   searchParams: Promise<{
     orderId?: string;
     order_id?: string;
+    orderNumber?: string;
+    order_number?: string;
+    id?: string;
   }>;
 }
 
 export default async function OrderSuccessPage({
   searchParams,
 }: OrderSuccessPageProps) {
-  const { orderId, order_id } = await searchParams;
-  const lookupId = orderId || order_id;
+  const { orderId, order_id, orderNumber, order_number, id } =
+    await searchParams;
+  const lookupId = orderNumber || order_number || orderId || order_id || id;
 
-  if (!lookupId) {
-    notFound();
-  }
-
-  const order = await getOrderById(lookupId);
+  const order = lookupId ? await getOrderById(lookupId) : null;
 
   if (!order) {
     return (

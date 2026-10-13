@@ -253,6 +253,7 @@ export interface Order {
   midtransOrderId?: string | null;
   notes?: string | null;
   disputeReason?: string | null;
+  disputeEvidenceUrl?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -265,6 +266,7 @@ export interface Review {
   buyerName: string;
   rating: number; // 1 to 5
   comment?: string | null;
+  imageUrl?: string | null;
   createdAt: string;
 }
 

@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
-import { requireSeller } from "@/lib/auth/session";
+import { getSession } from "@/lib/auth/session";
 import { createImageUploadTarget } from "@/lib/data";
 import { IMAGE_RULES, isAllowedImageType } from "@/lib/storage";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
@@ -29,7 +29,13 @@ export interface UploadTargetData {
 export async function createImageUploadAction(
   input: unknown,
 ): Promise<ActionResult<UploadTargetData>> {
-  const { sellerId } = await requireSeller("/dashboard/listing");
+  const session = await getSession();
+  const uploaderId =
+    session.role === "seller"
+      ? (session as unknown as { sellerId?: string }).sellerId || "seller"
+      : session.role === "buyer"
+        ? (session as unknown as { userId?: string }).userId || "buyer"
+        : "uploads";
   const parsed = uploadRequestSchema.safeParse(input);
   if (!parsed.success)
     return fail(parsed.error.issues[0]?.message ?? "File tidak valid");
@@ -46,7 +52,7 @@ export async function createImageUploadAction(
       );
 
       const ext = parsed.data.filename.split(".").pop() || "webp";
-      const filePath = `listings/${sellerId}/${crypto.randomUUID()}.${ext}`;
+      const filePath = `uploads/${uploaderId}/${crypto.randomUUID()}.${ext}`;
 
       const { data: signedData, error } = await supabase.storage
         .from("listings")
@@ -70,7 +76,7 @@ export async function createImageUploadAction(
 
   // Mock storage target fallback (local dev & testing)
   const target = createImageUploadTarget({
-    sellerId,
+    sellerId: uploaderId,
     contentType: parsed.data.contentType,
     size: parsed.data.size,
   });

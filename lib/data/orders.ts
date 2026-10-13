@@ -154,6 +154,7 @@ export async function getOrderById(idOrNumber: string): Promise<Order | null> {
           midtransOrderId: row.midtrans_order_id,
           notes: row.notes,
           disputeReason: row.dispute_reason ?? null,
+          disputeEvidenceUrl: row.dispute_evidence_url ?? null,
           createdAt: row.created_at,
           updatedAt: row.updated_at,
         };
@@ -210,6 +211,7 @@ export async function getOrdersBySeller(sellerId: string): Promise<Order[]> {
         midtransOrderId: row.midtrans_order_id,
         notes: row.notes,
         disputeReason: row.dispute_reason ?? null,
+        disputeEvidenceUrl: row.dispute_evidence_url ?? null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       }));
@@ -258,6 +260,7 @@ export async function getAllOrders(): Promise<Order[]> {
         midtransOrderId: row.midtrans_order_id,
         notes: row.notes,
         disputeReason: row.dispute_reason ?? null,
+        disputeEvidenceUrl: row.dispute_evidence_url ?? null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       }));
@@ -308,6 +311,7 @@ export async function getOrdersByBuyer(buyerIdOrEmail: string): Promise<Order[]>
         midtransOrderId: row.midtrans_order_id,
         notes: row.notes,
         disputeReason: row.dispute_reason ?? null,
+        disputeEvidenceUrl: row.dispute_evidence_url ?? null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       }));
@@ -326,35 +330,39 @@ export async function updateOrderStatus(
   status: OrderStatus,
   trackingNumber?: string,
   disputeReason?: string,
+  disputeEvidenceUrl?: string,
 ): Promise<boolean> {
   const pool = getPool();
   const now = new Date().toISOString();
 
   if (pool) {
     try {
+      let res;
       if (trackingNumber) {
-        await pool.query(
+        res = await pool.query(
           `UPDATE public.orders
            SET status = $1, tracking_number = $2, updated_at = $3
            WHERE id = $4 OR order_number = $4 OR midtrans_order_id = $4`,
           [status, trackingNumber, now, orderId],
         );
       } else if (disputeReason) {
-        await pool.query(
+        res = await pool.query(
           `UPDATE public.orders
-           SET status = $1, dispute_reason = $2, updated_at = $3
-           WHERE id = $4 OR order_number = $4 OR midtrans_order_id = $4`,
-          [status, disputeReason, now, orderId],
+           SET status = $1, dispute_reason = $2, dispute_evidence_url = $3, updated_at = $4
+           WHERE id = $5 OR order_number = $5 OR midtrans_order_id = $5`,
+          [status, disputeReason, disputeEvidenceUrl ?? null, now, orderId],
         );
       } else {
-        await pool.query(
+        res = await pool.query(
           `UPDATE public.orders
            SET status = $1, updated_at = $2
-           WHERE id = $4 OR order_number = $4 OR midtrans_order_id = $4`,
+           WHERE id = $3 OR order_number = $3 OR midtrans_order_id = $3`,
           [status, now, orderId],
         );
       }
-      return true;
+      if (res && res.rowCount && res.rowCount > 0) {
+        return true;
+      }
     } catch {
       // Fall through
     }
@@ -370,8 +378,48 @@ export async function updateOrderStatus(
     existing.status = status;
     if (trackingNumber) existing.trackingNumber = trackingNumber;
     if (disputeReason) existing.disputeReason = disputeReason;
+    if (disputeEvidenceUrl) existing.disputeEvidenceUrl = disputeEvidenceUrl;
     existing.updatedAt = now;
     return true;
   }
   return false;
+}
+
+export async function autoCompleteExpiredShippedOrders(
+  daysThreshold = 7,
+): Promise<{ completedCount: number; orderIds: string[] }> {
+  const pool = getPool();
+  const now = new Date();
+  const thresholdMs = daysThreshold * 24 * 60 * 60 * 1000;
+  const cutoffDate = new Date(now.getTime() - thresholdMs).toISOString();
+
+  const completedIds: string[] = [];
+
+  if (pool) {
+    try {
+      const res = await pool.query(
+        `UPDATE public.orders
+         SET status = 'completed', updated_at = NOW()
+         WHERE status = 'shipped' AND updated_at <= $1
+         RETURNING id`,
+        [cutoffDate],
+      );
+      res.rows.forEach((r) => completedIds.push(r.id));
+    } catch (e) {
+      console.error("Failed to auto-complete orders in postgres:", e);
+    }
+  }
+
+  mockOrders.forEach((o) => {
+    if (o.status === "shipped") {
+      const orderDate = new Date(o.updatedAt || o.createdAt).getTime();
+      if (now.getTime() - orderDate >= thresholdMs) {
+        o.status = "completed";
+        o.updatedAt = now.toISOString();
+        if (!completedIds.includes(o.id)) completedIds.push(o.id);
+      }
+    }
+  });
+
+  return { completedCount: completedIds.length, orderIds: completedIds };
 }

@@ -6,7 +6,8 @@ import { formatRupiah } from "@/components/shared/price-text";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExportCsvButton, type CsvColumn } from "@/components/shared/export-csv-button";
-import { resolveDisputeAction } from "@/actions/order.actions";
+import { resolveDisputeAction, autoCompleteOrdersAction } from "@/actions/order.actions";
+import { buildDisputeResolvedNotificationUrl } from "@/lib/notifications";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
@@ -20,6 +21,10 @@ import {
   RotateCcw,
   User,
   Store,
+  ExternalLink,
+  MessageCircle,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 
 interface AdminOrderDisputesProps {
@@ -48,12 +53,14 @@ const ORDER_COLUMNS: CsvColumn<Order>[] = [
   { key: "trackingNumber", label: "No Resi", format: (val) => val || "-" },
   { key: "status", label: "Status" },
   { key: "disputeReason", label: "Alasan Komplain", format: (val) => val || "-" },
+  { key: "disputeEvidenceUrl", label: "Link Bukti Foto", format: (val) => val || "-" },
 ];
 
 export function AdminOrderDisputes({ orders: initialOrders }: AdminOrderDisputesProps) {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [filter, setFilter] = useState<string>("all");
   const [isPending, startTransition] = useTransition();
+  const [isAutoCompleting, setIsAutoCompleting] = useState(false);
 
   const disputedCount = orders.filter((o) => o.status === "disputed").length;
 
@@ -91,6 +98,35 @@ export function AdminOrderDisputes({ orders: initialOrders }: AdminOrderDisputes
         toast.error(res.error || "Gagal menyelesaikan komplain");
       }
     });
+  };
+
+  const handleRunAutoComplete = async () => {
+    setIsAutoCompleting(true);
+    try {
+      const res = await autoCompleteOrdersAction();
+      if (res.success) {
+        if (res.data.completedCount > 0) {
+          toast.success(
+            `${res.data.completedCount} pesanan kadaluwarsa (>7 hari) berhasil diselesaikan otomatis!`,
+          );
+          setOrders((prev) =>
+            prev.map((o) =>
+              res.data.orderIds.includes(o.id)
+                ? { ...o, status: "completed" as OrderStatus }
+                : o,
+            ),
+          );
+        } else {
+          toast.info("Tidak ada pesanan kirim >7 hari yang perlu diselesaikan.");
+        }
+      } else {
+        toast.error(res.error || "Gagal menjalankan auto-complete pesanan");
+      }
+    } catch {
+      toast.error("Terjadi kesalahan saat memproses pesanan");
+    } finally {
+      setIsAutoCompleting(false);
+    }
   };
 
   const getStatusBadge = (status: OrderStatus) => {
@@ -201,12 +237,31 @@ export function AdminOrderDisputes({ orders: initialOrders }: AdminOrderDisputes
           </button>
         </div>
 
-        <ExportCsvButton
-          data={orders}
-          filename={`laporan-pesanan-biji-hub-${format(new Date(), "yyyyMMdd")}`}
-          columns={ORDER_COLUMNS}
-          label="Ekspor CSV Pesanan"
-        />
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={isAutoCompleting}
+            onClick={handleRunAutoComplete}
+            className="text-xs text-primary-800 border-primary-200 bg-primary-50/60 hover:bg-primary-100"
+            title="Selesaikan otomatis pesanan yang telah dikirim lebih dari 7 hari tanpa komplain"
+          >
+            {isAutoCompleting ? (
+              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+            ) : (
+              <Sparkles className="w-3.5 h-3.5 mr-1.5 text-primary-600" />
+            )}
+            Auto-Complete (&gt;7 Hari)
+          </Button>
+
+          <ExportCsvButton
+            data={orders}
+            filename={`laporan-pesanan-biji-hub-${format(new Date(), "yyyyMMdd")}`}
+            columns={ORDER_COLUMNS}
+            label="Ekspor CSV Pesanan"
+          />
+        </div>
       </div>
 
       {/* Orders List */}
@@ -253,6 +308,20 @@ export function AdminOrderDisputes({ orders: initialOrders }: AdminOrderDisputes
                       {order.disputeReason || "Tidak disertakan rincian."}
                     </p>
 
+                    {order.disputeEvidenceUrl && (
+                      <div className="pl-5.5 py-1">
+                        <a
+                          href={order.disputeEvidenceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs text-rose-700 underline font-semibold hover:text-rose-900"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          Lihat Foto Bukti Masalah dari Pembeli
+                        </a>
+                      </div>
+                    )}
+
                     <div className="flex flex-wrap items-center gap-2 pt-1 pl-5.5">
                       <Button
                         size="sm"
@@ -273,6 +342,22 @@ export function AdminOrderDisputes({ orders: initialOrders }: AdminOrderDisputes
                         <RotateCcw className="w-3.5 h-3.5 mr-1" />
                         Batalkan & Refund ke Pembeli
                       </Button>
+                      <a
+                        href={buildDisputeResolvedNotificationUrl({
+                          buyerPhone: order.buyerPhone,
+                          buyerName: order.buyerName,
+                          orderNumber: order.orderNumber,
+                          decision: "complete",
+                          totalAmount: order.totalAmount,
+                        })}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded hover:bg-emerald-100 font-medium"
+                        title="Kirim pesan WhatsApp konfirmasi ke pembeli"
+                      >
+                        <MessageCircle className="w-3 h-3" />
+                        Kirim WA ke Pembeli
+                      </a>
                     </div>
                   </div>
                 )}

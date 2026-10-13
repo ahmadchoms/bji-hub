@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,8 +12,9 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { submitReviewAction } from "@/actions/order.actions";
+import { uploadImage } from "@/lib/upload-client";
 import { toast } from "sonner";
-import { Star, Loader2, MessageSquare } from "lucide-react";
+import { Star, Loader2, Camera, X } from "lucide-react";
 
 interface OrderReviewModalProps {
   orderId: string;
@@ -26,11 +28,31 @@ export function OrderReviewModal({
   listingTitle,
 }: OrderReviewModalProps) {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const res = await uploadImage(file);
+      setImageUrl(res.url);
+      toast.success("Foto ulasan berhasil diunggah");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal mengunggah foto ulasan");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +63,7 @@ export function OrderReviewModal({
         listingId,
         rating,
         comment,
+        imageUrl,
       });
 
       if (res.success) {
@@ -138,7 +161,58 @@ export function OrderReviewModal({
               />
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-1">
+            {/* Foto Kopi / Unboxing */}
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-neutral-700 flex items-center justify-between">
+                <span>Foto Produk / Seduhan (Opsional)</span>
+                {isUploading && (
+                  <span className="text-[11px] text-primary-700 flex items-center gap-1">
+                    <Loader2 className="w-3 h-3 animate-spin" /> Mengunggah...
+                  </span>
+                )}
+              </label>
+
+              {imageUrl ? (
+                <div className="relative w-20 h-20 border rounded overflow-hidden group bg-neutral-100">
+                  <Image
+                    src={imageUrl}
+                    alt="Foto ulasan"
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setImageUrl(null)}
+                    className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 hover:bg-black/80"
+                    title="Hapus foto"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    id="review-file-upload"
+                    disabled={isUploading}
+                  />
+                  <label
+                    htmlFor="review-file-upload"
+                    className="flex items-center justify-center gap-2 p-2.5 border border-dashed border-neutral-300 rounded text-xs text-neutral-600 hover:bg-neutral-50 cursor-pointer transition-colors"
+                  >
+                    <Camera className="w-4 h-4 text-neutral-500" />
+                    <span>Tambahkan foto kemasan atau hasil seduhan</span>
+                  </label>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100">
               <Button
                 type="button"
                 variant="outline"
@@ -151,7 +225,7 @@ export function OrderReviewModal({
               <Button
                 type="submit"
                 size="sm"
-                disabled={isPending}
+                disabled={isPending || isUploading}
                 className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold"
               >
                 {isPending ? (

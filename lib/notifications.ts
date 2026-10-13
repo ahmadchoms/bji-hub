@@ -75,3 +75,27 @@ Tim Finansial Biji Hub`;
 
   return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
 }
+
+export function buildDisputeResolvedNotificationUrl(data: {
+  buyerPhone: string;
+  buyerName: string;
+  orderNumber: string;
+  decision: "complete" | "cancel";
+  totalAmount: number;
+}): string {
+  const phone = normalizeWhatsAppNumber(data.buyerPhone);
+  const decisionText =
+    data.decision === "complete"
+      ? "telah diselesaikan oleh tim Admin Biji Hub. Pesanan dinyatakan selesai dan dana telah diteruskan ke mitra roastery."
+      : `telah disetujui untuk PEMBATALAN & REFUND. Dana sebesar ${formatRupiah(data.totalAmount)} diproses untuk pengembalian ke rekening Anda.`;
+
+  const text = `Halo ${data.buyerName}, komplain untuk pesanan ${data.orderNumber} ${decisionText}
+
+Pantau rincian pesanan Anda di: https://bji-hub.vercel.app/order/success?orderNumber=${data.orderNumber}
+
+Salam,
+Tim Resolusi Sengketa Biji Hub`;
+
+  return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+}
+

@@ -226,6 +226,23 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                       {r.comment && (
                         <p className="text-neutral-700 leading-relaxed">{r.comment}</p>
                       )}
+                      {r.imageUrl && (
+                        <div className="pt-1">
+                          <a
+                            href={r.imageUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block relative w-16 h-16 rounded overflow-hidden border border-neutral-300 hover:opacity-90 transition-opacity"
+                            title="Klik untuk melihat foto ulasan ukuran penuh"
+                          >
+                            <img
+                              src={r.imageUrl}
+                              alt={`Foto ulasan oleh ${r.buyerName}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </a>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

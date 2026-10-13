@@ -21,6 +21,7 @@ export async function createReview(data: {
   buyerName: string;
   rating: number;
   comment?: string | null;
+  imageUrl?: string | null;
 }): Promise<Review> {
   const pool = getPool();
   const id = `rev-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
@@ -34,6 +35,7 @@ export async function createReview(data: {
     buyerName: data.buyerName,
     rating: Math.max(1, Math.min(5, data.rating)),
     comment: data.comment ?? null,
+    imageUrl: data.imageUrl ?? null,
     createdAt: now,
   };
 
@@ -41,8 +43,8 @@ export async function createReview(data: {
     try {
       await pool.query(
         `INSERT INTO public.reviews (
-          id, order_id, listing_id, buyer_id, buyer_name, rating, comment, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+          id, order_id, listing_id, buyer_id, buyer_name, rating, comment, image_url, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
         [
           id,
           data.orderId ?? null,
@@ -51,6 +53,7 @@ export async function createReview(data: {
           data.buyerName,
           newReview.rating,
           newReview.comment,
+          newReview.imageUrl,
           now,
         ],
       );
@@ -81,6 +84,7 @@ export async function getReviewsByListing(listingId: string): Promise<Review[]> 
         buyerName: row.buyer_name,
         rating: Number(row.rating),
         comment: row.comment,
+        imageUrl: row.image_url ?? null,
         createdAt: row.created_at,
       }));
     } catch {

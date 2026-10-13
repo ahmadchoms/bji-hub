@@ -4,7 +4,12 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 import { getListingBySlug, getListingById } from "@/lib/data";
-import { createOrder, getOrderById, updateOrderStatus } from "@/lib/data/orders";
+import {
+  createOrder,
+  getOrderById,
+  updateOrderStatus,
+  autoCompleteExpiredShippedOrders,
+} from "@/lib/data/orders";
 import { createReview } from "@/lib/data/reviews";
 import { createMidtransSnapToken } from "@/lib/midtrans";
 import { getSession, requireRole } from "@/lib/auth/session";
@@ -167,6 +172,7 @@ export async function completeOrderAction(
 const disputeSchema = z.object({
   orderId: z.string().min(1),
   reason: z.string().min(5, "Alasan komplain minimal 5 karakter").max(500),
+  evidenceUrl: z.string().optional().nullable(),
 });
 
 export async function disputeOrderAction(
@@ -184,7 +190,13 @@ export async function disputeOrderAction(
     return fail("Hanya pesanan yang sudah dibayar atau dikirim yang dapat diajukan komplain");
   }
 
-  await updateOrderStatus(order.id, "disputed", undefined, parsed.data.reason.trim());
+  await updateOrderStatus(
+    order.id,
+    "disputed",
+    undefined,
+    parsed.data.reason.trim(),
+    parsed.data.evidenceUrl || undefined,
+  );
   revalidatePath("/order/success");
   revalidatePath("/profile");
   revalidatePath("/dashboard/orders");
@@ -213,11 +225,24 @@ export async function resolveDisputeAction(
   return ok({ success: true });
 }
 
+export async function autoCompleteOrdersAction(): Promise<
+  ActionResult<{ completedCount: number; orderIds: string[] }>
+> {
+  await requireRole(["admin"], "/admin/transactions");
+  const result = await autoCompleteExpiredShippedOrders(7);
+  revalidatePath("/admin/transactions");
+  revalidatePath("/dashboard/orders");
+  revalidatePath("/order/success");
+  revalidatePath("/profile");
+  return ok(result);
+}
+
 const reviewSchema = z.object({
   orderId: z.string().optional(),
   listingId: z.string().min(1),
   rating: z.number().int().min(1).max(5),
   comment: z.string().max(500).optional(),
+  imageUrl: z.string().optional().nullable(),
 });
 
 export async function submitReviewAction(
@@ -244,6 +269,7 @@ export async function submitReviewAction(
     buyerName,
     rating: parsed.data.rating,
     comment: parsed.data.comment,
+    imageUrl: parsed.data.imageUrl,
   });
 
   return ok({ reviewId: review.id });

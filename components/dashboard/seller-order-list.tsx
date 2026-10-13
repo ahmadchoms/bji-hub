@@ -380,6 +380,19 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
                     <p className="text-rose-700 pl-5.5">
                       <span className="font-medium">Alasan:</span> {order.disputeReason || "Menunggu verifikasi admin."}
                     </p>
+                    {order.disputeEvidenceUrl && (
+                      <div className="pl-5.5 pt-1">
+                        <a
+                          href={order.disputeEvidenceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs text-rose-700 underline font-medium hover:text-rose-900"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          Lihat Foto Bukti Komplain dari Pembeli
+                        </a>
+                      </div>
+                    )}
                     <p className="text-[11px] text-rose-600 pl-5.5">
                       Admin Biji Hub sedang meninjau kasus ini sebelum memutuskan penerusan dana atau pengembalian ke pembeli.
                     </p>

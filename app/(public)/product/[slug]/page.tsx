@@ -316,31 +316,62 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                 </div>
               </div>
 
+              {/* Urgency Stock Warning Banner */}
+              {listing.stock !== undefined && listing.stock > 0 && listing.stock <= 5 && (
+                <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200/90 rounded-sm text-xs text-amber-900 font-medium">
+                  <span className="text-base">⚡</span>
+                  <div>
+                    <strong>Stok Terbatas:</strong> Tersisa hanya <strong>{listing.stock} {listing.unit}</strong> lagi dari lot ini!
+                  </div>
+                </div>
+              )}
+
+              {/* Sold Out Banner */}
+              {listing.stock === 0 && (
+                <div className="flex items-center gap-2 p-3 bg-rose-50 border border-rose-200 rounded-sm text-xs text-rose-900 font-medium">
+                  <span className="text-base">⚠️</span>
+                  <div>
+                    <strong>Stok Habis:</strong> Kuota lot ini telah habis terjual. Silakan gunakan opsi negosiasi atau minta sampel di bawah untuk batch berikutnya.
+                  </div>
+                </div>
+              )}
+
               {/* Primary Online Checkout & Cart CTAs */}
               <div className="space-y-2">
-                <Link
-                  href={`/checkout/${listing.slug}`}
-                  className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-4 rounded-sm text-base shadow-xs flex items-center justify-center transition-colors"
-                >
-                  <ShieldCheck className="w-5 h-5 mr-2 text-primary-200" />
-                  Beli Langsung
-                </Link>
+                {listing.stock === 0 ? (
+                  <button
+                    disabled
+                    className="w-full bg-neutral-200 text-neutral-500 font-medium py-3 px-4 rounded-sm text-base cursor-not-allowed flex items-center justify-center border border-neutral-300"
+                  >
+                    Stok Habis Terjual
+                  </button>
+                ) : (
+                  <>
+                    <Link
+                      href={`/checkout/${listing.slug}`}
+                      className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-4 rounded-sm text-base shadow-xs flex items-center justify-center transition-colors"
+                    >
+                      <ShieldCheck className="w-5 h-5 mr-2 text-primary-200" />
+                      Beli Langsung
+                    </Link>
 
-                <AddToCartButton
-                  item={{
-                    listingId: listing.id,
-                    slug: listing.slug,
-                    title: listing.title,
-                    price: listing.price,
-                    unit: listing.unit,
-                    minOrderQty: listing.minOrderQty,
-                    imageUrl: listing.images?.[0]?.url,
-                    sellerId: listing.sellerId,
-                    sellerName: listing.seller.businessName,
-                    sellerCity: listing.seller.city,
-                  }}
-                  className="w-full justify-center h-11 text-sm font-medium"
-                />
+                    <AddToCartButton
+                      item={{
+                        listingId: listing.id,
+                        slug: listing.slug,
+                        title: listing.title,
+                        price: listing.price,
+                        unit: listing.unit,
+                        minOrderQty: listing.minOrderQty,
+                        imageUrl: listing.images?.[0]?.url,
+                        sellerId: listing.sellerId,
+                        sellerName: listing.seller.businessName,
+                        sellerCity: listing.seller.city,
+                      }}
+                      className="w-full justify-center h-11 text-sm font-medium"
+                    />
+                  </>
+                )}
               </div>
 
               {/* B2B WhatsApp Negotiation Alternative */}

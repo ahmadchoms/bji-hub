@@ -170,3 +170,32 @@ export async function requestVerificationAction(): Promise<ActionResult> {
   revalidatePath("/admin/verification");
   return ok(undefined);
 }
+
+export async function quickUpdateStockAction(
+  listingId: string,
+  newStock: number,
+): Promise<ActionResult<{ stock: number }>> {
+  const { sellerId } = await requireSeller("/dashboard/listing");
+  if (typeof newStock !== "number" || newStock < 0 || isNaN(newStock)) {
+    return fail("Jumlah kuantitas stok tidak valid");
+  }
+
+  const existing = await getListingById(listingId);
+  if (!existing || existing.sellerId !== sellerId) {
+    return fail("Listing tidak ditemukan atau Anda tidak memiliki akses");
+  }
+
+  const { mockListings } = await import("@/lib/mock/data");
+  const target = mockListings.find((l) => l.id === listingId);
+  if (target) {
+    target.stock = newStock;
+    if (newStock > 0 && target.status === "archived") {
+      target.status = "active";
+    }
+  }
+
+  revalidatePath("/dashboard/listing");
+  revalidatePath(`/product/${existing.slug}`);
+  revalidatePath("/");
+  return ok({ stock: newStock });
+}

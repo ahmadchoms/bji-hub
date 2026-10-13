@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ListingWithRelations } from "@/types";
@@ -8,6 +9,15 @@ import { VerifiedBadge } from "@/components/shared/verified-badge";
 import { isActiveBoost } from "@/lib/boost";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -19,6 +29,8 @@ import {
 import { EmptyState } from "@/components/shared/empty-state";
 import { Pencil, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { quickUpdateStockAction } from "@/actions/seller.actions";
+import { toast } from "sonner";
 
 interface ListingTableProps {
   listings: ListingWithRelations[];
@@ -37,6 +49,109 @@ const STATUS_LABELS: Record<
   archived: { label: "Arsip", variant: "outline" },
   suspended: { label: "Ditangguhkan", variant: "destructive" },
 };
+
+function QuickStockDialog({
+  listingId,
+  title,
+  currentStock,
+  unit,
+}: {
+  listingId: string;
+  title: string;
+  currentStock: number;
+  unit: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [stockVal, setStockVal] = useState(String(currentStock));
+  const [loading, setLoading] = useState(false);
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const num = Number(stockVal);
+    if (isNaN(num) || num < 0) {
+      toast.error("Masukkan kuantitas stok yang valid");
+      return;
+    }
+    setLoading(true);
+    const res = await quickUpdateStockAction(listingId, num);
+    setLoading(false);
+    if (res.success) {
+      toast.success(`Stok "${title}" diperbarui: ${num} ${unit}`);
+      setOpen(false);
+    } else {
+      toast.error(res.error || "Gagal memperbarui stok");
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger
+        render={
+          <button
+            type="button"
+            className="cursor-pointer hover:opacity-80 transition-opacity text-left inline-flex"
+            title="Klik untuk ubah stok cepat"
+          />
+        }
+      >
+        {currentStock === 0 ? (
+          <span className="inline-flex items-center text-[11px] font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded cursor-pointer hover:bg-rose-100">
+            Habis (0) ✎
+          </span>
+        ) : currentStock <= 5 ? (
+          <span className="inline-flex items-center text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded cursor-pointer hover:bg-amber-100">
+            Menipis ({currentStock} {unit}) ✎
+          </span>
+        ) : (
+          <span className="font-mono text-xs text-neutral-800 font-medium cursor-pointer hover:text-primary-700 underline decoration-dotted">
+            {currentStock} {unit} ✎
+          </span>
+        )}
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-xs">
+        <DialogHeader>
+          <DialogTitle className="text-sm font-semibold">Update Stok Cepat</DialogTitle>
+          <DialogDescription className="text-xs text-neutral-500 truncate">
+            {title}
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleUpdate} className="space-y-3 pt-2">
+          <div className="space-y-1">
+            <label className="text-xs text-neutral-600 font-medium">
+              Sisa Stok ({unit})
+            </label>
+            <Input
+              type="number"
+              min="0"
+              value={stockVal}
+              onChange={(e) => setStockVal(e.target.value)}
+              className="h-10 text-sm font-mono"
+              required
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setOpen(false)}
+            >
+              Batal
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              disabled={loading}
+            >
+              {loading ? "Menyimpan..." : "Simpan"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export function ListingTable({ listings, className }: ListingTableProps) {
   if (listings.length === 0) {
@@ -130,19 +245,12 @@ export function ListingTable({ listings, className }: ListingTableProps) {
                     {formatRupiah(listing.price)}
                   </TableCell>
                   <TableCell>
-                    {stock === 0 ? (
-                      <span className="inline-flex items-center text-[11px] font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded">
-                        Habis (0)
-                      </span>
-                    ) : stock <= 5 ? (
-                      <span className="inline-flex items-center text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
-                        Menipis ({stock} {listing.unit})
-                      </span>
-                    ) : (
-                      <span className="font-mono text-xs text-neutral-800 font-medium">
-                        {stock} {listing.unit}
-                      </span>
-                    )}
+                    <QuickStockDialog
+                      listingId={listing.id}
+                      title={listing.title}
+                      currentStock={stock}
+                      unit={listing.unit}
+                    />
                   </TableCell>
                   <TableCell>
                     <Badge variant={statusConf.variant} className="text-xs">
@@ -231,19 +339,12 @@ export function ListingTable({ listings, className }: ListingTableProps) {
                     <Badge variant={statusConf.variant} className="text-xs">
                       {statusConf.label}
                     </Badge>
-                    {(listing.stock ?? 50) === 0 ? (
-                      <span className="text-[10px] font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded">
-                        Habis (0)
-                      </span>
-                    ) : (listing.stock ?? 50) <= 5 ? (
-                      <span className="text-[10px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
-                        Stok Menipis ({listing.stock ?? 50} {listing.unit})
-                      </span>
-                    ) : (
-                      <span className="text-[10px] text-neutral-600 bg-neutral-100 px-1.5 py-0.5 rounded font-mono">
-                        Stok: {listing.stock ?? 50} {listing.unit}
-                      </span>
-                    )}
+                    <QuickStockDialog
+                      listingId={listing.id}
+                      title={listing.title}
+                      currentStock={listing.stock ?? 50}
+                      unit={listing.unit}
+                    />
                   </div>
                 </div>
               </div>

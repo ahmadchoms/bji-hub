@@ -61,7 +61,11 @@ export async function loginAction(
         password: parsed.data.password,
       });
 
-      if (!error && data.user) {
+      if (error) {
+        return fail("Email atau kata sandi tidak sesuai. Silakan periksa kembali.");
+      }
+
+      if (data.user) {
         if (process.env.DATA_SOURCE === "prisma") {
           const prisma = getPrisma();
           const dbUser = await prisma.user.findUnique({
@@ -71,10 +75,11 @@ export async function loginAction(
           const role = (dbUser?.role?.toLowerCase() as Role) || "buyer";
           return ok({ redirectTo: safeNextPath(next, homeFor(role)) });
         }
-        return ok({ redirectTo: safeNextPath(next, "/") });
+        const role = (data.user.user_metadata?.role as Role) || "buyer";
+        return ok({ redirectTo: safeNextPath(next, homeFor(role)) });
       }
     } catch {
-      // Fall through to mock session if Supabase auth fails or offline
+      // Fall through to mock session if Supabase throws or offline
     }
   }
 
@@ -119,7 +124,15 @@ export async function registerAction(
         },
       });
 
-      if (!error && data.user) {
+      if (error) {
+        return fail(
+          error.message?.includes("already registered")
+            ? "Email sudah terdaftar. Silakan login."
+            : error.message || "Pendaftaran gagal. Silakan coba lagi."
+        );
+      }
+
+      if (data.user) {
         if (process.env.DATA_SOURCE === "prisma") {
           const prisma = getPrisma();
           await prisma.user.upsert({

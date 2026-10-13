@@ -38,7 +38,13 @@ export const sellerOnboardingSchema = z.object({
   whatsappNumber: z
     .string()
     .min(9, "Nomor WhatsApp aktif minimal 9 digit")
-    .regex(/^(\+62|62|08)[0-9]{8,13}$/, "Format nomor WhatsApp tidak valid (contoh: 08123456789)")
+    .refine(
+      (val) => {
+        const clean = val.replace(/[\s-]/g, "");
+        return /^(\+62|62|08)[0-9]{8,13}$/.test(clean);
+      },
+      "Format nomor WhatsApp tidak valid (contoh: 08123456789)"
+    )
     .transform((val) => val.replace(/\D/g, "").replace(/^0/, "62")),
   province: z.string().min(1, "Provinsi wajib dipilih"),
   city: z.string().min(1, "Kota/Kabupaten wajib diisi"),

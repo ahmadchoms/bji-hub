@@ -1,0 +1,50 @@
+import { describe, expect, it } from "vitest";
+import { parseCatalogParams } from "./catalog-params.schema";
+
+describe("catalog-params.schema", () => {
+  it("parses modern English query parameters correctly", () => {
+    const params = parseCatalogParams({
+      category: "arabika",
+      origin: "Aceh",
+      process: "Natural",
+      roast: "Medium",
+      min_price: "50000",
+      max_price: "200000",
+      sort: "price_asc",
+      page: "2",
+      verified: "true",
+    });
+
+    expect(params.category).toBe("arabika");
+    expect(params.origin).toBe("Aceh");
+    expect(params.process).toBe("Natural");
+    expect(params.roast).toBe("Medium");
+    expect(params.min_price).toBe(50000);
+    expect(params.max_price).toBe(200000);
+    expect(params.sort).toBe("price_asc");
+    expect(params.page).toBe(2);
+    expect(params.verified).toBe(true);
+  });
+
+  it("supports legacy Indonesian parameters for backward compatibility", () => {
+    const params = parseCatalogParams({
+      kategori: "robusta",
+      asal: "Toraja",
+      proses: "Washed",
+      sangrai: "Dark",
+      harga_min: "30000",
+      harga_max: "150000",
+      urut: "harga_tertinggi",
+      halaman: "3",
+    });
+
+    expect(params.category).toBe("robusta");
+    expect(params.origin).toBe("Toraja");
+    expect(params.process).toBe("Washed");
+    expect(params.roast).toBe("Dark");
+    expect(params.min_price).toBe(30000);
+    expect(params.max_price).toBe(150000);
+    expect(params.sort).toBe("price_desc");
+    expect(params.page).toBe(3);
+  });
+});

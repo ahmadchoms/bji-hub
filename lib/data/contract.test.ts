@@ -26,7 +26,7 @@ function loadPrisma(): Promise<DataRepository> {
       import("@/lib/data/prisma/client"),
       import("../../prisma/seed-data"),
     ]);
-    await seedDatabase(getPrisma());
+    await seedDatabase(getPrisma(), { useUUIDs: false });
     return prismaRepository;
   })();
   return prismaRepo;

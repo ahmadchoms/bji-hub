@@ -9,6 +9,23 @@ import {
 } from "@/lib/data/prisma/mappers";
 import type { CatalogFeedResult, FeedItem, ListingFilters } from "@/types";
 
+const memoryCache = new Map<string, { value: unknown; expiresAt: number }>();
+
+function withMemoryCache<T>(
+  key: string,
+  ttlMs: number,
+  fn: () => Promise<T>
+): Promise<T> {
+  const hit = memoryCache.get(key);
+  if (hit && hit.expiresAt > Date.now()) {
+    return Promise.resolve(hit.value as T);
+  }
+  return fn().then((val) => {
+    memoryCache.set(key, { value: val, expiresAt: Date.now() + ttlMs });
+    return val;
+  });
+}
+
 const ALL = "all";
 const PAGE_SIZE = 12;
 
@@ -80,10 +97,12 @@ type CatalogMethods = Pick<
 
 export const catalog: CatalogMethods = {
   async getCategories() {
-    const rows = await getPrisma().category.findMany({
-      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    return withMemoryCache("catalog:categories", 300_000, async () => {
+      const rows = await getPrisma().category.findMany({
+        orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      });
+      return rows.map(toCategory);
     });
-    return rows.map(toCategory);
   },
 
   async getCategoryBySlug(slug) {
@@ -165,12 +184,14 @@ export const catalog: CatalogMethods = {
   },
 
   async getFilterOptions() {
-    const [origins, processes, roastLevels] = await Promise.all([
-      distinct("originRegion"),
-      distinct("processMethod"),
-      distinct("roastLevel"),
-    ]);
-    return { origins, processes, roastLevels };
+    return withMemoryCache("catalog:filter-options", 300_000, async () => {
+      const [origins, processes, roastLevels] = await Promise.all([
+        distinct("originRegion"),
+        distinct("processMethod"),
+        distinct("roastLevel"),
+      ]);
+      return { origins, processes, roastLevels };
+    });
   },
 
   async getListingBySlug(slug) {

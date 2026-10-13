@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { isActiveBoost, seededShuffle, composeFeedPage } from "@/lib/boost";
+import { configureMock, resetMockConfig, getCatalogFeed } from "@/lib/mock/repository";
 import type { ListingWithRelations } from "@/types";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -367,30 +368,25 @@ describe("composeFeedPage", () => {
 // We import getCatalogFeed and call it with simulateLatencyMs=0 to keep tests fast.
 
 describe("getCatalogFeed — no ads on price sort", () => {
-  beforeEach(async () => {
-    const { configureMock } = await import("@/lib/mock/repository");
+  beforeEach(() => {
     configureMock({ simulateLatencyMs: 0 });
   });
 
-  afterEach(async () => {
-    const { resetMockConfig } = await import("@/lib/mock/repository");
+  afterEach(() => {
     resetMockConfig();
   });
 
   it("price_asc sort → zero isAd items", async () => {
-    const { getCatalogFeed } = await import("@/lib/mock/repository");
     const result = await getCatalogFeed({ sort: "price_asc" }, 1);
     expect(result.items.every((item) => !item.isAd)).toBe(true);
   });
 
   it("price_desc sort → zero isAd items", async () => {
-    const { getCatalogFeed } = await import("@/lib/mock/repository");
     const result = await getCatalogFeed({ sort: "price_desc" }, 1);
     expect(result.items.every((item) => !item.isAd)).toBe(true);
   });
 
   it("newest sort → has some isAd items (pool has active boosts)", async () => {
-    const { getCatalogFeed } = await import("@/lib/mock/repository");
     const result = await getCatalogFeed({ sort: "newest" }, 1);
     expect(result.items.some((item) => item.isAd)).toBe(true);
   });
@@ -399,13 +395,11 @@ describe("getCatalogFeed — no ads on price sort", () => {
 // ─── Repository-level: ads respect filters ──────────────────────────────────
 
 describe("getCatalogFeed — ads respect filters", () => {
-  beforeEach(async () => {
-    const { configureMock } = await import("@/lib/mock/repository");
+  beforeEach(() => {
     configureMock({ simulateLatencyMs: 0 });
   });
 
-  afterEach(async () => {
-    const { resetMockConfig } = await import("@/lib/mock/repository");
+  afterEach(() => {
     resetMockConfig();
   });
 
@@ -427,7 +421,6 @@ describe("getCatalogFeed — ads respect filters", () => {
   });
 
   it("expired boost listing (list-6) never appears as an ad", async () => {
-    const { getCatalogFeed } = await import("@/lib/mock/repository");
     // list-6 is in green-beans category and has expired boost
     const result = await getCatalogFeed({ categorySlug: "green-beans" }, 1);
     const adIds = result.items.filter((i) => i.isAd).map((i) => i.listing.id);
@@ -435,7 +428,6 @@ describe("getCatalogFeed — ads respect filters", () => {
   });
 
   it("total count equals unique listing count (ads not double-counted)", async () => {
-    const { getCatalogFeed } = await import("@/lib/mock/repository");
     const result = await getCatalogFeed({}, 1);
     // total should equal number of active listings in mock data
     expect(result.total).toBeGreaterThan(0);

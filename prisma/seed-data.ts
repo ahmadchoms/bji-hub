@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import type { PrismaClient } from "../lib/generated/prisma/client";
 import {
   mockCategories,
@@ -22,21 +23,38 @@ const TABLES = [
   "users",
 ];
 
+/** Converts any identifier deterministically to a standard RFC 4122 UUID v4 */
+function toUUID(str: string): string {
+  const hash = crypto.createHash("sha256").update(str).digest("hex");
+  return [
+    hash.substring(0, 8),
+    hash.substring(8, 12),
+    "4" + hash.substring(13, 16),
+    ((parseInt(hash.substring(16, 18), 16) & 0x3f) | 0x80).toString(16) + hash.substring(18, 20),
+    hash.substring(20, 32),
+  ].join("-");
+}
+
 const date = (value: string | null | undefined): Date | null => (value ? new Date(value) : null);
 
 async function createInChunks<T>(rows: T[], create: (chunk: T[]) => Promise<unknown>, size = 1000): Promise<void> {
   for (let i = 0; i < rows.length; i += size) await create(rows.slice(i, i + size));
 }
 
-/** Wipes every table and loads the demo data (the same data the mock repository serves). */
-export async function seedDatabase(prisma: PrismaClient): Promise<Record<string, number>> {
+/** Wipes every table and loads seed data with professional standard UUIDs by default. */
+export async function seedDatabase(
+  prisma: PrismaClient,
+  options: { useUUIDs?: boolean } = { useUUIDs: true }
+): Promise<Record<string, number>> {
+  const getId = options.useUUIDs ? toUUID : (id: string) => id;
+
   await prisma.$executeRawUnsafe(`TRUNCATE ${TABLES.map((t) => `"${t}"`).join(", ")} RESTART IDENTITY CASCADE`);
 
   await prisma.user.createMany({
     data: [
-      { id: "user-admin", email: "admin@example.com", role: "ADMIN" as const },
+      { id: getId("user-admin"), email: "admin@example.com", role: "ADMIN" as const },
       ...mockSellers.map((seller) => ({
-        id: seller.userId,
+        id: getId(seller.userId),
         email: `${seller.slug}@example.com`,
         role: "SELLER" as const,
         createdAt: new Date(seller.createdAt),
@@ -46,8 +64,8 @@ export async function seedDatabase(prisma: PrismaClient): Promise<Record<string,
 
   await prisma.sellerProfile.createMany({
     data: mockSellers.map((seller) => ({
-      id: seller.id,
-      userId: seller.userId,
+      id: getId(seller.id),
+      userId: getId(seller.userId),
       businessName: seller.businessName,
       slug: seller.slug,
       province: seller.province,
@@ -65,7 +83,7 @@ export async function seedDatabase(prisma: PrismaClient): Promise<Record<string,
 
   await prisma.category.createMany({
     data: mockCategories.map((category, index) => ({
-      id: category.id,
+      id: getId(category.id),
       name: category.name,
       slug: category.slug,
       description: category.description ?? null,
@@ -75,10 +93,10 @@ export async function seedDatabase(prisma: PrismaClient): Promise<Record<string,
 
   await prisma.listing.createMany({
     data: mockListings.map((listing) => ({
-      id: listing.id,
+      id: getId(listing.id),
       slug: listing.slug,
-      sellerId: listing.sellerId,
-      categoryId: listing.categoryId,
+      sellerId: getId(listing.sellerId),
+      categoryId: getId(listing.categoryId),
       title: listing.title,
       description: listing.description,
       price: listing.price,
@@ -96,8 +114,8 @@ export async function seedDatabase(prisma: PrismaClient): Promise<Record<string,
       listing.tasteProfile
         ? [
             {
-              id: listing.tasteProfile.id,
-              listingId: listing.id,
+              id: getId(listing.tasteProfile.id),
+              listingId: getId(listing.id),
               originRegion: listing.tasteProfile.originRegion,
               processMethod: listing.tasteProfile.processMethod,
               roastLevel: listing.tasteProfile.roastLevel,
@@ -117,8 +135,8 @@ export async function seedDatabase(prisma: PrismaClient): Promise<Record<string,
   await prisma.listingImage.createMany({
     data: mockListings.flatMap((listing) =>
       listing.images.map((image) => ({
-        id: image.id,
-        listingId: listing.id,
+        id: getId(image.id),
+        listingId: getId(listing.id),
         url: image.url,
         sortOrder: image.sortOrder,
       }))
@@ -127,8 +145,8 @@ export async function seedDatabase(prisma: PrismaClient): Promise<Record<string,
 
   await prisma.subscription.createMany({
     data: mockSubscriptions.map((sub) => ({
-      id: sub.id,
-      sellerId: sub.sellerId,
+      id: getId(sub.id),
+      sellerId: getId(sub.sellerId),
       tier: sub.tier,
       status: sub.status,
       startedAt: new Date(sub.startedAt),
@@ -139,10 +157,10 @@ export async function seedDatabase(prisma: PrismaClient): Promise<Record<string,
 
   await prisma.payment.createMany({
     data: mockPayments.map((payment) => ({
-      id: payment.id,
-      sellerId: payment.sellerId,
-      subscriptionId: payment.subscriptionId ?? null,
-      listingId: payment.listingId ?? null,
+      id: getId(payment.id),
+      sellerId: getId(payment.sellerId),
+      subscriptionId: payment.subscriptionId ? getId(payment.subscriptionId) : null,
+      listingId: payment.listingId ? getId(payment.listingId) : null,
       type: payment.type,
       amount: payment.amount,
       status: payment.status,
@@ -154,8 +172,8 @@ export async function seedDatabase(prisma: PrismaClient): Promise<Record<string,
 
   await prisma.inquiry.createMany({
     data: mockInquiries.map((inquiry) => ({
-      id: inquiry.id,
-      listingId: inquiry.listingId,
+      id: getId(inquiry.id),
+      listingId: getId(inquiry.listingId),
       buyerName: inquiry.buyerName,
       buyerContact: inquiry.buyerContact,
       quantity: inquiry.quantity,
@@ -168,8 +186,8 @@ export async function seedDatabase(prisma: PrismaClient): Promise<Record<string,
   await createInChunks(events, (chunk) =>
     prisma.analyticsEvent.createMany({
       data: chunk.map((event) => ({
-        id: event.id,
-        listingId: event.listingId,
+        id: getId(event.id),
+        listingId: getId(event.listingId),
         eventType: event.eventType,
         createdAt: new Date(event.createdAt),
       })),

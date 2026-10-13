@@ -6,9 +6,10 @@ import { prismaRepository } from "@/lib/data/prisma";
 
 /**
  * The only module pages, actions and route handlers may import data from.
- * DATA_SOURCE=prisma uses the database; anything else uses the in-memory mock.
+ * Defaults directly to Supabase Prisma repository.
  */
-const repository: DataRepository = process.env.DATA_SOURCE === "prisma" ? prismaRepository : mockRepository;
+const repository: DataRepository =
+  process.env.DATA_SOURCE === "mock" ? mockRepository : prismaRepository;
 
 export const {
   getCategories,

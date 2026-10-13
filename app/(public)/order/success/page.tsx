@@ -15,6 +15,7 @@ import {
   ArrowRight,
   HelpCircle,
 } from "lucide-react";
+import { ConfirmOrderButton } from "@/components/order/confirm-order-button";
 
 export const metadata: Metadata = {
   title: "Status Pesanan - Biji Hub",
@@ -69,7 +70,11 @@ export default async function OrderSuccessPage({
         {/* Header Status Card */}
         <div className="bg-white border border-neutral-300 rounded-lg p-6 md:p-8 text-center space-y-4 shadow-xs">
           <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
-            {isPaid ? (
+            {order.status === "completed" ? (
+              <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+            ) : order.status === "shipped" ? (
+              <Truck className="w-8 h-8 text-purple-600" />
+            ) : isPaid ? (
               <CheckCircle2 className="w-8 h-8" />
             ) : (
               <Clock className="w-8 h-8 text-amber-600" />
@@ -78,7 +83,13 @@ export default async function OrderSuccessPage({
 
           <div className="space-y-1">
             <h1 className="text-2xl font-bold font-display text-neutral-900">
-              {isPaid ? "Pembayaran Dikonfirmasi!" : "Pesanan Berhasil Dibuat"}
+              {order.status === "completed"
+                ? "Pesanan Selesai!"
+                : order.status === "shipped"
+                  ? "Pesanan Sedang Dikirim!"
+                  : isPaid
+                    ? "Pembayaran Dikonfirmasi!"
+                    : "Pesanan Berhasil Dibuat"}
             </h1>
             <p className="text-sm text-neutral-600">
               Nomor Pesanan: <span className="font-mono font-bold text-neutral-900">{order.orderNumber}</span>
@@ -87,15 +98,37 @@ export default async function OrderSuccessPage({
 
           <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-full text-xs font-medium">
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            Garansi Escrow Biji Hub Aktif (Dana Aman Terlindungi)
+            {order.status === "completed"
+              ? "Transaksi Sukses (Dana Telah Diteruskan ke Penjual)"
+              : "Garansi Escrow Biji Hub Aktif (Dana Aman Terlindungi)"}
           </div>
 
           <p className="text-xs text-neutral-500 max-w-md mx-auto">
-            {isPaid
-              ? "Dana Anda telah aman tertampung di rekening escrow resmi Biji Hub. Penjual telah diberitahu untuk segera memproses & mengirimkan pesanan."
-              : "Menunggu penyelesaian pembayaran. Jika sudah membayar melalui Snap Midtrans, status pesanan akan terbarui secara otomatis."}
+            {order.status === "completed"
+              ? "Terima kasih! Pesanan telah Anda terima dengan baik dan dana penjualan telah diteruskan ke pihak roastery/petani."
+              : order.status === "shipped"
+                ? "Paket Anda sedang dalam perjalanan oleh kurir. Segera periksa paket setelah tiba dan klik konfirmasi di bawah."
+                : isPaid
+                  ? "Dana Anda telah aman tertampung di rekening escrow resmi Biji Hub. Penjual telah diberitahu untuk segera memproses & mengirimkan pesanan."
+                  : "Menunggu penyelesaian pembayaran. Jika sudah membayar melalui Snap Midtrans, status pesanan akan terbarui secara otomatis."}
           </p>
         </div>
+
+        {/* Konfirmasi Penerimaan Barang CTA (when shipped) */}
+        {order.status === "shipped" && (
+          <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="space-y-0.5 text-center sm:text-left">
+              <p className="text-sm font-semibold text-emerald-950 flex items-center justify-center sm:justify-start gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                Sudah Menerima Kopi dengan Selamat?
+              </p>
+              <p className="text-xs text-emerald-800">
+                Klik konfirmasi pesanan jika produk sudah sesuai untuk meneruskan dana ke penjual.
+              </p>
+            </div>
+            <ConfirmOrderButton orderId={order.id} orderNumber={order.orderNumber} />
+          </div>
+        )}
 
         {/* Order Details & Summary */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

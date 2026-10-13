@@ -25,7 +25,25 @@ export interface SellerProfile {
   tier: "free" | "growth" | "business";
   bio?: string;
   avatarUrl?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  bankAccountHolder?: string;
   createdAt: string;
+}
+
+export type PayoutStatus = "pending" | "processed" | "rejected";
+
+export interface PayoutRequest {
+  id: string;
+  sellerId: string;
+  amount: number;
+  bankName: string;
+  bankAccountNumber: string;
+  bankAccountHolder: string;
+  status: PayoutStatus;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Category {

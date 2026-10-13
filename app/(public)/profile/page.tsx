@@ -13,6 +13,7 @@ import { BuyerProfileForm } from "@/components/profile/buyer-profile-form";
 import { getOrdersByBuyer } from "@/lib/data/orders";
 import { formatRupiah } from "@/components/shared/price-text";
 import { Package, Truck, Clock, CheckCircle2, AlertCircle, MapPin } from "lucide-react";
+import { ConfirmOrderButton } from "@/components/order/confirm-order-button";
 
 export const metadata = {
   title: "Profil Akun - Biji Hub",
@@ -210,6 +211,17 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
                     Lihat Rincian &rarr;
                   </Link>
                 </div>
+                {ord.status === "shipped" && (
+                  <div className="pt-2 border-t border-neutral-100 flex items-center justify-between bg-emerald-50/50 p-2 rounded">
+                    <span className="text-[11px] text-emerald-800">
+                      Paket sudah tiba? Konfirmasi penerimaan:
+                    </span>
+                    <ConfirmOrderButton
+                      orderId={ord.id}
+                      orderNumber={ord.orderNumber}
+                    />
+                  </div>
+                )}
               </div>
             ))
           )}

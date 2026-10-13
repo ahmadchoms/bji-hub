@@ -3,6 +3,7 @@ import { Order, OrderStatus } from "@/types";
 
 let poolInstance: Pool | null = null;
 function getPool(): Pool | null {
+  if (process.env.DATA_SOURCE === "mock") return null;
   const conn = process.env.DATABASE_URL || process.env.DIRECT_URL;
   if (!conn) return null;
   if (!poolInstance) {
@@ -117,7 +118,7 @@ export async function getOrderById(idOrNumber: string): Promise<Order | null> {
   if (pool) {
     try {
       const res = await pool.query(
-        `SELECT o.*, l.title as listing_title, s.business_name as seller_name
+        `SELECT o.*, l.title as listing_title, s."businessName" as seller_name
          FROM public.orders o
          LEFT JOIN public.listings l ON o.listing_id = l.id
          LEFT JOIN public.seller_profiles s ON o.seller_id = s.id
@@ -223,7 +224,7 @@ export async function getOrdersByBuyer(buyerIdOrEmail: string): Promise<Order[]>
   if (pool) {
     try {
       const res = await pool.query(
-        `SELECT o.*, l.title as listing_title, s.business_name as seller_name
+        `SELECT o.*, l.title as listing_title, s."businessName" as seller_name
          FROM public.orders o
          LEFT JOIN public.listings l ON o.listing_id = l.id
          LEFT JOIN public.seller_profiles s ON o.seller_id = s.id

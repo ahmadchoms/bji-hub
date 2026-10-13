@@ -10,6 +10,8 @@ import { LogIn, Loader2 } from "lucide-react";
 import { loginSchema, LoginFormValues } from "@/lib/validations/auth.schema";
 import { FormField } from "@/components/shared/form-field";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Logo } from "@/components/shared/logo";
 import { loginAction } from "@/actions/auth.actions";
 
@@ -20,6 +22,7 @@ function LoginForm() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -76,11 +79,11 @@ function LoginForm() {
               required
               error={errors.email?.message}
             >
-              <input
+              <Input
                 type="email"
                 {...register("email")}
                 placeholder="nama@roastery.com"
-                className="w-full h-10 px-3 text-sm bg-surface-base border border-neutral-300 rounded-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+                aria-invalid={!!errors.email}
               />
             </FormField>
 
@@ -89,20 +92,17 @@ function LoginForm() {
               required
               error={errors.password?.message}
             >
-              <input
+              <Input
                 type="password"
                 {...register("password")}
                 placeholder="••••••••"
-                className="w-full h-10 px-3 text-sm bg-surface-base border border-neutral-300 rounded-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+                aria-invalid={!!errors.password}
               />
             </FormField>
 
             <div className="flex items-center justify-between text-xs pt-1">
               <label className="flex items-center gap-2 cursor-pointer text-neutral-700">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 rounded text-primary-600 focus:ring-primary-400 border-neutral-300"
-                />
+                <Checkbox />
                 <span>Ingat saya</span>
               </label>
               <button
@@ -136,6 +136,44 @@ function LoginForm() {
               )}
             </Button>
           </form>
+
+          <div className="rounded-sm bg-neutral-50 p-3 text-xs text-neutral-700 space-y-1.5 border border-neutral-200">
+            <p className="font-semibold text-neutral-900">
+              Akun Seed Demo (Password: <code className="bg-white px-1 py-0.5 rounded border border-neutral-300 font-mono text-primary-700">password123</code>):
+            </p>
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setValue("email", "admin@example.com");
+                  setValue("password", "password123");
+                }}
+                className="px-2 py-1 bg-white hover:bg-neutral-100 border border-neutral-300 rounded-sm text-[11px] font-medium text-neutral-800 transition-colors"
+              >
+                Admin
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setValue("email", "gayo-highland-agro@example.com");
+                  setValue("password", "password123");
+                }}
+                className="px-2 py-1 bg-white hover:bg-neutral-100 border border-neutral-300 rounded-sm text-[11px] font-medium text-neutral-800 transition-colors"
+              >
+                Seller (Gayo)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setValue("email", "akbarhakim@gmail.com");
+                  setValue("password", "password123");
+                }}
+                className="px-2 py-1 bg-white hover:bg-neutral-100 border border-neutral-300 rounded-sm text-[11px] font-medium text-neutral-800 transition-colors"
+              >
+                Buyer (Akbar)
+              </button>
+            </div>
+          </div>
 
           <div className="text-center text-xs text-neutral-600 pt-2 border-t border-neutral-300">
             <span>Belum punya toko? </span>

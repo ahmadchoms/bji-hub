@@ -19,6 +19,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { cn } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -301,29 +303,35 @@ export function PlanSection({ state, listingCount }: PlanSectionProps) {
           </DialogHeader>
 
           {targetPlan && (
-            <fieldset className="space-y-2 py-2">
-              <legend className="sr-only">Lama langganan</legend>
+            <RadioGroup
+              value={String(months)}
+              onValueChange={(val) => setMonths(Number(val) as PlanMonths)}
+              className="space-y-2 py-2"
+            >
               {PLAN_PERIODS.map((period) => (
                 <label
                   key={period.months}
-                  className="flex min-h-11 cursor-pointer items-center justify-between border border-neutral-300 px-3 text-sm has-checked:border-primary-600"
+                  htmlFor={`plan-period-${period.months}`}
+                  className={cn(
+                    "flex min-h-11 cursor-pointer items-center justify-between border px-3 text-sm rounded-sm transition-colors",
+                    months === period.months
+                      ? "border-primary-600 bg-primary-50/40 text-primary-900"
+                      : "border-neutral-300 hover:border-neutral-400 text-neutral-800"
+                  )}
                 >
                   <span className="flex items-center gap-3">
-                    <input
-                      type="radio"
-                      name="plan-period"
-                      checked={months === period.months}
-                      onChange={() => setMonths(period.months)}
-                      className="accent-primary-600"
+                    <RadioGroupItem
+                      id={`plan-period-${period.months}`}
+                      value={String(period.months)}
                     />
-                    {period.label}
+                    <span>{period.label}</span>
                   </span>
                   <span className="font-mono tabular-nums">
                     {formatIdr(planTotal(targetPlan, period.months))}
                   </span>
                 </label>
               ))}
-            </fieldset>
+            </RadioGroup>
           )}
 
           {decision?.ok && decision.kind === "upgrade" && (

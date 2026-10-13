@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Table,
   TableBody,
@@ -223,32 +224,36 @@ export function BillingSection({
                   </Select>
                 </FormField>
                 {hasCredit && (
-                  <fieldset className="space-y-2">
-                    <legend className="sr-only">Cara pembayaran</legend>
-                    {(
+                  <RadioGroup
+                    value={payWith}
+                    onValueChange={(val) => setPayWith(val as "credit" | "cash")}
+                    className="grid grid-cols-1 gap-2 py-1"
+                  >
+                    {[
                       [
-                        [
-                          "credit",
-                          `Pakai kredit gratis (sisa ${credits.remaining}, ${credits.days} hari)`,
-                        ],
-                        ["cash", "Bayar"],
-                      ] as const
-                    ).map(([value, label]) => (
+                        "credit",
+                        `Pakai kredit gratis (sisa ${credits.remaining}, ${credits.days} hari)`,
+                      ],
+                      ["cash", "Bayar"],
+                    ].map(([value, label]) => (
                       <label
                         key={value}
-                        className="flex min-h-11 cursor-pointer items-center gap-3 border border-neutral-300 px-3 text-sm has-checked:border-primary-600"
+                        htmlFor={`boost-pay-${value}`}
+                        className={cn(
+                          "flex min-h-11 cursor-pointer items-center gap-3 border px-3 text-sm rounded-sm transition-colors",
+                          payWith === value
+                            ? "border-primary-600 bg-primary-50/40 text-primary-900"
+                            : "border-neutral-300 hover:border-neutral-400 text-neutral-800"
+                        )}
                       >
-                        <input
-                          type="radio"
-                          name="boost-pay"
-                          checked={payWith === value}
-                          onChange={() => setPayWith(value)}
-                          className="accent-primary-600"
+                        <RadioGroupItem
+                          id={`boost-pay-${value}`}
+                          value={value}
                         />
-                        {label}
+                        <span>{label}</span>
                       </label>
                     ))}
-                  </fieldset>
+                  </RadioGroup>
                 )}
                 {!useCredit && (
                   <FormField label="Durasi Boost" required>

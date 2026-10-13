@@ -11,6 +11,8 @@ import {
 } from "@/lib/validations/inquiry.schema";
 import { FormField } from "@/components/shared/form-field";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { submitInquiryAction } from "@/actions/inquiry.actions";
 
@@ -131,11 +133,11 @@ export function InquiryForm({
           required
           error={errors.buyerName?.message}
         >
-          <input
+          <Input
             type="text"
             {...register("buyerName")}
             placeholder="Contoh: Rian Pratama (Kafe Senja Kopi)"
-            className="w-full h-10 px-3 text-sm bg-surface-base border border-neutral-300 rounded-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+            aria-invalid={!!errors.buyerName}
           />
         </FormField>
 
@@ -145,11 +147,11 @@ export function InquiryForm({
           helperText="Penjual akan merespons langsung ke kontak ini."
           error={errors.buyerContact?.message}
         >
-          <input
+          <Input
             type="text"
             {...register("buyerContact")}
             placeholder="Contoh: 08123456789 atau rian@kafesenja.com"
-            className="w-full h-10 px-3 text-sm bg-surface-base border border-neutral-300 rounded-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+            aria-invalid={!!errors.buyerContact}
           />
         </FormField>
 
@@ -158,11 +160,11 @@ export function InquiryForm({
           required
           error={errors.quantity?.message}
         >
-          <input
+          <Input
             type="text"
             {...register("quantity")}
             placeholder="Contoh: 30 kg / bulan, atau 2 box sampel"
-            className="w-full h-10 px-3 text-sm bg-surface-base border border-neutral-300 rounded-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+            aria-invalid={!!errors.quantity}
           />
         </FormField>
 
@@ -172,11 +174,12 @@ export function InquiryForm({
           helperText="Tuliskan spesifikasi roasting, profil rasa, atau permintaan penawaran harga kontrak."
           error={errors.message?.message}
         >
-          <textarea
+          <Textarea
             rows={3}
             {...register("message")}
             placeholder="Halo, kami mencari pasokan biji kopi untuk menu espresso base. Apakah ada paket harga untuk kontrak suplai 6 bulan?"
-            className="w-full p-3 text-sm bg-surface-base border border-neutral-300 rounded-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600 resize-y min-h-[88px]"
+            className="resize-y min-h-[88px]"
+            aria-invalid={!!errors.message}
           />
         </FormField>
 

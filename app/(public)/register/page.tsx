@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Loader2, Eye, EyeOff } from "lucide-react";
@@ -12,6 +12,8 @@ import {
 } from "@/lib/validations/auth.schema";
 import { FormField } from "@/components/shared/form-field";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Logo } from "@/components/shared/logo";
 import { registerAction } from "@/actions/auth.actions";
 
@@ -22,6 +24,7 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -83,20 +86,20 @@ export default function RegisterPage() {
               required
               error={errors.name?.message}
             >
-              <input
+              <Input
                 type="text"
                 {...register("name")}
                 placeholder="Budi Santoso"
-                className="w-full h-10 px-3 text-sm bg-surface-base border border-neutral-300 rounded-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+                aria-invalid={!!errors.name}
               />
             </FormField>
 
             <FormField label="Email" required error={errors.email?.message}>
-              <input
+              <Input
                 type="email"
                 {...register("email")}
                 placeholder="budi@email.com"
-                className="w-full h-10 px-3 text-sm bg-surface-base border border-neutral-300 rounded-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+                aria-invalid={!!errors.email}
               />
             </FormField>
 
@@ -106,11 +109,12 @@ export default function RegisterPage() {
               error={errors.password?.message}
             >
               <div className="relative">
-                <input
+                <Input
                   type={showPassword ? "text" : "password"}
                   {...register("password")}
                   placeholder="Minimal 6 karakter"
-                  className="w-full h-10 pl-3 pr-10 text-sm bg-surface-base border border-neutral-300 rounded-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+                  className="pr-10"
+                  aria-invalid={!!errors.password}
                 />
                 <button
                   type="button"
@@ -129,10 +133,16 @@ export default function RegisterPage() {
 
             <div className="pt-1">
               <label className="flex items-start gap-2.5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  {...register("termsAccepted")}
-                  className="mt-0.5 h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-600"
+                <Controller
+                  control={control}
+                  name="termsAccepted"
+                  render={({ field }) => (
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={(checked) => field.onChange(!!checked)}
+                      className="mt-0.5"
+                    />
+                  )}
                 />
                 <span className="text-xs text-neutral-600 leading-snug">
                   Saya menyetujui{" "}

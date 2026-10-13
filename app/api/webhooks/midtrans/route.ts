@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyMidtransSignature } from "@/lib/midtrans";
+import { verifyMidtransSignature, mapMidtransStatus } from "@/lib/midtrans";
 import { getPrisma } from "@/lib/data/prisma/client";
 
 /**
@@ -41,16 +41,10 @@ export async function POST(req: NextRequest) {
   }
 
   // 2. Map Midtrans transaction_status
-  const isSuccess =
-    body.transaction_status === "settlement" ||
-    (body.transaction_status === "capture" && body.fraud_status === "accept");
-
-  const isFailed =
-    body.transaction_status === "cancel" ||
-    body.transaction_status === "deny" ||
-    body.transaction_status === "expire";
-
-  const nextStatus = isSuccess ? "paid" : isFailed ? "failed" : "pending";
+  const nextStatus = mapMidtransStatus(
+    body.transaction_status,
+    body.fraud_status
+  );
 
   await prisma.$transaction(async (tx) => {
     await tx.payment.update({

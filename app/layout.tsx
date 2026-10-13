@@ -25,10 +25,40 @@ const spaceGrotesk = Space_Grotesk({
   display: "swap",
 });
 
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://bijihub.com";
+
 export const metadata: Metadata = {
-  title: "Biji — Direktori & Marketplace Kopi Indonesia",
+  metadataBase: new URL(appUrl),
+  title: {
+    default: "Biji Hub — Direktori & Katalog Kopi Specialty Indonesia",
+    template: "%s | Biji Hub",
+  },
   description:
-    "Hubungkan petani dan roaster specialty coffee lokal langsung dengan penikmat dan kedai kopi di seluruh Indonesia.",
+    "Direktori kopi specialty Indonesia. Hubungkan petani, roastery, dan processor lokal langsung dengan kedai kopi dan penikmat kopi tanpa komisi.",
+  keywords: [
+    "kopi specialty",
+    "biji kopi indonesia",
+    "green beans indonesia",
+    "roasted beans",
+    "roastery lokal",
+    "petani kopi nusantara",
+    "direktori kopi",
+    "biji hub",
+  ],
+  openGraph: {
+    title: "Biji Hub — Direktori & Katalog Kopi Specialty Indonesia",
+    description:
+      "Temukan biji kopi specialty terbaik langsung dari roastery dan kebun kopi lokal se-Indonesia.",
+    type: "website",
+    locale: "id_ID",
+    siteName: "Biji Hub",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Biji Hub — Direktori & Katalog Kopi Specialty Indonesia",
+    description:
+      "Temukan biji kopi specialty terbaik langsung dari roastery dan kebun kopi lokal se-Indonesia.",
+  },
 };
 
 export default function RootLayout({

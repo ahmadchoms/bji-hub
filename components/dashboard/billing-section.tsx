@@ -39,8 +39,10 @@ import { isActiveBoost } from "@/lib/boost";
 import { BOOST_OPTIONS, boostOptionLabel } from "@/lib/plans";
 import { useRouter } from "next/navigation";
 import { purchaseBoostAction } from "@/actions/seller.actions";
+import { syncPaymentStatusAction } from "@/actions/subscription.actions";
 import { BoostCredits } from "@/lib/boost-credits";
 import { formatWib } from "@/lib/format-date";
+import { Loader2, RefreshCw } from "lucide-react";
 
 interface BillingSectionProps {
   subscription?: Subscription;
@@ -83,6 +85,26 @@ export function BillingSection({
   const [selectedDuration, setSelectedDuration] = useState("");
   const [boostLoading, setBoostLoading] = useState(false);
   const [payWith, setPayWith] = useState<"credit" | "cash">("credit");
+  const [syncingOrderId, setSyncingOrderId] = useState<string | null>(null);
+
+  const handleSyncPayment = async (orderId: string) => {
+    setSyncingOrderId(orderId);
+    try {
+      const res = await syncPaymentStatusAction(orderId);
+      if (!res.success) {
+        toast.error("Gagal memeriksa status", { description: res.error });
+      } else {
+        toast.success("Status pembayaran diperbarui", {
+          description: res.data.message,
+        });
+        router.refresh();
+      }
+    } catch {
+      toast.error("Gagal memeriksa status pembayaran");
+    } finally {
+      setSyncingOrderId(null);
+    }
+  };
 
   const hasCredit = credits.remaining > 0;
   const useCredit = hasCredit && payWith === "credit";
@@ -299,6 +321,7 @@ export function BillingSection({
                     <TableHead>Jumlah</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Tanggal</TableHead>
+                    <TableHead className="text-right">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -332,6 +355,26 @@ export function BillingSection({
                               })
                             : "-"}
                         </TableCell>
+                        <TableCell className="text-right">
+                          {pay.status === "pending" && pay.midtransOrderId ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs gap-1 px-2"
+                              disabled={syncingOrderId === pay.midtransOrderId}
+                              onClick={() => handleSyncPayment(pay.midtransOrderId)}
+                            >
+                              {syncingOrderId === pay.midtransOrderId ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <RefreshCw className="h-3 w-3" />
+                              )}
+                              Cek Status
+                            </Button>
+                          ) : (
+                            <span className="text-xs text-neutral-400">-</span>
+                          )}
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -363,6 +406,24 @@ export function BillingSection({
                           })
                         : pay.midtransOrderId}
                     </p>
+                    {pay.status === "pending" && pay.midtransOrderId && (
+                      <div className="pt-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs gap-1 px-2 w-full"
+                          disabled={syncingOrderId === pay.midtransOrderId}
+                          onClick={() => handleSyncPayment(pay.midtransOrderId)}
+                        >
+                          {syncingOrderId === pay.midtransOrderId ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-3 w-3" />
+                          )}
+                          Cek Status Midtrans
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 );
               })}

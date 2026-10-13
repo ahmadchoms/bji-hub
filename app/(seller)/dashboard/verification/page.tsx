@@ -72,7 +72,7 @@ export default async function SellerVerificationPage() {
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                Dukungan kurasi langsung dari tim Biji Corp saat peninjauan produk.
+                Dukungan kurasi langsung dari tim Biji Hub saat peninjauan produk.
               </li>
             </ul>
           </CardContent>
@@ -87,7 +87,7 @@ export default async function SellerVerificationPage() {
               <div>
                 <CardTitle className="text-amber-900 text-lg">Permohonan Verifikasi Sedang Ditinjau</CardTitle>
                 <CardDescription className="text-amber-700">
-                  Tim kurasi Biji Corp sedang memeriksa data profil toko Anda.
+                  Tim kurasi Biji Hub sedang memeriksa data profil toko Anda.
                 </CardDescription>
               </div>
             </div>
@@ -165,7 +165,7 @@ export default async function SellerVerificationPage() {
                     </p>
                   </div>
                   {!hasListing && (
-                    <Link href="/dashboard/listing/new">
+                    <Link href="/dashboard/listing/create">
                       <Button variant="outline" size="sm" className="text-xs">
                         Tambah Produk
                       </Button>

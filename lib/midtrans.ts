@@ -54,7 +54,7 @@ export async function createMidtransSnapToken(params: {
         },
         customer_details: {
           first_name: params.customerName || "Seller",
-          email: params.customerEmail || "seller@bijicorp.com",
+          email: params.customerEmail || "seller@bijihub.com",
         },
         ...(process.env.NEXT_PUBLIC_APP_URL?.startsWith("https://")
           ? {
@@ -67,6 +67,75 @@ export async function createMidtransSnapToken(params: {
     if (!res.ok) return null;
     const data = await res.json();
     return data.token || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Maps Midtrans transaction_status and fraud_status to application payment status.
+ */
+export function mapMidtransStatus(
+  transactionStatus?: string,
+  fraudStatus?: string
+): "paid" | "failed" | "pending" {
+  if (
+    transactionStatus === "settlement" ||
+    (transactionStatus === "capture" && fraudStatus === "accept")
+  ) {
+    return "paid";
+  }
+
+  if (
+    transactionStatus === "cancel" ||
+    transactionStatus === "deny" ||
+    transactionStatus === "expire"
+  ) {
+    return "failed";
+  }
+
+  return "pending";
+}
+
+/**
+ * Fetch transaction status directly from Midtrans API.
+ */
+export async function checkMidtransStatus(orderId: string): Promise<{
+  statusCode: string;
+  transactionStatus: string;
+  fraudStatus?: string;
+  grossAmount?: string;
+  paymentType?: string;
+} | null> {
+  const serverKey = process.env.MIDTRANS_SERVER_KEY;
+  if (!serverKey) return null;
+
+  const isProduction = process.env.MIDTRANS_IS_PRODUCTION === "true";
+  const baseUrl = isProduction
+    ? "https://api.midtrans.com/v2"
+    : "https://api.sandbox.midtrans.com/v2";
+
+  const authHeader = `Basic ${Buffer.from(`${serverKey}:`).toString("base64")}`;
+
+  try {
+    const res = await fetch(`${baseUrl}/${encodeURIComponent(orderId)}/status`, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        Authorization: authHeader,
+      },
+      cache: "no-store",
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    return {
+      statusCode: data.status_code,
+      transactionStatus: data.transaction_status,
+      fraudStatus: data.fraud_status,
+      grossAmount: data.gross_amount,
+      paymentType: data.payment_type,
+    };
   } catch {
     return null;
   }

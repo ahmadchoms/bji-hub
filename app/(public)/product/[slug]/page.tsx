@@ -29,7 +29,7 @@ export async function generateMetadata({
   const listing = await getListingBySlug(slug);
 
   if (!listing) {
-    return { title: "Produk Tidak Ditemukan - Biji Corp" };
+    return { title: "Produk Tidak Ditemukan - Biji Hub" };
   }
 
   const primaryImage = listing.images?.[0]?.url;
@@ -86,8 +86,34 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     .filter((l) => l.id !== listing.id)
     .slice(0, 3);
 
+  const primaryImage = listing.images?.[0]?.url;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: listing.title,
+    image: primaryImage ? [primaryImage] : [],
+    description:
+      listing.description ||
+      `${listing.title} dari ${listing.seller.businessName}`,
+    category: listing.category.name,
+    offers: {
+      "@type": "Offer",
+      price: listing.price,
+      priceCurrency: "IDR",
+      availability: "https://schema.org/InStock",
+      seller: {
+        "@type": "Organization",
+        name: listing.seller.businessName,
+      },
+    },
+  };
+
   return (
     <div className="py-8 md:py-12 space-y-10 pb-20 md:pb-0">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <TrackOnMount listingId={listing.id} type="view" />
       <ProductStickyCTA
         phoneNumber={listing.seller.whatsappNumber}
@@ -110,7 +136,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           </Link>
           <span>/</span>
           <Link
-            href={`/?kategori=${listing.category.slug}`}
+            href={`/catalog?category=${listing.category.slug}`}
             className="hover:text-primary-700"
           >
             {listing.category.name}

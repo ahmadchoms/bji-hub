@@ -99,3 +99,75 @@ export async function resumePlanAction(): Promise<
   refresh();
   return ok({ expiresAt: state.expiresAt });
 }
+
+export async function syncPaymentStatusAction(
+  orderId: string
+): Promise<ActionResult<{ status: Payment["status"]; message: string }>> {
+  await requireSeller("/dashboard/billing");
+  if (!orderId) return fail("ID Order tidak valid");
+
+  const { checkMidtransStatus, mapMidtransStatus } = await import(
+    "@/lib/midtrans"
+  );
+  const midtransRes = await checkMidtransStatus(orderId);
+
+  if (!midtransRes) {
+    return fail(
+      "Transaksi belum ditemukan di Midtrans atau Server Key belum dikonfigurasi."
+    );
+  }
+
+  const nextStatus = mapMidtransStatus(
+    midtransRes.transactionStatus,
+    midtransRes.fraudStatus
+  );
+
+  if (process.env.DATA_SOURCE === "prisma") {
+    const { getPrisma } = await import("@/lib/data/prisma/client");
+    const prisma = getPrisma();
+    const payment = await prisma.payment.findUnique({
+      where: { midtransOrderId: orderId },
+    });
+
+    if (payment && payment.status !== nextStatus) {
+      await prisma.$transaction(async (tx) => {
+        await tx.payment.update({
+          where: { id: payment.id },
+          data: {
+            status: nextStatus,
+            paidAt: nextStatus === "paid" ? new Date() : null,
+          },
+        });
+
+        if (nextStatus === "paid" && payment.subscriptionId) {
+          await tx.subscription.update({
+            where: { id: payment.subscriptionId },
+            data: { status: "active" },
+          });
+        }
+
+        if (
+          nextStatus === "paid" &&
+          payment.listingId &&
+          payment.type === "boost"
+        ) {
+          await tx.listing.update({
+            where: { id: payment.listingId },
+            data: { isBoosted: true },
+          });
+        }
+      });
+    }
+  }
+
+  refresh();
+  const message =
+    nextStatus === "paid"
+      ? "Pembayaran berhasil dan telah terverifikasi!"
+      : nextStatus === "failed"
+        ? "Pembayaran telah dibatalkan atau kedaluwarsa."
+        : "Status masih menunggu pembayaran di Midtrans.";
+
+  return ok({ status: nextStatus, message });
+}
+

@@ -29,10 +29,10 @@ export async function generateMetadata({
   const seller = await getSellerBySlug(slug);
 
   if (!seller) {
-    return { title: "Toko Tidak Ditemukan - Biji Corp" };
+    return { title: "Toko Tidak Ditemukan - Biji Hub" };
   }
 
-  const title = `${seller.businessName} | Toko Kopi di Biji Corp`;
+  const title = `${seller.businessName} | Toko Kopi di Biji Hub`;
   const description =
     seller.bio ||
     `Temukan ragam kopi pilihan dari ${seller.businessName} di ${seller.city}. Terhubung langsung dengan produsen kopi terpercaya.`;
@@ -75,12 +75,33 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
 
   const cleanPhone = sanitizeWhatsApp(seller.whatsappNumber);
   const waMessage = encodeURIComponent(
-    `Halo ${seller.businessName}, saya melihat profil toko Anda di Biji dan tertarik untuk berdiskusi lebih lanjut mengenai produk kopi Anda.`,
+    `Halo ${seller.businessName}, saya melihat profil toko Anda di Biji Hub dan tertarik untuk berdiskusi lebih lanjut mengenai produk kopi Anda.`
   );
   const waHref = `https://wa.me/${cleanPhone}?text=${waMessage}`;
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Store",
+    name: seller.businessName,
+    description:
+      seller.bio ||
+      `Profil toko kopi ${seller.businessName} di ${seller.city}, Indonesia.`,
+    image: seller.avatarUrl ? [seller.avatarUrl] : [],
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: seller.city,
+      addressRegion: seller.province,
+      addressCountry: "ID",
+    },
+    telephone: seller.whatsappNumber,
+  };
+
   return (
     <div className="py-8 md:py-12 space-y-10">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <PageContainer className="space-y-8">
         <nav
           className="flex items-center gap-1.5 text-xs text-neutral-500 font-mono"

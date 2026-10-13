@@ -18,14 +18,14 @@ const TEMPLATES = [
     label: "Cek Stok & Lot",
     badge: "Stok",
     getMessage: (title: string, seller: string, id: string) =>
-      `Halo ${seller}, saya melihat listing kopi "${title}" (Ref #${id}) di Biji Corp. Apakah lot stok ini masih ready untuk dipesan? Terima kasih.`,
+      `Halo ${seller}, saya melihat listing kopi "${title}" (Ref #${id}) di Biji Hub. Apakah lot stok ini masih ready untuk dipesan? Terima kasih.`,
   },
   {
     id: "bulk",
     label: "Nego Partai Besar (Bulk)",
     badge: ">30kg",
     getMessage: (title: string, seller: string, id: string) =>
-      `Halo ${seller}, saya tertarik melakukan pembelian partai besar (bulk/karungan) untuk produk "${title}" (Ref #${id}) di Biji Corp. Apakah ada penawaran tier harga khusus roastery?`,
+      `Halo ${seller}, saya tertarik melakukan pembelian partai besar (bulk/karungan) untuk produk "${title}" (Ref #${id}) di Biji Hub. Apakah ada penawaran tier harga khusus roastery?`,
   },
   {
     id: "crop",

@@ -33,3 +33,20 @@ describe("Midtrans Signature Verification", () => {
     expect(valid).toBe(false);
   });
 });
+
+describe("mapMidtransStatus", () => {
+  it("maps settlement and capture(accept) to paid", async () => {
+    const { mapMidtransStatus } = await import("./midtrans");
+    expect(mapMidtransStatus("settlement")).toBe("paid");
+    expect(mapMidtransStatus("capture", "accept")).toBe("paid");
+    expect(mapMidtransStatus("capture", "challenge")).toBe("pending");
+  });
+
+  it("maps cancel, deny, and expire to failed", async () => {
+    const { mapMidtransStatus } = await import("./midtrans");
+    expect(mapMidtransStatus("cancel")).toBe("failed");
+    expect(mapMidtransStatus("deny")).toBe("failed");
+    expect(mapMidtransStatus("expire")).toBe("failed");
+    expect(mapMidtransStatus("pending")).toBe("pending");
+  });
+});

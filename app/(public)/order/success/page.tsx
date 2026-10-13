@@ -15,8 +15,11 @@ import {
   ArrowRight,
   HelpCircle,
   MessageCircle,
+  AlertTriangle,
 } from "lucide-react";
 import { ConfirmOrderButton } from "@/components/order/confirm-order-button";
+import { OrderDisputeModal } from "@/components/order/order-dispute-modal";
+import { OrderReviewModal } from "@/components/order/order-review-modal";
 import { buildOrderPaidNotificationUrl } from "@/lib/notifications";
 
 export const metadata: Metadata = {
@@ -74,6 +77,8 @@ export default async function OrderSuccessPage({
           <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
             {order.status === "completed" ? (
               <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+            ) : order.status === "disputed" ? (
+              <AlertTriangle className="w-8 h-8 text-rose-600" />
             ) : order.status === "shipped" ? (
               <Truck className="w-8 h-8 text-purple-600" />
             ) : isPaid ? (
@@ -87,11 +92,13 @@ export default async function OrderSuccessPage({
             <h1 className="text-2xl font-bold font-display text-neutral-900">
               {order.status === "completed"
                 ? "Pesanan Selesai!"
-                : order.status === "shipped"
-                  ? "Pesanan Sedang Dikirim!"
-                  : isPaid
-                    ? "Pembayaran Dikonfirmasi!"
-                    : "Pesanan Berhasil Dibuat"}
+                : order.status === "disputed"
+                  ? "Pesanan Dalam Peninjauan Komplain"
+                  : order.status === "shipped"
+                    ? "Pesanan Sedang Dikirim!"
+                    : isPaid
+                      ? "Pembayaran Dikonfirmasi!"
+                      : "Pesanan Berhasil Dibuat"}
             </h1>
             <p className="text-sm text-neutral-600">
               Nomor Pesanan: <span className="font-mono font-bold text-neutral-900">{order.orderNumber}</span>
@@ -102,18 +109,33 @@ export default async function OrderSuccessPage({
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
             {order.status === "completed"
               ? "Transaksi Sukses (Dana Telah Diteruskan ke Penjual)"
-              : "Garansi Escrow Biji Hub Aktif (Dana Aman Terlindungi)"}
+              : order.status === "disputed"
+                ? "Dana Escrow Ditahan Sementara (Sedang Dimediasi)"
+                : "Garansi Escrow Biji Hub Aktif (Dana Aman Terlindungi)"}
           </div>
 
           <p className="text-xs text-neutral-500 max-w-md mx-auto">
             {order.status === "completed"
               ? "Terima kasih! Pesanan telah Anda terima dengan baik dan dana penjualan telah diteruskan ke pihak roastery/petani."
-              : order.status === "shipped"
-                ? "Paket Anda sedang dalam perjalanan oleh kurir. Segera periksa paket setelah tiba dan klik konfirmasi di bawah."
-                : isPaid
-                  ? "Dana Anda telah aman tertampung di rekening escrow resmi Biji Hub. Penjual telah diberitahu untuk segera memproses & mengirimkan pesanan."
-                  : "Menunggu penyelesaian pembayaran. Jika sudah membayar melalui Snap Midtrans, status pesanan akan terbarui secara otomatis."}
+              : order.status === "disputed"
+                ? `Komplain Anda telah dicatat: "${order.disputeReason || "Kendala pengiriman/produk"}". Tim Biji Hub sedang meninjau dan menghubungi kedua pihak.`
+                : order.status === "shipped"
+                  ? "Paket Anda sedang dalam perjalanan oleh kurir. Segera periksa paket setelah tiba dan klik konfirmasi di bawah."
+                  : isPaid
+                    ? "Dana Anda telah aman tertampung di rekening escrow resmi Biji Hub. Penjual telah diberitahu untuk segera memproses & mengirimkan pesanan."
+                    : "Menunggu penyelesaian pembayaran. Jika sudah membayar melalui Snap Midtrans, status pesanan akan terbarui secara otomatis."}
           </p>
+
+          {/* Review Action when completed */}
+          {order.status === "completed" && (
+            <div className="pt-2">
+              <OrderReviewModal
+                orderId={order.id}
+                listingId={order.listingId}
+                listingTitle={order.listingTitle || "Biji Kopi"}
+              />
+            </div>
+          )}
         </div>
 
         {/* Konfirmasi Penerimaan Barang CTA (when shipped) */}
@@ -125,10 +147,13 @@ export default async function OrderSuccessPage({
                 Sudah Menerima Kopi dengan Selamat?
               </p>
               <p className="text-xs text-emerald-800">
-                Klik konfirmasi pesanan jika produk sudah sesuai untuk meneruskan dana ke penjual.
+                Klik konfirmasi jika produk sudah sesuai. Jika ada kerusakan atau salah barang, ajukan komplain.
               </p>
             </div>
-            <ConfirmOrderButton orderId={order.id} orderNumber={order.orderNumber} />
+            <div className="flex items-center gap-2">
+              <OrderDisputeModal orderId={order.id} orderNumber={order.orderNumber} />
+              <ConfirmOrderButton orderId={order.id} orderNumber={order.orderNumber} />
+            </div>
           </div>
         )}
 

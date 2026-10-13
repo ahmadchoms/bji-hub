@@ -224,7 +224,8 @@ export type OrderStatus =
   | "paid"
   | "shipped"
   | "completed"
-  | "canceled";
+  | "canceled"
+  | "disputed";
 
 export interface Order {
   id: string;
@@ -251,7 +252,19 @@ export interface Order {
   snapToken?: string | null;
   midtransOrderId?: string | null;
   notes?: string | null;
+  disputeReason?: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Review {
+  id: string;
+  orderId?: string | null;
+  listingId: string;
+  buyerId?: string | null;
+  buyerName: string;
+  rating: number; // 1 to 5
+  comment?: string | null;
+  createdAt: string;
 }
 

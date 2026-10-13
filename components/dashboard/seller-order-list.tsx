@@ -24,6 +24,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { buildShipmentNotificationUrl } from "@/lib/notifications";
+import { ExportCsvButton, type CsvColumn } from "@/components/shared/export-csv-button";
 
 interface SellerOrderListProps {
   orders: Order[];
@@ -42,6 +43,7 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
     if (filter === "paid") return order.status === "paid";
     if (filter === "shipped") return order.status === "shipped";
     if (filter === "completed") return order.status === "completed";
+    if (filter === "disputed") return order.status === "disputed";
     return true;
   });
 
@@ -95,6 +97,12 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
             <CheckCircle2 className="w-3 h-3 mr-1" /> Selesai
           </Badge>
         );
+      case "disputed":
+        return (
+          <Badge variant="outline" className="text-rose-700 bg-rose-50 border-rose-300">
+            <AlertCircle className="w-3 h-3 mr-1" /> Dalam Komplain
+          </Badge>
+        );
       case "canceled":
         return (
           <Badge variant="outline" className="text-rose-700 bg-rose-50 border-rose-300">
@@ -117,48 +125,85 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
 
   return (
     <div className="space-y-6">
-      {/* Filter Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-neutral-200 text-xs">
-        <button
-          onClick={() => setFilter("all")}
-          className={`px-3 py-1.5 rounded-sm font-medium transition-colors ${
-            filter === "all"
-              ? "bg-neutral-900 text-white"
-              : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
-          }`}
-        >
-          Semua ({orders.length})
-        </button>
-        <button
-          onClick={() => setFilter("paid")}
-          className={`px-3 py-1.5 rounded-sm font-medium transition-colors ${
-            filter === "paid"
-              ? "bg-blue-700 text-white"
-              : "bg-blue-50 text-blue-700 hover:bg-blue-100"
-          }`}
-        >
-          Perlu Dikirim ({orders.filter((o) => o.status === "paid").length})
-        </button>
-        <button
-          onClick={() => setFilter("shipped")}
-          className={`px-3 py-1.5 rounded-sm font-medium transition-colors ${
-            filter === "shipped"
-              ? "bg-purple-700 text-white"
-              : "bg-purple-50 text-purple-700 hover:bg-purple-100"
-          }`}
-        >
-          Dalam Pengiriman ({orders.filter((o) => o.status === "shipped").length})
-        </button>
-        <button
-          onClick={() => setFilter("completed")}
-          className={`px-3 py-1.5 rounded-sm font-medium transition-colors ${
-            filter === "completed"
-              ? "bg-emerald-700 text-white"
-              : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-          }`}
-        >
-          Selesai ({orders.filter((o) => o.status === "completed").length})
-        </button>
+      {/* Filter Tabs & Export */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-neutral-200">
+        <div className="flex items-center gap-2 overflow-x-auto text-xs">
+          <button
+            onClick={() => setFilter("all")}
+            className={`px-3 py-1.5 rounded-sm font-medium transition-colors ${
+              filter === "all"
+                ? "bg-neutral-900 text-white"
+                : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+            }`}
+          >
+            Semua ({orders.length})
+          </button>
+          <button
+            onClick={() => setFilter("paid")}
+            className={`px-3 py-1.5 rounded-sm font-medium transition-colors ${
+              filter === "paid"
+                ? "bg-blue-700 text-white"
+                : "bg-blue-50 text-blue-700 hover:bg-blue-100"
+            }`}
+          >
+            Perlu Dikirim ({orders.filter((o) => o.status === "paid").length})
+          </button>
+          <button
+            onClick={() => setFilter("shipped")}
+            className={`px-3 py-1.5 rounded-sm font-medium transition-colors ${
+              filter === "shipped"
+                ? "bg-purple-700 text-white"
+                : "bg-purple-50 text-purple-700 hover:bg-purple-100"
+            }`}
+          >
+            Dalam Pengiriman ({orders.filter((o) => o.status === "shipped").length})
+          </button>
+          <button
+            onClick={() => setFilter("completed")}
+            className={`px-3 py-1.5 rounded-sm font-medium transition-colors ${
+              filter === "completed"
+                ? "bg-emerald-700 text-white"
+                : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+            }`}
+          >
+            Selesai ({orders.filter((o) => o.status === "completed").length})
+          </button>
+          <button
+            onClick={() => setFilter("disputed")}
+            className={`px-3 py-1.5 rounded-sm font-medium transition-colors ${
+              filter === "disputed"
+                ? "bg-rose-700 text-white"
+                : "bg-rose-50 text-rose-700 hover:bg-rose-100"
+            }`}
+          >
+            Komplain ({orders.filter((o) => o.status === "disputed").length})
+          </button>
+        </div>
+
+        <ExportCsvButton
+          data={orders}
+          filename={`laporan-pesanan-toko-${format(new Date(), "yyyyMMdd")}`}
+          columns={[
+            { key: "orderNumber", label: "No Pesanan" },
+            {
+              key: "createdAt",
+              label: "Tanggal",
+              format: (val) =>
+                val ? format(new Date(val), "yyyy-MM-dd HH:mm", { locale: idLocale }) : "",
+            },
+            { key: "listingTitle", label: "Produk", format: (val) => val || "-" },
+            { key: "quantity", label: "Jumlah" },
+            { key: "subtotal", label: "Subtotal Bersih (IDR)" },
+            { key: "shippingCourier", label: "Kurir" },
+            { key: "trackingNumber", label: "No Resi", format: (val) => val || "-" },
+            { key: "buyerName", label: "Nama Pembeli" },
+            { key: "buyerPhone", label: "No HP Pembeli" },
+            { key: "buyerCity", label: "Kota Tujuan" },
+            { key: "status", label: "Status" },
+            { key: "disputeReason", label: "Alasan Komplain", format: (val) => val || "-" },
+          ]}
+          label="Ekspor CSV"
+        />
       </div>
 
       {/* Orders List */}
@@ -169,7 +214,8 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
           </p>
         ) : (
           filteredOrders.map((order) => {
-            const canInputResi = order.status === "paid" || order.status === "shipped";
+            const canInputResi =
+              order.status === "paid" || order.status === "shipped";
 
             return (
               <div
@@ -323,6 +369,22 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
                     </div>
                   </div>
                 </div>
+
+                {/* Disputed Alert Banner */}
+                {order.status === "disputed" && (
+                  <div className="p-3 bg-rose-50 border border-rose-200 rounded text-xs text-rose-800 space-y-1">
+                    <div className="flex items-center gap-1.5 font-semibold text-rose-900">
+                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                      Pesanan Dalam Komplain Pembeli (Dana Escrow Ditahan)
+                    </div>
+                    <p className="text-rose-700 pl-5.5">
+                      <span className="font-medium">Alasan:</span> {order.disputeReason || "Menunggu verifikasi admin."}
+                    </p>
+                    <p className="text-[11px] text-rose-600 pl-5.5">
+                      Admin Biji Hub sedang meninjau kasus ini sebelum memutuskan penerusan dana atau pengembalian ke pembeli.
+                    </p>
+                  </div>
+                )}
 
                 {/* Footer Escrow notice */}
                 <div className="flex items-center gap-1.5 text-[11px] text-emerald-800 bg-emerald-50/70 px-3 py-1.5 rounded">

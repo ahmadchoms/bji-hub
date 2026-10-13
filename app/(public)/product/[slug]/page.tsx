@@ -18,8 +18,9 @@ import { CompareButton } from "@/components/catalog/compare-button";
 import { ProductStickyCTA } from "@/components/catalog/product-sticky-cta";
 import { TrackOnMount } from "@/components/shared/track-visible";
 import { Button } from "@/components/ui/button";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, Star } from "lucide-react";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
+import { getReviewsByListing, computeReviewStats } from "@/lib/data/reviews";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
@@ -88,6 +89,9 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   const relatedListings = relatedResult.items
     .filter((l) => l.id !== listing.id)
     .slice(0, 3);
+
+  const reviews = await getReviewsByListing(listing.id);
+  const reviewStats = computeReviewStats(reviews);
 
   const primaryImage = listing.images?.[0]?.url;
   const jsonLd = {
@@ -172,6 +176,62 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
             <BrewCalculator />
 
+            {/* Ulasan Pembeli */}
+            <div className="space-y-4 pt-4 border-t border-neutral-300">
+              <div className="flex items-center justify-between">
+                <h3 className="font-display text-lg font-semibold text-neutral-900">
+                  Ulasan Pembeli ({reviewStats.count})
+                </h3>
+                {reviewStats.count > 0 && (
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-neutral-800 bg-neutral-100 px-2.5 py-1 rounded">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
+                    <span>{reviewStats.average.toFixed(1)} / 5.0</span>
+                  </div>
+                )}
+              </div>
+
+              {reviews.length === 0 ? (
+                <div className="p-4 bg-neutral-50 rounded border border-neutral-200 text-xs text-neutral-500 text-center">
+                  Belum ada ulasan untuk produk ini. Ulasan akan muncul setelah pembeli menyelesaikan pesanan.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {reviews.map((r) => (
+                    <div
+                      key={r.id}
+                      className="p-3.5 bg-neutral-50/70 rounded border border-neutral-200 space-y-2 text-xs"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-neutral-900">{r.buyerName}</span>
+                        <span className="text-neutral-400 font-mono text-[11px]">
+                          {new Date(r.createdAt).toLocaleDateString("id-ID", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-0.5">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`w-3.5 h-3.5 ${
+                              star <= r.rating
+                                ? "fill-amber-400 text-amber-500"
+                                : "text-neutral-300"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      {r.comment && (
+                        <p className="text-neutral-700 leading-relaxed">{r.comment}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div id="inquiry-form">
               <InquiryForm
                 listingId={listing.id}
@@ -197,11 +257,23 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                 <h1 className="font-display text-2xl md:text-3xl text-primary-900 tracking-tight font-semibold leading-tight">
                   {listing.title}
                 </h1>
-                <p className="text-sm text-neutral-600">
-                  {listing.seller.businessName} —{" "}
-                  {listing.tasteProfile?.originRegion || listing.seller.city},{" "}
-                  {listing.seller.province}
-                </p>
+                <div className="flex flex-wrap items-center gap-3 text-sm">
+                  <p className="text-neutral-600">
+                    {listing.seller.businessName} —{" "}
+                    {listing.tasteProfile?.originRegion || listing.seller.city},{" "}
+                    {listing.seller.province}
+                  </p>
+                  <div className="flex items-center gap-1 font-mono text-xs text-neutral-700 bg-neutral-100 px-2 py-0.5 rounded">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
+                    {reviewStats.count > 0 ? (
+                      <span>
+                        <strong>{reviewStats.average.toFixed(1)}</strong> ({reviewStats.count} ulasan)
+                      </span>
+                    ) : (
+                      <span className="text-neutral-500">Belum ada ulasan</span>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Pricing Box */}

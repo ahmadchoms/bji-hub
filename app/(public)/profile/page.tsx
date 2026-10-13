@@ -12,8 +12,10 @@ import { createClient } from "@/lib/supabase/server";
 import { BuyerProfileForm } from "@/components/profile/buyer-profile-form";
 import { getOrdersByBuyer } from "@/lib/data/orders";
 import { formatRupiah } from "@/components/shared/price-text";
-import { Package, Truck, Clock, CheckCircle2, AlertCircle, MapPin } from "lucide-react";
+import { Package, Truck, Clock, CheckCircle2, AlertCircle, MapPin, AlertTriangle } from "lucide-react";
 import { ConfirmOrderButton } from "@/components/order/confirm-order-button";
+import { OrderReviewModal } from "@/components/order/order-review-modal";
+import { OrderDisputeModal } from "@/components/order/order-dispute-modal";
 
 export const metadata = {
   title: "Profil Akun - Biji Hub",
@@ -175,20 +177,24 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
                     className={
                       ord.status === "completed"
                         ? "text-emerald-700 bg-emerald-50 border-emerald-300"
-                        : ord.status === "shipped"
-                          ? "text-purple-700 bg-purple-50 border-purple-300"
-                          : ord.status === "paid"
-                            ? "text-blue-700 bg-blue-50 border-blue-300"
-                            : "text-amber-700 bg-amber-50 border-amber-300"
+                        : ord.status === "disputed"
+                          ? "text-rose-700 bg-rose-50 border-rose-300"
+                          : ord.status === "shipped"
+                            ? "text-purple-700 bg-purple-50 border-purple-300"
+                            : ord.status === "paid"
+                              ? "text-blue-700 bg-blue-50 border-blue-300"
+                              : "text-amber-700 bg-amber-50 border-amber-300"
                     }
                   >
                     {ord.status === "completed"
                       ? "Selesai"
-                      : ord.status === "shipped"
-                        ? "Dikirim"
-                        : ord.status === "paid"
-                          ? "Diproses"
-                          : "Menunggu Bayar"}
+                      : ord.status === "disputed"
+                        ? "Komplain"
+                        : ord.status === "shipped"
+                          ? "Dikirim"
+                          : ord.status === "paid"
+                            ? "Diproses"
+                            : "Menunggu Bayar"}
                   </Badge>
                 </div>
                 <div className="flex justify-between items-baseline text-neutral-700">
@@ -212,13 +218,25 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
                   </Link>
                 </div>
                 {ord.status === "shipped" && (
-                  <div className="pt-2 border-t border-neutral-100 flex items-center justify-between bg-emerald-50/50 p-2 rounded">
+                  <div className="pt-2 border-t border-neutral-100 flex flex-wrap items-center justify-between gap-2 bg-emerald-50/50 p-2 rounded">
                     <span className="text-[11px] text-emerald-800">
-                      Paket sudah tiba? Konfirmasi penerimaan:
+                      Paket sudah tiba?
                     </span>
-                    <ConfirmOrderButton
+                    <div className="flex items-center gap-1.5">
+                      <OrderDisputeModal orderId={ord.id} orderNumber={ord.orderNumber} />
+                      <ConfirmOrderButton
+                        orderId={ord.id}
+                        orderNumber={ord.orderNumber}
+                      />
+                    </div>
+                  </div>
+                )}
+                {ord.status === "completed" && (
+                  <div className="pt-2 border-t border-neutral-100 flex items-center justify-end">
+                    <OrderReviewModal
                       orderId={ord.id}
-                      orderNumber={ord.orderNumber}
+                      listingId={ord.listingId}
+                      listingTitle={ord.listingTitle || "Biji Kopi"}
                     />
                   </div>
                 )}

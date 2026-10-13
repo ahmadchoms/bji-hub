@@ -1,11 +1,13 @@
 "use server";
 
 import { z } from "zod";
+import { revalidatePath } from "next/cache";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 import { getListingBySlug, getListingById } from "@/lib/data";
 import { createOrder, getOrderById, updateOrderStatus } from "@/lib/data/orders";
+import { createReview } from "@/lib/data/reviews";
 import { createMidtransSnapToken } from "@/lib/midtrans";
-import { getSession } from "@/lib/auth/session";
+import { getSession, requireRole } from "@/lib/auth/session";
 
 const checkoutSchema = z.object({
   listingId: z.string().min(1, "Produk wajib dipilih"),
@@ -156,5 +158,94 @@ export async function completeOrderAction(
   if (!order) return fail("Pesanan tidak ditemukan");
 
   await updateOrderStatus(order.id, "completed");
+  revalidatePath("/order/success");
+  revalidatePath("/profile");
+  revalidatePath("/dashboard/orders");
   return ok({ success: true });
 }
+
+const disputeSchema = z.object({
+  orderId: z.string().min(1),
+  reason: z.string().min(5, "Alasan komplain minimal 5 karakter").max(500),
+});
+
+export async function disputeOrderAction(
+  input: unknown,
+): Promise<ActionResult<{ success: boolean }>> {
+  const parsed = disputeSchema.safeParse(input);
+  if (!parsed.success) {
+    return fail("Data komplain tidak valid", parsed.error.flatten().fieldErrors as Record<string, string[]>);
+  }
+
+  const order = await getOrderById(parsed.data.orderId);
+  if (!order) return fail("Pesanan tidak ditemukan");
+
+  if (order.status !== "shipped" && order.status !== "paid") {
+    return fail("Hanya pesanan yang sudah dibayar atau dikirim yang dapat diajukan komplain");
+  }
+
+  await updateOrderStatus(order.id, "disputed", undefined, parsed.data.reason.trim());
+  revalidatePath("/order/success");
+  revalidatePath("/profile");
+  revalidatePath("/dashboard/orders");
+  revalidatePath("/admin/transactions");
+
+  return ok({ success: true });
+}
+
+export async function resolveDisputeAction(
+  orderId: string,
+  decision: "complete" | "cancel",
+): Promise<ActionResult<{ success: boolean }>> {
+  await requireRole(["admin"], "/admin/transactions");
+
+  const order = await getOrderById(orderId);
+  if (!order) return fail("Pesanan tidak ditemukan");
+
+  const newStatus = decision === "complete" ? "completed" : "canceled";
+  await updateOrderStatus(order.id, newStatus);
+
+  revalidatePath("/order/success");
+  revalidatePath("/profile");
+  revalidatePath("/dashboard/orders");
+  revalidatePath("/admin/transactions");
+
+  return ok({ success: true });
+}
+
+const reviewSchema = z.object({
+  orderId: z.string().optional(),
+  listingId: z.string().min(1),
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().max(500).optional(),
+});
+
+export async function submitReviewAction(
+  input: unknown,
+): Promise<ActionResult<{ reviewId: string }>> {
+  const parsed = reviewSchema.safeParse(input);
+  if (!parsed.success) {
+    return fail("Data ulasan tidak valid");
+  }
+
+  const session = await getSession();
+  const buyerId = session.role === "buyer" ? (session as unknown as { userId?: string }).userId ?? null : null;
+
+  let buyerName = "Pembeli Biji Hub";
+  if (parsed.data.orderId) {
+    const order = await getOrderById(parsed.data.orderId);
+    if (order?.buyerName) buyerName = order.buyerName;
+  }
+
+  const review = await createReview({
+    orderId: parsed.data.orderId,
+    listingId: parsed.data.listingId,
+    buyerId,
+    buyerName,
+    rating: parsed.data.rating,
+    comment: parsed.data.comment,
+  });
+
+  return ok({ reviewId: review.id });
+}
+

@@ -1,9 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 
 const storage: Record<string, string> = {};
-if (typeof global.localStorage === "undefined" || !global.localStorage?.getItem) {
-  // @ts-expect-error mock storage
-  global.localStorage = {
+if (typeof (global as any).localStorage === "undefined" || !(global as any).localStorage?.getItem) {
+  (global as any).localStorage = {
     getItem: (key: string) => storage[key] ?? null,
     setItem: (key: string, val: string) => {
       storage[key] = val;
@@ -20,9 +19,8 @@ if (typeof global.localStorage === "undefined" || !global.localStorage?.getItem)
 }
 
 // Window event mock
-if (typeof global.window === "undefined") {
-  // @ts-expect-error mock window
-  global.window = {
+if (typeof (global as any).window === "undefined") {
+  (global as any).window = {
     dispatchEvent: () => true,
     addEventListener: () => {},
     removeEventListener: () => {},

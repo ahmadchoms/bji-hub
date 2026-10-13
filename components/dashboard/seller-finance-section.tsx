@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { updateSellerBankAction, requestPayoutAction } from "@/actions/payout.actions";
+import { ExportCsvButton, type CsvColumn } from "@/components/shared/export-csv-button";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
@@ -454,10 +455,31 @@ export function SellerFinanceSection({
       {/* Riwayat Pengajuan Pencairan Dana */}
       {payoutHistory.length > 0 && (
         <Card className="border-neutral-300 bg-white">
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-sm text-neutral-900 flex items-center gap-2">
               <Clock className="w-4 h-4 text-neutral-500" /> Riwayat Pengajuan Penarikan Dana
             </CardTitle>
+            <ExportCsvButton
+              data={payoutHistory}
+              filename={`riwayat-pencairan-dana-${format(new Date(), "yyyyMMdd")}`}
+              columns={[
+                { key: "id", label: "ID Pengajuan" },
+                {
+                  key: "createdAt",
+                  label: "Tanggal Pengajuan",
+                  format: (val) =>
+                    val ? format(new Date(val), "yyyy-MM-dd HH:mm", { locale: idLocale }) : "",
+                },
+                { key: "amount", label: "Nominal Pencairan (IDR)" },
+                { key: "bankName", label: "Bank Tujuan" },
+                { key: "bankAccountNumber", label: "Nomor Rekening" },
+                { key: "bankAccountHolder", label: "Nama Pemilik Rekening" },
+                { key: "status", label: "Status" },
+                { key: "notes", label: "Catatan", format: (val) => val || "-" },
+              ]}
+              label="Ekspor CSV"
+              size="sm"
+            />
           </CardHeader>
           <CardContent className="pt-0">
             <div className="space-y-2">

@@ -1,8 +1,15 @@
 import { describe, it, expect, beforeEach } from "vitest";
 
+interface GlobalWithMock {
+  localStorage?: Storage;
+  window?: unknown;
+}
+const mockGlobal = globalThis as unknown as GlobalWithMock;
+
 const storage: Record<string, string> = {};
-if (typeof (global as any).localStorage === "undefined" || !(global as any).localStorage?.getItem) {
-  (global as any).localStorage = {
+
+if (typeof mockGlobal.localStorage === "undefined" || !mockGlobal.localStorage?.getItem) {
+  mockGlobal.localStorage = {
     getItem: (key: string) => storage[key] ?? null,
     setItem: (key: string, val: string) => {
       storage[key] = val;
@@ -19,8 +26,8 @@ if (typeof (global as any).localStorage === "undefined" || !(global as any).loca
 }
 
 // Window event mock
-if (typeof (global as any).window === "undefined") {
-  (global as any).window = {
+if (typeof mockGlobal.window === "undefined") {
+  mockGlobal.window = {
     dispatchEvent: () => true,
     addEventListener: () => {},
     removeEventListener: () => {},

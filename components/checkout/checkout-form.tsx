@@ -6,7 +6,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
-  ShieldCheck,
   Truck,
   Minus,
   Plus,
@@ -44,11 +43,11 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
   const [isPending, startTransition] = useTransition();
 
   const [quantity, setQuantity] = useState<number>(listing.minOrderQty || 1);
-  const [buyerName, setBuyerName] = useState(initialBuyer.name);
-  const [buyerEmail, setBuyerEmail] = useState(initialBuyer.email);
-  const [buyerPhone, setBuyerPhone] = useState(initialBuyer.phone);
-  const [buyerCity, setBuyerCity] = useState(initialBuyer.city || "");
-  const [buyerAddress, setBuyerAddress] = useState(initialBuyer.address);
+  const buyerName = initialBuyer.name;
+  const buyerEmail = initialBuyer.email;
+  const buyerPhone = initialBuyer.phone;
+  const buyerCity = initialBuyer.city || "";
+  const buyerAddress = initialBuyer.address;
   const [notes, setNotes] = useState("");
 
   const [shippingRates, setShippingRates] = useState<ShippingRate[]>([]);
@@ -327,7 +326,7 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
             <div className="p-6 border border-dashed border-amber-300 bg-amber-50/40 rounded-sm text-center text-xs text-amber-900 space-y-1">
               <p className="font-semibold">Opsi Pengiriman Tidak Ditemukan</p>
               <p className="text-[11px] text-amber-700">
-                Pastikan nama kota sudah benar (contoh: "Bandung", "Surabaya", "Jakarta Selatan").
+                Pastikan nama kota sudah benar (contoh: &quot;Bandung&quot;, &quot;Surabaya&quot;, &quot;Jakarta Selatan&quot;).
               </p>
             </div>
           ) : (

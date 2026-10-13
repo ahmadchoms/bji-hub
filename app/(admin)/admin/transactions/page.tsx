@@ -49,7 +49,7 @@ export default async function AdminTransaksiPage() {
     {
       key: "sellerId",
       label: "Seller",
-      format: (val) => sellerMap[val] ?? val,
+      format: (val) => (typeof val === "string" ? sellerMap[val] ?? val : String(val ?? "-")),
     },
     { key: "amount", label: "Nominal (IDR)" },
     { key: "status", label: "Status" },
@@ -57,7 +57,9 @@ export default async function AdminTransaksiPage() {
       key: "paidAt",
       label: "Tanggal Lunas",
       format: (val) =>
-        val ? format(new Date(val), "yyyy-MM-dd HH:mm", { locale: idLocale }) : "-",
+        typeof val === "string"
+          ? format(new Date(val), "yyyy-MM-dd HH:mm", { locale: idLocale })
+          : "-",
     },
   ];
 

@@ -264,7 +264,7 @@ export async function trackShipmentWaybill(
         const json = await res.json();
         const result = json?.rajaongkir?.result;
         if (result && result.manifest) {
-          const manifests: WaybillManifest[] = (result.manifest || []).map((m: any) => ({
+          const manifests: WaybillManifest[] = (result.manifest || []).map((m: Record<string, string>) => ({
             manifestDescription: m.manifest_description,
             manifestDate: m.manifest_date,
             manifestTime: m.manifest_time,

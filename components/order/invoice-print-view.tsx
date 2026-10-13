@@ -9,8 +9,6 @@ import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import {
   Printer,
-  FileText,
-  Truck,
   ShieldCheck,
   Building2,
   User,

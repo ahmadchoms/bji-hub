@@ -5,14 +5,13 @@ import { PageContainer } from "@/components/layout/page-container";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { User, Store, ArrowRight, Compass, ShieldCheck } from "lucide-react";
+import { Store, ArrowRight, ShieldCheck, Package, AlertCircle } from "lucide-react";
 import { logoutAction } from "@/actions/auth.actions";
 
 import { createClient } from "@/lib/supabase/server";
 import { BuyerProfileForm } from "@/components/profile/buyer-profile-form";
 import { getOrdersByBuyer } from "@/lib/data/orders";
 import { formatRupiah } from "@/components/shared/price-text";
-import { Package, Truck, Clock, CheckCircle2, AlertCircle, MapPin, AlertTriangle } from "lucide-react";
 import { ConfirmOrderButton } from "@/components/order/confirm-order-button";
 import { OrderReviewModal } from "@/components/order/order-review-modal";
 import { OrderDisputeModal } from "@/components/order/order-dispute-modal";

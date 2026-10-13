@@ -3,8 +3,7 @@ import Link from "next/link";
 import { getOrderById } from "@/lib/data/orders";
 import { PageContainer } from "@/components/layout/page-container";
 import { formatRupiah } from "@/components/shared/price-text";
-import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   CheckCircle2,
   Clock,

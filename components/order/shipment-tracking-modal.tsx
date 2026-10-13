@@ -17,7 +17,6 @@ import {
   Truck,
   Loader2,
   Copy,
-  CheckCircle2,
   Clock,
   MapPin,
   RefreshCw,

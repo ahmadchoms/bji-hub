@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { updateSellerBankAction, requestPayoutAction } from "@/actions/payout.actions";
-import { ExportCsvButton, type CsvColumn } from "@/components/shared/export-csv-button";
+import { ExportCsvButton } from "@/components/shared/export-csv-button";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
@@ -22,7 +22,6 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
-  HelpCircle,
   Edit2,
   Loader2,
 } from "lucide-react";

@@ -5,7 +5,7 @@ import { SectionHeader } from "@/components/shared/section-header";
 import { AdminPayoutList } from "@/components/admin/admin-payout-list";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatRupiah } from "@/components/shared/price-text";
-import { Wallet, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { Clock, CheckCircle2, XCircle } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Pencairan Dana Penjual - Admin Biji Hub",

@@ -3,10 +3,11 @@
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export interface CsvColumn<T> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface CsvColumn<T, V = any> {
   key: keyof T | string;
   label: string;
-  format?: (value: any, row: T) => string | number | null | undefined;
+  format?: (value: V, row: T) => string | number | null | undefined;
 }
 
 interface ExportCsvButtonProps<T> {
@@ -28,7 +29,7 @@ function escapeCsvCell(val: unknown): string {
   return str;
 }
 
-export function ExportCsvButton<T extends Record<string, any>>({
+export function ExportCsvButton<T extends object>({
   data,
   filename,
   columns,
@@ -44,7 +45,7 @@ export function ExportCsvButton<T extends Record<string, any>>({
     const rows = data.map((row) =>
       columns
         .map((col) => {
-          const rawVal = row[col.key as keyof T];
+          const rawVal = (row as Record<string, unknown>)[col.key as string];
           const val = col.format ? col.format(rawVal, row) : rawVal;
           return escapeCsvCell(val);
         })

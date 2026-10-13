@@ -17,7 +17,6 @@ import { CuppingSheetModal } from "@/components/catalog/cupping-sheet-modal";
 import { CompareButton } from "@/components/catalog/compare-button";
 import { ProductStickyCTA } from "@/components/catalog/product-sticky-cta";
 import { TrackOnMount } from "@/components/shared/track-visible";
-import { Button } from "@/components/ui/button";
 import { ShieldCheck, Star } from "lucide-react";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { getReviewsByListing, computeReviewStats } from "@/lib/data/reviews";

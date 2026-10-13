@@ -17,8 +17,6 @@ import { id as idLocale } from "date-fns/locale";
 import {
   Printer,
   FileText,
-  Package,
-  Truck,
   ExternalLink,
   ShieldCheck,
   Building2,

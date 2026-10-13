@@ -5,7 +5,7 @@ import { VerifiedBadge } from "@/components/shared/verified-badge";
 import { RequestVerificationButton } from "@/components/dashboard/request-verification-button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, AlertCircle, Clock, ShieldCheck, Store, FileText, Phone } from "lucide-react";
+import { CheckCircle2, AlertCircle, Clock, Store, FileText, Phone } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 

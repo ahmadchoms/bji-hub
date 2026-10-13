@@ -10,7 +10,7 @@ import { buildPayoutDisbursedNotificationUrl } from "@/lib/notifications";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
-import type { PayoutRequest, PayoutStatus } from "@/types";
+import type { PayoutRequest } from "@/types";
 import {
   Building2,
   CheckCircle2,
@@ -18,7 +18,6 @@ import {
   Clock,
   MessageCircle,
   Loader2,
-  ExternalLink,
 } from "lucide-react";
 
 interface AdminPayoutListProps {

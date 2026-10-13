@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { completeOrderAction } from "@/actions/order.actions";
 import { toast } from "sonner";
-import { CheckCircle2, Loader2, AlertCircle } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 
 interface ConfirmOrderButtonProps {
   orderId: string;

@@ -25,7 +25,7 @@ import {
   Search,
 } from "lucide-react";
 import { buildShipmentNotificationUrl } from "@/lib/notifications";
-import { ExportCsvButton, type CsvColumn } from "@/components/shared/export-csv-button";
+import { ExportCsvButton } from "@/components/shared/export-csv-button";
 import { ShipmentTrackingModal } from "@/components/order/shipment-tracking-modal";
 import { OrderPrintModal } from "@/components/order/order-print-modal";
 

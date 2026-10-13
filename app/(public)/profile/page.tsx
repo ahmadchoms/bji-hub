@@ -17,6 +17,7 @@ import { ConfirmOrderButton } from "@/components/order/confirm-order-button";
 import { OrderReviewModal } from "@/components/order/order-review-modal";
 import { OrderDisputeModal } from "@/components/order/order-dispute-modal";
 import { ShipmentTrackingModal } from "@/components/order/shipment-tracking-modal";
+import { OrderPrintModal } from "@/components/order/order-print-modal";
 
 export const metadata = {
   title: "Profil Akun - Biji Hub",
@@ -220,12 +221,15 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
                       />
                     )}
                   </div>
-                  <Link
-                    href={`/order/success?orderNumber=${ord.orderNumber}`}
-                    className="font-medium text-primary-600 hover:text-primary-800"
-                  >
-                    Lihat Rincian &rarr;
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <OrderPrintModal order={ord} defaultMode="invoice" />
+                    <Link
+                      href={`/order/success?orderNumber=${ord.orderNumber}`}
+                      className="font-medium text-primary-600 hover:text-primary-800"
+                    >
+                      Lihat Rincian &rarr;
+                    </Link>
+                  </div>
                 </div>
                 {ord.status === "shipped" && (
                   <div className="pt-2 border-t border-neutral-100 flex flex-wrap items-center justify-between gap-2 bg-emerald-50/50 p-2 rounded">

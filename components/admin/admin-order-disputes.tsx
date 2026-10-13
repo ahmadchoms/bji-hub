@@ -10,6 +10,7 @@ import { ExportCsvButton, type CsvColumn } from "@/components/shared/export-csv-
 import { resolveDisputeAction, autoCompleteOrdersAction } from "@/actions/order.actions";
 import { buildDisputeResolvedNotificationUrl } from "@/lib/notifications";
 import { ShipmentTrackingModal } from "@/components/order/shipment-tracking-modal";
+import { OrderPrintModal } from "@/components/order/order-print-modal";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
@@ -329,7 +330,10 @@ export function AdminOrderDisputes({ orders: initialOrders }: AdminOrderDisputes
                       })}
                     </span>
                   </div>
-                  <div>{getStatusBadge(order.status)}</div>
+                  <div className="flex items-center gap-2">
+                    <OrderPrintModal order={order} defaultMode="invoice" />
+                    <div>{getStatusBadge(order.status)}</div>
+                  </div>
                 </div>
 
                 {/* Dispute Alert & Action Box */}

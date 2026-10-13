@@ -27,6 +27,7 @@ import {
 import { buildShipmentNotificationUrl } from "@/lib/notifications";
 import { ExportCsvButton, type CsvColumn } from "@/components/shared/export-csv-button";
 import { ShipmentTrackingModal } from "@/components/order/shipment-tracking-modal";
+import { OrderPrintModal } from "@/components/order/order-print-modal";
 
 interface SellerOrderListProps {
   orders: Order[];
@@ -261,7 +262,10 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
                       })}
                     </span>
                   </div>
-                  <div>{getStatusBadge(order.status)}</div>
+                  <div className="flex items-center gap-2">
+                    <OrderPrintModal order={order} defaultMode="shipping_label" />
+                    <div>{getStatusBadge(order.status)}</div>
+                  </div>
                 </div>
 
                 {/* Content Grid */}

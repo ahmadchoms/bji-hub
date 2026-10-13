@@ -21,6 +21,7 @@ import { ConfirmOrderButton } from "@/components/order/confirm-order-button";
 import { OrderDisputeModal } from "@/components/order/order-dispute-modal";
 import { OrderReviewModal } from "@/components/order/order-review-modal";
 import { ShipmentTrackingModal } from "@/components/order/shipment-tracking-modal";
+import { OrderPrintModal } from "@/components/order/order-print-modal";
 import { buildOrderPaidNotificationUrl } from "@/lib/notifications";
 
 export const metadata: Metadata = {
@@ -101,9 +102,12 @@ export default async function OrderSuccessPage({
                       ? "Pembayaran Dikonfirmasi!"
                       : "Pesanan Berhasil Dibuat"}
             </h1>
-            <p className="text-sm text-neutral-600">
-              Nomor Pesanan: <span className="font-mono font-bold text-neutral-900">{order.orderNumber}</span>
-            </p>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <p className="text-sm text-neutral-600">
+                Nomor Pesanan: <span className="font-mono font-bold text-neutral-900">{order.orderNumber}</span>
+              </p>
+              <OrderPrintModal order={order} defaultMode="invoice" />
+            </div>
           </div>
 
           <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-full text-xs font-medium">

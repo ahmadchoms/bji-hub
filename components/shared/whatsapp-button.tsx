@@ -1,33 +1,10 @@
 "use client";
 
 import { MessageCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, normalizeWhatsAppNumber } from "@/lib/utils";
 import { trackEvent } from "@/lib/tracking";
 
-interface WhatsAppButtonProps {
-  phoneNumber: string;
-  listingId: string;
-  listingTitle: string;
-  sellerName?: string;
-  unit?: string;
-  price?: number;
-  customMessage?: string;
-  variant?: "primary" | "secondary" | "accent" | "outline";
-  size?: "sm" | "md" | "lg";
-  className?: string;
-  children?: React.ReactNode;
-}
-
-export function normalizeWhatsAppNumber(phone: string): string {
-  const cleaned = phone.replace(/[^0-9]/g, "");
-  if (cleaned.startsWith("0")) {
-    return "62" + cleaned.slice(1);
-  }
-  if (cleaned.startsWith("62")) {
-    return cleaned;
-  }
-  return "62" + cleaned;
-}
+export { normalizeWhatsAppNumber };
 
 export function buildWhatsAppUrl({
   phoneNumber,
@@ -47,6 +24,20 @@ export function buildWhatsAppUrl({
   const defaultText = `${greeting}saya melihat listing kopi Anda "${listingTitle}" (Ref ID: #${listingId}) di Biji. Apakah stok ini masih tersedia dan bisa saya pesan? Terima kasih.`;
   const finalMessage = customMessage || defaultText;
   return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(finalMessage)}`;
+}
+
+export interface WhatsAppButtonProps {
+  phoneNumber: string;
+  listingId: string;
+  listingTitle: string;
+  sellerName?: string;
+  unit?: string;
+  price?: number;
+  customMessage?: string;
+  variant?: "primary" | "secondary" | "accent" | "outline";
+  size?: "sm" | "md" | "lg";
+  className?: string;
+  children?: React.ReactNode;
 }
 
 export function WhatsAppButton({

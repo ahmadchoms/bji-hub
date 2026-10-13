@@ -5,6 +5,7 @@ import {
   getSellerBankDetails,
   getPayoutRequestsBySeller,
 } from "@/lib/data/payouts";
+import { formatRupiah } from "@/components/shared/price-text";
 import { SectionHeader } from "@/components/shared/section-header";
 import { SellerOrderList } from "@/components/dashboard/seller-order-list";
 import { SellerFinanceSection } from "@/components/dashboard/seller-finance-section";
@@ -30,6 +31,10 @@ export default async function DashboardOrdersPage() {
   const paidCount = orders.filter((o) => o.status === "paid").length;
   const shippedCount = orders.filter((o) => o.status === "shipped").length;
   const completedCount = orders.filter((o) => o.status === "completed").length;
+
+  const completedOrders = orders.filter((o) => o.status === "completed");
+  const netEarnings = completedOrders.reduce((sum, o) => sum + Number(o.subtotal), 0);
+  const totalGmv = completedOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0);
 
   return (
     <div className="space-y-8">
@@ -104,6 +109,27 @@ export default async function DashboardOrdersPage() {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Financial Accounting Snapshot */}
+        <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4 flex flex-wrap items-center justify-between gap-4 text-xs">
+          <div className="flex flex-wrap items-center gap-6">
+            <div>
+              <span className="text-neutral-500 block">Total Omzet Pesanan Selesai (GMV):</span>
+              <span className="font-mono font-bold text-neutral-900 text-sm">
+                {formatRupiah(totalGmv)}
+              </span>
+            </div>
+            <div className="sm:border-l sm:border-neutral-200 sm:pl-6">
+              <span className="text-neutral-500 block">Pendapatan Bersih Roastery:</span>
+              <span className="font-mono font-bold text-emerald-800 text-sm">
+                {formatRupiah(netEarnings)}
+              </span>
+            </div>
+          </div>
+          <div className="text-neutral-500 text-[11px]">
+            <span>Komisi platform 0% untuk roastery mitra &bull; Bebas biaya penarikan</span>
+          </div>
         </div>
 
         <SellerOrderList orders={orders} />

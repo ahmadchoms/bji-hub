@@ -14,6 +14,7 @@ import { createReview } from "@/lib/data/reviews";
 import { createMidtransSnapToken } from "@/lib/midtrans";
 import { getSession, requireRole } from "@/lib/auth/session";
 import { trackShipmentWaybill, type WaybillTrackingResult } from "@/lib/shipping";
+import { sendOrderPaidEmail, sendOrderShippedEmail } from "@/lib/email";
 
 const checkoutSchema = z.object({
   listingId: z.string().min(1, "Produk wajib dipilih"),
@@ -139,6 +140,9 @@ export async function confirmOrderPaymentAction(
   if (!order) return fail("Pesanan tidak ditemukan");
 
   await updateOrderStatus(order.id, "paid");
+  sendOrderPaidEmail({ ...order, status: "paid" }).catch((err) =>
+    console.error("Failed to send paid email:", err),
+  );
   return ok({ success: true });
 }
 
@@ -153,7 +157,14 @@ export async function updateShipmentTrackingAction(
   const order = await getOrderById(orderId);
   if (!order) return fail("Pesanan tidak ditemukan");
 
-  await updateOrderStatus(order.id, "shipped", trackingNumber.trim());
+  const cleanResi = trackingNumber.trim();
+  await updateOrderStatus(order.id, "shipped", cleanResi);
+  sendOrderShippedEmail({
+    ...order,
+    status: "shipped",
+    trackingNumber: cleanResi,
+  }).catch((err) => console.error("Failed to send shipped email:", err));
+
   return ok({ success: true });
 }
 

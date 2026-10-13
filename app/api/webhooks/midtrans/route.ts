@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
 
   if (!payment) {
     // Check if it is a marketplace product order
-    const { updateOrderStatus } = await import("@/lib/data/orders");
+    const { updateOrderStatus, getOrderById } = await import("@/lib/data/orders");
     const nextStatus = mapMidtransStatus(
       body.transaction_status,
       body.fraud_status
@@ -51,6 +51,19 @@ export async function POST(req: NextRequest) {
           : "pending_payment";
     const updated = await updateOrderStatus(body.order_id, orderStatus);
     if (updated) {
+      if (orderStatus === "paid") {
+        try {
+          const order = await getOrderById(body.order_id);
+          if (order) {
+            const { sendOrderPaidEmail } = await import("@/lib/email");
+            sendOrderPaidEmail(order).catch((e) =>
+              console.error("Failed to send order paid email from webhook:", e)
+            );
+          }
+        } catch {
+          // Non-blocking
+        }
+      }
       return NextResponse.json({ received: true, type: "order" });
     }
     return NextResponse.json({ error: "Payment not found" }, { status: 404 });

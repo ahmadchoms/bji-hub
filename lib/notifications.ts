@@ -1,5 +1,4 @@
-import { normalizeWhatsAppNumber } from "@/components/shared/whatsapp-button";
-import { formatRupiah } from "@/components/shared/price-text";
+import { normalizeWhatsAppNumber, formatRupiah } from "@/lib/utils";
 
 export function buildOrderPaidNotificationUrl(data: {
   sellerPhone: string;

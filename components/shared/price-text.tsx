@@ -1,18 +1,11 @@
-import { cn } from "@/lib/utils";
+import { cn, formatRupiah } from "@/lib/utils";
+export { formatRupiah };
 
 interface PriceTextProps {
   price: number;
   unit?: string;
   size?: "sm" | "md" | "lg";
   className?: string;
-}
-
-export function formatRupiah(value: number): string {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  }).format(value);
 }
 
 export function PriceText({

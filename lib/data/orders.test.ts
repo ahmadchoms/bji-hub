@@ -90,4 +90,36 @@ describe("orders data layer & auto-complete", () => {
     const after = await getOrderById(order.id);
     expect(after?.status).toBe("completed");
   });
+
+  it("decrements listing stock when order status transitions to paid", async () => {
+    const { mockListings } = await import("@/lib/mock/data");
+    const listing = mockListings[0];
+    listing.stock = 20;
+
+    const orderNumber = `ORD-STOCK-${Date.now()}`;
+    const order = await createOrder({
+      orderNumber,
+      buyerName: "Stock Buyer",
+      buyerEmail: "stock@example.com",
+      buyerPhone: "08123456780",
+      buyerAddress: "Jl Kopi No 10",
+      buyerCity: "Bandung",
+      sellerId: listing.sellerId,
+      listingId: listing.id,
+      quantity: 5,
+      itemPrice: 100000,
+      subtotal: 500000,
+      shippingCost: 15000,
+      serviceFee: 1500,
+      totalAmount: 516500,
+      shippingCourier: "JNE",
+      midtransOrderId: orderNumber,
+    });
+
+    expect(listing.stock).toBe(20);
+
+    // Transition to paid
+    await updateOrderStatus(order.id, "paid");
+    expect(listing.stock).toBe(15);
+  });
 });

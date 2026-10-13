@@ -1,5 +1,6 @@
 import { Pool } from "pg";
 import { Order, OrderStatus } from "@/types";
+import { mockListings } from "@/lib/mock/data";
 
 let poolInstance: Pool | null = null;
 function getPool(): Pool | null {
@@ -325,6 +326,48 @@ export async function getOrdersByBuyer(buyerIdOrEmail: string): Promise<Order[]>
   );
 }
 
+export async function decrementListingStock(
+  listingId: string,
+  quantity: number,
+): Promise<{ success: boolean; remainingStock?: number }> {
+  const pool = getPool();
+  if (pool) {
+    try {
+      const res = await pool.query(
+        `UPDATE public.listings
+         SET stock = GREATEST(0, COALESCE(stock, 100) - $1)
+         WHERE id = $2
+         RETURNING stock`,
+        [quantity, listingId],
+      );
+      if (res && res.rows && res.rows.length > 0) {
+        const remaining = Number(res.rows[0].stock);
+        if (remaining <= 0) {
+          await pool.query(
+            `UPDATE public.listings SET status = 'archived' WHERE id = $1`,
+            [listingId],
+          );
+        }
+        return { success: true, remainingStock: remaining };
+      }
+    } catch {
+      // Postgres column may not exist yet, fall through to in-memory
+    }
+  }
+
+  const listing = mockListings.find((l) => l.id === listingId);
+  if (listing) {
+    const current = listing.stock ?? 50;
+    const remaining = Math.max(0, current - quantity);
+    listing.stock = remaining;
+    if (remaining <= 0) {
+      listing.status = "archived";
+    }
+    return { success: true, remainingStock: remaining };
+  }
+  return { success: false };
+}
+
 export async function updateOrderStatus(
   orderId: string,
   status: OrderStatus,
@@ -334,6 +377,22 @@ export async function updateOrderStatus(
 ): Promise<boolean> {
   const pool = getPool();
   const now = new Date().toISOString();
+
+  // If status is transitioning to paid, trigger stock decrement
+  if (status === "paid") {
+    const currentOrder = await getOrderById(orderId);
+    if (
+      currentOrder &&
+      currentOrder.status !== "paid" &&
+      currentOrder.listingId &&
+      currentOrder.quantity
+    ) {
+      await decrementListingStock(
+        currentOrder.listingId,
+        currentOrder.quantity,
+      );
+    }
+  }
 
   if (pool) {
     try {

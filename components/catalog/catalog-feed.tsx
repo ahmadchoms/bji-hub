@@ -20,6 +20,7 @@ export async function CatalogFeed({ params }: { params: CatalogParams }) {
         isVerified: params.verified,
         search: params.q,
         sort: params.sort,
+        minCuppingScore: params.cupping_score ?? params.min_cupping,
       },
       params.page,
     );
@@ -32,6 +33,7 @@ export async function CatalogFeed({ params }: { params: CatalogParams }) {
       roast: params.roast || params.sangrai || undefined,
       min_price: params.min_price !== undefined ? String(params.min_price) : params.harga_min !== undefined ? String(params.harga_min) : undefined,
       max_price: params.max_price !== undefined ? String(params.max_price) : params.harga_max !== undefined ? String(params.harga_max) : undefined,
+      cupping_score: params.cupping_score !== undefined ? String(params.cupping_score) : params.min_cupping !== undefined ? String(params.min_cupping) : undefined,
       verified: params.verified ? "true" : undefined,
       sort: params.sort !== "newest" ? params.sort : undefined,
     };

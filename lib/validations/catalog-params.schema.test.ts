@@ -13,6 +13,7 @@ describe("catalog-params.schema", () => {
       sort: "price_asc",
       page: "2",
       verified: "true",
+      cupping_score: "85",
     });
 
     expect(params.category).toBe("arabika");
@@ -24,6 +25,7 @@ describe("catalog-params.schema", () => {
     expect(params.sort).toBe("price_asc");
     expect(params.page).toBe(2);
     expect(params.verified).toBe(true);
+    expect(params.cupping_score).toBe(85);
   });
 
   it("supports legacy Indonesian parameters for backward compatibility", () => {
@@ -34,6 +36,7 @@ describe("catalog-params.schema", () => {
       sangrai: "Dark",
       harga_min: "30000",
       harga_max: "150000",
+      skor_cupping: "84",
       urut: "harga_tertinggi",
       halaman: "3",
     });
@@ -44,6 +47,7 @@ describe("catalog-params.schema", () => {
     expect(params.roast).toBe("Dark");
     expect(params.min_price).toBe(30000);
     expect(params.max_price).toBe(150000);
+    expect(params.cupping_score).toBe(84);
     expect(params.sort).toBe("price_desc");
     expect(params.page).toBe(3);
   });

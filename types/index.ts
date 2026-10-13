@@ -65,6 +65,7 @@ export interface TasteProfile {
   sweetnessScore?: number; // Optional phase 2 expansion (0 - 5)
   aromaScore?: number; // Optional phase 2 expansion (0 - 5)
   aftertasteScore?: number; // Optional phase 2 expansion (0 - 5)
+  cuppingScore?: number; // SCA cupping score (e.g. 84.5)
   roastDate: string;
 }
 
@@ -85,6 +86,7 @@ export interface Listing {
   price: number;
   unit: string; // e.g. "kg", "250g", "box", "unit"
   minOrderQty: number;
+  stock?: number; // Remaining inventory quantity
   status: "active" | "draft" | "archived" | "suspended";
   isBoosted: boolean;
   boostUntil?: string | null;
@@ -159,6 +161,7 @@ export interface ListingFilters {
   isBoosted?: boolean;
   search?: string;
   sort?: "newest" | "price_asc" | "price_desc" | "popular";
+  minCuppingScore?: number;
 }
 
 export interface ListingFeedResult {

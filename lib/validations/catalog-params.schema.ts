@@ -11,7 +11,10 @@ export const catalogParamsSchema = z.object({
   verified: z.preprocess((value) => value === true || value === "true", z.boolean()).default(false),
   sort: z.enum(["newest", "price_asc", "price_desc"]).default("newest"),
   page: z.coerce.number().int().min(1).default(1),
+  cupping_score: z.coerce.number().min(0).max(100).optional(),
   // Backward compatibility aliases
+  min_cupping: z.coerce.number().min(0).max(100).optional(),
+  skor_cupping: z.coerce.number().min(0).max(100).optional(),
   kategori: z.string().trim().optional(),
   asal: z.string().trim().optional(),
   proses: z.string().trim().optional(),
@@ -44,6 +47,7 @@ export function parseCatalogParams(params: Record<string, string | string[] | un
   const roast = value("roast") || value("sangrai") || "";
   const minPrice = value("min_price") || value("harga_min");
   const maxPrice = value("max_price") || value("harga_max");
+  const cuppingScore = value("cupping_score") || value("min_cupping") || value("skor_cupping");
   const verified = value("verified") === "true";
 
   const parsed = catalogParamsSchema.safeParse({
@@ -54,6 +58,7 @@ export function parseCatalogParams(params: Record<string, string | string[] | un
     roast,
     min_price: minPrice,
     max_price: maxPrice,
+    cupping_score: cuppingScore,
     verified,
     sort: normalizedSort,
     page,
@@ -63,6 +68,8 @@ export function parseCatalogParams(params: Record<string, string | string[] | un
     sangrai: roast,
     harga_min: minPrice,
     harga_max: maxPrice,
+    min_cupping: cuppingScore,
+    skor_cupping: cuppingScore,
     urut: normalizedSort,
     halaman: page,
   });

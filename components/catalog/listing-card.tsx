@@ -76,6 +76,11 @@ export function ListingCard({
             <span className="bg-amber-50 text-amber-800 border border-amber-200/60 px-1.5 py-0.5 rounded font-medium">
               {roast}
             </span>
+            {listing.tasteProfile?.cuppingScore && (
+              <span className="bg-emerald-50 text-emerald-800 border border-emerald-300/70 px-1.5 py-0.5 rounded font-semibold">
+                SCA {listing.tasteProfile.cuppingScore}
+              </span>
+            )}
           </div>
 
           {listing.tasteProfile?.flavorNotes && (

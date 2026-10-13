@@ -147,6 +147,17 @@ async function findListings(
     results = results.filter((item) => item.price <= filters.maxPrice!);
   }
 
+  // Cupping score filter (SCA standard ≥ 80)
+  if (typeof filters.minCuppingScore === "number" && !isNaN(filters.minCuppingScore)) {
+    results = results.filter((item) => {
+      if (!item.tasteProfile) return false;
+      const score =
+        item.tasteProfile.cuppingScore ??
+        80 + ((item.tasteProfile.acidityScore + item.tasteProfile.bodyScore) / 10) * 8;
+      return score >= filters.minCuppingScore!;
+    });
+  }
+
   // Keyword search (title, seller name, origin, flavor notes)
   if (filters.search && filters.search.trim() !== "") {
     const q = filters.search.toLowerCase().trim();

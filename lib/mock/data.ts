@@ -171,6 +171,7 @@ export const mockListings: ListingWithRelations[] = [
       sweetnessScore: 4.5,
       aromaScore: 4.7,
       aftertasteScore: 4.0,
+      cuppingScore: 87.5,
       roastDate: "2025-02-14T00:00:00.000Z",
     },
     images: [
@@ -217,6 +218,7 @@ export const mockListings: ListingWithRelations[] = [
       sweetnessScore: 4.0,
       aromaScore: 4.2,
       aftertasteScore: 3.9,
+      cuppingScore: 86.0,
       roastDate: "2025-02-15T00:00:00.000Z",
     },
     images: [
@@ -257,6 +259,7 @@ export const mockListings: ListingWithRelations[] = [
       sweetnessScore: 4.1,
       aromaScore: 3.8,
       aftertasteScore: 4.0,
+      cuppingScore: 85.5,
       roastDate: "2025-02-16T00:00:00.000Z",
     },
     images: [
@@ -294,6 +297,7 @@ export const mockListings: ListingWithRelations[] = [
       flavorNotes: "Mandarin Orange, Peach, Honeycomb, Lemongrass",
       acidityScore: 4.5,
       bodyScore: 2.8,
+      cuppingScore: 84.0,
       roastDate: "2025-02-18T00:00:00.000Z",
     },
     images: [
@@ -331,6 +335,7 @@ export const mockListings: ListingWithRelations[] = [
       flavorNotes: "Dark Chocolate, Roasted Hazelnut, Caramel, Orange Peel",
       acidityScore: 2.9,
       bodyScore: 4.0,
+      cuppingScore: 84.5,
       roastDate: "2025-02-20T00:00:00.000Z",
     },
     images: [
@@ -368,6 +373,7 @@ export const mockListings: ListingWithRelations[] = [
       flavorNotes: "Cedar, Earthy Sweet, Dark Cocoa, Sweet Spice",
       acidityScore: 2.5,
       bodyScore: 4.8,
+      cuppingScore: 83.5,
       roastDate: "2025-02-01T00:00:00.000Z",
     },
     images: [
@@ -405,6 +411,7 @@ export const mockListings: ListingWithRelations[] = [
       flavorNotes: "Sugar Cane, Ripe Peach, Creamy, Floral Honey",
       acidityScore: 3.5,
       bodyScore: 4.0,
+      cuppingScore: 85.0,
       roastDate: "2025-02-02T00:00:00.000Z",
     },
     images: [

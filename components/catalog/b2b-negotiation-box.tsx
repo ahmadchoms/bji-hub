@@ -28,6 +28,13 @@ const TEMPLATES = [
       `Halo ${seller}, saya tertarik melakukan pembelian partai besar (bulk/karungan) untuk produk "${title}" (Ref #${id}) di Biji Hub. Apakah ada penawaran tier harga khusus roastery?`,
   },
   {
+    id: "quote",
+    label: "Minta Quotation Resmi",
+    badge: "B2B Quote",
+    getMessage: (title: string, seller: string, id: string) =>
+      `Halo ${seller}, kami dari roastery tertarik memesan lot "${title}" (Ref #${id}). Mohon kirimkan surat penawaran harga grosir (quotation) resmi dan estimasi kargo pengiriman. Terima kasih!`,
+  },
+  {
     id: "crop",
     label: "Tanya Crop & Moisture",
     badge: "Spesifikasi",

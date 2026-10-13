@@ -38,6 +38,7 @@ export function SampleRequestModal({
   const [buyerName, setBuyerName] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [city, setCity] = useState("");
+  const [requestType, setRequestType] = useState<"100g" | "250g" | "500g" | "wholesale">("100g");
   const [beanFormat, setBeanFormat] = useState<"Green Beans" | "Roasted Beans">(
     "Green Beans",
   );
@@ -46,26 +47,36 @@ export function SampleRequestModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!buyerName.trim() || !businessName.trim() || !city.trim()) {
-      toast.error("Mohon lengkapi semua data permintaan sampel.");
+      toast.error("Mohon lengkapi semua data permintaan.");
       return;
     }
 
     setSubmitting(true);
     try {
+      const isWholesale = requestType === "wholesale";
+      const reqLabel = isWholesale
+        ? "Penawaran Grosir / Bulk (>30kg)"
+        : `Sampel ${requestType} (${beanFormat})`;
+      const inquiryMessage = isWholesale
+        ? `Permintaan surat penawaran harga grosir resmi untuk ${businessName.trim()} di ${city.trim()}.`
+        : `Permintaan sampel ${requestType} (${beanFormat}) untuk uji rasa ${businessName.trim()} di ${city.trim()}. Siap tanggung ongkir.`;
+
       // 1. Simpan sebagai inquiry di dashboard seller
       await submitInquiryAction({
         listingId,
         buyerName: `${buyerName.trim()} (${businessName.trim()})`,
         buyerContact: city.trim(),
-        quantity: `Sampel 100g (${beanFormat})`,
-        message: `Permintaan sampel cupping 100g untuk ${businessName.trim()} di ${city.trim()}. Siap tanggung ongkir.`,
+        quantity: reqLabel,
+        message: inquiryMessage,
       });
 
       // 2. Track event analytics
       trackEvent(listingId, "contact_click");
 
       // 3. Format pesan WhatsApp terstruktur
-      const customMessage = `Halo ${sellerName}, saya ${buyerName.trim()} dari ${businessName.trim()} (${city.trim()}). Saya mengajukan permintaan sampel cupping 100g (${beanFormat}) untuk produk: "${listingTitle}". Biaya ongkos kirim ke ${city.trim()} siap saya tanggung. Mohon info ketersediaannya. Terima kasih!`;
+      const customMessage = isWholesale
+        ? `Halo ${sellerName}, saya ${buyerName.trim()} dari ${businessName.trim()} (${city.trim()}). Kami tertarik memesan partai besar untuk produk: "${listingTitle}". Mohon kirimkan surat penawaran harga grosir resmi (quotation) dan estimasi ongkir kargo ke ${city.trim()}. Terima kasih!`
+        : `Halo ${sellerName}, saya ${buyerName.trim()} dari ${businessName.trim()} (${city.trim()}). Saya mengajukan permintaan sampel ${requestType} (${beanFormat}) untuk produk: "${listingTitle}". Biaya ongkos kirim ke ${city.trim()} siap saya tanggung. Mohon info ketersediaannya. Terima kasih!`;
 
       const waUrl = buildWhatsAppUrl({
         phoneNumber: sellerPhone,
@@ -77,7 +88,11 @@ export function SampleRequestModal({
 
       setOpen(false);
       window.open(waUrl, "_blank", "noopener,noreferrer");
-      toast.success("Permintaan sampel berhasil diajukan via WhatsApp!");
+      toast.success(
+        isWholesale
+          ? "Permintaan penawaran grosir terkirim via WhatsApp!"
+          : "Permintaan sampel berhasil diajukan via WhatsApp!",
+      );
     } catch {
       toast.error("Gagal mengirim permintaan, coba lagi.");
     } finally {
@@ -98,7 +113,7 @@ export function SampleRequestModal({
         }
       >
         <Coffee className="w-4 h-4 text-primary-600 shrink-0 mr-1.5" />
-        <span>Minta Sampel Cupping (100g)</span>
+        <span>Minta Sampel & Penawaran Grosir B2B</span>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md">
@@ -106,14 +121,14 @@ export function SampleRequestModal({
           <div className="flex items-center gap-2 text-primary-600 mb-1">
             <Sparkles className="w-4 h-4" />
             <span className="text-[11px] font-mono uppercase tracking-wider font-semibold">
-              B2B Cupping Test
+              B2B & Roastery Direct
             </span>
           </div>
           <DialogTitle className="font-display text-lg text-primary-900 font-semibold">
-            Permintaan Sampel Biji Kopi (100g)
+            Permintaan Sampel & Penawaran Grosir
           </DialogTitle>
           <DialogDescription className="text-xs text-neutral-600">
-            Khusus uji rasa kedai kopi, roastery, atau barista sebelum order partai besar.
+            Khusus roastery, kedai kopi, dan pembeli partai besar langsung ke petani/prosesor.
           </DialogDescription>
         </DialogHeader>
 
@@ -157,7 +172,34 @@ export function SampleRequestModal({
 
           <div className="space-y-1">
             <label className="text-xs font-medium text-neutral-800">
-              Format Biji Sampel
+              Jenis Permintaan B2B
+            </label>
+            <div className="grid grid-cols-2 gap-1.5 pt-1">
+              {[
+                { id: "100g", label: "Sampel 100g (Cupping)" },
+                { id: "250g", label: "Sampel 250g (Roast)" },
+                { id: "500g", label: "Sampel 500g (Espresso)" },
+                { id: "wholesale", label: "Penawaran Grosir (>30kg)" },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setRequestType(item.id as typeof requestType)}
+                  className={`py-1.5 px-2 text-[11px] font-medium rounded-sm border text-center transition-colors ${
+                    requestType === item.id
+                      ? "border-primary-600 bg-primary-50 text-primary-900 font-semibold"
+                      : "border-neutral-300 bg-surface-base text-neutral-700 hover:bg-neutral-50"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-neutral-800">
+              Format Biji
             </label>
             <div className="grid grid-cols-2 gap-2 pt-1">
               <button
@@ -185,12 +227,14 @@ export function SampleRequestModal({
             </div>
           </div>
 
-          {/* Info Banner Biaya Ongkir */}
+          {/* Info Banner Biaya Ongkir / Info B2B */}
           <div className="rounded-sm bg-neutral-100 p-3 text-xs text-neutral-600 leading-relaxed border border-neutral-200">
             <p className="font-semibold text-neutral-800 mb-0.5">
-              💡 Catatan Pengiriman:
+              💡 Catatan Layanan:
             </p>
-            Biji sampel 100g disediakan oleh penjual. Biaya ongkos kirim ke kota Anda ditanggung oleh pemohon sampel.
+            {requestType === "wholesale"
+              ? "Penjual akan menyiapkan rincian penawaran tier harga karungan dan kalkulasi ekspedisi kargo (JNE Trucking/Dakota Cargo) ke lokasi Anda."
+              : `Biji sampel ${requestType} disediakan langsung oleh penjual. Biaya ongkir ke kota Anda ditanggung oleh pemohon sampel.`}
           </div>
 
           <Button

@@ -40,6 +40,14 @@ const priceRanges = [
   { label: "Di atas Rp150.000", min: "150000", max: "" },
 ];
 
+const cuppingScores = [
+  { label: "Semua Skor Cupping", min: "" },
+  { label: "82+ Good", min: "82" },
+  { label: "84+ Specialty", min: "84" },
+  { label: "86+ Excellent", min: "86" },
+  { label: "88+ Outstanding", min: "88" },
+];
+
 export function CatalogControls({
   origins,
   processes,
@@ -73,6 +81,10 @@ export function CatalogControls({
       if (key === "process") params.delete("proses");
       if (key === "roast") params.delete("sangrai");
       if (key === "category") params.delete("kategori");
+      if (key === "cupping_score") {
+        params.delete("min_cupping");
+        params.delete("skor_cupping");
+      }
       startTransition(() =>
         router.replace(`${pathname}?${params.toString()}`, { scroll: false }),
       );
@@ -110,12 +122,14 @@ export function CatalogControls({
   const currentOrigin = searchParams.get("origin") || searchParams.get("asal") || "";
   const currentProcess = searchParams.get("process") || searchParams.get("proses") || "";
   const currentRoast = searchParams.get("roast") || searchParams.get("sangrai") || "";
+  const currentCupping = searchParams.get("cupping_score") || searchParams.get("min_cupping") || "";
 
   // Helper untuk menghitung jumlah filter aktif
   const activeFilterCount = [
     currentOrigin,
     currentProcess,
     currentRoast,
+    currentCupping,
     currentMinPrice || currentMaxPrice,
     searchParams.get("verified"),
   ].filter(Boolean).length;
@@ -256,6 +270,30 @@ export function CatalogControls({
         </Select>
       </div>
 
+      {/* Filter Skor Cupping SCA */}
+      <div className="min-w-0 flex-1">
+        <Select
+          value={currentCupping || "ALL"}
+          onValueChange={(val) =>
+            replaceParam("cupping_score", !val || val === "ALL" ? "" : val)
+          }
+        >
+          <SelectTrigger className="h-11 w-full text-xs">
+            <SelectValue placeholder="Skor Cupping">
+              {cuppingScores.find((c) => c.min === currentCupping)?.label || "Skor Cupping"}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">Semua Skor Cupping</SelectItem>
+            {cuppingScores.filter((c) => c.min).map((c) => (
+              <SelectItem key={c.min} value={c.min}>
+                {c.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       {/* Checkbox Terverifikasi */}
       <label className="flex min-h-11 cursor-pointer items-center gap-2 text-xs text-neutral-700 select-none">
         <Checkbox
@@ -379,6 +417,18 @@ export function CatalogControls({
                   type="button"
                   onClick={() => replaceParam("roast", "")}
                   className="hover:text-amber-950 ml-0.5"
+                >
+                  &times;
+                </button>
+              </span>
+            )}
+            {currentCupping && (
+              <span className="inline-flex items-center gap-1 text-[11px] bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded-full">
+                SCA: ≥{currentCupping}
+                <button
+                  type="button"
+                  onClick={() => replaceParam("cupping_score", "")}
+                  className="hover:text-emerald-950 ml-0.5"
                 >
                   &times;
                 </button>

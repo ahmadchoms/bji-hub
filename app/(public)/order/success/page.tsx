@@ -63,8 +63,8 @@ export default async function OrderSuccessPage({
           <p className="text-sm text-neutral-600">
             Nomor pesanan yang Anda tuju tidak ditemukan atau belum tercatat di sistem kami.
           </p>
-          <Link href="/catalog" className={buttonVariants({ className: "w-full" })}>
-            Kembali ke Katalog
+          <Link href="/" className={buttonVariants({ className: "w-full" })}>
+            Kembali ke Beranda
           </Link>
         </PageContainer>
       </div>
@@ -301,10 +301,10 @@ export default async function OrderSuccessPage({
         {/* Navigation Action Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
           <Link
-            href="/catalog"
+            href="/"
             className={buttonVariants({ variant: "outline", className: "w-full sm:w-auto" })}
           >
-            Lanjut Belanja di Katalog
+            Lanjut Belanja di Beranda
           </Link>
 
           <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">

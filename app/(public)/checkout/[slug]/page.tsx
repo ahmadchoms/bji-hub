@@ -137,10 +137,6 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
             Beranda
           </Link>
           <span>/</span>
-          <Link href="/catalog" className="hover:text-primary-700">
-            Katalog
-          </Link>
-          <span>/</span>
           <Link
             href={`/product/${listing.slug}`}
             className="hover:text-primary-700"

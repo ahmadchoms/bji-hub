@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { PageContainer } from "@/components/layout/page-container";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { cn } from "cn";
 
 export default function ProductNotFound() {
   return (
@@ -16,18 +15,19 @@ export default function ProductNotFound() {
             Listing kopi yang Anda cari mungkin telah dinonaktifkan atau tautan
             yang Anda masukkan salah.
           </p>
-          <Link
-            href="/catalog"
-            className={cn(
-              buttonVariants({ variant: "primary", size: "md" }),
-              "gap-2",
-            )}
-          >
-            <Button variant="primary" size="md" className="gap-2">
+          <div className="pt-2">
+            <Link
+              href="/"
+              className={buttonVariants({
+                variant: "primary",
+                size: "md",
+                className: "gap-2",
+              })}
+            >
               <ArrowLeft className="w-4 h-4" />
-              <span>Kembali ke Katalog</span>
-            </Button>
-          </Link>
+              <span>Kembali ke Beranda</span>
+            </Link>
+          </div>
         </div>
       </PageContainer>
     </div>

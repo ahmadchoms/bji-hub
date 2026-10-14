@@ -117,13 +117,6 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
             Beranda
           </Link>
           <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
-          <Link
-            href="/catalog"
-            className="hover:text-neutral-900 transition-colors"
-          >
-            Direktori
-          </Link>
-          <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
           <span className="text-neutral-900 font-medium truncate">
             {seller.businessName}
           </span>

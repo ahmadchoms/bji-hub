@@ -60,7 +60,7 @@ export default async function OrdersPage() {
             </p>
           </div>
           <Link
-            href="/catalog"
+            href="/"
             className="text-xs font-semibold text-primary-700 hover:text-primary-800 self-start sm:self-auto"
           >
             Beli Kopi Lagi →

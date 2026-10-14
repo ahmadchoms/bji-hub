@@ -48,10 +48,10 @@ export function CategoryQuickGrid({ activeCategory }: CategoryQuickGridProps) {
             </h2>
           </div>
           <Link
-            href="/catalog"
+            href="/"
             className="text-xs font-semibold text-primary-700 hover:text-primary-800 flex items-center gap-1"
           >
-            Lihat Semua Katalog <ArrowRight className="w-3.5 h-3.5" />
+            Lihat Semua <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 

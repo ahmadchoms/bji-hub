@@ -138,12 +138,8 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
             Beranda
           </Link>
           <span>/</span>
-          <Link href="/catalog" className="hover:text-primary-700">
-            Katalog
-          </Link>
-          <span>/</span>
           <Link
-            href={`/catalog?category=${listing.category.slug}`}
+            href={`/?kategori=${listing.category.slug}`}
             className="hover:text-primary-700"
           >
             {listing.category.name}

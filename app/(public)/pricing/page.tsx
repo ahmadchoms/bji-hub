@@ -27,8 +27,8 @@ export default async function PricingPage() {
 
   const faqs = [
     {
-      q: "Apakah platform Biji memotong persentase dari penjualan kopi saya?",
-      a: "Sama sekali tidak. Biji adalah direktori murni tanpa payment gateway. Seluruh pembayaran dilakukan langsung antara Anda dan pembeli.",
+      q: "Apakah platform Biji Hub memotong persentase komisi dari penjualan kopi saya?",
+      a: "Biji Hub tidak mengambil potongan komisi penjualan dari transaksi Anda. Transaksi diproses secara aman menggunakan Rekening Bersama Escrow resmi dengan biaya pemrosesan standar gateway.",
     },
     {
       q: "Untuk apa biaya langganan ini?",

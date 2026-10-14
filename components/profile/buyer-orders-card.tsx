@@ -135,10 +135,10 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
             </p>
             {orders.length === 0 && (
               <Link
-                href="/catalog"
+                href="/"
                 className="text-xs font-semibold text-primary-600 hover:underline mt-1 inline-block"
               >
-                Jelajahi Katalog Biji Kopi &rarr;
+                Jelajahi Pilihan Kopi &rarr;
               </Link>
             )}
           </div>

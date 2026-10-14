@@ -104,9 +104,9 @@ export function NavbarInner({
     e.preventDefault();
     const query = searchQuery.trim();
     if (query) {
-      router.push(`/catalog?q=${encodeURIComponent(query)}`);
+      router.push(`/?q=${encodeURIComponent(query)}`);
     } else {
-      router.push("/catalog");
+      router.push("/");
     }
   };
 
@@ -216,7 +216,7 @@ export function NavbarInner({
                       {categories.map((cat) => (
                         <Link
                           key={cat.id}
-                          href={`/catalog?kategori=${cat.slug}`}
+                          href={`/?kategori=${cat.slug}`}
                           onClick={() => setCategoryOpen(false)}
                           className="flex flex-col px-3 py-2 text-xs hover:bg-neutral-50 transition-colors"
                         >
@@ -233,11 +233,11 @@ export function NavbarInner({
                     </div>
                     <div className="border-t border-neutral-100 pt-1 mt-1 px-1">
                       <Link
-                        href="/catalog"
+                        href="/"
                         onClick={() => setCategoryOpen(false)}
                         className="block px-2.5 py-1.5 text-xs font-semibold text-primary-700 hover:text-primary-800 hover:bg-primary-50 rounded"
                       >
-                        Lihat Semua Katalog Kopi →
+                        Lihat Semua Kopi →
                       </Link>
                     </div>
                   </div>
@@ -282,7 +282,7 @@ export function NavbarInner({
                     type="button"
                     onClick={() => {
                       setSearchQuery(item);
-                      router.push(`/catalog?q=${encodeURIComponent(item)}`);
+                      router.push(`/?q=${encodeURIComponent(item)}`);
                     }}
                     className="hover:text-primary-700 hover:underline transition-colors cursor-pointer shrink-0"
                   >
@@ -525,7 +525,7 @@ export function NavbarInner({
                       {categories.map((cat) => (
                         <Link
                           key={cat.id}
-                          href={`/catalog?kategori=${cat.slug}`}
+                          href={`/?kategori=${cat.slug}`}
                           onClick={() => setMobileOpen(false)}
                           className="flex items-center justify-between px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md"
                         >
@@ -533,11 +533,11 @@ export function NavbarInner({
                         </Link>
                       ))}
                       <Link
-                        href="/catalog"
+                        href="/"
                         onClick={() => setMobileOpen(false)}
                         className="px-3 py-2 text-xs font-semibold text-primary-700 hover:bg-primary-50 rounded-md"
                       >
-                        Semua Produk Katalog →
+                        Semua Produk Kopi →
                       </Link>
                     </nav>
                   </div>

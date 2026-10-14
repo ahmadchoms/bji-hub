@@ -63,12 +63,12 @@ export default function CartPage() {
           </p>
           <div className="pt-2">
             <Link
-              href="/catalog"
+              href="/"
               className={buttonVariants({
                 className: "bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold px-6",
               })}
             >
-              Jelajahi Katalog Biji Kopi
+              Jelajahi Pilihan Kopi
             </Link>
           </div>
         </PageContainer>
@@ -307,7 +307,7 @@ export default function CartPage() {
                   )}
 
                   <Link
-                    href="/catalog"
+                    href="/"
                     className={buttonVariants({
                       variant: "outline",
                       className: "w-full text-xs text-neutral-700",

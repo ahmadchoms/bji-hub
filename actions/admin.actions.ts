@@ -40,7 +40,6 @@ export async function moderateListingAction(
   const found = await moderateListing(listingId, decision);
   if (!found) return fail("Listing tidak ditemukan");
   revalidatePath("/admin/moderation");
-  revalidatePath("/catalog");
   revalidatePath("/");
   return ok(undefined);
 }

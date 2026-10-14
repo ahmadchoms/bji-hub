@@ -36,30 +36,50 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   return (
     <div className="bg-neutral-50/40 min-h-screen">
-      {/* Tokopedia-Style Promo Hero Section */}
-      <section className="bg-neutral-900 text-white py-7 border-b border-neutral-800">
-        <PageContainer className="flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="space-y-2 max-w-xl text-center md:text-left">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-semibold">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              Rekening Bersama Escrow Resmi Biji Hub
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight">
-              Bursa Biji Kopi Specialty Terpercaya Nusantara
-            </h1>
-            <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed">
-              Hubungkan roastery, kedai kopi, dan penikmat seduh langsung ke petani & prosesor lokal terbaik. Transaksi aman, data cupping transparan.
-            </p>
-          </div>
+      {/* Tokopedia-Style Marketplace Promo Section */}
+      <section className="py-4 border-b border-neutral-200 bg-white">
+        <PageContainer>
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-stretch">
+            {/* Promo Banner Card */}
+            <div className="md:col-span-8 rounded-xl bg-gradient-to-br from-neutral-900 via-neutral-900 to-primary-950 text-white p-5 sm:p-6 flex flex-col justify-between shadow-xs">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[11px] font-semibold">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  Rekening Bersama Escrow Biji Hub
+                </div>
+                <h1 className="text-xl sm:text-2xl font-display font-bold text-white tracking-tight">
+                  Bursa Kopi Specialty Nusantara
+                </h1>
+                <p className="text-xs sm:text-sm text-neutral-300 max-w-xl leading-relaxed">
+                  Beli biji mentah (green beans) & sangrai langsung dari petani, koperasi, dan roastery lokal. Transaksi aman dengan escrow, cupping score transparan, dan negosiasi grosir B2B.
+                </p>
+              </div>
 
-          <div className="bg-neutral-800/80 border border-neutral-700/80 p-4 rounded-xl text-xs space-y-2.5 shrink-0 max-w-xs w-full text-center shadow-lg">
-            <p className="font-semibold text-neutral-100 flex items-center justify-center gap-1.5">
-              <span>☕</span> Bingung Menentukan Pilihan?
-            </p>
-            <p className="text-[11px] text-neutral-400 leading-relaxed">
-              Ikuti kuis selera 30 detik untuk dapat rekomendasi beans yang sesuai dengan alat seduhmu.
-            </p>
-            <TasteQuizModal triggerVariant="banner" />
+              <div className="pt-3 flex flex-wrap items-center gap-2 text-[11px] text-neutral-300">
+                <span className="bg-white/10 px-2 py-0.5 rounded font-mono">100% Kopi Nusantara</span>
+                <span className="bg-white/10 px-2 py-0.5 rounded font-mono">Beli Grosir & Sampel</span>
+                <span className="bg-white/10 px-2 py-0.5 rounded font-mono">Garansi Pengiriman</span>
+              </div>
+            </div>
+
+            {/* Smart Helper Quiz Card */}
+            <div className="md:col-span-4 rounded-xl border border-neutral-200/90 bg-neutral-50/80 p-5 flex flex-col justify-between text-neutral-800 shadow-xs">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 text-primary-900">
+                  <span className="text-base">☕</span>
+                  <p className="text-xs font-bold font-display uppercase tracking-wider text-neutral-900">
+                    Cari Rasa yang Pas?
+                  </p>
+                </div>
+                <p className="text-xs text-neutral-600 leading-relaxed">
+                  Pilih metode seduhmu (Filter, Espresso, Tubruk) untuk rekomendasi biji kopi dengan karakter rasa yang cocok.
+                </p>
+              </div>
+
+              <div className="pt-3">
+                <TasteQuizModal triggerVariant="banner" className="w-full" />
+              </div>
+            </div>
           </div>
         </PageContainer>
       </section>

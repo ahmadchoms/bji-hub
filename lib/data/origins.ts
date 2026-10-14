@@ -282,7 +282,6 @@ export async function getCoffeeOriginById(id: string): Promise<CoffeeOrigin | nu
           createdAt: new Date(r.created_at).toISOString(),
         };
       }
-      return null;
     } catch {
       // Fallback
     }
@@ -310,6 +309,8 @@ export async function createCoffeeOrigin(data: {
     createdAt: new Date().toISOString(),
   };
 
+  mockOrigins.push(newOrigin);
+
   const pool = getPool();
   if (pool) {
     try {
@@ -328,13 +329,11 @@ export async function createCoffeeOrigin(data: {
           newOrigin.isActive,
         ]
       );
-      return newOrigin;
     } catch {
       // Fallback
     }
   }
 
-  mockOrigins.push(newOrigin);
   return newOrigin;
 }
 
@@ -342,39 +341,41 @@ export async function updateCoffeeOrigin(
   id: string,
   data: Partial<Omit<CoffeeOrigin, "id" | "createdAt">>
 ): Promise<CoffeeOrigin | null> {
+  const idx = mockOrigins.findIndex((o) => o.id === id);
+  if (idx !== -1) {
+    mockOrigins[idx] = { ...mockOrigins[idx], ...data };
+  }
+
   const pool = getPool();
   if (pool) {
     try {
       await ensureOriginsTable(pool);
       const existing = await getCoffeeOriginById(id);
-      if (!existing) return null;
-
-      const merged = { ...existing, ...data };
-      await pool.query(
-        `UPDATE public.coffee_origins
-         SET name = $1, country = $2, island_or_state = $3, min_altitude = $4, max_altitude = $5, description = $6, is_active = $7, updated_at = NOW()
-         WHERE id = $8`,
-        [
-          merged.name,
-          merged.country,
-          merged.islandOrState || null,
-          merged.minAltitude || null,
-          merged.maxAltitude || null,
-          merged.description || null,
-          merged.isActive,
-          id,
-        ]
-      );
-      return merged;
+      if (existing) {
+        const merged = { ...existing, ...data };
+        await pool.query(
+          `UPDATE public.coffee_origins
+           SET name = $1, country = $2, island_or_state = $3, min_altitude = $4, max_altitude = $5, description = $6, is_active = $7, updated_at = NOW()
+           WHERE id = $8`,
+          [
+            merged.name,
+            merged.country,
+            merged.islandOrState || null,
+            merged.minAltitude || null,
+            merged.maxAltitude || null,
+            merged.description || null,
+            merged.isActive,
+            id,
+          ]
+        );
+        return merged;
+      }
     } catch {
       // Fallback
     }
   }
 
-  const idx = mockOrigins.findIndex((o) => o.id === id);
-  if (idx === -1) return null;
-  mockOrigins[idx] = { ...mockOrigins[idx], ...data };
-  return mockOrigins[idx];
+  return idx !== -1 ? mockOrigins[idx] : null;
 }
 
 export async function toggleCoffeeOriginStatus(id: string): Promise<CoffeeOrigin | null> {

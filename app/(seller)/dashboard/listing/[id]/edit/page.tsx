@@ -46,6 +46,8 @@ export default async function EditListingPage({
           sweetnessScore: listing.tasteProfile?.sweetnessScore,
           aromaScore: listing.tasteProfile?.aromaScore,
           aftertasteScore: listing.tasteProfile?.aftertasteScore,
+          cropYear: listing.tasteProfile?.cropYear ?? "",
+          moistureContent: listing.tasteProfile?.moistureContent,
           images: [...listing.images]
             .sort((a, b) => a.sortOrder - b.sortOrder)
             .map((image) => ({ url: image.url, path: image.id })),

@@ -65,6 +65,18 @@ export interface Category {
   description?: string;
 }
 
+export interface CoffeeOrigin {
+  id: string;
+  name: string;
+  country: string;
+  islandOrState?: string;
+  minAltitude?: number;
+  maxAltitude?: number;
+  description?: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export interface TasteProfile {
   id: string;
   listingId: string;
@@ -79,6 +91,9 @@ export interface TasteProfile {
   aftertasteScore?: number; // Optional phase 2 expansion (0 - 5)
   cuppingScore?: number; // SCA cupping score (e.g. 84.5)
   roastDate: string;
+  cropYear?: string;
+  moistureContent?: number;
+  altitude?: string;
 }
 
 export interface ListingImage {

@@ -279,16 +279,36 @@ export function ListingForm({
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <FormField
             label="Daerah Asal (Origin)"
             required
             error={errors.originRegion?.message}
+            helperText="Pilih saran atau ketik daerah asal lainnya"
           >
             <Input
               {...register("originRegion")}
-              placeholder="Gayo, Toraja, Kintamani, Ijen..."
+              list="origin-suggestions"
+              placeholder="Contoh: Aceh Gayo, Toraja, Yirgacheffe..."
             />
+            <datalist id="origin-suggestions">
+              <option value="Aceh Gayo" />
+              <option value="Mandheling" />
+              <option value="Java Preanger" />
+              <option value="Toraja Sapan" />
+              <option value="Kintamani" />
+              <option value="Flores Bajawa" />
+              <option value="Wamena" />
+              <option value="Temanggung" />
+              <option value="Ijen Raung" />
+              <option value="Kerinci" />
+              <option value="Yirgacheffe (Ethiopia)" />
+              <option value="Sidama (Ethiopia)" />
+              <option value="Huila (Colombia)" />
+              <option value="Antigua (Guatemala)" />
+              <option value="Tarrazú (Costa Rica)" />
+              <option value="Nyeri (Kenya)" />
+            </datalist>
           </FormField>
 
           <FormField
@@ -357,6 +377,34 @@ export function ListingForm({
             error={errors.roastDate?.message}
           >
             <Input type="date" {...register("roastDate")} />
+          </FormField>
+
+          <FormField
+            label="Tahun Panen (Crop Year)"
+            error={errors.cropYear?.message}
+            helperText="Opsional (standar B2B, misal: 2024/2025)"
+          >
+            <Input
+              {...register("cropYear")}
+              placeholder="Contoh: 2024/2025"
+            />
+          </FormField>
+
+          <FormField
+            label="Kadar Air / Moisture (%)"
+            error={errors.moistureContent?.message}
+            helperText="Opsional (spesialti: 10.0 - 12.5%)"
+          >
+            <Input
+              type="number"
+              step="0.1"
+              min="0"
+              max="100"
+              {...register("moistureContent", {
+                setValueAs: (v) => (v === "" || isNaN(v) ? undefined : Number(v)),
+              })}
+              placeholder="Contoh: 11.2"
+            />
           </FormField>
         </div>
 

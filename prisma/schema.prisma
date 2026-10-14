@@ -144,6 +144,8 @@ model TasteProfile {
   listingId       String   @unique
   listing         Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
   originRegion    String
+  cropYear        String?
+  moistureContent Decimal? @db.Decimal(4, 2)
   /// Wash | Natural | Honey | Wet Hulled | Anaerobic (validated in listingSchema, kept open for new methods)
   processMethod   String
   /// Light | Medium-Light | Medium | Medium-Dark | Dark
@@ -232,4 +234,20 @@ model Inquiry {
 
   @@index([listingId, createdAt])
   @@map("inquiries")
+}
+
+model CoffeeOrigin {
+  id            String   @id @default(uuid())
+  name          String   @unique
+  country       String
+  islandOrState String?
+  minAltitude   Int?
+  maxAltitude   Int?
+  description   String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([country])
+  @@map("coffee_origins")
 }

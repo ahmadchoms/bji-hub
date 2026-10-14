@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { updateShipmentTrackingAction } from "@/actions/order.actions";
+import { updateShipmentTrackingAction, sellerResolveDisputeAction } from "@/actions/order.actions";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
@@ -23,6 +23,7 @@ import {
   ExternalLink,
   MessageCircle,
   Search,
+  RotateCcw,
 } from "lucide-react";
 import { buildShipmentNotificationUrl } from "@/lib/notifications";
 import { ExportCsvButton } from "@/components/shared/export-csv-button";
@@ -39,6 +40,12 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [activeTrackingInput, setActiveTrackingInput] = useState<{
     [orderId: string]: string;
+  }>({});
+  const [reshipInput, setReshipInput] = useState<{
+    [orderId: string]: string;
+  }>({});
+  const [showReshipForm, setShowReshipForm] = useState<{
+    [orderId: string]: boolean;
   }>({});
   const [isPending, startTransition] = useTransition();
 
@@ -109,6 +116,38 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
         }
       } else {
         toast.error(res.error || "Gagal memperbarui nomor resi");
+      }
+    });
+  };
+
+  const handleSellerResolveDispute = (
+    orderId: string,
+    resolution: "refund" | "reship",
+    newTracking?: string
+  ) => {
+    startTransition(async () => {
+      const res = await sellerResolveDisputeAction(orderId, resolution, newTracking);
+      if (res.success) {
+        setOrders((prev) =>
+          prev.map((ord) => {
+            if (ord.id === orderId) {
+              return {
+                ...ord,
+                status: resolution === "refund" ? "canceled" : "shipped",
+                trackingNumber: newTracking || ord.trackingNumber,
+              };
+            }
+            return ord;
+          })
+        );
+        setShowReshipForm((prev) => ({ ...prev, [orderId]: false }));
+        toast.success(
+          resolution === "refund"
+            ? "Komplain disetujui. Dana escrow telah dikembalikan ke pembeli."
+            : "Paket pengganti berhasil dicatat. Status pesanan kembali menjadi 'Dikirim'."
+        );
+      } else {
+        toast.error(res.error || "Gagal memproses penyelesaian komplain");
       }
     });
   };
@@ -464,11 +503,83 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-medium transition-colors"
                       >
-                        <MessageCircle className="w-3.5 h-3.5" /> Hubungi Pembeli via WhatsApp
+                        <MessageCircle className="w-3.5 h-3.5" /> Hubungi Pembeli
                       </a>
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={isPending}
+                        onClick={() =>
+                          setShowReshipForm((prev) => ({
+                            ...prev,
+                            [order.id]: !prev[order.id],
+                          }))
+                        }
+                        className="h-6 text-[11px] border-amber-300 text-amber-800 hover:bg-amber-100"
+                      >
+                        <Truck className="w-3 h-3 mr-1" /> Kirim Paket Pengganti
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={isPending}
+                        onClick={() => {
+                          if (
+                            confirm(
+                              `Setujui pengembalian dana untuk pesanan ${order.orderNumber}? Dana akan langsung dikembalikan ke saldo/rekening pembeli.`
+                            )
+                          ) {
+                            handleSellerResolveDispute(order.id, "refund");
+                          }
+                        }}
+                        className="h-6 text-[11px] border-rose-300 text-rose-700 hover:bg-rose-100"
+                      >
+                        <RotateCcw className="w-3 h-3 mr-1" /> Setujui Refund Dana
+                      </Button>
                     </div>
+
+                    {showReshipForm[order.id] && (
+                      <div className="pl-5.5 pt-2 space-y-1.5 bg-white/70 p-2.5 rounded border border-rose-200 mt-2">
+                        <label className="text-[11px] font-semibold text-neutral-800 block">
+                          Nomor Resi Paket Pengganti:
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            placeholder="Contoh: JNE092837483"
+                            value={reshipInput[order.id] || ""}
+                            onChange={(e) =>
+                              setReshipInput((prev) => ({
+                                ...prev,
+                                [order.id]: e.target.value,
+                              }))
+                            }
+                            className="h-7 text-xs font-mono bg-white"
+                          />
+                          <Button
+                            size="sm"
+                            disabled={isPending || !reshipInput[order.id]?.trim()}
+                            onClick={() =>
+                              handleSellerResolveDispute(
+                                order.id,
+                                "reship",
+                                reshipInput[order.id]
+                              )
+                            }
+                            className="h-7 text-xs bg-neutral-900 text-white shrink-0 hover:bg-neutral-800"
+                          >
+                            Kirim
+                          </Button>
+                        </div>
+                        <p className="text-[10px] text-neutral-500">
+                          Memasukkan nomor resi baru akan mengubah status pesanan kembali menjadi &quot;Dikirim&quot; dan mengakhiri penahanan komplain.
+                        </p>
+                      </div>
+                    )}
+
                     <p className="text-[11px] text-rose-600 pl-5.5 pt-1 border-t border-rose-200/60 mt-1">
-                      Admin Biji Hub sedang meninjau kasus ini sebelum memutuskan penerusan dana ke Anda atau pengembalian dana ke pembeli.
+                      Anda dapat langsung menyetujui refund, mengirim barang pengganti, atau menunggu peninjauan oleh tim admin Biji Hub.
                     </p>
                   </div>
                 )}

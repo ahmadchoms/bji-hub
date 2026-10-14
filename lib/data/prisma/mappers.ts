@@ -64,6 +64,8 @@ export function toTaste(row: TasteRow): TasteProfile {
     sweetnessScore: numOrUndef(row.sweetnessScore),
     aromaScore: numOrUndef(row.aromaScore),
     aftertasteScore: numOrUndef(row.aftertasteScore),
+    cropYear: (row as any).cropYear ?? undefined,
+    moistureContent: (row as any).moistureContent ? num((row as any).moistureContent) : undefined,
     roastDate: iso(row.roastDate),
   };
 }

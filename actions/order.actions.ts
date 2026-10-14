@@ -278,6 +278,41 @@ export async function resolveDisputeAction(
   return ok({ success: true });
 }
 
+export async function sellerResolveDisputeAction(
+  orderId: string,
+  resolution: "refund" | "reship",
+  newTrackingNumber?: string,
+): Promise<ActionResult<{ success: boolean }>> {
+  const session = await getSession();
+  const sellerId = (session as unknown as { sellerId?: string }).sellerId;
+  const order = await getOrderById(orderId);
+  if (!order) return fail("Pesanan tidak ditemukan");
+
+  if (session.role !== "admin" && (!sellerId || order.sellerId !== sellerId)) {
+    return fail("Anda tidak memiliki akses untuk menyelesaikan komplain pesanan ini");
+  }
+
+  if (order.status !== "disputed") {
+    return fail("Pesanan tidak sedang dalam status komplain");
+  }
+
+  if (resolution === "refund") {
+    await updateOrderStatus(order.id, "canceled");
+  } else if (resolution === "reship") {
+    if (!newTrackingNumber || newTrackingNumber.trim().length < 3) {
+      return fail("Nomor resi paket pengganti wajib diisi");
+    }
+    await updateOrderStatus(order.id, "shipped", newTrackingNumber.trim());
+  }
+
+  revalidatePath("/order/success");
+  revalidatePath("/profile");
+  revalidatePath("/dashboard/orders");
+  revalidatePath("/admin/transactions");
+
+  return ok({ success: true });
+}
+
 export async function autoCompleteOrdersAction(): Promise<
   ActionResult<{ completedCount: number; orderIds: string[] }>
 > {

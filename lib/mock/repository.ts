@@ -582,6 +582,8 @@ function toTasteProfile(
     sweetnessScore: data.sweetnessScore,
     aromaScore: data.aromaScore,
     aftertasteScore: data.aftertasteScore,
+    cropYear: data.cropYear,
+    moistureContent: data.moistureContent,
     roastDate: new Date(data.roastDate).toISOString(),
   };
 }

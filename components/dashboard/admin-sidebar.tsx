@@ -9,6 +9,7 @@ const ADMIN_NAV: readonly DashboardNavItem[] = [
   { href: "/admin/moderation", label: "Moderasi Produk" },
   { href: "/admin/transactions", label: "Riwayat Transaksi" },
   { href: "/admin/payouts", label: "Pencairan Dana" },
+  { href: "/admin/origins", label: "Master Asal Kopi" },
 ];
 
 export function AdminSidebar({ children }: { children: React.ReactNode }) {

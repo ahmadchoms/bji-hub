@@ -38,6 +38,8 @@ function tasteData(data: ListingFormValues) {
     sweetnessScore: data.sweetnessScore ?? null,
     aromaScore: data.aromaScore ?? null,
     aftertasteScore: data.aftertasteScore ?? null,
+    cropYear: data.cropYear ?? null,
+    moistureContent: data.moistureContent ?? null,
     roastDate: new Date(data.roastDate),
   };
 }

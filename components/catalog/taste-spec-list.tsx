@@ -20,7 +20,9 @@ export function TasteSpecList({ tasteProfile, className }: TasteSpecListProps) {
     { label: "Proses", value: tasteProfile.processMethod },
     { label: "Sangrai", value: tasteProfile.roastLevel },
     { label: "Tgl. Roast", value: formattedDate },
-    { label: "Altitude", value: "1.200–1.600 mdpl" },
+    ...(tasteProfile.cropYear ? [{ label: "Tahun Panen", value: tasteProfile.cropYear }] : []),
+    ...(tasteProfile.moistureContent ? [{ label: "Kadar Air", value: `${tasteProfile.moistureContent}%` }] : []),
+    { label: "Altitude", value: tasteProfile.altitude || "1.200–1.600 mdpl" },
     { label: "Spesies", value: "100% Arabica Specialty" },
   ];
 

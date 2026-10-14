@@ -49,6 +49,8 @@ const listingBaseSchema = z.object({
   sweetnessScore: z.number().min(0).max(5).optional(),
   aromaScore: z.number().min(0).max(5).optional(),
   aftertasteScore: z.number().min(0).max(5).optional(),
+  cropYear: z.string().max(20).optional(),
+  moistureContent: z.number().min(0).max(100).optional(),
   roastDate: z.string().min(1, "Tanggal sangrai wajib diisi"),
   images: z
     .array(listingImageSchema)

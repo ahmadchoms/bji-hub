@@ -28,54 +28,59 @@ export default function CartPage() {
     updateCartQuantity,
     removeFromCart,
     clearCart,
+    getItemKey,
   } = useCart();
 
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [initialized, setInitialized] = useState(false);
 
-  // Initialize selected IDs with all items once cart is loaded
+  // Initialize selected keys with all items once cart is loaded
   useEffect(() => {
     if (isLoaded) {
       if (!initialized && items.length > 0) {
-        setSelectedIds(items.map((i) => i.listingId));
+        setSelectedKeys(items.map((i) => getItemKey(i)));
         setInitialized(true);
       } else {
         // Prune any deleted items
-        setSelectedIds((prev) => prev.filter((id) => items.some((i) => i.listingId === id)));
+        setSelectedKeys((prev) =>
+          prev.filter((key) => items.some((i) => getItemKey(i) === key)),
+        );
       }
     }
-  }, [isLoaded, items, initialized]);
+  }, [isLoaded, items, initialized, getItemKey]);
 
   const isAllSelected =
-    items.length > 0 && items.every((i) => selectedIds.includes(i.listingId));
+    items.length > 0 && items.every((i) => selectedKeys.includes(getItemKey(i)));
 
   const toggleAll = () => {
     if (isAllSelected) {
-      setSelectedIds([]);
+      setSelectedKeys([]);
     } else {
-      setSelectedIds(items.map((i) => i.listingId));
+      setSelectedKeys(items.map((i) => getItemKey(i)));
     }
   };
 
-  const toggleItem = (listingId: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(listingId)
-        ? prev.filter((id) => id !== listingId)
-        : [...prev, listingId],
+  const toggleItem = (itemKey: string) => {
+    setSelectedKeys((prev) =>
+      prev.includes(itemKey)
+        ? prev.filter((id) => id !== itemKey)
+        : [...prev, itemKey],
     );
   };
 
   const toggleSeller = (sellerItems: typeof items) => {
-    const sellerItemIds = sellerItems.map((i) => i.listingId);
-    const isSellerAll = sellerItemIds.every((id) => selectedIds.includes(id));
+    const sellerItemKeys = sellerItems.map((i) => getItemKey(i));
+    const isSellerAll = sellerItemKeys.every((key) => selectedKeys.includes(key));
     if (isSellerAll) {
-      setSelectedIds((prev) => prev.filter((id) => !sellerItemIds.includes(id)));
+      setSelectedKeys((prev) =>
+        prev.filter((key) => !sellerItemKeys.includes(key)),
+      );
     } else {
-      setSelectedIds((prev) => Array.from(new Set([...prev, ...sellerItemIds])));
+      setSelectedKeys((prev) => Array.from(new Set([...prev, ...sellerItemKeys])));
     }
   };
 
-  const selectedItems = items.filter((i) => selectedIds.includes(i.listingId));
+  const selectedItems = items.filter((i) => selectedKeys.includes(getItemKey(i)));
   const selectedTotalAmount = selectedItems.reduce(
     (sum, i) => sum + i.price * i.quantity,
     0,
@@ -87,12 +92,15 @@ export default function CartPage() {
 
   // Group selected by seller for checkout target
   const selectedSellerEntries = Object.entries(groupedBySeller).filter(
-    ([, group]) => group.items.some((i) => selectedIds.includes(i.listingId)),
+    ([, group]) =>
+      group.items.some((i) => selectedKeys.includes(getItemKey(i))),
   );
   const firstSelectedSeller = selectedSellerEntries[0];
   const firstSelectedSellerId = firstSelectedSeller ? firstSelectedSeller[0] : "";
   const firstSelectedSellerItems = firstSelectedSeller
-    ? firstSelectedSeller[1].items.filter((i) => selectedIds.includes(i.listingId))
+    ? firstSelectedSeller[1].items.filter((i) =>
+        selectedKeys.includes(getItemKey(i)),
+      )
     : [];
   const firstSelectedSlug = firstSelectedSellerItems[0]?.slug || "";
   const firstSelectedItemsParam = firstSelectedSellerItems
@@ -183,7 +191,7 @@ export default function CartPage() {
             <button
               type="button"
               onClick={() => {
-                selectedItems.forEach((i) => removeFromCart(i.listingId));
+                selectedItems.forEach((i) => removeFromCart(i.listingId, i.grindSize));
               }}
               className="text-xs text-rose-600 hover:underline font-semibold"
             >
@@ -196,10 +204,10 @@ export default function CartPage() {
           {/* Main List Grouped by Seller */}
           <div className="lg:col-span-8 space-y-6">
             {Object.entries(groupedBySeller).map(([sellerId, group]) => {
-              const sellerItemIds = group.items.map((i) => i.listingId);
-              const isSellerAll = sellerItemIds.every((id) => selectedIds.includes(id));
+              const sellerItemKeys = group.items.map((i) => getItemKey(i));
+              const isSellerAll = sellerItemKeys.every((key) => selectedKeys.includes(key));
               const sellerSelected = group.items.filter((i) =>
-                selectedIds.includes(i.listingId),
+                selectedKeys.includes(getItemKey(i)),
               );
               const sellerSelectedSubtotal = sellerSelected.reduce(
                 (sum, i) => sum + i.price * i.quantity,
@@ -246,18 +254,19 @@ export default function CartPage() {
                   {/* Items list with Checkboxes */}
                   <div className="divide-y divide-neutral-100">
                     {group.items.map((item) => {
-                      const isItemChecked = selectedIds.includes(item.listingId);
+                      const itemKey = getItemKey(item);
+                      const isItemChecked = selectedKeys.includes(itemKey);
 
                       return (
                         <div
-                          key={item.listingId}
+                          key={itemKey}
                           className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
                         >
                           <div className="flex items-start gap-3 flex-1 min-w-0">
                             <input
                               type="checkbox"
                               checked={isItemChecked}
-                              onChange={() => toggleItem(item.listingId)}
+                              onChange={() => toggleItem(itemKey)}
                               className="w-4 h-4 mt-1 rounded border-neutral-300 text-primary-600 focus:ring-primary-500 cursor-pointer shrink-0"
                             />
                             <div className="w-12 h-12 rounded bg-neutral-100 border border-neutral-200 relative overflow-hidden flex items-center justify-center text-neutral-400 shrink-0">
@@ -280,7 +289,12 @@ export default function CartPage() {
                               >
                                 {item.title}
                               </Link>
-                              <p className="text-neutral-500 mt-0.5">
+                              {item.grindSize && (
+                                <span className="inline-block mt-1 text-[11px] font-medium bg-neutral-100 text-neutral-700 px-2 py-0.5 rounded border border-neutral-200">
+                                  Gilingan: {item.grindSize}
+                                </span>
+                              )}
+                              <p className="text-neutral-500 mt-1">
                                 {formatRupiah(item.price)} / {item.unit}
                               </p>
                               <span className="text-[10px] text-neutral-400">
@@ -296,7 +310,11 @@ export default function CartPage() {
                               <button
                                 type="button"
                                 onClick={() =>
-                                  updateCartQuantity(item.listingId, item.quantity - 1)
+                                  updateCartQuantity(
+                                    item.listingId,
+                                    item.quantity - 1,
+                                    item.grindSize,
+                                  )
                                 }
                                 className="w-7 h-7 flex items-center justify-center bg-neutral-50 hover:bg-neutral-100 text-neutral-600 border-r border-neutral-300"
                                 title="Kurangi"
@@ -309,7 +327,11 @@ export default function CartPage() {
                               <button
                                 type="button"
                                 onClick={() =>
-                                  updateCartQuantity(item.listingId, item.quantity + 1)
+                                  updateCartQuantity(
+                                    item.listingId,
+                                    item.quantity + 1,
+                                    item.grindSize,
+                                  )
                                 }
                                 className="w-7 h-7 flex items-center justify-center bg-neutral-50 hover:bg-neutral-100 text-neutral-600 border-l border-neutral-300"
                                 title="Tambah"
@@ -328,7 +350,9 @@ export default function CartPage() {
                             {/* Remove button */}
                             <button
                               type="button"
-                              onClick={() => removeFromCart(item.listingId)}
+                              onClick={() =>
+                                removeFromCart(item.listingId, item.grindSize)
+                              }
                               className="text-neutral-400 hover:text-rose-600 p-1"
                               title="Hapus"
                             >

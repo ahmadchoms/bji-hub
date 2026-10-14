@@ -14,6 +14,11 @@ export interface CartItem {
   sellerId: string;
   sellerName: string;
   sellerCity: string;
+  grindSize?: string;
+}
+
+export function getCartItemKey(item: { listingId: string; grindSize?: string }): string {
+  return `${item.listingId}::${item.grindSize || "Biji Utuh"}`;
 }
 
 const CART_STORAGE_KEY = "biji_cart_items";
@@ -42,24 +47,35 @@ function saveCart(items: CartItem[]): void {
 
 export function addToCart(item: CartItem): void {
   const current = getStoredCart();
-  const existingIndex = current.findIndex((i) => i.listingId === item.listingId);
+  const targetGrind = item.grindSize || "Biji Utuh";
+  const existingIndex = current.findIndex(
+    (i) => i.listingId === item.listingId && (i.grindSize || "Biji Utuh") === targetGrind,
+  );
 
   if (existingIndex > -1) {
     current[existingIndex].quantity += item.quantity;
   } else {
-    current.push(item);
+    current.push({ ...item, grindSize: targetGrind });
   }
 
   saveCart(current);
 }
 
-export function updateCartQuantity(listingId: string, quantity: number): void {
+export function updateCartQuantity(
+  listingId: string,
+  quantity: number,
+  grindSize?: string,
+): void {
   const current = getStoredCart();
-  const item = current.find((i) => i.listingId === listingId);
+  const item = current.find(
+    (i) =>
+      i.listingId === listingId &&
+      (grindSize === undefined || (i.grindSize || "Biji Utuh") === grindSize),
+  );
   if (!item) return;
 
   if (quantity <= 0) {
-    removeFromCart(listingId);
+    removeFromCart(listingId, grindSize);
     return;
   }
 
@@ -67,8 +83,13 @@ export function updateCartQuantity(listingId: string, quantity: number): void {
   saveCart(current);
 }
 
-export function removeFromCart(listingId: string): void {
-  const current = getStoredCart().filter((i) => i.listingId !== listingId);
+export function removeFromCart(listingId: string, grindSize?: string): void {
+  const current = getStoredCart().filter((i) => {
+    if (grindSize !== undefined) {
+      return !(i.listingId === listingId && (i.grindSize || "Biji Utuh") === grindSize);
+    }
+    return i.listingId !== listingId;
+  });
   saveCart(current);
 }
 
@@ -149,5 +170,6 @@ export function useCart() {
     updateCartQuantity,
     removeFromCart,
     clearCart,
+    getItemKey: getCartItemKey,
   };
 }

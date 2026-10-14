@@ -11,6 +11,7 @@ interface Props {
   listingTitle: string;
   sellerName: string;
   listingSlug?: string;
+  isOutOfStock?: boolean;
   className?: string;
 }
 
@@ -20,6 +21,7 @@ export function ProductStickyCTA({
   listingTitle,
   sellerName,
   listingSlug,
+  isOutOfStock = false,
   className,
 }: Props) {
   const whatsappUrl = buildWhatsAppUrl({
@@ -43,7 +45,14 @@ export function ProductStickyCTA({
       )}
     >
       <div className="flex items-stretch divide-x divide-neutral-300">
-        {listingSlug ? (
+        {isOutOfStock ? (
+          <button
+            disabled
+            className="flex min-h-12 flex-1 items-center justify-center bg-neutral-200 text-neutral-500 text-sm font-medium cursor-not-allowed"
+          >
+            Stok Habis
+          </button>
+        ) : listingSlug ? (
           <Link
             href={`/checkout/${listingSlug}`}
             className="flex min-h-12 flex-1 items-center justify-center bg-primary-600 text-white text-sm font-medium"

@@ -167,4 +167,51 @@ describe("shopping cart helpers", () => {
     expect(seller1Items.length).toBe(2);
     expect(seller1Items.reduce((sum, i) => sum + i.quantity, 0)).toBe(3);
   });
+
+  it("handles different grind sizes for the same listing as separate cart items", () => {
+    addToCart({
+      listingId: "item-gayo",
+      slug: "gayo-natural",
+      title: "Aceh Gayo Natural",
+      price: 120000,
+      unit: "kg",
+      minOrderQty: 1,
+      quantity: 1,
+      sellerId: "seller-1",
+      sellerName: "Gayo Roastery",
+      sellerCity: "Takengon",
+      grindSize: "Biji Utuh",
+    });
+
+    addToCart({
+      listingId: "item-gayo",
+      slug: "gayo-natural",
+      title: "Aceh Gayo Natural",
+      price: 120000,
+      unit: "kg",
+      minOrderQty: 1,
+      quantity: 2,
+      sellerId: "seller-1",
+      sellerName: "Gayo Roastery",
+      sellerCity: "Takengon",
+      grindSize: "Giling Halus",
+    });
+
+    let items = getStoredCart();
+    expect(items.length).toBe(2);
+    expect(items.find((i) => i.grindSize === "Biji Utuh")?.quantity).toBe(1);
+    expect(items.find((i) => i.grindSize === "Giling Halus")?.quantity).toBe(2);
+
+    // Update quantity for only Giling Halus
+    updateCartQuantity("item-gayo", 4, "Giling Halus");
+    items = getStoredCart();
+    expect(items.find((i) => i.grindSize === "Giling Halus")?.quantity).toBe(4);
+    expect(items.find((i) => i.grindSize === "Biji Utuh")?.quantity).toBe(1);
+
+    // Remove only Giling Halus
+    removeFromCart("item-gayo", "Giling Halus");
+    items = getStoredCart();
+    expect(items.length).toBe(1);
+    expect(items[0].grindSize).toBe("Biji Utuh");
+  });
 });

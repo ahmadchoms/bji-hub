@@ -5,6 +5,7 @@ import {
   type CatalogParams,
 } from "@/lib/validations/catalog-params.schema";
 import { TokopediaSortBar } from "@/components/catalog/tokopedia-sort-bar";
+import { CatalogCategoryTabs } from "@/components/catalog/catalog-category-tabs";
 import { ProductList } from "@/components/catalog/product-feed";
 import { LoadMore } from "@/components/catalog/load-more";
 
@@ -49,7 +50,8 @@ export async function CatalogFeed({ params }: { params: CatalogParams }) {
     const nextUrl = feed.hasMore ? `/?${nextParams.toString()}` : null;
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-3.5">
+        <CatalogCategoryTabs />
         <TokopediaSortBar total={feed.total} />
         {feed.items.length ? (
           <>

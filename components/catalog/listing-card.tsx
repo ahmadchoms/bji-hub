@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ListingWithRelations } from "@/types";
 import { cn } from "@/lib/utils";
+import { formatRupiah } from "@/components/shared/price-text";
 import { TrackVisible } from "../shared/track-visible";
 import { CompareButton } from "./compare-button";
 
@@ -22,6 +23,9 @@ export function ListingCard({
   const origin = listing.tasteProfile?.originRegion || listing.seller.city;
   const process = listing.tasteProfile?.processMethod || "—";
   const roast = listing.tasteProfile?.roastLevel || "—";
+  const isOutOfStock = listing.stock === 0;
+  const isLowStock =
+    listing.stock !== undefined && listing.stock > 0 && listing.stock <= 5;
 
   return (
     <li className={cn("relative min-w-0 group/item", className)}>
@@ -34,14 +38,26 @@ export function ListingCard({
         className="group block rounded-sm border border-neutral-300 bg-surface-base outline-none transition-colors hover:border-neutral-900 focus-visible:ring-2 focus-visible:ring-primary-600"
       >
         <div className="relative aspect-square overflow-hidden border-b border-neutral-300 bg-secondary-50">
-          {isAd && (
+          {isOutOfStock && (
+            <div className="absolute inset-0 bg-neutral-950/50 backdrop-blur-[1px] flex items-center justify-center z-10">
+              <span className="bg-neutral-900/90 text-white font-mono text-xs font-bold px-3 py-1 rounded shadow-md border border-neutral-700 uppercase tracking-wider">
+                Stok Habis
+              </span>
+            </div>
+          )}
+          {isAd && !isOutOfStock && (
             <span className="absolute top-2 left-2 z-10 text-[10px] font-mono font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-xs bg-amber-600 text-white shadow-xs">
               Iklan
             </span>
           )}
-          {listing.minOrderQty >= 30 && !isAd && (
+          {listing.minOrderQty >= 30 && !isAd && !isOutOfStock && (
             <span className="absolute top-2 left-2 z-10 text-[10px] font-mono font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-xs bg-primary-900/90 text-white backdrop-blur-xs shadow-xs">
               Partai B2B
+            </span>
+          )}
+          {isLowStock && !isOutOfStock && (
+            <span className="absolute bottom-2 left-2 z-10 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-xs bg-amber-500 text-white shadow-xs">
+              Sisa {listing.stock} {listing.unit}
             </span>
           )}
           {image ? (
@@ -51,7 +67,10 @@ export function ListingCard({
               fill
               priority={priority}
               sizes="(max-width: 767px) 50vw, (max-width: 1023px) 33vw, 25vw"
-              className="object-cover"
+              className={cn(
+                "object-cover transition-transform group-hover:scale-105 duration-300",
+                isOutOfStock && "grayscale contrast-75 opacity-70",
+              )}
             />
           ) : (
             <div className="flex h-full items-center justify-center p-4 text-center">
@@ -90,14 +109,20 @@ export function ListingCard({
             </p>
           )}
 
-          <p className="font-mono text-base font-bold tabular-nums text-primary-900">
-            {new Intl.NumberFormat("id-ID", {
-              style: "currency",
-              currency: "IDR",
-              maximumFractionDigits: 0,
-            }).format(listing.price)}{" "}
-            / {listing.unit}
-          </p>
+          {isOutOfStock ? (
+            <div className="flex items-center justify-between">
+              <p className="font-mono text-base font-bold tabular-nums text-neutral-400 line-through">
+                {formatRupiah(listing.price)}
+              </p>
+              <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200 px-1.5 py-0.5 rounded font-mono">
+                Habis
+              </span>
+            </div>
+          ) : (
+            <p className="font-mono text-base font-bold tabular-nums text-primary-900">
+              {formatRupiah(listing.price)} / {listing.unit}
+            </p>
+          )}
           {listing.minOrderQty > 1 && (
             <p className="text-[11px] font-mono text-neutral-500">
               Min. order {listing.minOrderQty} {listing.unit}

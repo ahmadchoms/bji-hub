@@ -82,4 +82,47 @@ describe("createCheckoutOrderAction", () => {
 
     expect(res.success).toBe(false);
   });
+
+  it("attaches grindSize to order notes when provided for single item", async () => {
+    const res = await createCheckoutOrderAction({
+      listingId: "list-1",
+      quantity: 1,
+      buyerName: "Ahmad Barista",
+      buyerEmail: "ahmad@example.com",
+      buyerPhone: "081234567890",
+      buyerAddress: "Jl. Riau No. 15",
+      buyerCity: "Bandung",
+      shippingCourier: "JNE REG",
+      shippingCost: 15000,
+      grindSize: "Giling Halus",
+      notes: "Tolong pack rapi",
+    });
+
+    expect(res.success).toBe(true);
+    if (!res.success) return;
+
+    const order = await getOrderById(res.data.orderId);
+    expect(order?.notes).toContain("[Gilingan: Giling Halus]");
+    expect(order?.notes).toContain("Tolong pack rapi");
+  });
+
+  it("fails when attempting to order an out-of-stock product", async () => {
+    // list-5 has stock: 0 in mock data
+    const res = await createCheckoutOrderAction({
+      listingId: "list-5",
+      quantity: 1,
+      buyerName: "Buyer Test",
+      buyerEmail: "buyer@example.com",
+      buyerPhone: "081234567890",
+      buyerAddress: "Jl. Sudirman",
+      buyerCity: "Jakarta",
+      shippingCourier: "JNE",
+      shippingCost: 10000,
+    });
+
+    expect(res.success).toBe(false);
+    if (!res.success) {
+      expect(res.error).toContain("habis terjual");
+    }
+  });
 });

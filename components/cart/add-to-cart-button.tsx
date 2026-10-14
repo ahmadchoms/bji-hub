@@ -7,20 +7,24 @@ import { ShoppingCart, Check } from "lucide-react";
 
 interface AddToCartButtonProps {
   item: Omit<CartItem, "quantity"> & { quantity?: number };
+  grindSize?: string;
   variant?: "default" | "outline" | "secondary";
   size?: "sm" | "md" | "lg";
   className?: string;
   showIcon?: boolean;
   label?: string;
+  disabled?: boolean;
 }
 
 export function AddToCartButton({
   item,
+  grindSize,
   variant = "outline",
   size = "md",
   className,
   showIcon = true,
   label = "Tambah ke Keranjang",
+  disabled = false,
 }: AddToCartButtonProps) {
   const [added, setAdded] = useState(false);
 
@@ -30,6 +34,7 @@ export function AddToCartButton({
 
     addToCart({
       ...item,
+      grindSize: grindSize || item.grindSize,
       quantity: item.quantity || item.minOrderQty || 1,
     });
 
@@ -41,6 +46,7 @@ export function AddToCartButton({
     <Button
       type="button"
       variant={variant}
+      disabled={disabled}
       size={size === "md" ? "default" : size}
       onClick={handleClick}
       className={`transition-all duration-200 ${

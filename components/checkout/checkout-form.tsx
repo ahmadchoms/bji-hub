@@ -65,8 +65,15 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
       })
     : [];
   const activeItems = sellerCartItems.length > 0 ? sellerCartItems : null;
+  const grindParam = searchParams.get("grind") || undefined;
+  const qtyParam = searchParams.get("qty") || searchParams.get("quantity");
+  const parsedQty = qtyParam ? parseInt(qtyParam, 10) : undefined;
+  const initialQuantity =
+    parsedQty && !isNaN(parsedQty)
+      ? Math.max(listing.minOrderQty || 1, parsedQty)
+      : listing.minOrderQty || 1;
 
-  const [quantity, setQuantity] = useState<number>(listing.minOrderQty || 1);
+  const [quantity, setQuantity] = useState<number>(initialQuantity);
 
   // Editable recipient / shipping address state
   const [buyerName, setBuyerName] = useState(initialBuyer.name);
@@ -164,6 +171,11 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
       return;
     }
 
+    if (listing.stock === 0) {
+      toast.error("Maaf, stok produk ini telah habis");
+      return;
+    }
+
     startTransition(async () => {
       try {
         const res = await createCheckoutOrderAction({
@@ -176,12 +188,14 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
           buyerCity,
           shippingCourier: `${selectedCourier.courierName} ${selectedCourier.service}`,
           shippingCost,
+          grindSize: grindParam,
           notes,
           ...(activeItems && activeItems.length > 0
             ? {
                 items: activeItems.map((i) => ({
                   listingId: i.listingId,
                   quantity: i.quantity,
+                  grindSize: i.grindSize,
                 })),
               }
             : {}),
@@ -194,7 +208,7 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
 
         // Clean items from cart if checkout came from cart
         if (activeItems && activeItems.length > 0) {
-          activeItems.forEach((i) => removeFromCart(i.listingId));
+          activeItems.forEach((i) => removeFromCart(i.listingId, i.grindSize));
         }
 
         const { snapToken, orderNumber } = res.data;
@@ -292,6 +306,11 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
                       <p className="font-semibold text-neutral-900 truncate">
                         {item.title}
                       </p>
+                      {item.grindSize && (
+                        <span className="inline-block text-[10px] font-medium bg-neutral-100 text-neutral-700 px-1.5 py-0.5 rounded border border-neutral-200 mt-0.5">
+                          Gilingan: {item.grindSize}
+                        </span>
+                      )}
                       <p className="text-neutral-500 text-[11px] mt-0.5">
                         {formatRupiah(item.price)} × {item.quantity} {item.unit}
                       </p>
@@ -325,6 +344,11 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
                   <h2 className="font-medium text-sm text-neutral-900 truncate">
                     {listing.title}
                   </h2>
+                  {grindParam && (
+                    <span className="inline-block text-[10px] font-medium bg-neutral-100 text-neutral-700 px-1.5 py-0.5 rounded border border-neutral-200 mt-0.5">
+                      Gilingan: {grindParam}
+                    </span>
+                  )}
                   <p className="text-sm font-mono tabular-nums font-bold text-primary-900 mt-1">
                     {formatRupiah(listing.price)} / {listing.unit}
                   </p>
@@ -347,8 +371,13 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
                   </span>
                   <button
                     type="button"
-                    onClick={() => setQuantity((q) => q + 1)}
-                    className="w-7 h-7 rounded border border-neutral-300 flex items-center justify-center text-neutral-700 hover:bg-neutral-100"
+                    onClick={() =>
+                      setQuantity((q) =>
+                        listing.stock !== undefined ? Math.min(listing.stock, q + 1) : q + 1,
+                      )
+                    }
+                    disabled={listing.stock !== undefined && quantity >= listing.stock}
+                    className="w-7 h-7 rounded border border-neutral-300 flex items-center justify-center text-neutral-700 hover:bg-neutral-100 disabled:opacity-40"
                   >
                     <Plus className="w-3 h-3" />
                   </button>
@@ -630,11 +659,17 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
             </span>
           </div>
 
+          {listing.stock === 0 && (
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded text-rose-800 text-xs">
+              ⚠️ Maaf, produk ini saat ini telah habis terjual (sold out).
+            </div>
+          )}
+
           <Button
             type="button"
             variant="primary"
             size="lg"
-            disabled={isPending || !selectedCourier}
+            disabled={isPending || !selectedCourier || listing.stock === 0}
             onClick={handlePay}
             className="w-full justify-center gap-2 font-semibold"
           >
@@ -643,6 +678,8 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
                 <Loader2 className="w-4 h-4 animate-spin" />
                 <span>Memproses Transaksi...</span>
               </>
+            ) : listing.stock === 0 ? (
+              <span>Stok Habis Terjual</span>
             ) : !selectedCourier ? (
               <>
                 <MapPin className="w-4 h-4" />

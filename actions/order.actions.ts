@@ -19,6 +19,7 @@ import { sendOrderPaidEmail, sendOrderShippedEmail } from "@/lib/email";
 const checkoutItemSchema = z.object({
   listingId: z.string().min(1, "ID produk wajib diisi"),
   quantity: z.number().int().min(1, "Jumlah produk minimal 1"),
+  grindSize: z.string().optional(),
 });
 
 const checkoutSchema = z.object({
@@ -31,6 +32,7 @@ const checkoutSchema = z.object({
   buyerCity: z.string().min(2, "Kota pengiriman wajib diisi"),
   shippingCourier: z.string().min(1, "Kurir pengiriman wajib dipilih"),
   shippingCost: z.number().min(0, "Ongkos kirim tidak valid"),
+  grindSize: z.string().optional(),
   notes: z.string().max(500).optional(),
   items: z.array(checkoutItemSchema).optional(),
 });
@@ -65,6 +67,7 @@ export async function createCheckoutOrderAction(
     buyerCity,
     shippingCourier,
     shippingCost,
+    grindSize,
     notes,
     items,
   } = parsed.data;
@@ -74,6 +77,11 @@ export async function createCheckoutOrderAction(
     (await getListingById(listingId)) || (await getListingBySlug(listingId));
   if (!listing) {
     return fail("Produk tidak ditemukan atau sudah tidak tersedia");
+  }
+
+  // Stock check guard
+  if (listing.stock === 0) {
+    return fail(`Maaf, stok untuk "${listing.title}" telah habis terjual`);
   }
 
   // 2. Compute items breakdown (multi-item vs single item)
@@ -93,6 +101,14 @@ export async function createCheckoutOrderAction(
       if (!itemListing) {
         return fail(`Salah satu produk dalam pesanan tidak ditemukan (${item.listingId})`);
       }
+      if (itemListing.stock === 0) {
+        return fail(`Maaf, stok untuk "${itemListing.title}" telah habis terjual`);
+      }
+      if (itemListing.stock !== undefined && item.quantity > itemListing.stock) {
+        return fail(
+          `Pesanan untuk "${itemListing.title}" (${item.quantity}) melebihi stok yang tersedia (${itemListing.stock} ${itemListing.unit})`,
+        );
+      }
       if (item.quantity < itemListing.minOrderQty) {
         return fail(
           `Minimal pemesanan untuk ${itemListing.title} adalah ${itemListing.minOrderQty} ${itemListing.unit}`,
@@ -100,7 +116,10 @@ export async function createCheckoutOrderAction(
       }
       computedSubtotal += Number(itemListing.price) * item.quantity;
       computedTotalQty += item.quantity;
-      summaryList.push(`${itemListing.title} (${item.quantity} ${itemListing.unit})`);
+      const grindNote = item.grindSize ? ` [${item.grindSize}]` : "";
+      summaryList.push(
+        `${itemListing.title}${grindNote} (${item.quantity} ${itemListing.unit})`,
+      );
     }
 
     subtotal = computedSubtotal;
@@ -110,6 +129,11 @@ export async function createCheckoutOrderAction(
       multiItemSummary = `[Paket Pesanan: ${summaryList.join(", ")}]`;
     }
   } else {
+    if (listing.stock !== undefined && quantity > listing.stock) {
+      return fail(
+        `Pesanan (${quantity}) melebihi stok yang tersedia (${listing.stock} ${listing.unit})`,
+      );
+    }
     if (quantity < listing.minOrderQty) {
       return fail(
         `Minimal pemesanan untuk produk ini adalah ${listing.minOrderQty} ${listing.unit}`,
@@ -120,7 +144,10 @@ export async function createCheckoutOrderAction(
 
   const serviceFee = 1500; // Biaya layanan platform Biji Hub
   const totalAmount = subtotal + shippingCost + serviceFee;
-  const combinedNotes = [multiItemSummary, notes].filter(Boolean).join(" ");
+  const singleItemGrind = !items && grindSize ? `[Gilingan: ${grindSize}]` : "";
+  const combinedNotes = [multiItemSummary || singleItemGrind, notes]
+    .filter(Boolean)
+    .join(" ");
 
   const orderNumber = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(
     100 + Math.random() * 900,

@@ -4,7 +4,8 @@ import {
   parseCatalogParams,
   type CatalogParams,
 } from "@/lib/validations/catalog-params.schema";
-import { ProductList, ResultMeta } from "@/components/catalog/product-feed";
+import { TokopediaSortBar } from "@/components/catalog/tokopedia-sort-bar";
+import { ProductList } from "@/components/catalog/product-feed";
 import { LoadMore } from "@/components/catalog/load-more";
 
 export async function CatalogFeed({ params }: { params: CatalogParams }) {
@@ -48,11 +49,8 @@ export async function CatalogFeed({ params }: { params: CatalogParams }) {
     const nextUrl = feed.hasMore ? `/?${nextParams.toString()}` : null;
 
     return (
-      <>
-        <ResultMeta
-          total={feed.total}
-          params={new URLSearchParams(serialized)}
-        />
+      <div className="space-y-4">
+        <TokopediaSortBar total={feed.total} />
         {feed.items.length ? (
           <>
             <ProductList items={feed.items} />
@@ -91,7 +89,7 @@ export async function CatalogFeed({ params }: { params: CatalogParams }) {
             </div>
           </div>
         )}
-      </>
+      </div>
     );
   } catch {
     return (

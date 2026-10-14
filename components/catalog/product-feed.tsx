@@ -86,7 +86,7 @@ export function ResultMeta({
 export function ProductList({ items }: { items: FeedItem[] }) {
   return (
     <ul
-      className="columns-2 gap-3 md:columns-3 lg:columns-4 [column-fill:balance]"
+      className="columns-2 gap-3.5 md:columns-3 xl:columns-3 [column-fill:balance]"
       aria-label="Daftar produk kopi"
     >
       {items.map((item, index) => (

@@ -14,10 +14,10 @@ export async function GET(request: Request) {
   }
 
   try {
-    const result = await autoCompleteExpiredShippedOrders(7);
+    const result = await autoCompleteExpiredShippedOrders(2);
     return NextResponse.json({
       success: true,
-      message: `${result.completedCount} pesanan kadaluwarsa (>7 hari) berhasil diselesaikan otomatis.`,
+      message: `${result.completedCount} pesanan kadaluwarsa (>48 jam) berhasil diselesaikan otomatis.`,
       ...result,
     });
   } catch (error) {

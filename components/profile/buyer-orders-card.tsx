@@ -11,7 +11,7 @@ import { OrderReviewModal } from "@/components/order/order-review-modal";
 import { OrderDisputeModal } from "@/components/order/order-dispute-modal";
 import { ShipmentTrackingModal } from "@/components/order/shipment-tracking-modal";
 import { OrderPrintModal } from "@/components/order/order-print-modal";
-import { Package, Clock, ShieldCheck, ArrowRight } from "lucide-react";
+import { Package, Clock, ShieldCheck, ArrowRight, AlertCircle, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 
@@ -19,7 +19,7 @@ interface BuyerOrdersCardProps {
   orders: Order[];
 }
 
-type OrderFilter = "all" | "pending_payment" | "paid" | "shipped" | "completed";
+type OrderFilter = "all" | "pending_payment" | "paid" | "shipped" | "completed" | "disputed";
 
 export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
   const [filter, setFilter] = useState<OrderFilter>("all");
@@ -35,6 +35,7 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
     paid: orders.filter((o) => o.status === "paid").length,
     shipped: orders.filter((o) => o.status === "shipped").length,
     completed: orders.filter((o) => o.status === "completed").length,
+    disputed: orders.filter((o) => o.status === "disputed").length,
   };
 
   return (
@@ -107,6 +108,18 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
               }`}
             >
               Selesai ({counts.completed})
+            </button>
+            <button
+              onClick={() => setFilter("disputed")}
+              className={`px-2.5 py-1 rounded-sm text-xs font-medium transition-colors shrink-0 ${
+                filter === "disputed"
+                  ? "bg-rose-700 text-white font-semibold"
+                  : counts.disputed > 0
+                    ? "bg-rose-50 text-rose-700 hover:bg-rose-100 font-medium"
+                    : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+              }`}
+            >
+              Komplain ({counts.disputed})
             </button>
           </div>
         )}
@@ -243,6 +256,35 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
                         />
                       </div>
                     </div>
+                  </div>
+                )}
+
+                {/* Disputed Alert Banner */}
+                {ord.status === "disputed" && (
+                  <div className="pt-2 border-t border-neutral-100 space-y-1.5 bg-rose-50/80 p-2.5 rounded border border-rose-200 text-[11px] text-rose-800">
+                    <div className="flex items-center gap-1.5 font-semibold text-rose-950">
+                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                      Komplain Anda Sedang Dalam Peninjauan & Mediasi
+                    </div>
+                    <p className="text-rose-800">
+                      <span className="font-medium">Kendala yang dilaporkan:</span>{" "}
+                      &ldquo;{ord.disputeReason || "Kendala kualitas/pengiriman produk kopi."}&rdquo;
+                    </p>
+                    {ord.disputeEvidenceUrl && (
+                      <div className="pt-0.5">
+                        <a
+                          href={ord.disputeEvidenceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[11px] text-rose-700 underline font-medium hover:text-rose-900"
+                        >
+                          <ExternalLink className="w-3 h-3" /> Foto Bukti Kendala Terlampir
+                        </a>
+                      </div>
+                    )}
+                    <p className="text-[10px] text-rose-600 pt-0.5 border-t border-rose-200/60">
+                      Dana Anda tetap aman tertampung di rekening escrow resmi Biji Hub dan tidak akan dicairkan ke penjual sampai kendala terselesaikan.
+                    </p>
                   </div>
                 )}
 

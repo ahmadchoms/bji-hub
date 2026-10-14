@@ -132,7 +132,7 @@ export function AdminOrderDisputes({ orders: initialOrders }: AdminOrderDisputes
       if (res.success) {
         if (res.data.completedCount > 0) {
           toast.success(
-            `${res.data.completedCount} pesanan kadaluwarsa (>7 hari) berhasil diselesaikan otomatis!`,
+            `${res.data.completedCount} pesanan kadaluwarsa (>48 jam) berhasil diselesaikan otomatis!`,
           );
           setOrders((prev) =>
             prev.map((o) =>
@@ -142,7 +142,7 @@ export function AdminOrderDisputes({ orders: initialOrders }: AdminOrderDisputes
             ),
           );
         } else {
-          toast.info("Tidak ada pesanan kirim >7 hari yang perlu diselesaikan.");
+          toast.info("Tidak ada pesanan kirim >48 jam yang perlu diselesaikan.");
         }
       } else {
         toast.error(res.error || "Gagal menjalankan auto-complete pesanan");
@@ -270,14 +270,14 @@ export function AdminOrderDisputes({ orders: initialOrders }: AdminOrderDisputes
             disabled={isAutoCompleting}
             onClick={handleRunAutoComplete}
             className="text-xs text-primary-800 border-primary-200 bg-primary-50/60 hover:bg-primary-100"
-            title="Selesaikan otomatis pesanan yang telah dikirim lebih dari 7 hari tanpa komplain"
+            title="Selesaikan otomatis pesanan yang telah dikirim lebih dari 48 jam tanpa komplain"
           >
             {isAutoCompleting ? (
               <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
             ) : (
               <Sparkles className="w-3.5 h-3.5 mr-1.5 text-primary-600" />
             )}
-            Auto-Complete (&gt;7 Hari)
+            Auto-Complete (&gt;48 Jam)
           </Button>
 
           <ExportCsvButton

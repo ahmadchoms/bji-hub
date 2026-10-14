@@ -455,8 +455,20 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
                         </a>
                       </div>
                     )}
-                    <p className="text-[11px] text-rose-600 pl-5.5">
-                      Admin Biji Hub sedang meninjau kasus ini sebelum memutuskan penerusan dana atau pengembalian ke pembeli.
+                    <div className="pl-5.5 pt-1.5 flex flex-wrap items-center gap-2">
+                      <a
+                        href={`https://wa.me/${order.buyerPhone.replace(/\D/g, "").replace(/^0/, "62")}?text=${encodeURIComponent(
+                          `Halo ${order.buyerName}, saya dari ${order.sellerName || "penjual"} mengenai kendala pesanan ${order.orderNumber}. Kami siap membantu mencarikan solusi terbaik untuk kendala Anda.`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-medium transition-colors"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" /> Hubungi Pembeli via WhatsApp
+                      </a>
+                    </div>
+                    <p className="text-[11px] text-rose-600 pl-5.5 pt-1 border-t border-rose-200/60 mt-1">
+                      Admin Biji Hub sedang meninjau kasus ini sebelum memutuskan penerusan dana ke Anda atau pengembalian dana ke pembeli.
                     </p>
                   </div>
                 )}

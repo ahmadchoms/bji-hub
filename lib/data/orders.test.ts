@@ -79,11 +79,11 @@ describe("orders data layer & auto-complete", () => {
     await updateOrderStatus(order.id, "shipped", "EXP888");
     const fetched = await getOrderById(order.id);
     if (fetched) {
-      const eightDaysAgo = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString();
-      fetched.updatedAt = eightDaysAgo;
+      const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+      fetched.updatedAt = threeDaysAgo;
     }
 
-    const result = await autoCompleteExpiredShippedOrders(7);
+    const result = await autoCompleteExpiredShippedOrders(); // uses default 2 days
     expect(result.completedCount).toBeGreaterThanOrEqual(1);
     expect(result.orderIds).toContain(order.id);
 

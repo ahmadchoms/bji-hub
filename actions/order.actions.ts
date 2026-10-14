@@ -241,7 +241,7 @@ export async function autoCompleteOrdersAction(): Promise<
   ActionResult<{ completedCount: number; orderIds: string[] }>
 > {
   await requireRole(["admin"], "/admin/transactions");
-  const result = await autoCompleteExpiredShippedOrders(7);
+  const result = await autoCompleteExpiredShippedOrders(2);
   revalidatePath("/admin/transactions");
   revalidatePath("/dashboard/orders");
   revalidatePath("/order/success");

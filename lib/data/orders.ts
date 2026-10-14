@@ -460,7 +460,7 @@ export async function updateOrderStatus(
 }
 
 export async function autoCompleteExpiredShippedOrders(
-  daysThreshold = 7,
+  daysThreshold = 2,
 ): Promise<{ completedCount: number; orderIds: string[] }> {
   const pool = getPool();
   const now = new Date();

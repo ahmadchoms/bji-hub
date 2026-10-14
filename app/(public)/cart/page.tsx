@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "@/lib/cart";
@@ -15,7 +16,6 @@ import {
   Minus,
   Store,
   ArrowRight,
-  ShieldCheck,
   Package,
 } from "lucide-react";
 
@@ -24,18 +24,85 @@ export default function CartPage() {
     isLoaded,
     items,
     totalItems,
-    totalAmount,
     groupedBySeller,
     updateCartQuantity,
     removeFromCart,
     clearCart,
   } = useCart();
-  const sellerEntries = Object.entries(groupedBySeller);
-  const firstSeller = sellerEntries[0];
-  const firstSellerId = firstSeller ? firstSeller[0] : "";
-  const firstSellerName = firstSeller ? firstSeller[1].sellerName : "";
-  const firstSellerSlug = firstSeller ? firstSeller[1].items[0]?.slug : "";
-  const isSingleSeller = sellerEntries.length <= 1;
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [initialized, setInitialized] = useState(false);
+
+  // Initialize selected IDs with all items once cart is loaded
+  useEffect(() => {
+    if (isLoaded) {
+      if (!initialized && items.length > 0) {
+        setSelectedIds(items.map((i) => i.listingId));
+        setInitialized(true);
+      } else {
+        // Prune any deleted items
+        setSelectedIds((prev) => prev.filter((id) => items.some((i) => i.listingId === id)));
+      }
+    }
+  }, [isLoaded, items, initialized]);
+
+  const isAllSelected =
+    items.length > 0 && items.every((i) => selectedIds.includes(i.listingId));
+
+  const toggleAll = () => {
+    if (isAllSelected) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(items.map((i) => i.listingId));
+    }
+  };
+
+  const toggleItem = (listingId: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(listingId)
+        ? prev.filter((id) => id !== listingId)
+        : [...prev, listingId],
+    );
+  };
+
+  const toggleSeller = (sellerItems: typeof items) => {
+    const sellerItemIds = sellerItems.map((i) => i.listingId);
+    const isSellerAll = sellerItemIds.every((id) => selectedIds.includes(id));
+    if (isSellerAll) {
+      setSelectedIds((prev) => prev.filter((id) => !sellerItemIds.includes(id)));
+    } else {
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...sellerItemIds])));
+    }
+  };
+
+  const selectedItems = items.filter((i) => selectedIds.includes(i.listingId));
+  const selectedTotalAmount = selectedItems.reduce(
+    (sum, i) => sum + i.price * i.quantity,
+    0,
+  );
+  const selectedTotalCount = selectedItems.reduce(
+    (sum, i) => sum + i.quantity,
+    0,
+  );
+
+  // Group selected by seller for checkout target
+  const selectedSellerEntries = Object.entries(groupedBySeller).filter(
+    ([, group]) => group.items.some((i) => selectedIds.includes(i.listingId)),
+  );
+  const firstSelectedSeller = selectedSellerEntries[0];
+  const firstSelectedSellerId = firstSelectedSeller ? firstSelectedSeller[0] : "";
+  const firstSelectedSellerItems = firstSelectedSeller
+    ? firstSelectedSeller[1].items.filter((i) => selectedIds.includes(i.listingId))
+    : [];
+  const firstSelectedSlug = firstSelectedSellerItems[0]?.slug || "";
+  const firstSelectedItemsParam = firstSelectedSellerItems
+    .map((i) => i.listingId)
+    .join(",");
+
+  const mainBuyButtonText =
+    firstSelectedSellerItems.length > 1
+      ? `Beli (${firstSelectedSellerItems.length})`
+      : "Beli";
 
   if (!isLoaded) {
     return (
@@ -98,24 +165,67 @@ export default function CartPage() {
           </Button>
         </div>
 
+        {/* Tokopedia Select All Bar */}
+        <div className="bg-white border border-neutral-300 rounded-lg p-3.5 flex items-center justify-between text-xs shadow-2xs">
+          <label className="flex items-center gap-2.5 cursor-pointer font-medium text-neutral-800 select-none">
+            <input
+              type="checkbox"
+              checked={isAllSelected}
+              onChange={toggleAll}
+              className="w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+            />
+            <span>
+              Pilih Semua ({selectedItems.length}/{items.length} item dipilih)
+            </span>
+          </label>
+
+          {selectedItems.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                selectedItems.forEach((i) => removeFromCart(i.listingId));
+              }}
+              className="text-xs text-rose-600 hover:underline font-semibold"
+            >
+              Hapus yang Dipilih
+            </button>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Main List Grouped by Seller */}
           <div className="lg:col-span-8 space-y-6">
             {Object.entries(groupedBySeller).map(([sellerId, group]) => {
-              const sellerTotal = group.items.reduce(
+              const sellerItemIds = group.items.map((i) => i.listingId);
+              const isSellerAll = sellerItemIds.every((id) => selectedIds.includes(id));
+              const sellerSelected = group.items.filter((i) =>
+                selectedIds.includes(i.listingId),
+              );
+              const sellerSelectedSubtotal = sellerSelected.reduce(
                 (sum, i) => sum + i.price * i.quantity,
                 0,
               );
               const firstSlug = group.items[0]?.slug;
+              const sellerBuyText =
+                sellerSelected.length > 1
+                  ? `Beli (${sellerSelected.length})`
+                  : "Beli";
 
               return (
                 <div
                   key={sellerId}
                   className="bg-white border border-neutral-300 rounded-lg p-5 space-y-4 shadow-xs"
                 >
-                  {/* Seller Header */}
+                  {/* Seller Header with Checkbox */}
                   <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <input
+                        type="checkbox"
+                        checked={isSellerAll}
+                        onChange={() => toggleSeller(group.items)}
+                        className="w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                        title="Pilih semua produk dari toko ini"
+                      />
                       <div className="w-7 h-7 rounded-full bg-primary-100 text-primary-800 flex items-center justify-center font-bold text-xs">
                         <Store className="w-3.5 h-3.5" />
                       </div>
@@ -133,112 +243,135 @@ export default function CartPage() {
                     </Badge>
                   </div>
 
-                  {/* Items list */}
+                  {/* Items list with Checkboxes */}
                   <div className="divide-y divide-neutral-100">
-                    {group.items.map((item) => (
-                      <div
-                        key={item.listingId}
-                        className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
-                      >
-                        <div className="flex items-start gap-3 flex-1 min-w-0">
-                          <div className="w-12 h-12 rounded bg-neutral-100 border border-neutral-200 relative overflow-hidden flex items-center justify-center text-neutral-400 shrink-0">
-                            {item.imageUrl ? (
-                              <Image
-                                src={item.imageUrl}
-                                alt={item.title}
-                                fill
-                                className="object-cover rounded"
-                                unoptimized
-                              />
-                            ) : (
-                              <Package className="w-5 h-5" />
-                            )}
-                          </div>
-                          <div className="min-w-0">
-                            <Link
-                              href={`/product/${item.slug}`}
-                              className="font-semibold text-neutral-900 hover:text-primary-700 truncate block text-sm"
-                            >
-                              {item.title}
-                            </Link>
-                            <p className="text-neutral-500 mt-0.5">
-                              {formatRupiah(item.price)} / {item.unit}
-                            </p>
-                            <span className="text-[10px] text-neutral-400">
-                              Min. order: {item.minOrderQty} {item.unit}
-                            </span>
-                          </div>
-                        </div>
+                    {group.items.map((item) => {
+                      const isItemChecked = selectedIds.includes(item.listingId);
 
-                        {/* Stepper & Total */}
-                        <div className="flex items-center justify-between sm:justify-end gap-4 self-end sm:self-auto w-full sm:w-auto">
-                          {/* Stepper */}
-                          <div className="flex items-center border border-neutral-300 rounded overflow-hidden">
+                      return (
+                        <div
+                          key={item.listingId}
+                          className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                        >
+                          <div className="flex items-start gap-3 flex-1 min-w-0">
+                            <input
+                              type="checkbox"
+                              checked={isItemChecked}
+                              onChange={() => toggleItem(item.listingId)}
+                              className="w-4 h-4 mt-1 rounded border-neutral-300 text-primary-600 focus:ring-primary-500 cursor-pointer shrink-0"
+                            />
+                            <div className="w-12 h-12 rounded bg-neutral-100 border border-neutral-200 relative overflow-hidden flex items-center justify-center text-neutral-400 shrink-0">
+                              {item.imageUrl ? (
+                                <Image
+                                  src={item.imageUrl}
+                                  alt={item.title}
+                                  fill
+                                  className="object-cover rounded"
+                                  unoptimized
+                                />
+                              ) : (
+                                <Package className="w-5 h-5" />
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <Link
+                                href={`/product/${item.slug}`}
+                                className="font-semibold text-neutral-900 hover:text-primary-700 truncate block text-sm"
+                              >
+                                {item.title}
+                              </Link>
+                              <p className="text-neutral-500 mt-0.5">
+                                {formatRupiah(item.price)} / {item.unit}
+                              </p>
+                              <span className="text-[10px] text-neutral-400">
+                                Min. order: {item.minOrderQty} {item.unit}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Stepper & Total */}
+                          <div className="flex items-center justify-between sm:justify-end gap-4 self-end sm:self-auto w-full sm:w-auto">
+                            {/* Stepper */}
+                            <div className="flex items-center border border-neutral-300 rounded overflow-hidden">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  updateCartQuantity(item.listingId, item.quantity - 1)
+                                }
+                                className="w-7 h-7 flex items-center justify-center bg-neutral-50 hover:bg-neutral-100 text-neutral-600 border-r border-neutral-300"
+                                title="Kurangi"
+                              >
+                                <Minus className="w-3 h-3" />
+                              </button>
+                              <span className="w-9 text-center font-mono font-semibold text-neutral-900">
+                                {item.quantity}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  updateCartQuantity(item.listingId, item.quantity + 1)
+                                }
+                                className="w-7 h-7 flex items-center justify-center bg-neutral-50 hover:bg-neutral-100 text-neutral-600 border-l border-neutral-300"
+                                title="Tambah"
+                              >
+                                <Plus className="w-3 h-3" />
+                              </button>
+                            </div>
+
+                            {/* Subtotal */}
+                            <div className="text-right min-w-[90px]">
+                              <p className="font-mono font-bold text-neutral-900">
+                                {formatRupiah(item.price * item.quantity)}
+                              </p>
+                            </div>
+
+                            {/* Remove button */}
                             <button
                               type="button"
-                              onClick={() =>
-                                updateCartQuantity(item.listingId, item.quantity - 1)
-                              }
-                              className="w-7 h-7 flex items-center justify-center bg-neutral-50 hover:bg-neutral-100 text-neutral-600 border-r border-neutral-300"
-                              title="Kurangi"
+                              onClick={() => removeFromCart(item.listingId)}
+                              className="text-neutral-400 hover:text-rose-600 p-1"
+                              title="Hapus"
                             >
-                              <Minus className="w-3 h-3" />
-                            </button>
-                            <span className="w-9 text-center font-mono font-semibold text-neutral-900">
-                              {item.quantity}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                updateCartQuantity(item.listingId, item.quantity + 1)
-                              }
-                              className="w-7 h-7 flex items-center justify-center bg-neutral-50 hover:bg-neutral-100 text-neutral-600 border-l border-neutral-300"
-                              title="Tambah"
-                            >
-                              <Plus className="w-3 h-3" />
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
-
-                          {/* Subtotal */}
-                          <div className="text-right min-w-[90px]">
-                            <p className="font-mono font-bold text-neutral-900">
-                              {formatRupiah(item.price * item.quantity)}
-                            </p>
-                          </div>
-
-                          {/* Remove button */}
-                          <button
-                            type="button"
-                            onClick={() => removeFromCart(item.listingId)}
-                            className="text-neutral-400 hover:text-rose-600 p-1"
-                            title="Hapus"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   {/* Seller Checkout CTA */}
                   <div className="pt-3 border-t border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-neutral-50/70 p-3 rounded">
                     <div>
-                      <span className="text-[11px] text-neutral-500">Subtotal Toko:</span>
+                      <span className="text-[11px] text-neutral-500">
+                        Subtotal ({sellerSelected.length} produk dipilih):
+                      </span>
                       <p className="font-mono font-bold text-sm text-primary-900">
-                        {formatRupiah(sellerTotal)}
+                        {formatRupiah(sellerSelectedSubtotal)}
                       </p>
                     </div>
 
-                    <Link
-                      href={`/checkout/${firstSlug}?cart=1&sellerId=${sellerId}`}
-                      className={buttonVariants({
-                        size: "sm",
-                        className:
-                          "bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold px-4 gap-1.5",
-                      })}
-                    >
-                      Beli dari Toko Ini ({group.items.length} Produk) <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
+                    {sellerSelected.length > 0 ? (
+                      <Link
+                        href={`/checkout/${firstSlug}?cart=1&sellerId=${sellerId}&items=${sellerSelected.map((i) => i.listingId).join(",")}`}
+                        className={buttonVariants({
+                          size: "sm",
+                          className:
+                            "bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold px-4 gap-1.5",
+                        })}
+                      >
+                        <span>{sellerBuyText}</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    ) : (
+                      <Button
+                        size="sm"
+                        disabled
+                        className="bg-neutral-200 text-neutral-400 text-xs px-4 cursor-not-allowed"
+                      >
+                        Pilih Produk
+                      </Button>
+                    )}
                   </div>
                 </div>
               );
@@ -255,9 +388,9 @@ export default function CartPage() {
               </CardHeader>
               <CardContent className="space-y-4 pt-4 text-xs">
                 <div className="flex justify-between text-neutral-600">
-                  <span>Total Produk ({totalItems} item)</span>
+                  <span>Total Produk ({selectedTotalCount} item)</span>
                   <span className="font-mono font-semibold text-neutral-900">
-                    {formatRupiah(totalAmount)}
+                    {formatRupiah(selectedTotalAmount)}
                   </span>
                 </div>
                 <div className="flex justify-between text-neutral-500 text-[11px]">
@@ -268,41 +401,35 @@ export default function CartPage() {
                 <div className="pt-3 border-t border-neutral-200 flex justify-between items-baseline font-bold text-sm">
                   <span className="text-neutral-900">Total Estimasi</span>
                   <span className="font-mono text-primary-700 text-base">
-                    {formatRupiah(totalAmount)}
+                    {formatRupiah(selectedTotalAmount)}
                   </span>
                 </div>
 
-                <div className="p-3 bg-emerald-50 rounded border border-emerald-200 text-[11px] text-emerald-800 space-y-1">
-                  <div className="font-semibold flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                    Garansi Rekening Escrow Biji Hub
-                  </div>
-                  <p className="leading-relaxed">
-                    Pembayaran aman tertampung di rekening bersama resmi sampai pesanan kopi Anda terima dengan selamat.
-                  </p>
-                </div>
-
                 <div className="pt-2 space-y-2">
-                  {firstSeller && (
+                  {firstSelectedSellerItems.length > 0 ? (
                     <Link
-                      href={`/checkout/${firstSellerSlug}?cart=1&sellerId=${firstSellerId}`}
+                      href={`/checkout/${firstSelectedSlug}?cart=1&sellerId=${firstSelectedSellerId}&items=${firstSelectedItemsParam}`}
                       className={buttonVariants({
                         size: "lg",
                         className:
                           "w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 text-xs shadow-xs flex items-center justify-center gap-2",
                       })}
                     >
-                      <ShieldCheck className="w-4 h-4 text-primary-200" />
-                      {isSingleSeller
-                        ? `Lanjut ke Checkout (${totalItems} Produk)`
-                        : `Beli dari ${firstSellerName} (${firstSeller[1].items.length} Produk)`}
+                      <span>{mainBuyButtonText}</span>
                       <ArrowRight className="w-4 h-4" />
                     </Link>
+                  ) : (
+                    <Button
+                      disabled
+                      className="w-full bg-neutral-200 text-neutral-400 font-medium py-3 text-xs cursor-not-allowed"
+                    >
+                      Pilih Produk
+                    </Button>
                   )}
 
-                  {!isSingleSeller && (
+                  {selectedSellerEntries.length > 1 && (
                     <p className="text-[11px] text-neutral-500 text-center leading-tight">
-                      Keranjang memiliki beberapa toko. Pembelian dapat diselesaikan per toko mitra.
+                      Produk yang dipilih berasal dari toko berbeda. Pembelian diproses per toko mitra.
                     </p>
                   )}
 

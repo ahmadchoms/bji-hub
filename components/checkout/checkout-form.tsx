@@ -48,11 +48,21 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
   const [isPending, startTransition] = useTransition();
 
   const isCart = searchParams.get("cart") === "1";
+  const itemsParam = searchParams.get("items");
+  const selectedListingIds = itemsParam
+    ? itemsParam.split(",").filter(Boolean)
+    : null;
   const { items: cartItems, removeFromCart } = useCart();
 
-  // Multi-item cart detection
+  // Multi-item cart detection (filtered by selected items if provided)
   const sellerCartItems = isCart
-    ? cartItems.filter((item) => item.sellerId === listing.sellerId)
+    ? cartItems.filter((item) => {
+        if (item.sellerId !== listing.sellerId) return false;
+        if (selectedListingIds && selectedListingIds.length > 0) {
+          return selectedListingIds.includes(item.listingId);
+        }
+        return true;
+      })
     : [];
   const activeItems = sellerCartItems.length > 0 ? sellerCartItems : null;
 

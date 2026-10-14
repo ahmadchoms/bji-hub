@@ -5,18 +5,13 @@ import { PageContainer } from "@/components/layout/page-container";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Store, ArrowRight, ShieldCheck, Package, AlertCircle } from "lucide-react";
+import { Store, ArrowRight, ShieldCheck, AlertCircle } from "lucide-react";
 import { logoutAction } from "@/actions/auth.actions";
 
 import { createClient } from "@/lib/supabase/server";
 import { BuyerProfileForm } from "@/components/profile/buyer-profile-form";
+import { BuyerOrdersCard } from "@/components/profile/buyer-orders-card";
 import { getOrdersByBuyer } from "@/lib/data/orders";
-import { formatRupiah } from "@/components/shared/price-text";
-import { ConfirmOrderButton } from "@/components/order/confirm-order-button";
-import { OrderReviewModal } from "@/components/order/order-review-modal";
-import { OrderDisputeModal } from "@/components/order/order-dispute-modal";
-import { ShipmentTrackingModal } from "@/components/order/shipment-tracking-modal";
-import { OrderPrintModal } from "@/components/order/order-print-modal";
 
 export const metadata = {
   title: "Profil Akun - Biji Hub",
@@ -135,129 +130,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
       />
 
       {/* Riwayat Pesanan Saya */}
-      <Card className="border-neutral-300">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-base text-neutral-900 flex items-center gap-2">
-                <Package className="w-4 h-4 text-primary-600" />
-                Riwayat Pesanan Saya
-              </CardTitle>
-              <CardDescription className="text-xs text-neutral-500">
-                Daftar transaksi langsung dan status pengiriman biji kopi Anda.
-              </CardDescription>
-            </div>
-            <span className="font-mono text-xs text-neutral-500">
-              {buyerOrders.length} Pesanan
-            </span>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-3 pt-0">
-          {buyerOrders.length === 0 ? (
-            <div className="text-center py-6 border border-dashed border-neutral-200 rounded-sm">
-              <p className="text-xs text-neutral-500">Belum ada riwayat pesanan.</p>
-              <Link
-                href="/catalog"
-                className="text-xs font-semibold text-primary-600 hover:underline mt-1 inline-block"
-              >
-                Jelajahi Katalog Biji Kopi &rarr;
-              </Link>
-            </div>
-          ) : (
-            buyerOrders.map((ord) => (
-              <div
-                key={ord.id}
-                className="p-3 border border-neutral-200 rounded-sm space-y-2 text-xs hover:border-neutral-300 transition-colors bg-white"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-mono font-bold text-neutral-900">
-                    {ord.orderNumber}
-                  </span>
-                  <Badge
-                    variant="outline"
-                    className={
-                      ord.status === "completed"
-                        ? "text-emerald-700 bg-emerald-50 border-emerald-300"
-                        : ord.status === "disputed"
-                          ? "text-rose-700 bg-rose-50 border-rose-300"
-                          : ord.status === "shipped"
-                            ? "text-purple-700 bg-purple-50 border-purple-300"
-                            : ord.status === "paid"
-                              ? "text-blue-700 bg-blue-50 border-blue-300"
-                              : "text-amber-700 bg-amber-50 border-amber-300"
-                    }
-                  >
-                    {ord.status === "completed"
-                      ? "Selesai"
-                      : ord.status === "disputed"
-                        ? "Komplain"
-                        : ord.status === "shipped"
-                          ? "Dikirim"
-                          : ord.status === "paid"
-                            ? "Diproses"
-                            : "Menunggu Bayar"}
-                  </Badge>
-                </div>
-                <div className="flex justify-between items-baseline text-neutral-700">
-                  <span className="truncate max-w-[240px] font-medium text-neutral-900">
-                    {ord.listingTitle || `Produk #${ord.listingId}`}
-                  </span>
-                  <span className="font-mono font-bold text-primary-900">
-                    {formatRupiah(ord.totalAmount)}
-                  </span>
-                </div>
-                <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-neutral-100 text-[11px] text-neutral-500">
-                  <div className="flex items-center gap-2">
-                    <span>
-                      Kurir: {ord.shippingCourier}{" "}
-                      {ord.trackingNumber && `(Resi: ${ord.trackingNumber})`}
-                    </span>
-                    {ord.trackingNumber && (
-                      <ShipmentTrackingModal
-                        trackingNumber={ord.trackingNumber}
-                        courierCode={ord.shippingCourier || "jne"}
-                        orderNumber={ord.orderNumber}
-                      />
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <OrderPrintModal order={ord} defaultMode="invoice" />
-                    <Link
-                      href={`/order/success?orderNumber=${ord.orderNumber}`}
-                      className="font-medium text-primary-600 hover:text-primary-800"
-                    >
-                      Lihat Rincian &rarr;
-                    </Link>
-                  </div>
-                </div>
-                {ord.status === "shipped" && (
-                  <div className="pt-2 border-t border-neutral-100 flex flex-wrap items-center justify-between gap-2 bg-emerald-50/50 p-2 rounded">
-                    <span className="text-[11px] text-emerald-800">
-                      Paket sudah tiba?
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      <OrderDisputeModal orderId={ord.id} orderNumber={ord.orderNumber} />
-                      <ConfirmOrderButton
-                        orderId={ord.id}
-                        orderNumber={ord.orderNumber}
-                      />
-                    </div>
-                  </div>
-                )}
-                {ord.status === "completed" && (
-                  <div className="pt-2 border-t border-neutral-100 flex items-center justify-end">
-                    <OrderReviewModal
-                      orderId={ord.id}
-                      listingId={ord.listingId}
-                      listingTitle={ord.listingTitle || "Biji Kopi"}
-                    />
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
+      <BuyerOrdersCard orders={buyerOrders} />
 
       <Card className="border-primary-200 bg-primary-50/40">
         <CardHeader>

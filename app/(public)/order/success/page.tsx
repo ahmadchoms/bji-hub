@@ -4,6 +4,8 @@ import { getOrderById } from "@/lib/data/orders";
 import { PageContainer } from "@/components/layout/page-container";
 import { formatRupiah } from "@/components/shared/price-text";
 import { buttonVariants } from "@/components/ui/button";
+import { format } from "date-fns";
+import { id as idLocale } from "date-fns/locale";
 import {
   CheckCircle2,
   Clock,
@@ -147,24 +149,42 @@ export default async function OrderSuccessPage({
           )}
         </div>
 
-        {/* Konfirmasi Penerimaan Barang CTA (when shipped) */}
-        {order.status === "shipped" && (
-          <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-lg flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="space-y-0.5 text-center sm:text-left">
-              <p className="text-sm font-semibold text-emerald-950 flex items-center justify-center sm:justify-start gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                Sudah Menerima Kopi dengan Selamat?
-              </p>
-              <p className="text-xs text-emerald-800">
-                Klik konfirmasi jika produk sudah sesuai. Jika ada kerusakan atau salah barang, ajukan komplain.
-              </p>
+        {/* Konfirmasi Penerimaan Barang CTA & Escrow Auto-Release Banner (when shipped) */}
+        {order.status === "shipped" && (() => {
+          const shippedTimestamp = new Date(order.updatedAt || order.createdAt).getTime();
+          const autoReleaseDate = new Date(shippedTimestamp + 48 * 60 * 60 * 1000);
+          const isAutoReleasePassed = Date.now() > autoReleaseDate.getTime();
+
+          return (
+            <div className="p-4 sm:p-5 bg-emerald-50 border border-emerald-300 rounded-lg space-y-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <p className="text-sm font-bold text-emerald-950 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    Sudah Menerima Kopi dengan Selamat?
+                  </p>
+                  <p className="text-xs text-emerald-800">
+                    Klik konfirmasi jika produk sudah sesuai. Jika ada kerusakan atau salah barang, ajukan komplain untuk menahan dana.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+                  <OrderDisputeModal orderId={order.id} orderNumber={order.orderNumber} />
+                  <ConfirmOrderButton orderId={order.id} orderNumber={order.orderNumber} />
+                </div>
+              </div>
+
+              <div className="p-2.5 bg-white/80 rounded border border-emerald-200/80 text-[11px] text-emerald-900 flex items-center gap-2">
+                <Clock className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                <span>
+                  <strong>Garansi Pelepasan Dana Otomatis:</strong>{" "}
+                  {isAutoReleasePassed
+                    ? "Batas waktu 2x24 jam telah tercapai. Dana akan dicairkan ke penjual jika tidak ada komplain yang diajukan."
+                    : `Batas konfirmasi hingga ${format(autoReleaseDate, "d MMMM yyyy, HH:mm", { locale: idLocale })} sebelum dana escrow diteruskan otomatis ke penjual.`}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <OrderDisputeModal orderId={order.id} orderNumber={order.orderNumber} />
-              <ConfirmOrderButton orderId={order.id} orderNumber={order.orderNumber} />
-            </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Order Details & Summary */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

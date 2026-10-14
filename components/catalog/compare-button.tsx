@@ -53,14 +53,14 @@ export function CompareButton({
       type="button"
       onClick={toggle}
       className={cn(
-        "w-full py-1.5 px-3 rounded-sm border text-xs font-mono uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5",
+        "w-full h-10 px-4 rounded-sm border text-xs font-semibold transition-colors flex items-center justify-center gap-2",
         active
           ? "border-neutral-900 bg-neutral-900 text-white"
-          : "border-neutral-300 text-neutral-700 hover:bg-neutral-50",
+          : "border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50",
         className
       )}
     >
-      <Scale className="size-3" />
+      <Scale className={cn("w-4 h-4 shrink-0", active ? "text-white" : "text-neutral-600")} />
       <span>{active ? "Ditambahkan ke Komparasi" : "Bandingkan Lot Kopi"}</span>
     </button>
   );

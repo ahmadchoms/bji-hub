@@ -33,14 +33,14 @@ export function CuppingSheetModal({ listing }: CuppingSheetModalProps) {
       <DialogTrigger
         render={
           <Button
+            type="button"
             variant="outline"
-            size="sm"
-            className="w-full text-xs font-mono uppercase tracking-wider text-neutral-600 border-neutral-300 hover:bg-neutral-50 justify-center gap-1.5"
+            className="w-full h-10 px-4 rounded-sm border border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50 text-xs font-semibold flex items-center justify-center gap-2 transition-colors"
           />
         }
       >
-        <Printer className="size-3.5 text-neutral-500" />
-        Cetak Cupping Spec Sheet
+        <Printer className="w-4 h-4 text-neutral-600 shrink-0" />
+        <span>Cetak Cupping Spec Sheet</span>
       </DialogTrigger>
       <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="border-b border-neutral-200 pb-3">

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Coffee, Send, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +24,6 @@ interface SampleRequestModalProps {
   sellerName: string;
   sellerPhone: string;
   className?: string;
-  size?: "sm" | "md" | "lg";
 }
 
 export function SampleRequestModal({
@@ -32,7 +32,6 @@ export function SampleRequestModal({
   sellerName,
   sellerPhone,
   className,
-  size = "lg",
 }: SampleRequestModalProps) {
   const [open, setOpen] = useState(false);
   const [buyerName, setBuyerName] = useState("");
@@ -107,12 +106,14 @@ export function SampleRequestModal({
           <Button
             type="button"
             variant="outline"
-            size={size}
-            className={className}
+            className={cn(
+              "w-full h-10 px-4 rounded-sm border border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50 text-xs font-semibold flex items-center justify-center gap-2 transition-colors",
+              className,
+            )}
           />
         }
       >
-        <Coffee className="w-4 h-4 text-primary-600 shrink-0 mr-1.5" />
+        <Coffee className="w-4 h-4 text-neutral-600 shrink-0" />
         <span>Minta Sampel & Penawaran Grosir B2B</span>
       </DialogTrigger>
 

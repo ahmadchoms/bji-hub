@@ -1,15 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { User, Loader2, Save, ArrowRight } from "lucide-react";
+import { User, Loader2, Save, ArrowRight, Camera, Trash2 } from "lucide-react";
 import { FormField } from "@/components/shared/form-field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { updateBuyerProfileAction } from "@/actions/auth.actions";
+import { uploadImage } from "@/lib/upload-client";
 
 export interface BuyerProfileValues {
   name: string;
@@ -37,12 +38,15 @@ interface BuyerProfileFormProps {
 
 export function BuyerProfileForm({ initialData, nextUrl }: BuyerProfileFormProps) {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<BuyerProfileValues>({
     defaultValues: {
@@ -57,6 +61,28 @@ export function BuyerProfileForm({ initialData, nextUrl }: BuyerProfileFormProps
   });
 
   const avatarUrl = watch("avatarUrl");
+
+  const handleAvatarFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const res = await uploadImage(file);
+      setValue("avatarUrl", res.url, { shouldValidate: true, shouldDirty: true });
+      toast.success("Foto profil berhasil diunggah!");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal mengunggah foto profil");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveAvatar = () => {
+    setValue("avatarUrl", "", { shouldValidate: true, shouldDirty: true });
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const onSubmit = async (values: BuyerProfileValues) => {
     setIsSubmitting(true);
@@ -104,7 +130,7 @@ export function BuyerProfileForm({ initialData, nextUrl }: BuyerProfileFormProps
 
         {/* Avatar Section */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pb-4 border-b border-neutral-200">
-          <div className="w-16 h-16 rounded-full border border-neutral-300 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0">
+          <div className="w-16 h-16 rounded-full border border-neutral-300 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0 relative group">
             {avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -115,17 +141,62 @@ export function BuyerProfileForm({ initialData, nextUrl }: BuyerProfileFormProps
             ) : (
               <User className="w-7 h-7 text-neutral-400" />
             )}
+            {isUploading && (
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                <Loader2 className="w-5 h-5 text-white animate-spin" />
+              </div>
+            )}
           </div>
-          <div className="flex-1 w-full space-y-1">
-            <FormField
-              label="URL Foto Profil / Avatar"
-              helperText="Tautan langsung ke foto profil Anda (opsional)."
-            >
-              <Input
-                {...register("avatarUrl")}
-                placeholder="https://example.com/foto-anda.jpg"
-              />
-            </FormField>
+
+          <div className="flex-1 w-full space-y-1.5">
+            <label className="text-xs font-semibold text-neutral-800 block">
+              Foto Profil / Avatar
+            </label>
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/*"
+              onChange={handleAvatarFile}
+              className="hidden"
+            />
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isUploading}
+                onClick={() => fileInputRef.current?.click()}
+                className="text-xs h-8 gap-1.5 border-neutral-300 hover:bg-neutral-50 text-neutral-800"
+              >
+                {isUploading ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Mengunggah...
+                  </>
+                ) : (
+                  <>
+                    <Camera className="w-3.5 h-3.5 text-neutral-600" />
+                    {avatarUrl ? "Ganti Foto" : "Unggah Foto"}
+                  </>
+                )}
+              </Button>
+
+              {avatarUrl && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={isUploading}
+                  onClick={handleRemoveAvatar}
+                  className="text-xs h-8 text-neutral-500 hover:text-rose-600"
+                >
+                  <Trash2 className="w-3.5 h-3.5 mr-1" /> Hapus
+                </Button>
+              )}
+            </div>
+            <p className="text-[11px] text-neutral-500">
+              Format JPG, PNG, atau WEBP. Maksimum 2 MB.
+            </p>
           </div>
         </div>
 

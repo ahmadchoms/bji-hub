@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
 import { PageContainer } from "@/components/layout/page-container";
@@ -10,8 +11,6 @@ import { logoutAction } from "@/actions/auth.actions";
 
 import { createClient } from "@/lib/supabase/server";
 import { BuyerProfileForm } from "@/components/profile/buyer-profile-form";
-import { BuyerOrdersCard } from "@/components/profile/buyer-orders-card";
-import { getOrdersByBuyer } from "@/lib/data/orders";
 
 export const metadata = {
   title: "Profil Akun - Biji Hub",
@@ -73,12 +72,28 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
     }
   }
 
-  if (!userEmail) {
-    userEmail = "pembeli@bijihub.com";
-    userName = "Akbar Hakim";
+  if (!userPhone || !userCity || !userAddress) {
+    try {
+      const cookieStore = await cookies();
+      const raw = cookieStore.get("biji-buyer-profile")?.value;
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        userName = userName || parsed.name || "";
+        userAvatarUrl = userAvatarUrl || parsed.avatarUrl || "";
+        userPhone = userPhone || parsed.phone || "";
+        userProvince = userProvince || parsed.province || "";
+        userCity = userCity || parsed.city || "";
+        userPostalCode = userPostalCode || parsed.postalCode || "";
+        userAddress = userAddress || parsed.address || "";
+      }
+    } catch {
+      // ignore
+    }
   }
 
-  const buyerOrders = await getOrdersByBuyer(userEmail);
+  if (!userEmail) {
+    userEmail = "pembeli@bijihub.com";
+  }
 
   return (
     <PageContainer className="py-10 md:py-16 max-w-2xl space-y-8">
@@ -128,9 +143,6 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
         }}
         nextUrl={next}
       />
-
-      {/* Riwayat Pesanan Saya */}
-      <BuyerOrdersCard orders={buyerOrders} />
 
       <Card className="border-primary-200 bg-primary-50/40">
         <CardHeader>

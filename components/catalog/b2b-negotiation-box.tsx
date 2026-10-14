@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MessageCircle, Check, Sparkles } from "lucide-react";
+import { MessageCircle, Check } from "lucide-react";
 import { buildWhatsAppUrl } from "@/components/shared/whatsapp-button";
 import { trackEvent } from "@/lib/tracking";
 
@@ -70,11 +70,12 @@ export function B2BNegotiationBox({
   return (
     <div className="space-y-3 p-3.5 rounded-xl border border-primary-200/80 bg-primary-50/40">
       <div className="flex items-center justify-between text-xs">
-        <span className="font-semibold text-neutral-800 flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-primary-600" />
+        <span className="font-semibold text-neutral-800">
           Template Chat B2B Langsung
         </span>
-        <span className="text-[10px] text-neutral-500 font-mono">Pilih topik</span>
+        <span className="text-[10px] text-neutral-500 font-mono">
+          Pilih topik
+        </span>
       </div>
 
       <div className="flex flex-wrap gap-1.5">
@@ -89,7 +90,9 @@ export function B2BNegotiationBox({
                 : "bg-white/60 border-neutral-200 text-neutral-600 hover:bg-white hover:text-neutral-900"
             }`}
           >
-            {selectedId === tmpl.id && <Check className="w-3 h-3 text-primary-600 shrink-0" />}
+            {selectedId === tmpl.id && (
+              <Check className="w-3 h-3 text-primary-600 shrink-0" />
+            )}
             <span>{tmpl.label}</span>
           </button>
         ))}

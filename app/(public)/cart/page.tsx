@@ -30,6 +30,12 @@ export default function CartPage() {
     removeFromCart,
     clearCart,
   } = useCart();
+  const sellerEntries = Object.entries(groupedBySeller);
+  const firstSeller = sellerEntries[0];
+  const firstSellerId = firstSeller ? firstSeller[0] : "";
+  const firstSellerName = firstSeller ? firstSeller[1].sellerName : "";
+  const firstSellerSlug = firstSeller ? firstSeller[1].items[0]?.slug : "";
+  const isSingleSeller = sellerEntries.length <= 1;
 
   if (!isLoaded) {
     return (
@@ -276,15 +282,40 @@ export default function CartPage() {
                   </p>
                 </div>
 
-                <Link
-                  href="/catalog"
-                  className={buttonVariants({
-                    variant: "outline",
-                    className: "w-full text-xs text-neutral-700",
-                  })}
-                >
-                  Tambah Kopi Lainnya
-                </Link>
+                <div className="pt-2 space-y-2">
+                  {firstSeller && (
+                    <Link
+                      href={`/checkout/${firstSellerSlug}?cart=1&sellerId=${firstSellerId}`}
+                      className={buttonVariants({
+                        size: "lg",
+                        className:
+                          "w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 text-xs shadow-xs flex items-center justify-center gap-2",
+                      })}
+                    >
+                      <ShieldCheck className="w-4 h-4 text-primary-200" />
+                      {isSingleSeller
+                        ? `Lanjut ke Checkout (${totalItems} Produk)`
+                        : `Beli dari ${firstSellerName} (${firstSeller[1].items.length} Produk)`}
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  )}
+
+                  {!isSingleSeller && (
+                    <p className="text-[11px] text-neutral-500 text-center leading-tight">
+                      Keranjang memiliki beberapa toko. Pembelian dapat diselesaikan per toko mitra.
+                    </p>
+                  )}
+
+                  <Link
+                    href="/catalog"
+                    className={buttonVariants({
+                      variant: "outline",
+                      className: "w-full text-xs text-neutral-700",
+                    })}
+                  >
+                    Tambah Kopi Lainnya
+                  </Link>
+                </div>
               </CardContent>
             </Card>
           </div>

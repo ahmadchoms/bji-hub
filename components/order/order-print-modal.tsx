@@ -55,7 +55,14 @@ function BarcodeSvg({ value }: { value: string }) {
         xmlns="http://www.w3.org/2000/svg"
       >
         {bars.map((bar, idx) => (
-          <rect key={idx} x={bar.x} y={0} width={bar.w} height={45} fill="#000000" />
+          <rect
+            key={idx}
+            x={bar.x}
+            y={0}
+            width={bar.w}
+            height={45}
+            fill="#000000"
+          />
         ))}
       </svg>
       <span className="font-mono text-[11px] tracking-widest text-neutral-800 font-bold mt-0.5">
@@ -74,7 +81,9 @@ export function OrderPrintModal({
   const [mode, setMode] = useState<"invoice" | "shipping_label">(defaultMode);
 
   const formattedDate = order.createdAt
-    ? format(new Date(order.createdAt), "d MMMM yyyy, HH:mm", { locale: idLocale })
+    ? format(new Date(order.createdAt), "d MMMM yyyy, HH:mm", {
+        locale: idLocale,
+      })
     : "-";
 
   const handlePrint = () => {
@@ -106,14 +115,15 @@ export function OrderPrintModal({
           )
         }
       />
-      <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="max-w-2xl lg:max-w-2xl max-h-[92vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader className="border-b border-neutral-200 pb-3 flex flex-row items-center justify-between gap-3 pr-8">
           <div>
             <DialogTitle className="text-base font-bold text-neutral-900">
               Pratinjau Cetak & Dokumen
             </DialogTitle>
             <p className="text-xs text-neutral-500 mt-0.5">
-              Pesanan #{order.orderNumber} &bull; {order.shippingCourier || "Kurir"}
+              Pesanan #{order.orderNumber} &bull;{" "}
+              {order.shippingCourier || "Kurir"}
             </p>
           </div>
 
@@ -175,8 +185,13 @@ export function OrderPrintModal({
               <div className="py-1 text-center border-b border-neutral-200">
                 <BarcodeSvg value={order.trackingNumber || order.orderNumber} />
                 <div className="flex items-center justify-center gap-4 text-[11px] text-neutral-600 mt-1 font-mono">
-                  <span>No. Resi: <strong>{order.trackingNumber || "- (Belum ada)"}</strong></span>
-                  <span>No. Pesanan: <strong>{order.orderNumber}</strong></span>
+                  <span>
+                    No. Resi:{" "}
+                    <strong>{order.trackingNumber || "- (Belum ada)"}</strong>
+                  </span>
+                  <span>
+                    No. Pesanan: <strong>{order.orderNumber}</strong>
+                  </span>
                 </div>
               </div>
 
@@ -190,7 +205,9 @@ export function OrderPrintModal({
                   <p className="font-bold text-neutral-900 text-sm leading-tight">
                     {order.buyerName}
                   </p>
-                  <p className="font-mono text-neutral-700 text-xs">{order.buyerPhone}</p>
+                  <p className="font-mono text-neutral-700 text-xs">
+                    {order.buyerPhone}
+                  </p>
                   <p className="text-neutral-800 text-[11px] leading-relaxed">
                     {order.buyerAddress}
                   </p>
@@ -232,7 +249,8 @@ export function OrderPrintModal({
 
                 {order.notes && (
                   <p className="text-[11px] text-neutral-700 italic bg-amber-50/60 p-1.5 rounded border border-amber-200">
-                    <span className="font-bold not-italic">Catatan:</span> {order.notes}
+                    <span className="font-bold not-italic">Catatan:</span>{" "}
+                    {order.notes}
                   </p>
                 )}
               </div>
@@ -271,7 +289,10 @@ export function OrderPrintModal({
                   <span className="font-mono text-xs font-bold text-neutral-900 block">
                     INV-{order.orderNumber}
                   </span>
-                  <Badge variant="outline" className="mt-1 text-emerald-700 bg-emerald-50 border-emerald-300 text-[10px]">
+                  <Badge
+                    variant="outline"
+                    className="mt-1 text-emerald-700 bg-emerald-50 border-emerald-300 text-[10px]"
+                  >
                     LUNAS (ESCROW)
                   </Badge>
                 </div>
@@ -283,9 +304,15 @@ export function OrderPrintModal({
                   <span className="text-neutral-500 block text-[10px] uppercase font-bold">
                     Diterbitkan Untuk:
                   </span>
-                  <p className="font-bold text-neutral-900">{order.buyerName}</p>
-                  <p className="text-neutral-600 font-mono text-[11px]">{order.buyerPhone}</p>
-                  <p className="text-neutral-600 text-[11px]">{order.buyerAddress}, {order.buyerCity}</p>
+                  <p className="font-bold text-neutral-900">
+                    {order.buyerName}
+                  </p>
+                  <p className="text-neutral-600 font-mono text-[11px]">
+                    {order.buyerPhone}
+                  </p>
+                  <p className="text-neutral-600 text-[11px]">
+                    {order.buyerAddress}, {order.buyerCity}
+                  </p>
                 </div>
                 <div>
                   <span className="text-neutral-500 block text-[10px] uppercase font-bold">
@@ -295,10 +322,16 @@ export function OrderPrintModal({
                     {order.sellerName || "Mitra Roastery Biji Hub"}
                   </p>
                   <p className="text-neutral-500 text-[11px] mt-1">
-                    Tanggal: <strong className="text-neutral-700">{formattedDate}</strong>
+                    Tanggal:{" "}
+                    <strong className="text-neutral-700">
+                      {formattedDate}
+                    </strong>
                   </p>
                   <p className="text-neutral-500 text-[11px]">
-                    Kurir: <strong className="text-neutral-700">{order.shippingCourier || "-"}</strong>
+                    Kurir:{" "}
+                    <strong className="text-neutral-700">
+                      {order.shippingCourier || "-"}
+                    </strong>
                   </p>
                 </div>
               </div>
@@ -326,9 +359,15 @@ export function OrderPrintModal({
                           </span>
                         )}
                       </td>
-                      <td className="p-2.5 text-center font-mono">{order.quantity}</td>
-                      <td className="p-2.5 text-right font-mono">{formatRupiah(order.itemPrice)}</td>
-                      <td className="p-2.5 text-right font-mono font-medium">{formatRupiah(order.subtotal)}</td>
+                      <td className="p-2.5 text-center font-mono">
+                        {order.quantity}
+                      </td>
+                      <td className="p-2.5 text-right font-mono">
+                        {formatRupiah(order.itemPrice)}
+                      </td>
+                      <td className="p-2.5 text-right font-mono font-medium">
+                        {formatRupiah(order.subtotal)}
+                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -338,15 +377,21 @@ export function OrderPrintModal({
               <div className="space-y-1.5 pt-1 text-xs border-t border-neutral-100">
                 <div className="flex justify-between text-neutral-600">
                   <span>Subtotal Produk</span>
-                  <span className="font-mono text-neutral-900">{formatRupiah(order.subtotal)}</span>
+                  <span className="font-mono text-neutral-900">
+                    {formatRupiah(order.subtotal)}
+                  </span>
                 </div>
                 <div className="flex justify-between text-neutral-600">
                   <span>Ongkos Kirim ({order.shippingCourier || "Kurir"})</span>
-                  <span className="font-mono text-neutral-900">{formatRupiah(order.shippingCost)}</span>
+                  <span className="font-mono text-neutral-900">
+                    {formatRupiah(order.shippingCost)}
+                  </span>
                 </div>
                 <div className="flex justify-between text-neutral-600">
                   <span>Biaya Layanan Escrow Biji Hub</span>
-                  <span className="font-mono text-neutral-900">{formatRupiah(order.serviceFee)}</span>
+                  <span className="font-mono text-neutral-900">
+                    {formatRupiah(order.serviceFee)}
+                  </span>
                 </div>
                 <div className="flex justify-between items-baseline pt-2 border-t border-neutral-900 font-bold text-sm">
                   <span className="text-neutral-900">Total Pembayaran</span>
@@ -360,7 +405,9 @@ export function OrderPrintModal({
               <div className="p-2.5 bg-emerald-50 rounded border border-emerald-200 text-[10px] text-emerald-900 flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0" />
                 <span>
-                  Invoice ini sah dan diterbitkan otomatis oleh sistem Biji Hub. Pembayaran telah diverifikasi secara elektronik via Midtrans payment gateway.
+                  Invoice ini sah dan diterbitkan otomatis oleh sistem Biji Hub.
+                  Pembayaran telah diverifikasi secara elektronik via Midtrans
+                  payment gateway.
                 </span>
               </div>
             </div>

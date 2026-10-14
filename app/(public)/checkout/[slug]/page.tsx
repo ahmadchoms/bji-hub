@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { getListingBySlug } from "@/lib/data";
 import { PageContainer } from "@/components/layout/page-container";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
@@ -77,14 +78,27 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
     }
   }
 
-  // Fallback demo user if mock session active in dev
+  // Cookie fallback if stored locally
+  if (!userPhone || !userCity || !userAddress) {
+    try {
+      const cookieStore = await cookies();
+      const raw = cookieStore.get("biji-buyer-profile")?.value;
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        userName = userName || parsed.name || "";
+        userPhone = userPhone || parsed.phone || "";
+        userProvince = userProvince || parsed.province || "";
+        userCity = userCity || parsed.city || "";
+        userPostalCode = userPostalCode || parsed.postalCode || "";
+        userAddress = userAddress || parsed.address || "";
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   if (!userEmail) {
     userEmail = "pembeli@bijihub.com";
-    userName = userName || "Akbar Hakim";
-    userPhone = userPhone || "081298765432";
-    userCity = userCity || "Bandung";
-    userProvince = userProvince || "Jawa Barat";
-    userAddress = userAddress || "Jl. Riau No. 45, Citarum";
   }
 
   // 2. Profile Gating: Ensure essential order delivery data is completed

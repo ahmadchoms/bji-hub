@@ -408,10 +408,28 @@ export async function updateBuyerProfileAction(input: {
       if (error) {
         return fail(error.message || "Gagal memperbarui profil.");
       }
-      return ok({ success: true });
     } catch {
       // Fall through for mock
     }
+  }
+
+  try {
+    const store = await cookies();
+    store.set(
+      "biji-buyer-profile",
+      JSON.stringify({
+        name: input.name.trim(),
+        avatarUrl: input.avatarUrl?.trim() || null,
+        phone: input.phone?.trim() || null,
+        province: input.province?.trim() || null,
+        city: input.city?.trim() || null,
+        postalCode: input.postalCode?.trim() || null,
+        address: input.address?.trim() || null,
+      }),
+      { path: "/", httpOnly: true, maxAge: 60 * 60 * 24 * 7 },
+    );
+  } catch {
+    // ignore
   }
 
   return ok({ success: true });

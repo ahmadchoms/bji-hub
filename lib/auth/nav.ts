@@ -13,10 +13,6 @@ export interface NavModel {
 }
 
 const LINKS: NavItem[] = [{ label: "Paket Penjual", href: "/pricing" }];
-const BECOME_SELLER: NavItem = {
-  label: "Buka Toko",
-  href: "/open-store",
-};
 
 export function getNavModel(role: Role): NavModel {
   switch (role) {
@@ -24,7 +20,7 @@ export function getNavModel(role: Role): NavModel {
       return {
         links: LINKS,
         account: { label: "Dashboard", href: "/dashboard" },
-        cta: { label: "Jual Kopi", href: "/dashboard/listing" },
+        cta: { label: "Riwayat Pesanan", href: "/dashboard/orders" },
         canLogout: true,
       };
     case "admin":
@@ -38,14 +34,14 @@ export function getNavModel(role: Role): NavModel {
       return {
         links: LINKS,
         account: { label: "Akun Saya", href: "/profile" },
-        cta: BECOME_SELLER,
+        cta: { label: "Riwayat Pesanan", href: "/orders" },
         canLogout: true,
       };
     default:
       return {
         links: LINKS,
         account: { label: "Masuk", href: "/login" },
-        cta: BECOME_SELLER,
+        cta: null,
         canLogout: false,
       };
   }

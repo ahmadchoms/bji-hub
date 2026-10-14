@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { addToCart, type CartItem } from "@/lib/cart";
 import { ShoppingCart, Check } from "lucide-react";
-import { toast } from "sonner";
 
 interface AddToCartButtonProps {
   item: Omit<CartItem, "quantity"> & { quantity?: number };
@@ -35,7 +34,6 @@ export function AddToCartButton({
     });
 
     setAdded(true);
-    toast.success(`"${item.title}" ditambahkan ke keranjang belanja`);
     setTimeout(() => setAdded(false), 2000);
   };
 

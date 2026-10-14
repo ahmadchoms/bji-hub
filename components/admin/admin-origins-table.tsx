@@ -69,7 +69,7 @@ export function AdminOriginsTable({ origins: initialOrigins }: AdminOriginsTable
   const handleToggle = (id: string) => {
     startTransition(async () => {
       const res = await toggleCoffeeOriginAction(id);
-      if (res.success && res.data) {
+      if (res.success) {
         setOrigins((prev) =>
           prev.map((item) => (item.id === id ? { ...item, isActive: res.data.isActive } : item))
         );
@@ -97,7 +97,7 @@ export function AdminOriginsTable({ origins: initialOrigins }: AdminOriginsTable
         description: formDesc.trim() || undefined,
       });
 
-      if (res.success && res.data) {
+      if (res.success) {
         setOrigins((prev) => [res.data, ...prev]);
         toast.success(`Wilayah ${res.data.name} berhasil ditambahkan!`);
         setIsOpenAdd(false);

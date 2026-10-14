@@ -52,6 +52,7 @@ export function toSeller(row: SellerRow): SellerProfile {
 }
 
 export function toTaste(row: TasteRow): TasteProfile {
+  const r = row as TasteRow & { cropYear?: string | null; moistureContent?: Decimalish | null };
   return {
     id: row.id,
     listingId: row.listingId,
@@ -64,8 +65,8 @@ export function toTaste(row: TasteRow): TasteProfile {
     sweetnessScore: numOrUndef(row.sweetnessScore),
     aromaScore: numOrUndef(row.aromaScore),
     aftertasteScore: numOrUndef(row.aftertasteScore),
-    cropYear: (row as any).cropYear ?? undefined,
-    moistureContent: (row as any).moistureContent ? num((row as any).moistureContent) : undefined,
+    cropYear: r.cropYear ?? undefined,
+    moistureContent: r.moistureContent ? num(r.moistureContent) : undefined,
     roastDate: iso(row.roastDate),
   };
 }

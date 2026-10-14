@@ -206,7 +206,7 @@ export async function getCoffeeOrigins(options?: {
     try {
       await ensureOriginsTable(pool);
       let query = `SELECT id, name, country, island_or_state, min_altitude, max_altitude, description, is_active, created_at FROM public.coffee_origins WHERE 1=1`;
-      const params: any[] = [];
+      const params: (string | boolean | number)[] = [];
 
       if (options?.activeOnly) {
         params.push(true);

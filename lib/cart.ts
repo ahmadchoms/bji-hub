@@ -30,6 +30,7 @@ export function getStoredCart(): CartItem[] {
 }
 
 function saveCart(items: CartItem[]): void {
+  memoryCart = items;
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
@@ -76,7 +77,12 @@ export function clearCart(): void {
 }
 
 // React hook for components
-let memoryCart: CartItem[] = [];
+const EMPTY_CART: CartItem[] = [];
+let memoryCart: CartItem[] = EMPTY_CART;
+
+if (typeof window !== "undefined") {
+  memoryCart = getStoredCart();
+}
 
 function subscribe(callback: () => void) {
   if (typeof window === "undefined") return () => {};
@@ -92,15 +98,15 @@ function subscribe(callback: () => void) {
   };
 }
 
+const getClientSnapshot = (): CartItem[] => memoryCart;
+const getServerSnapshot = (): CartItem[] => EMPTY_CART;
+
 export function useCart() {
   const [isClient, setIsClient] = useState(false);
   const items = useSyncExternalStore(
     subscribe,
-    () => {
-      memoryCart = getStoredCart();
-      return memoryCart;
-    },
-    () => [],
+    getClientSnapshot,
+    getServerSnapshot,
   );
 
   useEffect(() => {

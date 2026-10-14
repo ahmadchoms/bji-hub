@@ -39,4 +39,10 @@ describe("reviews data and stats", () => {
     expect(stats.average).toBe(4.3);
     expect(stats.count).toBe(3);
   });
+
+  it("handles getReviewsByListingIds with empty list", async () => {
+    const { getReviewsByListingIds } = await import("@/lib/data/reviews");
+    const res = await getReviewsByListingIds([]);
+    expect(res).toEqual([]);
+  });
 });

@@ -70,10 +70,11 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
       return;
     }
 
+    const targetOrder = orders.find((o) => o.id === orderId);
+
     startTransition(async () => {
       const res = await updateShipmentTrackingAction(orderId, resi);
       if (res.success) {
-        toast.success("Nomor resi berhasil disimpan. Status pesanan diubah ke 'Dikirim'.");
         setOrders((prev) =>
           prev.map((o) =>
             o.id === orderId
@@ -81,6 +82,31 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
               : o,
           ),
         );
+
+        if (targetOrder?.buyerPhone) {
+          const waUrl = buildShipmentNotificationUrl({
+            buyerPhone: targetOrder.buyerPhone,
+            buyerName: targetOrder.buyerName,
+            sellerName: targetOrder.sellerName || "Roastery",
+            orderNumber: targetOrder.orderNumber,
+            listingTitle: targetOrder.listingTitle || "Biji Kopi",
+            courier: targetOrder.shippingCourier || "Ekspedisi",
+            trackingNumber: resi,
+          });
+
+          toast.success("Nomor resi disimpan. Pesanan beralih ke 'Dikirim'.", {
+            description: `Beri tahu ${targetOrder.buyerName} via WhatsApp bahwa paket telah dikirim?`,
+            duration: 8000,
+            action: {
+              label: "Kirim WA",
+              onClick: () => {
+                window.open(waUrl, "_blank", "noopener,noreferrer");
+              },
+            },
+          });
+        } else {
+          toast.success("Nomor resi berhasil disimpan. Status pesanan diubah ke 'Dikirim'.");
+        }
       } else {
         toast.error(res.error || "Gagal memperbarui nomor resi");
       }

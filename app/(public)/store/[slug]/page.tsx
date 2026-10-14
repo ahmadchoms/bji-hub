@@ -12,8 +12,10 @@ import {
   ShieldCheck,
   Handshake,
   MessageCircle,
+  Star,
 } from "lucide-react";
 import { getSellerBySlug } from "@/lib/data";
+import { getReviewsByListingIds, computeReviewStats } from "@/lib/data/reviews";
 import { PageContainer } from "@/components/layout/page-container";
 import { ListingGrid } from "@/components/catalog/listing-grid";
 import { VerifiedBadge } from "@/components/shared/verified-badge";
@@ -72,6 +74,10 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
   if (!seller) {
     notFound();
   }
+
+  const listingIds = seller.listings.map((l) => l.id);
+  const reviews = await getReviewsByListingIds(listingIds);
+  const reviewStats = computeReviewStats(reviews);
 
   const cleanPhone = sanitizeWhatsApp(seller.whatsappNumber);
   const waMessage = encodeURIComponent(
@@ -165,6 +171,20 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
                         locale: id,
                       })}
                     </span>
+                    <span className="text-neutral-300">•</span>
+                    {reviewStats.count > 0 ? (
+                      <span className="inline-flex items-center gap-1 font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                        <Star className="w-3 h-3 fill-amber-400 text-amber-500" />
+                        {reviewStats.average}{" "}
+                        <span className="text-neutral-500 font-normal">
+                          ({reviewStats.count} ulasan)
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-neutral-400">
+                        <Star className="w-3 h-3 text-neutral-300" /> Toko Baru
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -205,6 +225,25 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
 
               <div className="space-y-1">
                 <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
+                  <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
+                  Rating Toko
+                </div>
+                <p className="font-mono text-xl font-bold text-neutral-900 tabular-nums">
+                  {reviewStats.count > 0 ? (
+                    <>
+                      {reviewStats.average}{" "}
+                      <span className="text-xs font-normal text-neutral-500">
+                        / 5 ({reviewStats.count})
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-sm font-normal text-neutral-400">Belum ada</span>
+                  )}
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
                   <ShieldCheck className="w-3.5 h-3.5 text-neutral-400" />
                   Status
                 </div>
@@ -220,16 +259,6 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
                 </div>
                 <p className="text-sm font-medium text-neutral-900 capitalize">
                   {seller.tier}
-                </p>
-              </div>
-
-              <div className="space-y-1">
-                <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
-                  <MessageCircle className="w-3.5 h-3.5 text-neutral-400" />
-                  Transaksi
-                </div>
-                <p className="text-sm font-medium text-neutral-900">
-                  Direct Trade via WhatsApp
                 </p>
               </div>
             </div>
@@ -251,6 +280,67 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
             emptyTitle="Belum ada listing aktif"
             emptyDescription="Hubungi penjual langsung via WhatsApp untuk menanyakan ketersediaan produk."
           />
+        </div>
+
+        {/* Section Ulasan & Penilaian Pembeli */}
+        <div className="space-y-4 pt-4 border-t border-neutral-200">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-neutral-200">
+            <div className="flex items-center gap-2">
+              <Star className="w-4 h-4 fill-amber-400 text-amber-500" />
+              <h2 className="text-lg font-bold text-neutral-900">
+                Ulasan Pembeli ({reviewStats.count})
+              </h2>
+            </div>
+            {reviewStats.count > 0 ? (
+              <span className="text-xs font-medium text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+                ★ {reviewStats.average} / 5.0 dari {reviewStats.count} ulasan terverifikasi
+              </span>
+            ) : (
+              <span className="text-xs text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded">
+                Belum ada ulasan
+              </span>
+            )}
+          </div>
+
+          {reviews.length === 0 ? (
+            <div className="p-6 bg-neutral-50 border border-neutral-200 rounded-lg text-center space-y-1 text-xs text-neutral-500">
+              <p className="font-medium text-neutral-700">Belum ada ulasan untuk toko ini.</p>
+              <p>Transaksi dilindungi escrow Biji Hub. Ulasan akan muncul setelah pembeli menyelesaikan pesanan!</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {reviews.map((rev) => (
+                <div
+                  key={rev.id}
+                  className="p-4 bg-white border border-neutral-200 rounded-lg space-y-2 shadow-xs text-xs"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-neutral-900">{rev.buyerName}</span>
+                    <div className="flex items-center gap-0.5">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-3 h-3 ${
+                            i < rev.rating
+                              ? "fill-amber-400 text-amber-400"
+                              : "text-neutral-200 fill-neutral-100"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  {rev.comment && (
+                    <p className="text-neutral-700 leading-relaxed italic">
+                      &ldquo;{rev.comment}&rdquo;
+                    </p>
+                  )}
+                  <p className="text-[10px] text-neutral-400 font-mono">
+                    {format(new Date(rev.createdAt), "d MMMM yyyy", { locale: id })}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </PageContainer>
     </div>

@@ -95,6 +95,37 @@ export async function getReviewsByListing(listingId: string): Promise<Review[]> 
   return mockReviews.filter((r) => r.listingId === listingId);
 }
 
+export async function getReviewsByListingIds(listingIds: string[]): Promise<Review[]> {
+  if (listingIds.length === 0) return [];
+  const pool = getPool();
+  if (pool) {
+    try {
+      const res = await pool.query(
+        `SELECT * FROM public.reviews
+         WHERE listing_id = ANY($1)
+         ORDER BY created_at DESC`,
+        [listingIds],
+      );
+      return res.rows.map((row) => ({
+        id: row.id,
+        orderId: row.order_id,
+        listingId: row.listing_id,
+        buyerId: row.buyer_id,
+        buyerName: row.buyer_name,
+        rating: Number(row.rating),
+        comment: row.comment,
+        imageUrl: row.image_url ?? null,
+        createdAt: row.created_at,
+      }));
+    } catch {
+      // Fall through
+    }
+  }
+
+  const idSet = new Set(listingIds);
+  return mockReviews.filter((r) => idSet.has(r.listingId));
+}
+
 export function computeReviewStats(reviews: Review[]): {
   average: number;
   count: number;

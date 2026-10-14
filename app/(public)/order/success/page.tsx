@@ -21,6 +21,7 @@ import { OrderDisputeModal } from "@/components/order/order-dispute-modal";
 import { OrderReviewModal } from "@/components/order/order-review-modal";
 import { ShipmentTrackingModal } from "@/components/order/shipment-tracking-modal";
 import { OrderPrintModal } from "@/components/order/order-print-modal";
+import { OrderStatusStepper } from "@/components/order/order-status-stepper";
 import { buildOrderPaidNotificationUrl } from "@/lib/notifications";
 
 export const metadata: Metadata = {
@@ -116,6 +117,10 @@ export default async function OrderSuccessPage({
               : order.status === "disputed"
                 ? "Dana Escrow Ditahan Sementara (Sedang Dimediasi)"
                 : "Garansi Escrow Biji Hub Aktif (Dana Aman Terlindungi)"}
+          </div>
+
+          <div className="pt-3 pb-1 px-1 sm:px-6">
+            <OrderStatusStepper status={order.status} />
           </div>
 
           <p className="text-xs text-neutral-500 max-w-md mx-auto">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -14,6 +14,9 @@ import {
   Lock,
   MapPin,
   ExternalLink,
+  Edit2,
+  Check,
+  Package,
 } from "lucide-react";
 import { ListingWithRelations } from "@/types";
 import { formatRupiah } from "@/components/shared/price-text";
@@ -23,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { calculateShippingRates, ShippingRate } from "@/lib/shipping";
 import { createCheckoutOrderAction } from "@/actions/order.actions";
+import { useCart } from "@/lib/cart";
 import { cn } from "@/lib/utils";
 
 interface CheckoutFormProps {
@@ -40,14 +44,30 @@ interface CheckoutFormProps {
 
 export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
+  const isCart = searchParams.get("cart") === "1";
+  const { items: cartItems, removeFromCart } = useCart();
+
+  // Multi-item cart detection
+  const sellerCartItems = isCart
+    ? cartItems.filter((item) => item.sellerId === listing.sellerId)
+    : [];
+  const activeItems = sellerCartItems.length > 0 ? sellerCartItems : null;
+
   const [quantity, setQuantity] = useState<number>(listing.minOrderQty || 1);
-  const buyerName = initialBuyer.name;
-  const buyerEmail = initialBuyer.email;
-  const buyerPhone = initialBuyer.phone;
-  const buyerCity = initialBuyer.city || "";
-  const buyerAddress = initialBuyer.address;
+
+  // Editable recipient / shipping address state
+  const [buyerName, setBuyerName] = useState(initialBuyer.name);
+  const [buyerEmail] = useState(initialBuyer.email);
+  const [buyerPhone, setBuyerPhone] = useState(initialBuyer.phone);
+  const [buyerCity, setBuyerCity] = useState(initialBuyer.city || "");
+  const [buyerProvince, setBuyerProvince] = useState(initialBuyer.province || "");
+  const [buyerPostalCode, setBuyerPostalCode] = useState(initialBuyer.postalCode || "");
+  const [buyerAddress, setBuyerAddress] = useState(initialBuyer.address);
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
+
   const [notes, setNotes] = useState("");
 
   const [shippingRates, setShippingRates] = useState<ShippingRate[]>([]);
@@ -57,8 +77,16 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
   const selectedCourier =
     shippingRates.find((r) => r.id === selectedCourierId) || null;
 
-  const itemPrice = Number(listing.price);
-  const subtotal = itemPrice * quantity;
+  // Compute active totals and weight
+  const activeQuantity = activeItems
+    ? activeItems.reduce((acc, i) => acc + i.quantity, 0)
+    : quantity;
+
+  const subtotal = activeItems
+    ? activeItems.reduce((acc, i) => acc + i.price * i.quantity, 0)
+    : Number(listing.price) * quantity;
+
+  const totalWeightGrams = Math.max(1000, activeQuantity * 1000);
   const shippingCost = selectedCourier?.cost || 0;
   const serviceFee = 1500;
   const totalAmount = subtotal + shippingCost + serviceFee;
@@ -81,7 +109,7 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
           originCity: listing.seller.city,
           originProvince: listing.seller.province,
           destinationCity: cleanCity,
-          weightGrams: quantity * 1000,
+          weightGrams: totalWeightGrams,
         });
         if (!canceled) {
           setShippingRates(rates);
@@ -102,7 +130,7 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
       canceled = true;
       clearTimeout(timer);
     };
-  }, [quantity, buyerCity, listing.seller.city, listing.seller.province]);
+  }, [totalWeightGrams, buyerCity, listing.seller.city, listing.seller.province]);
 
   const handlePay = () => {
     if (!buyerName.trim()) {
@@ -130,7 +158,7 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
       try {
         const res = await createCheckoutOrderAction({
           listingId: listing.id,
-          quantity,
+          quantity: activeQuantity,
           buyerName,
           buyerEmail: buyerEmail || "buyer@bijihub.com",
           buyerPhone,
@@ -139,11 +167,24 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
           shippingCourier: `${selectedCourier.courierName} ${selectedCourier.service}`,
           shippingCost,
           notes,
+          ...(activeItems && activeItems.length > 0
+            ? {
+                items: activeItems.map((i) => ({
+                  listingId: i.listingId,
+                  quantity: i.quantity,
+                })),
+              }
+            : {}),
         });
 
         if (!res.success) {
           toast.error("Gagal memproses pesanan", { description: res.error });
           return;
+        }
+
+        // Clean items from cart if checkout came from cart
+        if (activeItems && activeItems.length > 0) {
+          activeItems.forEach((i) => removeFromCart(i.listingId));
         }
 
         const { snapToken, orderNumber } = res.data;
@@ -187,102 +228,263 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-5xl mx-auto">
       {/* Kolom Kiri: Formulir Pengiriman & Produk */}
       <div className="lg:col-span-7 space-y-6">
-        <Link
-          href={`/product/${listing.slug}`}
-          className="inline-flex items-center gap-1.5 text-xs text-neutral-600 hover:text-primary-700 transition-colors font-medium"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" /> Kembali ke Detail Produk
-        </Link>
-
-        {/* Ringkasan Produk */}
-        <div className="border border-neutral-300 bg-surface-base rounded-sm p-5 space-y-4">
-          <div className="flex gap-4">
-            <div className="w-16 h-16 rounded-sm bg-neutral-100 relative overflow-hidden shrink-0 border border-neutral-200">
-              {firstImage && (
-                <Image
-                  src={firstImage}
-                  alt={listing.title}
-                  fill
-                  className="object-cover"
-                />
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider">
-                {listing.category.name}
-              </span>
-              <h2 className="font-medium text-sm text-neutral-900 truncate">
-                {listing.title}
-              </h2>
-              <p className="text-xs text-neutral-600 mt-0.5">
-                Toko: <span className="font-semibold text-neutral-800">{listing.seller.businessName}</span> ({listing.seller.city})
-              </p>
-              <p className="text-sm font-mono tabular-nums font-bold text-primary-900 mt-1">
-                {formatRupiah(listing.price)} / {listing.unit}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between pt-3 border-t border-neutral-200 text-xs">
-            <span className="text-neutral-600">Jumlah Pesanan ({listing.unit}):</span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setQuantity((q) => Math.max(listing.minOrderQty, q - 1))}
-                disabled={quantity <= listing.minOrderQty}
-                className="w-7 h-7 rounded border border-neutral-300 flex items-center justify-center text-neutral-700 hover:bg-neutral-100 disabled:opacity-40"
-              >
-                <Minus className="w-3 h-3" />
-              </button>
-              <span className="font-mono tabular-nums font-bold text-neutral-900 px-2 min-w-8 text-center">
-                {quantity}
-              </span>
-              <button
-                type="button"
-                onClick={() => setQuantity((q) => q + 1)}
-                className="w-7 h-7 rounded border border-neutral-300 flex items-center justify-center text-neutral-700 hover:bg-neutral-100"
-              >
-                <Plus className="w-3 h-3" />
-              </button>
-            </div>
-          </div>
+        <div className="flex items-center justify-between">
+          <Link
+            href={activeItems ? "/cart" : `/product/${listing.slug}`}
+            className="inline-flex items-center gap-1.5 text-xs text-neutral-600 hover:text-primary-700 transition-colors font-medium"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            {activeItems ? "Kembali ke Keranjang Belanja" : "Kembali ke Detail Produk"}
+          </Link>
+          {activeItems && (
+            <span className="text-xs bg-primary-50 text-primary-800 font-medium px-2 py-0.5 rounded border border-primary-200">
+              Checkout Keranjang ({activeItems.length} Produk)
+            </span>
+          )}
         </div>
 
-        {/* Alamat Pengiriman Tersimpan (Checking Data) */}
-        <div className="border border-neutral-300 bg-surface-base rounded-sm p-5 space-y-3">
+        {/* Ringkasan Produk (Multi-Item atau Single Item) */}
+        <div className="border border-neutral-300 bg-surface-base rounded-sm p-5 space-y-4">
+          <div className="border-b border-neutral-200 pb-2 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-neutral-500">Dikirim dari:</p>
+              <h2 className="text-sm font-bold text-neutral-900">
+                {listing.seller.businessName} ({listing.seller.city})
+              </h2>
+            </div>
+            <span className="text-[11px] font-mono text-neutral-500">
+              Est. Bobot: {Math.round(totalWeightGrams / 1000)} kg
+            </span>
+          </div>
+
+          {activeItems && activeItems.length > 0 ? (
+            <div className="divide-y divide-neutral-100">
+              {activeItems.map((item) => (
+                <div
+                  key={item.listingId}
+                  className="py-3 first:pt-0 last:pb-0 flex items-center justify-between gap-3 text-xs"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-12 h-12 rounded bg-neutral-100 relative overflow-hidden shrink-0 border border-neutral-200 flex items-center justify-center text-neutral-400">
+                      {item.imageUrl ? (
+                        <Image
+                          src={item.imageUrl}
+                          alt={item.title}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      ) : (
+                        <Package className="w-4 h-4" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-neutral-900 truncate">
+                        {item.title}
+                      </p>
+                      <p className="text-neutral-500 text-[11px] mt-0.5">
+                        {formatRupiah(item.price)} × {item.quantity} {item.unit}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="font-mono font-bold text-neutral-900">
+                      {formatRupiah(item.price * item.quantity)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              <div className="flex gap-4">
+                <div className="w-16 h-16 rounded-sm bg-neutral-100 relative overflow-hidden shrink-0 border border-neutral-200">
+                  {firstImage && (
+                    <Image
+                      src={firstImage}
+                      alt={listing.title}
+                      fill
+                      className="object-cover"
+                    />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider">
+                    {listing.category.name}
+                  </span>
+                  <h2 className="font-medium text-sm text-neutral-900 truncate">
+                    {listing.title}
+                  </h2>
+                  <p className="text-sm font-mono tabular-nums font-bold text-primary-900 mt-1">
+                    {formatRupiah(listing.price)} / {listing.unit}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-3 border-t border-neutral-200 text-xs">
+                <span className="text-neutral-600">Jumlah Pesanan ({listing.unit}):</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((q) => Math.max(listing.minOrderQty, q - 1))}
+                    disabled={quantity <= listing.minOrderQty}
+                    className="w-7 h-7 rounded border border-neutral-300 flex items-center justify-center text-neutral-700 hover:bg-neutral-100 disabled:opacity-40"
+                  >
+                    <Minus className="w-3 h-3" />
+                  </button>
+                  <span className="font-mono tabular-nums font-bold text-neutral-900 px-2 min-w-8 text-center">
+                    {quantity}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((q) => q + 1)}
+                    className="w-7 h-7 rounded border border-neutral-300 flex items-center justify-center text-neutral-700 hover:bg-neutral-100"
+                  >
+                    <Plus className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Alamat Pengiriman Tersimpan & Quick Switcher / Inline Editor */}
+        <div className="border border-neutral-300 bg-surface-base rounded-sm p-5 space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-neutral-200">
             <h3 className="font-display text-base font-semibold text-neutral-900 flex items-center gap-2">
               <MapPin className="w-4 h-4 text-primary-600" /> Alamat Pengiriman Penerima
             </h3>
-            <Link
-              href={`/profile?next=${encodeURIComponent(`/checkout/${listing.slug}`)}`}
-              className="text-xs font-semibold text-primary-700 hover:text-primary-800 hover:underline flex items-center gap-1"
-            >
-              Ubah Alamat <ExternalLink className="w-3 h-3" />
-            </Link>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setIsEditingAddress((prev) => !prev)}
+                className="text-xs font-semibold text-primary-700 hover:text-primary-800 flex items-center gap-1 cursor-pointer"
+              >
+                <Edit2 className="w-3 h-3" />
+                {isEditingAddress ? "Tutup Editor" : "Ubah Alamat"}
+              </button>
+              <Link
+                href={`/profile?next=${encodeURIComponent(
+                  activeItems
+                    ? `/checkout/${listing.slug}?cart=1&sellerId=${listing.sellerId}`
+                    : `/checkout/${listing.slug}`,
+                )}`}
+                className="text-xs text-neutral-500 hover:text-neutral-700 flex items-center gap-1"
+                title="Kelola profil akun"
+              >
+                <ExternalLink className="w-3 h-3" />
+              </Link>
+            </div>
           </div>
 
-          <div className="text-xs space-y-1.5 text-neutral-700">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-sm text-neutral-900">
-                {buyerName}
-              </span>
-              <span className="font-mono text-neutral-500 font-normal">
-                • {buyerPhone}
-              </span>
+          {isEditingAddress ? (
+            <div className="bg-neutral-50/70 border border-neutral-200 rounded p-4 space-y-3 text-xs">
+              <div className="flex items-center justify-between text-[11px] text-neutral-600 pb-1 border-b border-neutral-200">
+                <span className="font-semibold text-neutral-800">
+                  Edit Alamat untuk Pesanan Ini
+                </span>
+                <span className="text-primary-700">
+                  Perubahan kota otomatis memperbarui ongkir
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <FormField label="Nama Penerima">
+                  <Input
+                    value={buyerName}
+                    onChange={(e) => setBuyerName(e.target.value)}
+                    placeholder="Nama lengkap penerima"
+                    className="text-xs h-9 bg-white"
+                  />
+                </FormField>
+                <FormField label="No. WhatsApp / HP">
+                  <Input
+                    value={buyerPhone}
+                    onChange={(e) => setBuyerPhone(e.target.value)}
+                    placeholder="08xxxxxxxxxx"
+                    className="text-xs h-9 bg-white"
+                  />
+                </FormField>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <FormField label="Kota / Kabupaten Tujuan">
+                  <Input
+                    value={buyerCity}
+                    onChange={(e) => setBuyerCity(e.target.value)}
+                    placeholder="Contoh: Bandung, Surabaya, Jakarta Selatan"
+                    className="text-xs h-9 bg-white"
+                  />
+                </FormField>
+                <FormField label="Provinsi & Kode Pos (Opsional)">
+                  <div className="flex gap-2">
+                    <Input
+                      value={buyerProvince}
+                      onChange={(e) => setBuyerProvince(e.target.value)}
+                      placeholder="Provinsi"
+                      className="text-xs h-9 bg-white flex-1"
+                    />
+                    <Input
+                      value={buyerPostalCode}
+                      onChange={(e) => setBuyerPostalCode(e.target.value)}
+                      placeholder="Kodepos"
+                      className="text-xs h-9 bg-white w-24"
+                    />
+                  </div>
+                </FormField>
+              </div>
+
+              <FormField label="Alamat Lengkap & Patokan">
+                <Input
+                  value={buyerAddress}
+                  onChange={(e) => setBuyerAddress(e.target.value)}
+                  placeholder="Nama jalan, nomor rumah, RT/RW, kelurahan, kecamatan"
+                  className="text-xs h-9 bg-white"
+                />
+              </FormField>
+
+              <div className="pt-1 flex justify-end">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="primary"
+                  onClick={() => {
+                    if (!buyerCity.trim() || !buyerAddress.trim() || !buyerName.trim()) {
+                      toast.error("Nama, kota, dan alamat lengkap wajib diisi");
+                      return;
+                    }
+                    setIsEditingAddress(false);
+                    toast.success("Alamat pengiriman diperbarui");
+                  }}
+                  className="text-xs h-8 gap-1.5"
+                >
+                  <Check className="w-3.5 h-3.5" /> Gunakan Alamat Ini
+                </Button>
+              </div>
             </div>
-            <p className="leading-relaxed text-neutral-800">
-              {buyerAddress}
-            </p>
-            <p className="text-neutral-600 font-medium">
-              {buyerCity}
-              {initialBuyer.province ? `, ${initialBuyer.province}` : ""}
-              {initialBuyer.postalCode ? ` (${initialBuyer.postalCode})` : ""}
-            </p>
-            <p className="text-neutral-500 text-[11px] font-mono pt-1">
-              Konfirmasi transaksi dikirim ke: {buyerEmail}
-            </p>
-          </div>
+          ) : (
+            <div className="text-xs space-y-1.5 text-neutral-700">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-sm text-neutral-900">
+                  {buyerName}
+                </span>
+                <span className="font-mono text-neutral-500 font-normal">
+                  • {buyerPhone}
+                </span>
+              </div>
+              <p className="leading-relaxed text-neutral-800">
+                {buyerAddress}
+              </p>
+              <p className="text-neutral-600 font-medium">
+                {buyerCity}
+                {buyerProvince ? `, ${buyerProvince}` : ""}
+                {buyerPostalCode ? ` (${buyerPostalCode})` : ""}
+              </p>
+              <p className="text-neutral-500 text-[11px] font-mono pt-1">
+                Konfirmasi transaksi dikirim ke: {buyerEmail}
+              </p>
+            </div>
+          )}
 
           <div className="pt-2 border-t border-neutral-100">
             <FormField label="Catatan Tambahan untuk Penjual (Opsional)">
@@ -380,7 +582,9 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
 
           <div className="space-y-2.5 text-xs text-neutral-700">
             <div className="flex justify-between">
-              <span>Subtotal Produk ({quantity} {listing.unit}):</span>
+              <span>
+                Subtotal Produk ({activeItems ? `${activeQuantity} item` : `${quantity} ${listing.unit}`}):
+              </span>
               <span className="font-mono tabular-nums font-medium text-neutral-900">
                 {formatRupiah(subtotal)}
               </span>

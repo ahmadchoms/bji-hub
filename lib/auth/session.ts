@@ -18,7 +18,12 @@ const MOCK_SELLER_ID = "seller-1";
  * Supports Supabase Auth when cookies exist, with graceful fallback to mock session.
  */
 export async function getSession(): Promise<Session> {
-  const store = await cookies();
+  let store: Awaited<ReturnType<typeof cookies>>;
+  try {
+    store = await cookies();
+  } catch {
+    return GUEST_SESSION;
+  }
 
   // 1. Check Supabase Auth session first
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {

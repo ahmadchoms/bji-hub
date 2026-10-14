@@ -15,6 +15,32 @@ export default async function DashboardListingPage() {
     return <p className="text-neutral-500">Data seller tidak ditemukan.</p>;
   }
 
+  const formattedListingCsvData = seller.listings.map((l) => ({
+    title: l.title,
+    category: l.category.name,
+    price: Number(l.price),
+    unit: l.unit,
+    stock: l.stock ?? 50,
+    status: l.status,
+    origin: l.tasteProfile?.originRegion || "-",
+    process: l.tasteProfile?.processMethod || "-",
+    roast: l.tasteProfile?.roastLevel || "-",
+    cupping: l.tasteProfile?.cuppingScore || "-",
+  }));
+
+  const listingCsvColumns = [
+    { key: "title" as const, label: "Judul Produk" },
+    { key: "category" as const, label: "Kategori" },
+    { key: "price" as const, label: "Harga" },
+    { key: "unit" as const, label: "Satuan" },
+    { key: "stock" as const, label: "Sisa Stok" },
+    { key: "status" as const, label: "Status" },
+    { key: "origin" as const, label: "Origin" },
+    { key: "process" as const, label: "Proses" },
+    { key: "roast" as const, label: "Roast" },
+    { key: "cupping" as const, label: "Skor SCA" },
+  ];
+
   return (
     <div className="space-y-6">
       <SectionHeader
@@ -23,19 +49,8 @@ export default async function DashboardListingPage() {
         action={
           <div className="flex items-center gap-2">
             <ExportCsvButton
-              data={seller.listings}
-              columns={[
-                { key: "title", label: "Judul Produk" },
-                { key: "category", label: "Kategori", format: (_, l) => l.category.name },
-                { key: "price", label: "Harga", format: (v) => Number(v) },
-                { key: "unit", label: "Satuan" },
-                { key: "stock", label: "Sisa Stok", format: (_, l) => l.stock ?? 50 },
-                { key: "status", label: "Status" },
-                { key: "origin", label: "Origin", format: (_, l) => l.tasteProfile?.originRegion || "-" },
-                { key: "process", label: "Proses", format: (_, l) => l.tasteProfile?.processMethod || "-" },
-                { key: "roast", label: "Roast", format: (_, l) => l.tasteProfile?.roastLevel || "-" },
-                { key: "cupping", label: "Skor SCA", format: (_, l) => l.tasteProfile?.cuppingScore || "-" },
-              ]}
+              data={formattedListingCsvData}
+              columns={listingCsvColumns}
               filename={`inventaris-kopi-${seller.slug}.csv`}
             />
             <Link

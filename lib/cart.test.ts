@@ -121,4 +121,50 @@ describe("shopping cart helpers", () => {
     clearCart();
     expect(getStoredCart().length).toBe(0);
   });
+
+  it("handles items from multiple sellers correctly", () => {
+    addToCart({
+      listingId: "item-1",
+      slug: "gayo",
+      title: "Gayo",
+      price: 100000,
+      unit: "kg",
+      minOrderQty: 1,
+      quantity: 2,
+      sellerId: "seller-1",
+      sellerName: "Gayo Roastery",
+      sellerCity: "Takengon",
+    });
+    addToCart({
+      listingId: "item-2",
+      slug: "gayo-peaberry",
+      title: "Gayo Peaberry",
+      price: 120000,
+      unit: "kg",
+      minOrderQty: 1,
+      quantity: 1,
+      sellerId: "seller-1",
+      sellerName: "Gayo Roastery",
+      sellerCity: "Takengon",
+    });
+    addToCart({
+      listingId: "item-3",
+      slug: "bali-kintamani",
+      title: "Bali Kintamani",
+      price: 110000,
+      unit: "kg",
+      minOrderQty: 1,
+      quantity: 3,
+      sellerId: "seller-2",
+      sellerName: "Bali Farm",
+      sellerCity: "Bangli",
+    });
+
+    const items = getStoredCart();
+    expect(items.length).toBe(3);
+
+    const seller1Items = items.filter((i) => i.sellerId === "seller-1");
+    expect(seller1Items.length).toBe(2);
+    expect(seller1Items.reduce((sum, i) => sum + i.quantity, 0)).toBe(3);
+  });
 });

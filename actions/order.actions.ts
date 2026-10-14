@@ -16,6 +16,11 @@ import { getSession, requireRole } from "@/lib/auth/session";
 import { trackShipmentWaybill, type WaybillTrackingResult } from "@/lib/shipping";
 import { sendOrderPaidEmail, sendOrderShippedEmail } from "@/lib/email";
 
+const checkoutItemSchema = z.object({
+  listingId: z.string().min(1, "ID produk wajib diisi"),
+  quantity: z.number().int().min(1, "Jumlah produk minimal 1"),
+});
+
 const checkoutSchema = z.object({
   listingId: z.string().min(1, "Produk wajib dipilih"),
   quantity: z.number().int().min(1, "Jumlah pesanan minimal 1"),
@@ -26,7 +31,8 @@ const checkoutSchema = z.object({
   buyerCity: z.string().min(2, "Kota pengiriman wajib diisi"),
   shippingCourier: z.string().min(1, "Kurir pengiriman wajib dipilih"),
   shippingCost: z.number().min(0, "Ongkos kirim tidak valid"),
-  notes: z.string().max(300).optional(),
+  notes: z.string().max(500).optional(),
+  items: z.array(checkoutItemSchema).optional(),
 });
 
 export type CheckoutFormValues = z.infer<typeof checkoutSchema>;
@@ -60,26 +66,61 @@ export async function createCheckoutOrderAction(
     shippingCourier,
     shippingCost,
     notes,
+    items,
   } = parsed.data;
 
-  // 1. Fetch listing details
+  // 1. Fetch primary listing details
   const listing =
     (await getListingById(listingId)) || (await getListingBySlug(listingId));
   if (!listing) {
     return fail("Produk tidak ditemukan atau sudah tidak tersedia");
   }
 
-  if (quantity < listing.minOrderQty) {
-    return fail(
-      `Minimal pemesanan untuk produk ini adalah ${listing.minOrderQty} ${listing.unit}`,
-    );
+  // 2. Compute items breakdown (multi-item vs single item)
+  let subtotal = 0;
+  let totalQuantity = quantity;
+  let itemPrice = Number(listing.price);
+  let multiItemSummary = "";
+
+  if (items && items.length > 0) {
+    let computedSubtotal = 0;
+    let computedTotalQty = 0;
+    const summaryList: string[] = [];
+
+    for (const item of items) {
+      const itemListing =
+        (await getListingById(item.listingId)) || (await getListingBySlug(item.listingId));
+      if (!itemListing) {
+        return fail(`Salah satu produk dalam pesanan tidak ditemukan (${item.listingId})`);
+      }
+      if (item.quantity < itemListing.minOrderQty) {
+        return fail(
+          `Minimal pemesanan untuk ${itemListing.title} adalah ${itemListing.minOrderQty} ${itemListing.unit}`,
+        );
+      }
+      computedSubtotal += Number(itemListing.price) * item.quantity;
+      computedTotalQty += item.quantity;
+      summaryList.push(`${itemListing.title} (${item.quantity} ${itemListing.unit})`);
+    }
+
+    subtotal = computedSubtotal;
+    totalQuantity = computedTotalQty;
+    itemPrice = Math.round(subtotal / Math.max(1, totalQuantity));
+    if (summaryList.length > 1) {
+      multiItemSummary = `[Paket Pesanan: ${summaryList.join(", ")}]`;
+    }
+  } else {
+    if (quantity < listing.minOrderQty) {
+      return fail(
+        `Minimal pemesanan untuk produk ini adalah ${listing.minOrderQty} ${listing.unit}`,
+      );
+    }
+    subtotal = itemPrice * quantity;
   }
 
-  // 2. Compute financial breakdown
-  const itemPrice = Number(listing.price);
-  const subtotal = itemPrice * quantity;
   const serviceFee = 1500; // Biaya layanan platform Biji Hub
   const totalAmount = subtotal + shippingCost + serviceFee;
+  const combinedNotes = [multiItemSummary, notes].filter(Boolean).join(" ");
 
   const orderNumber = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(
     100 + Math.random() * 900,
@@ -113,7 +154,7 @@ export async function createCheckoutOrderAction(
     buyerCity,
     sellerId: listing.sellerId,
     listingId: listing.id,
-    quantity,
+    quantity: totalQuantity,
     itemPrice,
     subtotal,
     shippingCost,
@@ -122,7 +163,7 @@ export async function createCheckoutOrderAction(
     shippingCourier,
     snapToken,
     midtransOrderId,
-    notes,
+    notes: combinedNotes || null,
   });
 
   return ok({

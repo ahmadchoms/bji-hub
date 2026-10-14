@@ -17,7 +17,6 @@ import { getAllOrders } from "@/lib/data/orders";
 import { paymentTypeLabel } from "@/lib/payments";
 import { AdminOrderDisputes } from "@/components/admin/admin-order-disputes";
 import { ExportCsvButton, type CsvColumn } from "@/components/shared/export-csv-button";
-import type { Payment } from "@/types";
 
 const PAYMENT_STATUS_MAP: Record<
   string,
@@ -44,23 +43,22 @@ export default async function AdminTransaksiPage() {
     .filter((p) => p.status === "paid")
     .reduce((sum, p) => sum + p.amount, 0);
 
-  const paymentCsvColumns: CsvColumn<Payment>[] = [
+  const formattedPaymentCsvData = payments.map((p) => ({
+    midtransOrderId: p.midtransOrderId,
+    seller: sellerMap[p.sellerId] ?? p.sellerId,
+    amount: p.amount,
+    status: p.status,
+    paidAt: p.paidAt
+      ? format(new Date(p.paidAt), "yyyy-MM-dd HH:mm", { locale: idLocale })
+      : "-",
+  }));
+
+  const paymentCsvColumns: CsvColumn<typeof formattedPaymentCsvData[number]>[] = [
     { key: "midtransOrderId", label: "ID Order Midtrans" },
-    {
-      key: "sellerId",
-      label: "Seller",
-      format: (val) => (typeof val === "string" ? sellerMap[val] ?? val : String(val ?? "-")),
-    },
+    { key: "seller", label: "Seller" },
     { key: "amount", label: "Nominal (IDR)" },
     { key: "status", label: "Status" },
-    {
-      key: "paidAt",
-      label: "Tanggal Lunas",
-      format: (val) =>
-        typeof val === "string"
-          ? format(new Date(val), "yyyy-MM-dd HH:mm", { locale: idLocale })
-          : "-",
-    },
+    { key: "paidAt", label: "Tanggal Lunas" },
   ];
 
   return (
@@ -82,7 +80,7 @@ export default async function AdminTransaksiPage() {
             subtitle={`${payments.length} transaksi · Total: ${formatRupiah(totalRevenue)}`}
           />
           <ExportCsvButton
-            data={payments}
+            data={formattedPaymentCsvData}
             filename={`laporan-gateway-midtrans-${format(new Date(), "yyyyMMdd")}`}
             columns={paymentCsvColumns}
             label="Ekspor CSV Gateway"

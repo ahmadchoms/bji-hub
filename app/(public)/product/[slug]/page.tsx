@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getListingBySlug, getListingFeed } from "@/lib/data";
 import { PageContainer } from "@/components/layout/page-container";
@@ -234,10 +235,12 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                             className="inline-block relative w-16 h-16 rounded overflow-hidden border border-neutral-300 hover:opacity-90 transition-opacity"
                             title="Klik untuk melihat foto ulasan ukuran penuh"
                           >
-                            <img
+                            <Image
                               src={r.imageUrl}
                               alt={`Foto ulasan oleh ${r.buyerName}`}
-                              className="w-full h-full object-cover"
+                              fill
+                              className="object-cover"
+                              unoptimized
                             />
                           </a>
                         </div>

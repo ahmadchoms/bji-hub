@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useCart } from "@/lib/cart";
 import { PageContainer } from "@/components/layout/page-container";
 import { formatRupiah } from "@/components/shared/price-text";
@@ -134,12 +135,14 @@ export default function CartPage() {
                         className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
                       >
                         <div className="flex items-start gap-3 flex-1 min-w-0">
-                          <div className="w-12 h-12 rounded bg-neutral-100 border border-neutral-200 flex items-center justify-center text-neutral-400 shrink-0">
+                          <div className="w-12 h-12 rounded bg-neutral-100 border border-neutral-200 relative overflow-hidden flex items-center justify-center text-neutral-400 shrink-0">
                             {item.imageUrl ? (
-                              <img
+                              <Image
                                 src={item.imageUrl}
                                 alt={item.title}
-                                className="w-full h-full object-cover rounded"
+                                fill
+                                className="object-cover rounded"
+                                unoptimized
                               />
                             ) : (
                               <Package className="w-5 h-5" />
@@ -221,14 +224,14 @@ export default function CartPage() {
                     </div>
 
                     <Link
-                      href={`/checkout/${firstSlug}`}
+                      href={`/checkout/${firstSlug}?cart=1&sellerId=${sellerId}`}
                       className={buttonVariants({
                         size: "sm",
                         className:
                           "bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold px-4 gap-1.5",
                       })}
                     >
-                      Beli dari Toko Ini <ArrowRight className="w-3.5 h-3.5" />
+                      Beli dari Toko Ini ({group.items.length} Produk) <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>
                 </div>

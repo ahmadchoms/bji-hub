@@ -7,6 +7,7 @@ import { PageContainer } from "@/components/layout/page-container";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
 import { createClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth/session";
+import type { BuyerAddress } from "@/types";
 
 interface CheckoutPageProps {
   params: Promise<{ slug: string }>;
@@ -72,6 +73,16 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
         userCity = (user.user_metadata?.city as string) || "";
         userPostalCode = (user.user_metadata?.postal_code as string) || "";
         userAddress = (user.user_metadata?.address as string) || "";
+        if (Array.isArray(user.user_metadata?.addresses) && user.user_metadata.addresses.length > 0) {
+          const primary = (user.user_metadata.addresses as BuyerAddress[]).find((a) => a.isPrimary) || (user.user_metadata.addresses[0] as BuyerAddress);
+          if (primary) {
+            userPhone = userPhone || primary.phone || "";
+            userProvince = userProvince || primary.province || "";
+            userCity = userCity || primary.city || "";
+            userPostalCode = userPostalCode || primary.postalCode || "";
+            userAddress = userAddress || primary.address || "";
+          }
+        }
       }
     } catch {
       // ignore
@@ -91,6 +102,16 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
         userCity = userCity || parsed.city || "";
         userPostalCode = userPostalCode || parsed.postalCode || "";
         userAddress = userAddress || parsed.address || "";
+        if (Array.isArray(parsed.addresses) && parsed.addresses.length > 0) {
+          const primary = (parsed.addresses as BuyerAddress[]).find((a) => a.isPrimary) || (parsed.addresses[0] as BuyerAddress);
+          if (primary) {
+            userPhone = userPhone || primary.phone || "";
+            userProvince = userProvince || primary.province || "";
+            userCity = userCity || primary.city || "";
+            userPostalCode = userPostalCode || primary.postalCode || "";
+            userAddress = userAddress || primary.address || "";
+          }
+        }
       }
     } catch {
       // ignore

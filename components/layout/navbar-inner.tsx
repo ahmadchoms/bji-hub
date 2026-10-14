@@ -16,7 +16,6 @@ import {
   Coffee,
   X,
   MapPin,
-  Sparkles,
   Package,
 } from "lucide-react";
 import { Logo } from "@/components/shared/logo";
@@ -344,7 +343,9 @@ export function NavbarInner({
                 className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded-md transition-colors max-w-[150px]"
                 title={isSeller ? storeLabel : "Buka Toko Mitra"}
               >
-                <Store className="w-4 h-4 text-neutral-600 shrink-0" />
+                <div className="w-6 h-6 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center shrink-0 text-neutral-600">
+                  <Store className="w-3.5 h-3.5" />
+                </div>
                 <span className="truncate">{storeLabel}</span>
               </Link>
 
@@ -393,8 +394,7 @@ export function NavbarInner({
                     </>
                   ) : (
                     <div className="space-y-2">
-                      <div className="flex items-center gap-1.5 text-primary-700 font-semibold">
-                        <Sparkles className="w-4 h-4 text-primary-600" />
+                      <div className="text-primary-700 font-semibold text-xs">
                         <span>Buka Toko Kopi Gratis</span>
                       </div>
                       <p className="text-[11px] text-neutral-500 leading-relaxed">
@@ -427,10 +427,12 @@ export function NavbarInner({
                     <img
                       src={user.avatarUrl}
                       alt={user.firstName}
-                      className="w-5 h-5 rounded-full object-cover shrink-0 border border-neutral-200"
+                      className="w-6 h-6 rounded-full object-cover shrink-0 border border-neutral-200"
                     />
                   ) : (
-                    <User className="w-4 h-4 text-neutral-600 shrink-0" />
+                    <div className="w-6 h-6 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center shrink-0 text-neutral-600">
+                      <User className="w-3.5 h-3.5" />
+                    </div>
                   )}
                   <span className="truncate">{user.firstName}</span>
                 </button>

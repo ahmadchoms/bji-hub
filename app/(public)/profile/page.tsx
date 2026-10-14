@@ -11,6 +11,7 @@ import { logoutAction } from "@/actions/auth.actions";
 
 import { createClient } from "@/lib/supabase/server";
 import { BuyerProfileForm } from "@/components/profile/buyer-profile-form";
+import type { BuyerAddress } from "@/types";
 
 export const metadata = {
   title: "Profil Akun - Biji Hub",
@@ -45,6 +46,8 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
   let userPostalCode = "";
   let userAddress = "";
 
+  let userAddresses: BuyerAddress[] = [];
+
   if (
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -66,29 +69,49 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
         userCity = (user.user_metadata?.city as string) || "";
         userPostalCode = (user.user_metadata?.postal_code as string) || "";
         userAddress = (user.user_metadata?.address as string) || "";
+        if (Array.isArray(user.user_metadata?.addresses) && user.user_metadata.addresses.length > 0) {
+          userAddresses = user.user_metadata.addresses;
+        }
       }
     } catch {
       // ignore
     }
   }
 
-  if (!userPhone || !userCity || !userAddress) {
-    try {
-      const cookieStore = await cookies();
-      const raw = cookieStore.get("biji-buyer-profile")?.value;
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        userName = userName || parsed.name || "";
-        userAvatarUrl = userAvatarUrl || parsed.avatarUrl || "";
-        userPhone = userPhone || parsed.phone || "";
-        userProvince = userProvince || parsed.province || "";
-        userCity = userCity || parsed.city || "";
-        userPostalCode = userPostalCode || parsed.postalCode || "";
-        userAddress = userAddress || parsed.address || "";
+  try {
+    const cookieStore = await cookies();
+    const raw = cookieStore.get("biji-buyer-profile")?.value;
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      userName = userName || parsed.name || "";
+      userAvatarUrl = userAvatarUrl || parsed.avatarUrl || "";
+      userPhone = userPhone || parsed.phone || "";
+      userProvince = userProvince || parsed.province || "";
+      userCity = userCity || parsed.city || "";
+      userPostalCode = userPostalCode || parsed.postalCode || "";
+      userAddress = userAddress || parsed.address || "";
+      if (!userAddresses.length && Array.isArray(parsed.addresses) && parsed.addresses.length > 0) {
+        userAddresses = parsed.addresses;
       }
-    } catch {
-      // ignore
     }
+  } catch {
+    // ignore
+  }
+
+  if (!userAddresses.length && userAddress && userCity) {
+    userAddresses = [
+      {
+        id: "addr-default",
+        label: "Rumah",
+        recipientName: userName || "Penerima",
+        phone: userPhone || "-",
+        province: userProvince,
+        city: userCity,
+        postalCode: userPostalCode,
+        address: userAddress,
+        isPrimary: true,
+      },
+    ];
   }
 
   if (!userEmail) {
@@ -123,7 +146,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
               Lengkapi Alamat Pengiriman Terlebih Dahulu
             </p>
             <p className="leading-relaxed">
-              Sebelum melanjutkan ke pemesanan, silakan isi data penerima dan alamat pengiriman di bawah ini. Data Anda akan tersimpan otomatis untuk transaksi berikutnya.
+              Sebelum melanjutkan ke pemesanan, silakan tambahkan alamat pengiriman pada daftar alamat di bawah ini.
             </p>
           </div>
         </div>
@@ -136,10 +159,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
           name: userName,
           avatarUrl: userAvatarUrl,
           phone: userPhone,
-          province: userProvince,
-          city: userCity,
-          postalCode: userPostalCode,
-          address: userAddress,
+          addresses: userAddresses,
         }}
         nextUrl={next}
       />

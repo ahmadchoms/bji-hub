@@ -9,7 +9,6 @@ import {
 import { ProductGridSkeleton } from "@/components/catalog/product-grid-skeleton";
 import { TasteQuizModal } from "@/components/catalog/taste-quiz-modal";
 import { getCategories, getFilterOptions } from "@/lib/data";
-import { ShieldCheck } from "lucide-react";
 
 interface HomePageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -43,10 +42,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             {/* Promo Banner Card */}
             <div className="md:col-span-8 rounded-xl bg-gradient-to-br from-neutral-900 via-neutral-900 to-primary-950 text-white p-5 sm:p-6 flex flex-col justify-between shadow-xs">
               <div className="space-y-2">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[11px] font-semibold">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  Rekening Bersama Escrow Biji Hub
-                </div>
                 <h1 className="text-xl sm:text-2xl font-display font-bold text-white tracking-tight">
                   Bursa Kopi Specialty Nusantara
                 </h1>
@@ -65,12 +60,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             {/* Smart Helper Quiz Card */}
             <div className="md:col-span-4 rounded-xl border border-neutral-200/90 bg-neutral-50/80 p-5 flex flex-col justify-between text-neutral-800 shadow-xs">
               <div className="space-y-1.5">
-                <div className="flex items-center gap-2 text-primary-900">
-                  <span className="text-base">☕</span>
-                  <p className="text-xs font-bold font-display uppercase tracking-wider text-neutral-900">
-                    Cari Rasa yang Pas?
-                  </p>
-                </div>
+                <p className="text-xs font-bold font-display uppercase tracking-wider text-neutral-900">
+                  Cari Rasa yang Pas?
+                </p>
                 <p className="text-xs text-neutral-600 leading-relaxed">
                   Pilih metode seduhmu (Filter, Espresso, Tubruk) untuk rekomendasi biji kopi dengan karakter rasa yang cocok.
                 </p>

@@ -20,6 +20,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getPrisma } from "@/lib/data/prisma/client";
 import { slugify } from "@/lib/slug";
 import { checkRateLimit } from "@/lib/rate-limit";
+import type { BuyerAddress } from "@/types";
 
 async function setMockSession(role: Role): Promise<void> {
   const store = await cookies();
@@ -373,12 +374,25 @@ export async function updateBuyerProfileAction(input: {
   city?: string;
   postalCode?: string;
   address?: string;
+  addresses?: BuyerAddress[];
 }): Promise<ActionResult<{ success: boolean }>> {
   if (!input.name || input.name.trim().length < 2) {
     return fail("Nama minimal 2 karakter", {
       name: ["Nama minimal 2 karakter"],
     });
   }
+
+  const cookieStore = await cookies();
+  const existingCookieRaw = cookieStore.get("biji-buyer-profile")?.value;
+  const existingData = existingCookieRaw ? JSON.parse(existingCookieRaw) : {};
+
+  const currentAddresses = input.addresses ?? existingData.addresses ?? [];
+  const primaryAddr = currentAddresses.find((a: BuyerAddress) => a.isPrimary) || currentAddresses[0];
+
+  const resolvedProvince = input.province?.trim() || primaryAddr?.province || existingData.province || null;
+  const resolvedCity = input.city?.trim() || primaryAddr?.city || existingData.city || null;
+  const resolvedPostal = input.postalCode?.trim() || primaryAddr?.postalCode || existingData.postalCode || null;
+  const resolvedAddress = input.address?.trim() || primaryAddr?.address || existingData.address || null;
 
   if (
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
@@ -398,10 +412,11 @@ export async function updateBuyerProfileAction(input: {
           name: input.name.trim(),
           avatar_url: input.avatarUrl?.trim() || null,
           phone: input.phone?.trim() || null,
-          province: input.province?.trim() || null,
-          city: input.city?.trim() || null,
-          postal_code: input.postalCode?.trim() || null,
-          address: input.address?.trim() || null,
+          province: resolvedProvince,
+          city: resolvedCity,
+          postal_code: resolvedPostal,
+          address: resolvedAddress,
+          addresses: currentAddresses,
         },
       });
 
@@ -414,17 +429,74 @@ export async function updateBuyerProfileAction(input: {
   }
 
   try {
-    const store = await cookies();
-    store.set(
+    cookieStore.set(
       "biji-buyer-profile",
       JSON.stringify({
         name: input.name.trim(),
         avatarUrl: input.avatarUrl?.trim() || null,
         phone: input.phone?.trim() || null,
-        province: input.province?.trim() || null,
-        city: input.city?.trim() || null,
-        postalCode: input.postalCode?.trim() || null,
-        address: input.address?.trim() || null,
+        province: resolvedProvince,
+        city: resolvedCity,
+        postalCode: resolvedPostal,
+        address: resolvedAddress,
+        addresses: currentAddresses,
+      }),
+      { path: "/", httpOnly: true, maxAge: 60 * 60 * 24 * 7 },
+    );
+  } catch {
+    // ignore
+  }
+
+  return ok({ success: true });
+}
+
+export async function updateBuyerAddressesAction(
+  addresses: BuyerAddress[],
+): Promise<ActionResult<{ success: boolean }>> {
+  if (!Array.isArray(addresses)) {
+    return fail("Format daftar alamat tidak valid.");
+  }
+
+  const primary = addresses.find((a) => a.isPrimary) || addresses[0];
+
+  if (
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
+    try {
+      const supabase = await createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.auth.updateUser({
+          data: {
+            addresses,
+            province: primary ? primary.province.trim() : null,
+            city: primary ? primary.city.trim() : null,
+            postal_code: primary ? (primary.postalCode?.trim() || null) : null,
+            address: primary ? primary.address.trim() : null,
+          },
+        });
+      }
+    } catch {
+      // Fall through for mock
+    }
+  }
+
+  try {
+    const store = await cookies();
+    const existingRaw = store.get("biji-buyer-profile")?.value;
+    const existing = existingRaw ? JSON.parse(existingRaw) : {};
+    store.set(
+      "biji-buyer-profile",
+      JSON.stringify({
+        ...existing,
+        addresses,
+        province: primary ? primary.province.trim() : existing.province || null,
+        city: primary ? primary.city.trim() : existing.city || null,
+        postalCode: primary ? (primary.postalCode?.trim() || null) : existing.postalCode || null,
+        address: primary ? primary.address.trim() : existing.address || null,
       }),
       { path: "/", httpOnly: true, maxAge: 60 * 60 * 24 * 7 },
     );

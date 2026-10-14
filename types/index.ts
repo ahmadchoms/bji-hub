@@ -1,6 +1,18 @@
 // Core Role Enum
 export type Role = "BUYER" | "SELLER" | "ADMIN";
 
+export interface BuyerAddress {
+  id: string;
+  label: string;
+  recipientName: string;
+  phone: string;
+  province: string;
+  city: string;
+  postalCode?: string;
+  address: string;
+  isPrimary: boolean;
+}
+
 // Base Models mirroring Prisma Schema
 export interface User {
   id: string;

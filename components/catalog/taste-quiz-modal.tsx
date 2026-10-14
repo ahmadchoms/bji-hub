@@ -184,11 +184,10 @@ export function TasteQuizModal({
             <button
               type="button"
               className={cn(
-                "group inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-neutral-800 bg-amber-50 hover:bg-amber-100/80 border border-amber-200/80 rounded-md transition-all shadow-2xs",
+                "group inline-flex items-center justify-center px-3 py-2 text-xs font-semibold text-neutral-800 bg-white hover:bg-neutral-100 border border-neutral-300 rounded-md transition-all shadow-2xs",
                 className,
               )}
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-700 transition-transform group-hover:scale-110" />
               <span>Mulai Kuis Rasa 30 Detik</span>
             </button>
           ) : (

@@ -11,15 +11,32 @@ interface TasteSpecListProps {
 export function TasteSpecList({ tasteProfile, className }: TasteSpecListProps) {
   if (!tasteProfile) return null;
 
-  const formattedDate = tasteProfile.roastDate
-    ? format(new Date(tasteProfile.roastDate), "dd MMM yyyy", { locale: id })
+  const roastDateObj = tasteProfile.roastDate
+    ? new Date(tasteProfile.roastDate)
+    : null;
+  const daysOld =
+    roastDateObj && !isNaN(roastDateObj.getTime())
+      ? Math.floor((Date.now() - roastDateObj.getTime()) / (1000 * 60 * 60 * 24))
+      : null;
+
+  const formattedDate = roastDateObj
+    ? format(roastDateObj, "dd MMM yyyy", { locale: id })
     : "-";
+
+  const roastValue =
+    daysOld !== null && daysOld >= 0
+      ? daysOld <= 14
+        ? `${formattedDate} (Fresh Roast, ${daysOld}h)`
+        : daysOld <= 30
+          ? `${formattedDate} (Peak Flavor, ${daysOld}h)`
+          : formattedDate
+      : formattedDate;
 
   const specs = [
     { label: "Origin", value: tasteProfile.originRegion },
     { label: "Proses", value: tasteProfile.processMethod },
     { label: "Sangrai", value: tasteProfile.roastLevel },
-    { label: "Tgl. Roast", value: formattedDate },
+    { label: "Tgl. Roast", value: roastValue },
     ...(tasteProfile.cropYear ? [{ label: "Tahun Panen", value: tasteProfile.cropYear }] : []),
     ...(tasteProfile.moistureContent ? [{ label: "Kadar Air", value: `${tasteProfile.moistureContent}%` }] : []),
     { label: "Altitude", value: tasteProfile.altitude || "1.200–1.600 mdpl" },

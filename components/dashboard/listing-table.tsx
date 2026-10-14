@@ -29,7 +29,10 @@ import {
 import { EmptyState } from "@/components/shared/empty-state";
 import { Pencil, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { quickUpdateStockAction } from "@/actions/seller.actions";
+import {
+  quickUpdateStockAction,
+  toggleListingStatusAction,
+} from "@/actions/seller.actions";
 import { toast } from "sonner";
 
 interface ListingTableProps {
@@ -37,18 +40,83 @@ interface ListingTableProps {
   className?: string;
 }
 
-const STATUS_LABELS: Record<
-  string,
-  {
-    label: string;
-    variant: "default" | "secondary" | "outline" | "destructive";
+function QuickStatusToggle({
+  listingId,
+  currentStatus,
+  title,
+}: {
+  listingId: string;
+  currentStatus: string;
+  title: string;
+}) {
+  const [status, setStatus] = useState(currentStatus);
+  const [loading, setLoading] = useState(false);
+
+  if (status === "suspended") {
+    return (
+      <Badge variant="destructive" className="text-xs">
+        Ditangguhkan
+      </Badge>
+    );
   }
-> = {
-  active: { label: "Aktif", variant: "default" },
-  draft: { label: "Draf", variant: "secondary" },
-  archived: { label: "Arsip", variant: "outline" },
-  suspended: { label: "Ditangguhkan", variant: "destructive" },
-};
+
+  const isCurrentActive = status === "active";
+
+  const handleToggle = async () => {
+    const nextStatus = isCurrentActive ? "archived" : "active";
+    setLoading(true);
+    const res = await toggleListingStatusAction(listingId, nextStatus);
+    setLoading(false);
+    if (res.success) {
+      setStatus(nextStatus);
+      toast.success(
+        nextStatus === "active"
+          ? `"${title}" diaktifkan di katalog`
+          : `"${title}" dinonaktifkan (diarsipkan)`,
+      );
+    } else {
+      toast.error(res.error || "Gagal mengubah status produk");
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleToggle}
+      disabled={loading}
+      title={
+        isCurrentActive
+          ? "Klik untuk menonaktifkan produk dari katalog"
+          : "Klik untuk mengaktifkan produk ke katalog"
+      }
+      className="cursor-pointer transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 inline-flex items-center"
+    >
+      <Badge
+        variant={
+          isCurrentActive
+            ? "default"
+            : status === "draft"
+              ? "secondary"
+              : "outline"
+        }
+        className={cn(
+          "text-xs transition-colors",
+          isCurrentActive
+            ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+            : "text-neutral-500 hover:bg-neutral-100",
+        )}
+      >
+        {loading
+          ? "..."
+          : isCurrentActive
+            ? "Aktif ●"
+            : status === "draft"
+              ? "Draf ✎"
+              : "Nonaktif ○"}
+      </Badge>
+    </button>
+  );
+}
 
 function QuickStockDialog({
   listingId,
@@ -194,8 +262,6 @@ export function ListingTable({ listings, className }: ListingTableProps) {
           </TableHeader>
           <TableBody>
             {listings.map((listing) => {
-              const statusConf =
-                STATUS_LABELS[listing.status] ?? STATUS_LABELS.active;
               const img = listing.images[0]?.url;
               const stock = listing.stock ?? 50;
               return (
@@ -253,9 +319,11 @@ export function ListingTable({ listings, className }: ListingTableProps) {
                     />
                   </TableCell>
                   <TableCell>
-                    <Badge variant={statusConf.variant} className="text-xs">
-                      {statusConf.label}
-                    </Badge>
+                    <QuickStatusToggle
+                      listingId={listing.id}
+                      currentStatus={listing.status}
+                      title={listing.title}
+                    />
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
@@ -302,8 +370,6 @@ export function ListingTable({ listings, className }: ListingTableProps) {
 
       <div className={cn("md:hidden space-y-3", className)}>
         {listings.map((listing) => {
-          const statusConf =
-            STATUS_LABELS[listing.status] ?? STATUS_LABELS.active;
           const img = listing.images[0]?.url;
           return (
             <div
@@ -336,9 +402,11 @@ export function ListingTable({ listings, className }: ListingTableProps) {
                     <span className="font-mono tabular-nums text-sm text-primary-900 font-semibold">
                       {formatRupiah(listing.price)}
                     </span>
-                    <Badge variant={statusConf.variant} className="text-xs">
-                      {statusConf.label}
-                    </Badge>
+                    <QuickStatusToggle
+                      listingId={listing.id}
+                      currentStatus={listing.status}
+                      title={listing.title}
+                    />
                     <QuickStockDialog
                       listingId={listing.id}
                       title={listing.title}

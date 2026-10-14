@@ -26,6 +26,16 @@ export function ListingCard({
   const isOutOfStock = listing.stock === 0;
   const isLowStock =
     listing.stock !== undefined && listing.stock > 0 && listing.stock <= 5;
+  const roastDate = listing.tasteProfile?.roastDate
+    ? new Date(listing.tasteProfile.roastDate)
+    : null;
+  const daysSinceRoast =
+    roastDate && !isNaN(roastDate.getTime())
+      ? Math.floor((Date.now() - roastDate.getTime()) / (1000 * 60 * 60 * 24))
+      : null;
+  const isGreenBean =
+    listing.category?.slug === "green-beans" ||
+    roast.toLowerCase().includes("green");
 
   return (
     <li className={cn("relative min-w-0 group/item", className)}>
@@ -55,6 +65,16 @@ export function ListingCard({
               Partai B2B
             </span>
           )}
+          {daysSinceRoast !== null &&
+            daysSinceRoast >= 0 &&
+            daysSinceRoast <= 14 &&
+            !isOutOfStock &&
+            !isAd &&
+            listing.minOrderQty < 30 && (
+              <span className="absolute top-2 left-2 z-10 text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded-xs bg-emerald-700 text-white shadow-xs">
+                Fresh Roast
+              </span>
+            )}
           {isLowStock && !isOutOfStock && (
             <span className="absolute bottom-2 left-2 z-10 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-xs bg-amber-500 text-white shadow-xs">
               Sisa {listing.stock} {listing.unit}
@@ -95,6 +115,21 @@ export function ListingCard({
             <span className="bg-amber-50 text-amber-800 border border-amber-200/60 px-1.5 py-0.5 rounded font-medium">
               {roast}
             </span>
+            {daysSinceRoast !== null && daysSinceRoast >= 0 ? (
+              daysSinceRoast <= 14 ? (
+                <span className="bg-emerald-50 text-emerald-800 border border-emerald-300/80 px-1.5 py-0.5 rounded font-semibold">
+                  Fresh {daysSinceRoast}h
+                </span>
+              ) : daysSinceRoast <= 30 ? (
+                <span className="bg-blue-50 text-blue-800 border border-blue-200/80 px-1.5 py-0.5 rounded font-medium">
+                  Peak Flavor
+                </span>
+              ) : null
+            ) : isGreenBean ? (
+              <span className="bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-1.5 py-0.5 rounded font-medium">
+                Mentah
+              </span>
+            ) : null}
             {listing.tasteProfile?.cuppingScore && (
               <span className="bg-emerald-50 text-emerald-800 border border-emerald-300/70 px-1.5 py-0.5 rounded font-semibold">
                 SCA {listing.tasteProfile.cuppingScore}

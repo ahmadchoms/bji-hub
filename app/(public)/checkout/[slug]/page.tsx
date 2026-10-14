@@ -53,6 +53,8 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
   let userPostalCode = "";
   let userAddress = "";
 
+  let userAddresses: BuyerAddress[] = [];
+
   if (
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -74,7 +76,8 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
         userPostalCode = (user.user_metadata?.postal_code as string) || "";
         userAddress = (user.user_metadata?.address as string) || "";
         if (Array.isArray(user.user_metadata?.addresses) && user.user_metadata.addresses.length > 0) {
-          const primary = (user.user_metadata.addresses as BuyerAddress[]).find((a) => a.isPrimary) || (user.user_metadata.addresses[0] as BuyerAddress);
+          userAddresses = user.user_metadata.addresses as BuyerAddress[];
+          const primary = userAddresses.find((a) => a.isPrimary) || userAddresses[0];
           if (primary) {
             userPhone = userPhone || primary.phone || "";
             userProvince = userProvince || primary.province || "";
@@ -90,7 +93,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
   }
 
   // Cookie fallback if stored locally
-  if (!userPhone || !userCity || !userAddress) {
+  if (!userPhone || !userCity || !userAddress || userAddresses.length === 0) {
     try {
       const cookieStore = await cookies();
       const raw = cookieStore.get("biji-buyer-profile")?.value;
@@ -103,6 +106,9 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
         userPostalCode = userPostalCode || parsed.postalCode || "";
         userAddress = userAddress || parsed.address || "";
         if (Array.isArray(parsed.addresses) && parsed.addresses.length > 0) {
+          if (userAddresses.length === 0) {
+            userAddresses = parsed.addresses as BuyerAddress[];
+          }
           const primary = (parsed.addresses as BuyerAddress[]).find((a) => a.isPrimary) || (parsed.addresses[0] as BuyerAddress);
           if (primary) {
             userPhone = userPhone || primary.phone || "";
@@ -168,7 +174,11 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
           <span className="text-neutral-900 font-medium">Checkout</span>
         </nav>
 
-        <CheckoutForm listing={listing} initialBuyer={initialBuyer} />
+        <CheckoutForm
+          listing={listing}
+          initialBuyer={initialBuyer}
+          savedAddresses={userAddresses}
+        />
       </PageContainer>
     </div>
   );

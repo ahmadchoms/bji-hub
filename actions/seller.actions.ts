@@ -199,3 +199,41 @@ export async function quickUpdateStockAction(
   revalidatePath("/");
   return ok({ stock: newStock });
 }
+
+export async function toggleListingStatusAction(
+  listingId: string,
+  newStatus: "active" | "archived",
+): Promise<ActionResult<{ status: string }>> {
+  const { sellerId } = await requireSeller("/dashboard/listing");
+  const existing = await getListingById(listingId);
+  if (!existing || existing.sellerId !== sellerId) {
+    return fail("Listing tidak ditemukan atau Anda tidak memiliki akses");
+  }
+  if (existing.status === "suspended") {
+    return fail("Produk yang ditangguhkan admin tidak dapat diubah statusnya");
+  }
+
+  if (process.env.DATABASE_URL) {
+    try {
+      const { getPrisma } = await import("@/lib/data/prisma/client");
+      const prisma = getPrisma();
+      await prisma.listing.update({
+        where: { id: listingId },
+        data: { status: newStatus },
+      });
+    } catch {
+      // fallback to mock
+    }
+  }
+
+  const { mockListings } = await import("@/lib/mock/data");
+  const target = mockListings.find((l) => l.id === listingId);
+  if (target) {
+    target.status = newStatus;
+  }
+
+  revalidatePath("/dashboard/listing");
+  revalidatePath(`/product/${existing.slug}`);
+  revalidatePath("/");
+  return ok({ status: newStatus });
+}

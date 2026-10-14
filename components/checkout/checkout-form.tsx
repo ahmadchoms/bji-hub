@@ -18,11 +18,19 @@ import {
   Check,
   Package,
 } from "lucide-react";
-import { ListingWithRelations } from "@/types";
+import { ListingWithRelations, BuyerAddress } from "@/types";
 import { formatRupiah } from "@/components/shared/price-text";
 import { FormField } from "@/components/shared/form-field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { calculateShippingRates, ShippingRate } from "@/lib/shipping";
 import { createCheckoutOrderAction } from "@/actions/order.actions";
@@ -40,12 +48,18 @@ interface CheckoutFormProps {
     postalCode?: string;
     address: string;
   };
+  savedAddresses?: BuyerAddress[];
 }
 
-export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
+export function CheckoutForm({
+  listing,
+  initialBuyer,
+  savedAddresses = [],
+}: CheckoutFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
 
   const isCart = searchParams.get("cart") === "1";
   const itemsParam = searchParams.get("items");
@@ -394,10 +408,20 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
               <MapPin className="w-4 h-4 text-primary-600" /> Alamat Pengiriman Penerima
             </h3>
             <div className="flex items-center gap-3">
+              {savedAddresses.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setIsAddressModalOpen(true)}
+                  className="text-xs font-semibold text-primary-700 hover:text-primary-800 flex items-center gap-1 cursor-pointer"
+                >
+                  <MapPin className="w-3 h-3" />
+                  Pilih Alamat Lain
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setIsEditingAddress((prev) => !prev)}
-                className="text-xs font-semibold text-primary-700 hover:text-primary-800 flex items-center gap-1 cursor-pointer"
+                className="text-xs font-semibold text-neutral-600 hover:text-neutral-800 flex items-center gap-1 cursor-pointer"
               >
                 <Edit2 className="w-3 h-3" />
                 {isEditingAddress ? "Tutup Editor" : "Ubah Alamat"}
@@ -535,6 +559,98 @@ export function CheckoutForm({ listing, initialBuyer }: CheckoutFormProps) {
               />
             </FormField>
           </div>
+
+          {/* Modal Dialog: Pilih Alamat Pengiriman Tersimpan */}
+          <Dialog open={isAddressModalOpen} onOpenChange={setIsAddressModalOpen}>
+            <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="text-base font-semibold text-neutral-900 flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-primary-600" /> Pilih Alamat Pengiriman
+                </DialogTitle>
+                <DialogDescription className="text-xs text-neutral-500">
+                  Pilih alamat tujuan tersimpan untuk menghitung estimasi ongkir otomatis.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-2.5 pt-1">
+                {savedAddresses.map((addr) => {
+                  const isSelected =
+                    buyerAddress === addr.address && buyerCity === addr.city;
+                  return (
+                    <div
+                      key={addr.id}
+                      onClick={() => {
+                        setBuyerName(addr.recipientName || buyerName);
+                        setBuyerPhone(addr.phone || buyerPhone);
+                        setBuyerCity(addr.city || "");
+                        setBuyerProvince(addr.province || "");
+                        setBuyerPostalCode(addr.postalCode || "");
+                        setBuyerAddress(addr.address || "");
+                        setIsEditingAddress(false);
+                        setIsAddressModalOpen(false);
+                        toast.success(`Alamat pengiriman diubah: ${addr.label || addr.city}`);
+                      }}
+                      className={cn(
+                        "p-3 rounded border text-xs cursor-pointer transition-all space-y-1.5",
+                        isSelected
+                          ? "border-primary-600 bg-primary-50/50 ring-1 ring-primary-600"
+                          : "border-neutral-200 hover:border-neutral-400 bg-white",
+                      )}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-semibold text-neutral-900 font-mono uppercase text-[11px]">
+                            {addr.label || "Alamat"}
+                          </span>
+                          {addr.isPrimary && (
+                            <Badge variant="outline" className="text-[10px] py-0 px-1.5 text-primary-700 bg-primary-50 border-primary-300">
+                              Utama
+                            </Badge>
+                          )}
+                        </div>
+                        {isSelected && (
+                          <span className="text-[11px] font-semibold text-primary-700 flex items-center gap-1">
+                            <Check className="w-3.5 h-3.5" /> Digunakan
+                          </span>
+                        )}
+                      </div>
+                      <p className="font-medium text-neutral-800">
+                        {addr.recipientName} • <span className="font-mono text-neutral-600">{addr.phone}</span>
+                      </p>
+                      <p className="text-neutral-600 leading-snug">
+                        {addr.address}
+                      </p>
+                      <p className="text-neutral-500 text-[11px]">
+                        {addr.city}, {addr.province} {addr.postalCode ? `(${addr.postalCode})` : ""}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="pt-2 border-t border-neutral-100 flex items-center justify-between">
+                <Link
+                  href={`/profile?next=${encodeURIComponent(
+                    activeItems
+                      ? `/checkout/${listing.slug}?cart=1&sellerId=${listing.sellerId}`
+                      : `/checkout/${listing.slug}`,
+                  )}`}
+                  className="text-xs text-primary-600 font-medium hover:underline flex items-center gap-1"
+                >
+                  + Kelola / Tambah Alamat
+                </Link>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsAddressModalOpen(false)}
+                  className="text-xs h-8"
+                >
+                  Tutup
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Pilihan Ekspedisi / Kurir */}

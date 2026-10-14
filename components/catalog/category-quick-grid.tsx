@@ -62,7 +62,7 @@ export function CategoryQuickGrid({ activeCategory }: CategoryQuickGridProps) {
             return (
               <Link
                 key={cat.slug}
-                href={`/?kategori=${cat.slug}`}
+                href={`/?category=${cat.slug}`}
                 className={`p-3 rounded-lg border transition-all duration-150 flex items-center gap-3 group hover:shadow-xs ${
                   isSelected
                     ? "border-primary-600 bg-primary-50/60 ring-1 ring-primary-600"

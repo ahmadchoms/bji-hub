@@ -11,6 +11,7 @@ import { OrderReviewModal } from "@/components/order/order-review-modal";
 import { OrderDisputeModal } from "@/components/order/order-dispute-modal";
 import { ShipmentTrackingModal } from "@/components/order/shipment-tracking-modal";
 import { OrderPrintModal } from "@/components/order/order-print-modal";
+import { OrderStatusStepper } from "@/components/order/order-status-stepper";
 import { Package, Clock, ShieldCheck, ArrowRight, AlertCircle, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
@@ -201,6 +202,11 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
                   <span className="font-mono font-bold text-primary-900">
                     {formatRupiah(ord.totalAmount)}
                   </span>
+                </div>
+
+                {/* Status Timeline Tracking Stepper */}
+                <div className="pt-2 pb-1 border-t border-neutral-100">
+                  <OrderStatusStepper status={ord.status} />
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-neutral-100 text-[11px] text-neutral-500">

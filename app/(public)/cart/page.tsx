@@ -203,6 +203,20 @@ export default function CartPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Main List Grouped by Seller */}
           <div className="lg:col-span-8 space-y-6">
+            {Object.keys(groupedBySeller).length > 1 && (
+              <div className="p-3.5 bg-blue-50/80 border border-blue-200 rounded-lg text-xs text-blue-900 flex items-start gap-2.5 shadow-2xs">
+                <Store className="w-4 h-4 text-blue-700 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-semibold text-blue-950">
+                    Pesanan dari {Object.keys(groupedBySeller).length} Toko Berbeda
+                  </p>
+                  <p className="text-[11px] text-blue-800 leading-relaxed">
+                    Karena setiap roastery mengirim dari kotanya masing-masing, pengiriman dan pembayaran diproses per toko. Selesaikan transaksi toko pertama, lalu lanjutkan untuk toko berikutnya.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {Object.entries(groupedBySeller).map(([sellerId, group]) => {
               const sellerItemKeys = group.items.map((i) => getItemKey(i));
               const isSellerAll = sellerItemKeys.every((key) => selectedKeys.includes(key));
@@ -452,9 +466,12 @@ export default function CartPage() {
                   )}
 
                   {selectedSellerEntries.length > 1 && (
-                    <p className="text-[11px] text-neutral-500 text-center leading-tight">
-                      Produk yang dipilih berasal dari toko berbeda. Pembelian diproses per toko mitra.
-                    </p>
+                    <div className="p-2.5 rounded bg-amber-50 border border-amber-200 text-[11px] text-amber-900 leading-relaxed space-y-0.5">
+                      <p className="font-semibold">Perhatian Multi-Toko:</p>
+                      <p className="text-[10px] text-amber-800">
+                        Checkout saat ini untuk <strong>{firstSelectedSeller?.[1]?.sellerName}</strong>. Produk toko lain tetap tersimpan aman di keranjang.
+                      </p>
+                    </div>
                   )}
 
                   <Link

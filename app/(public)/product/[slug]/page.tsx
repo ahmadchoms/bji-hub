@@ -139,7 +139,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           </Link>
           <span>/</span>
           <Link
-            href={`/?kategori=${listing.category.slug}`}
+            href={`/?category=${listing.category.slug}`}
             className="hover:text-primary-700"
           >
             {listing.category.name}
@@ -355,7 +355,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                 Sejenis Lainnya
               </h3>
               <Link
-                href={`/?kategori=${listing.category.slug}`}
+                href={`/?category=${listing.category.slug}`}
                 className="text-xs font-medium text-primary-600 hover:underline"
               >
                 Lihat Semua →

@@ -233,7 +233,7 @@ export function NavbarInner({
                       {categories.map((cat) => (
                         <Link
                           key={cat.id}
-                          href={`/?kategori=${cat.slug}`}
+                          href={`/?category=${cat.slug}`}
                           onClick={() => setCategoryOpen(false)}
                           className="flex flex-col px-3 py-2 text-xs hover:bg-neutral-50 transition-colors"
                         >
@@ -694,7 +694,7 @@ export function NavbarInner({
                       {categories.map((cat) => (
                         <Link
                           key={cat.id}
-                          href={`/?kategori=${cat.slug}`}
+                          href={`/?category=${cat.slug}`}
                           onClick={() => setMobileOpen(false)}
                           className="flex items-center justify-between px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md"
                         >

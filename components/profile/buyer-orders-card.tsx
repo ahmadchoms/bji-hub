@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Order } from "@/types";
 import { formatRupiah } from "@/components/shared/price-text";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ConfirmOrderButton } from "@/components/order/confirm-order-button";
 import { OrderReviewModal } from "@/components/order/order-review-modal";
@@ -12,9 +14,24 @@ import { OrderDisputeModal } from "@/components/order/order-dispute-modal";
 import { ShipmentTrackingModal } from "@/components/order/shipment-tracking-modal";
 import { OrderPrintModal } from "@/components/order/order-print-modal";
 import { OrderStatusStepper } from "@/components/order/order-status-stepper";
-import { Package, Clock, ShieldCheck, ArrowRight, AlertCircle, ExternalLink } from "lucide-react";
+import {
+  Package,
+  Clock,
+  ShieldCheck,
+  ArrowRight,
+  AlertCircle,
+  ExternalLink,
+  CreditCard,
+  XCircle,
+  MessageCircle,
+} from "lucide-react";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
+import { toast } from "sonner";
+import {
+  resumeOrderPaymentAction,
+  cancelPendingOrderAction,
+} from "@/actions/order.actions";
 
 interface BuyerOrdersCardProps {
   orders: Order[];
@@ -23,7 +40,58 @@ interface BuyerOrdersCardProps {
 type OrderFilter = "all" | "pending_payment" | "paid" | "shipped" | "completed" | "disputed";
 
 export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
+  const router = useRouter();
   const [filter, setFilter] = useState<OrderFilter>("all");
+  const [payingId, setPayingId] = useState<string | null>(null);
+  const [cancelingId, setCancelingId] = useState<string | null>(null);
+
+  const handleResumePayment = async (order: Order) => {
+    setPayingId(order.id);
+    const res = await resumeOrderPaymentAction(order.id);
+    setPayingId(null);
+    if (!res.success) {
+      toast.error(res.error || "Gagal memproses pembayaran");
+      return;
+    }
+    const { snapToken } = res.data;
+    if (
+      snapToken &&
+      typeof window !== "undefined" &&
+      (window as unknown as { snap?: { pay: (token: string, options: unknown) => void } }).snap
+    ) {
+      const snap = (window as unknown as { snap: { pay: (token: string, options: unknown) => void } }).snap;
+      snap.pay(snapToken, {
+        onSuccess: async () => {
+          toast.success("Pembayaran berhasil!");
+          router.push(`/order/success?orderNumber=${order.orderNumber}`);
+        },
+        onPending: () => {
+          toast.info("Menunggu pembayaran diselesaikan.");
+        },
+        onError: () => {
+          toast.error("Pembayaran gagal. Silakan coba kembali.");
+        },
+        onClose: () => {
+          toast.info("Jendela pembayaran ditutup.");
+        },
+      });
+    } else {
+      router.push(`/order/success?orderNumber=${order.orderNumber}`);
+    }
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    if (!confirm("Apakah Anda yakin ingin membatalkan pesanan ini?")) return;
+    setCancelingId(orderId);
+    const res = await cancelPendingOrderAction(orderId);
+    setCancelingId(null);
+    if (res.success) {
+      toast.success("Pesanan berhasil dibatalkan");
+      router.refresh();
+    } else {
+      toast.error(res.error || "Gagal membatalkan pesanan");
+    }
+  };
 
   const filteredOrders = orders.filter((o) => {
     if (filter === "all") return true;
@@ -224,6 +292,18 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
                     )}
                   </div>
                   <div className="flex items-center gap-2">
+                    <a
+                      href={`https://wa.me/6281234567890?text=${encodeURIComponent(
+                        `Halo ${ord.sellerName || "Roastery Biji Hub"}, saya pembeli untuk pesanan #${ord.orderNumber} (${ord.listingTitle || "Kopi"}). Ingin menanyakan status pesanan saya. Terima kasih!`,
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] text-emerald-700 hover:text-emerald-800 flex items-center gap-1 font-medium bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200 transition-colors"
+                      title="Hubungi penjual via WhatsApp"
+                    >
+                      <MessageCircle className="w-3 h-3 text-emerald-600" />
+                      Chat Penjual
+                    </a>
                     <OrderPrintModal order={ord} defaultMode="invoice" />
                     <Link
                       href={`/order/success?orderNumber=${ord.orderNumber}`}
@@ -233,6 +313,57 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
                     </Link>
                   </div>
                 </div>
+
+                {/* Pending Payment Action Banner */}
+                {ord.status === "pending_payment" && (() => {
+                  const createdTime = new Date(ord.createdAt).getTime();
+                  const expireDate = new Date(createdTime + 24 * 60 * 60 * 1000);
+                  const isExpired = Date.now() > expireDate.getTime();
+
+                  return (
+                    <div className="pt-2 border-t border-neutral-100 space-y-2 bg-amber-50/70 p-2.5 rounded border border-amber-200 text-xs">
+                      <div className="flex items-start gap-1.5 text-[11px] text-amber-900">
+                        <Clock className="w-3.5 h-3.5 text-amber-700 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-semibold text-amber-950">
+                            {isExpired
+                              ? "Batas Waktu Pembayaran Telah Berakhir"
+                              : "Menunggu Penyelesaian Pembayaran (Batas 24 Jam)"}
+                          </p>
+                          <p className="text-amber-800 text-[10px] mt-0.5">
+                            {isExpired
+                              ? "Silakan batalkan pesanan ini atau hubungi tim Biji Hub jika sudah transfer."
+                              : `Selesaikan pembayaran sebelum ${format(expireDate, "d MMMM yyyy, HH:mm", { locale: idLocale })} agar pesanan segera diproses penjual.`}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-amber-200/60">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={cancelingId === ord.id}
+                          onClick={() => handleCancelOrder(ord.id)}
+                          className="text-[11px] h-7 px-2 text-rose-700 hover:text-rose-800 hover:bg-rose-50 cursor-pointer"
+                        >
+                          <XCircle className="w-3 h-3 mr-1" />
+                          {cancelingId === ord.id ? "Membatalkan..." : "Batalkan Pesanan"}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="primary"
+                          size="sm"
+                          disabled={payingId === ord.id || isExpired}
+                          onClick={() => handleResumePayment(ord)}
+                          className="text-[11px] h-7 px-3 bg-neutral-900 hover:bg-neutral-800 text-white cursor-pointer"
+                        >
+                          <CreditCard className="w-3 h-3 mr-1" />
+                          {payingId === ord.id ? "Memuat..." : "Bayar Sekarang"}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Shipped & Escrow Auto-Complete Countdown Alert */}
                 {ord.status === "shipped" && (

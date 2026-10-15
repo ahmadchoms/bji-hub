@@ -402,4 +402,63 @@ export async function trackShipmentAction(
   return ok(result);
 }
 
+export async function cancelPendingOrderAction(
+  orderId: string,
+): Promise<ActionResult<{ success: boolean }>> {
+  const session = await getSession();
+  const order = await getOrderById(orderId);
+  if (!order) return fail("Pesanan tidak ditemukan");
+
+  if (order.status !== "pending_payment") {
+    return fail("Hanya pesanan yang belum dibayar yang dapat dibatalkan");
+  }
+
+  if (session.role === "guest") {
+    return fail("Silakan login untuk membatalkan pesanan ini");
+  }
+
+  await updateOrderStatus(order.id, "canceled");
+  revalidatePath("/orders");
+  revalidatePath("/profile");
+  revalidatePath("/dashboard/orders");
+  return ok({ success: true });
+}
+
+export async function resumeOrderPaymentAction(
+  orderId: string,
+): Promise<
+  ActionResult<{
+    snapToken: string | null;
+    orderNumber: string;
+    totalAmount: number;
+  }>
+> {
+  const order = await getOrderById(orderId);
+  if (!order) return fail("Pesanan tidak ditemukan");
+
+  if (order.status !== "pending_payment") {
+    return fail("Pesanan ini sudah diproses atau telah selesai");
+  }
+
+  let snapToken = order.snapToken;
+  if (!snapToken) {
+    try {
+      snapToken = await createMidtransSnapToken({
+        orderId: order.midtransOrderId || order.orderNumber,
+        grossAmount: order.totalAmount,
+        customerName: order.buyerName,
+        customerEmail: order.buyerEmail,
+      });
+    } catch {
+      // offline / mock fallback
+    }
+  }
+
+  return ok({
+    snapToken: snapToken ?? null,
+    orderNumber: order.orderNumber,
+    totalAmount: order.totalAmount,
+  });
+}
+
 

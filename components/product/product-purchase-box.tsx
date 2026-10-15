@@ -6,6 +6,7 @@ import { ShieldCheck, Minus, Plus } from "lucide-react";
 import { ListingWithRelations } from "@/types";
 import { PriceText, formatRupiah } from "@/components/shared/price-text";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
+import { ProductShippingEstimator } from "@/components/product/product-shipping-estimator";
 import { GRIND_SIZE_OPTIONS, GrindSize } from "@/lib/coffee-constants";
 import { cn } from "@/lib/utils";
 
@@ -208,6 +209,12 @@ export function ProductPurchaseBox({ listing }: ProductPurchaseBoxProps) {
           </>
         )}
       </div>
+
+      {/* Estimasi Ongkir Ringkas */}
+      <ProductShippingEstimator
+        originCity={listing.seller.city}
+        originProvince={listing.seller.province}
+      />
     </div>
   );
 }

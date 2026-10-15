@@ -108,11 +108,19 @@ async function findListings(
     );
   }
 
-  // Origin region filter
+  // Origin region filter (supports exact region or island match)
   if (filters.originRegion && filters.originRegion !== "all") {
-    results = results.filter(
-      (item) => item.tasteProfile?.originRegion === filters.originRegion,
-    );
+    const target = filters.originRegion.toLowerCase();
+    results = results.filter((item) => {
+      const region = item.tasteProfile?.originRegion?.toLowerCase() || "";
+      if (region === target || region.includes(target)) return true;
+      if (target === "sumatera" && (region.includes("gayo") || region.includes("mandheling") || region.includes("kerinci"))) return true;
+      if (target === "jawa" && (region.includes("java") || region.includes("preanger") || region.includes("ijen") || region.includes("ciwidey"))) return true;
+      if (target === "sulawesi" && (region.includes("toraja") || region.includes("enrekang"))) return true;
+      if ((target === "bali" || target === "ntt" || target === "nusa tenggara") && (region.includes("kintamani") || region.includes("bajawa") || region.includes("flores"))) return true;
+      if (target === "papua" && region.includes("wamena")) return true;
+      return false;
+    });
   }
 
   // Process method filter

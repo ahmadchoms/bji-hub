@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
-import { Award } from "lucide-react";
+import { Award, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const categoryTabs = [
@@ -11,6 +11,15 @@ const categoryTabs = [
   { slug: "green-beans", label: "Biji Mentah (Green Bean)" },
   { slug: "drip-bag", label: "Drip Bag" },
   { slug: "equipment", label: "Alat Seduh" },
+];
+
+const islandPresets = [
+  { slug: "", label: "Semua Wilayah" },
+  { slug: "Sumatera", label: "Sumatera" },
+  { slug: "Jawa", label: "Jawa" },
+  { slug: "Bali", label: "Bali & NTT" },
+  { slug: "Sulawesi", label: "Sulawesi" },
+  { slug: "Papua", label: "Papua" },
 ];
 
 const cuppingPresets = [
@@ -33,6 +42,8 @@ export function CatalogCategoryTabs() {
     searchParams.get("min_cupping") ||
     searchParams.get("skor_cupping") ||
     "";
+  const currentOrigin =
+    searchParams.get("origin") || searchParams.get("asal") || "";
 
   const handleCategoryClick = (slug: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -42,6 +53,21 @@ export function CatalogCategoryTabs() {
     } else {
       params.set("category", slug);
       params.delete("kategori");
+    }
+    params.delete("page");
+    startTransition(() => {
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    });
+  };
+
+  const handleOriginClick = (slug: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (!slug) {
+      params.delete("origin");
+      params.delete("asal");
+    } else {
+      params.set("origin", slug);
+      params.delete("asal");
     }
     params.delete("page");
     startTransition(() => {
@@ -85,6 +111,33 @@ export function CatalogCategoryTabs() {
               )}
             >
               {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Archipelago / Island Presets */}
+      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none text-[11px]">
+        <span className="text-neutral-500 font-medium shrink-0 flex items-center gap-1 mr-1">
+          <MapPin className="w-3.5 h-3.5 text-primary-600" />
+          Wilayah:
+        </span>
+        {islandPresets.map((preset) => {
+          const isActive =
+            currentOrigin.toLowerCase() === preset.slug.toLowerCase();
+          return (
+            <button
+              key={preset.slug || "all-islands"}
+              type="button"
+              onClick={() => handleOriginClick(preset.slug)}
+              className={cn(
+                "px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors shrink-0 whitespace-nowrap",
+                isActive
+                  ? "bg-primary-700 text-white font-semibold shadow-2xs"
+                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 hover:text-neutral-900",
+              )}
+            >
+              {preset.label}
             </button>
           );
         })}

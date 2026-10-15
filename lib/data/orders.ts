@@ -372,6 +372,41 @@ export async function decrementListingStock(
   return { success: false };
 }
 
+export async function incrementListingStock(
+  listingId: string,
+  quantity: number,
+): Promise<{ success: boolean; newStock?: number }> {
+  const pool = getPool();
+  if (pool) {
+    try {
+      const res = await pool.query(
+        `UPDATE public.listings
+         SET stock = COALESCE(stock, 0) + $1,
+             status = 'active'
+         WHERE id = $2
+         RETURNING stock`,
+        [quantity, listingId],
+      );
+      if (res && res.rows && res.rows.length > 0) {
+        return { success: true, newStock: Number(res.rows[0].stock) };
+      }
+    } catch {
+      // Postgres fallback
+    }
+  }
+
+  const listing = mockListings.find((l) => l.id === listingId);
+  if (listing) {
+    const current = listing.stock ?? 0;
+    listing.stock = current + quantity;
+    if (listing.status === "archived") {
+      listing.status = "active";
+    }
+    return { success: true, newStock: listing.stock };
+  }
+  return { success: false };
+}
+
 export async function updateOrderStatus(
   orderId: string,
   status: OrderStatus,
@@ -410,6 +445,19 @@ export async function updateOrderStatus(
           })
           .catch(() => {});
       }
+    }
+  }
+
+  // If status is transitioning to canceled from a paid order, restore inventory
+  if (status === "canceled") {
+    const currentOrder = await getOrderById(orderId);
+    if (
+      currentOrder &&
+      currentOrder.status === "paid" &&
+      currentOrder.listingId &&
+      currentOrder.quantity
+    ) {
+      await incrementListingStock(currentOrder.listingId, currentOrder.quantity);
     }
   }
 
@@ -500,4 +548,43 @@ export async function autoCompleteExpiredShippedOrders(
   });
 
   return { completedCount: completedIds.length, orderIds: completedIds };
+}
+
+export async function autoCancelExpiredPendingOrders(
+  hoursThreshold = 24,
+): Promise<{ canceledCount: number; orderIds: string[] }> {
+  const pool = getPool();
+  const now = new Date();
+  const thresholdMs = hoursThreshold * 60 * 60 * 1000;
+  const cutoffDate = new Date(now.getTime() - thresholdMs).toISOString();
+
+  const canceledIds: string[] = [];
+
+  if (pool) {
+    try {
+      const res = await pool.query(
+        `UPDATE public.orders
+         SET status = 'canceled', updated_at = NOW()
+         WHERE status = 'pending_payment' AND created_at <= $1
+         RETURNING id`,
+        [cutoffDate],
+      );
+      res.rows.forEach((r) => canceledIds.push(r.id));
+    } catch (e) {
+      console.error("Failed to auto-cancel expired pending orders in postgres:", e);
+    }
+  }
+
+  mockOrders.forEach((o) => {
+    if (o.status === "pending_payment") {
+      const orderDate = new Date(o.createdAt).getTime();
+      if (now.getTime() - orderDate >= thresholdMs) {
+        o.status = "canceled";
+        o.updatedAt = now.toISOString();
+        if (!canceledIds.includes(o.id)) canceledIds.push(o.id);
+      }
+    }
+  });
+
+  return { canceledCount: canceledIds.length, orderIds: canceledIds };
 }

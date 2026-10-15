@@ -121,5 +121,45 @@ describe("orders data layer & auto-complete", () => {
     // Transition to paid
     await updateOrderStatus(order.id, "paid");
     expect(listing.stock).toBe(15);
+
+    // Transitioning from paid to canceled restores stock
+    await updateOrderStatus(order.id, "canceled");
+    expect(listing.stock).toBe(20);
+  });
+
+  it("auto-cancels pending orders older than 24 hours", async () => {
+    const orderNumber = `ORD-PENDING-OLD-${Date.now()}`;
+    const order = await createOrder({
+      orderNumber,
+      buyerName: "Lazy Buyer",
+      buyerEmail: "lazy@example.com",
+      buyerPhone: "08123456789",
+      buyerAddress: "Jl Pending No 1",
+      buyerCity: "Jakarta",
+      sellerId: "seller-1",
+      listingId: "list-1",
+      quantity: 1,
+      itemPrice: 50000,
+      subtotal: 50000,
+      shippingCost: 10000,
+      serviceFee: 1500,
+      totalAmount: 61500,
+      shippingCourier: "JNE",
+      midtransOrderId: orderNumber,
+    });
+
+    const fetched = await getOrderById(order.id);
+    if (fetched) {
+      // 25 hours ago
+      fetched.createdAt = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString();
+    }
+
+    const { autoCancelExpiredPendingOrders } = await import("@/lib/data/orders");
+    const result = await autoCancelExpiredPendingOrders(24);
+    expect(result.canceledCount).toBeGreaterThanOrEqual(1);
+    expect(result.orderIds).toContain(order.id);
+
+    const after = await getOrderById(order.id);
+    expect(after?.status).toBe("canceled");
   });
 });

@@ -28,6 +28,7 @@ import {
   Check,
   RotateCcw,
   Truck,
+  Search,
 } from "lucide-react";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
@@ -47,6 +48,7 @@ type OrderFilter = "all" | "pending_payment" | "paid" | "shipped" | "completed" 
 export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
   const router = useRouter();
   const [filter, setFilter] = useState<OrderFilter>("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [payingId, setPayingId] = useState<string | null>(null);
   const [cancelingId, setCancelingId] = useState<string | null>(null);
   const [copiedResiId, setCopiedResiId] = useState<string | null>(null);
@@ -124,8 +126,19 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
   };
 
   const filteredOrders = orders.filter((o) => {
-    if (filter === "all") return true;
-    return o.status === filter;
+    if (filter !== "all" && o.status !== filter) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const matchNum = o.orderNumber.toLowerCase().includes(q);
+      const matchTitle = (o.listingTitle || "").toLowerCase().includes(q);
+      const matchSeller = (o.sellerName || "").toLowerCase().includes(q);
+      const matchResi = (o.trackingNumber || "").toLowerCase().includes(q);
+      const matchCourier = (o.shippingCourier || "").toLowerCase().includes(q);
+      if (!matchNum && !matchTitle && !matchSeller && !matchResi && !matchCourier) {
+        return false;
+      }
+    }
+    return true;
   });
 
   const counts = {
@@ -139,7 +152,7 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
 
   return (
     <Card className="border-neutral-300">
-      <CardHeader>
+      <CardHeader className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <CardTitle className="text-base text-neutral-900 flex items-center gap-2">
@@ -155,9 +168,33 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
           </span>
         </div>
 
+        {/* Quick Search Bar */}
+        {orders.length > 0 && (
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari nomor pesanan, nama kopi, penjual, atau resi..."
+              className="w-full text-xs pl-8 pr-8 py-2 rounded-md border border-neutral-200 bg-neutral-50/50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400 placeholder:text-neutral-400 transition-colors"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-2 text-neutral-400 hover:text-neutral-600 text-xs px-1 py-0.5 rounded cursor-pointer"
+                title="Hapus pencarian"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Filter Tabs */}
         {orders.length > 0 && (
-          <div className="flex items-center gap-1.5 overflow-x-auto pt-2 border-t border-neutral-100 text-xs">
+          <div className="flex items-center gap-1.5 overflow-x-auto pt-1 border-t border-neutral-100 text-xs">
             <button
               onClick={() => setFilter("all")}
               className={`px-2.5 py-1 rounded-sm text-xs font-medium transition-colors shrink-0 ${
@@ -226,20 +263,30 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
 
       <CardContent className="space-y-3 pt-0">
         {filteredOrders.length === 0 ? (
-          <div className="text-center py-6 border border-dashed border-neutral-200 rounded-sm">
+          <div className="text-center py-6 border border-dashed border-neutral-200 rounded-sm space-y-1.5">
             <p className="text-xs text-neutral-500">
               {orders.length === 0
                 ? "Belum ada riwayat pesanan."
-                : "Tidak ada pesanan dalam status ini."}
+                : searchQuery
+                  ? `Tidak ada pesanan yang cocok dengan pencarian "${searchQuery}".`
+                  : "Tidak ada pesanan dalam status ini."}
             </p>
-            {orders.length === 0 && (
+            {orders.length === 0 ? (
               <Link
                 href="/"
-                className="text-xs font-semibold text-primary-600 hover:underline mt-1 inline-block"
+                className="text-xs font-semibold text-primary-600 hover:underline inline-block"
               >
                 Jelajahi Pilihan Kopi &rarr;
               </Link>
-            )}
+            ) : searchQuery ? (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="text-xs font-semibold text-primary-600 hover:underline inline-block cursor-pointer"
+              >
+                Reset Pencarian
+              </button>
+            ) : null}
           </div>
         ) : (
           filteredOrders.map((ord) => {

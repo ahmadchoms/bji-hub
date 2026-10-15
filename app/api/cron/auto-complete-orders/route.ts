@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { autoCompleteExpiredShippedOrders } from "@/lib/data/orders";
+import {
+  autoCompleteExpiredShippedOrders,
+  autoCancelExpiredPendingOrders,
+} from "@/lib/data/orders";
 
 export const dynamic = "force-dynamic";
 
@@ -14,11 +17,15 @@ export async function GET(request: Request) {
   }
 
   try {
-    const result = await autoCompleteExpiredShippedOrders(2);
+    const [completed, canceled] = await Promise.all([
+      autoCompleteExpiredShippedOrders(2),
+      autoCancelExpiredPendingOrders(24),
+    ]);
     return NextResponse.json({
       success: true,
-      message: `${result.completedCount} pesanan kadaluwarsa (>48 jam) berhasil diselesaikan otomatis.`,
-      ...result,
+      message: `${completed.completedCount} pesanan selesai otomatis (>48 jam). ${canceled.canceledCount} pesanan belum bayar dibatalkan otomatis (>24 jam).`,
+      completed,
+      canceled,
     });
   } catch (error) {
     return NextResponse.json(

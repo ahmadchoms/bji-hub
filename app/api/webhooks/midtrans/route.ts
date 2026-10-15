@@ -27,6 +27,35 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
+  // 2. Check if it is a marketplace product order
+  const { updateOrderStatus, getOrderById } = await import("@/lib/data/orders");
+  const nextStatus = mapMidtransStatus(
+    body.transaction_status,
+    body.fraud_status
+  );
+  const orderStatus =
+    nextStatus === "paid"
+      ? "paid"
+      : nextStatus === "failed"
+        ? "canceled"
+        : "pending_payment";
+
+  const order = await getOrderById(body.order_id);
+  if (order) {
+    const updated = await updateOrderStatus(order.id, orderStatus);
+    if (updated && orderStatus === "paid") {
+      try {
+        const { sendOrderPaidEmail } = await import("@/lib/email");
+        sendOrderPaidEmail(order).catch((e) =>
+          console.error("Failed to send order paid email from webhook:", e)
+        );
+      } catch {
+        // Non-blocking
+      }
+    }
+    return NextResponse.json({ received: true, type: "order" });
+  }
+
   if (process.env.DATA_SOURCE !== "prisma") {
     return NextResponse.json({ received: true, mode: "mock" });
   }
@@ -37,44 +66,10 @@ export async function POST(req: NextRequest) {
   });
 
   if (!payment) {
-    // Check if it is a marketplace product order
-    const { updateOrderStatus, getOrderById } = await import("@/lib/data/orders");
-    const nextStatus = mapMidtransStatus(
-      body.transaction_status,
-      body.fraud_status
-    );
-    const orderStatus =
-      nextStatus === "paid"
-        ? "paid"
-        : nextStatus === "failed"
-          ? "canceled"
-          : "pending_payment";
-    const updated = await updateOrderStatus(body.order_id, orderStatus);
-    if (updated) {
-      if (orderStatus === "paid") {
-        try {
-          const order = await getOrderById(body.order_id);
-          if (order) {
-            const { sendOrderPaidEmail } = await import("@/lib/email");
-            sendOrderPaidEmail(order).catch((e) =>
-              console.error("Failed to send order paid email from webhook:", e)
-            );
-          }
-        } catch {
-          // Non-blocking
-        }
-      }
-      return NextResponse.json({ received: true, type: "order" });
-    }
     return NextResponse.json({ error: "Payment not found" }, { status: 404 });
   }
 
-  // 2. Map Midtrans transaction_status
-  const nextStatus = mapMidtransStatus(
-    body.transaction_status,
-    body.fraud_status
-  );
-
+  // 3. Process Subscription / Boost Payment
   await prisma.$transaction(async (tx) => {
     await tx.payment.update({
       where: { id: payment.id },

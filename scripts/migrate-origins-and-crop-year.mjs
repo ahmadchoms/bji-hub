@@ -34,8 +34,42 @@ async function main() {
       );
 
       CREATE INDEX IF NOT EXISTS idx_coffee_origins_country ON public.coffee_origins(country);
+
+      -- Create order_items table
+      CREATE TABLE IF NOT EXISTS public.order_items (
+        id TEXT PRIMARY KEY,
+        order_id TEXT NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
+        listing_id TEXT NOT NULL REFERENCES public.listings(id) ON DELETE CASCADE,
+        title TEXT NOT NULL,
+        price DECIMAL(14, 2) NOT NULL,
+        quantity INTEGER NOT NULL DEFAULT 1,
+        unit TEXT NOT NULL DEFAULT '250g',
+        grind_size TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON public.order_items(order_id);
+      CREATE INDEX IF NOT EXISTS idx_order_items_listing_id ON public.order_items(listing_id);
+
+      -- Create user_addresses table
+      CREATE TABLE IF NOT EXISTS public.user_addresses (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+        label TEXT NOT NULL DEFAULT 'Utama',
+        recipient_name TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        street_address TEXT NOT NULL,
+        city TEXT NOT NULL,
+        province TEXT NOT NULL,
+        postal_code TEXT,
+        is_default BOOLEAN NOT NULL DEFAULT false,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_user_addresses_user_id ON public.user_addresses(user_id);
     `);
-    console.log("Successfully migrated taste_profiles and coffee_origins!");
+    console.log("Successfully migrated taste_profiles, coffee_origins, order_items, and user_addresses!");
   } catch (err) {
     console.error("Migration error:", err);
     throw err;

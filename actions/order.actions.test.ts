@@ -125,4 +125,33 @@ describe("createCheckoutOrderAction", () => {
       expect(res.error).toContain("habis terjual");
     }
   });
+
+  it("prevents seller from purchasing their own listing (self-purchase guard)", async () => {
+    const authSession = await import("@/lib/auth/session");
+    const spy = vi.spyOn(authSession, "getSession").mockResolvedValueOnce({
+      role: "seller",
+      sellerId: "seller-1",
+      userId: "user-seller-1",
+      email: "seller@bijihub.com",
+    });
+
+    const res = await createCheckoutOrderAction({
+      listingId: "list-1",
+      quantity: 1,
+      buyerName: "Pak Hendra Owner",
+      buyerEmail: "seller@bijihub.com",
+      buyerPhone: "081234567890",
+      buyerAddress: "Jl. Takengon",
+      buyerCity: "Takengon",
+      shippingCourier: "JNE",
+      shippingCost: 10000,
+    });
+
+    expect(res.success).toBe(false);
+    if (!res.success) {
+      expect(res.error).toContain("tidak dapat membeli produk dari toko Anda sendiri");
+    }
+
+    spy.mockRestore();
+  });
 });

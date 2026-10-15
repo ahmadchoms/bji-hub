@@ -59,6 +59,8 @@ export async function getSession(): Promise<Session> {
           return {
             role,
             sellerId: dbUser.sellerProfile?.id ?? null,
+            userId: dbUser.id,
+            email: dbUser.email,
           };
         }
       }
@@ -70,7 +72,22 @@ export async function getSession(): Promise<Session> {
   // 2. Mock session fallback (preserves Vitest test suite)
   const raw = store.get(MOCK_SESSION_COOKIE)?.value;
   if (!isRole(raw) || raw === "guest") return GUEST_SESSION;
-  return { role: raw, sellerId: raw === "seller" ? MOCK_SELLER_ID : null };
+  return {
+    role: raw,
+    sellerId: raw === "seller" ? MOCK_SELLER_ID : null,
+    userId:
+      raw === "seller"
+        ? "user-seller-1"
+        : raw === "admin"
+          ? "user-admin-1"
+          : "user-buyer-1",
+    email:
+      raw === "seller"
+        ? "seller@bijihub.com"
+        : raw === "admin"
+          ? "admin@bijihub.com"
+          : "buyer@bijihub.com",
+  };
 }
 
 export async function requireRole(

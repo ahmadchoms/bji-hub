@@ -85,6 +85,13 @@ export async function createCheckoutOrderAction(
     return fail("Produk tidak ditemukan atau sudah tidak tersedia");
   }
 
+  const session = await getSession();
+
+  // Self-purchase prevention
+  if (session.sellerId && listing.sellerId === session.sellerId) {
+    return fail("Anda tidak dapat membeli produk dari toko Anda sendiri.");
+  }
+
   // Stock check guard
   if (listing.stock === 0) {
     return fail(`Maaf, stok untuk "${listing.title}" telah habis terjual`);
@@ -173,8 +180,7 @@ export async function createCheckoutOrderAction(
     // If offline / sandbox mock
   }
 
-  const session = await getSession();
-  const buyerId = session.role === "buyer" ? (session as unknown as { userId?: string }).userId ?? null : null;
+  const buyerId = session.userId ?? null;
 
   // 4. Save order to database
   const order = await createOrder({

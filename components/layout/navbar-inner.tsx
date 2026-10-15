@@ -137,12 +137,7 @@ export function NavbarInner({
   };
 
   const isSeller = role === "seller";
-  const ordersHref =
-    role === "seller"
-      ? "/dashboard/orders"
-      : role === "buyer"
-        ? "/orders"
-        : "/login?next=/orders";
+  const ordersHref = user ? "/orders" : "/login?next=/orders";
 
   const storeHref = isSeller ? "/dashboard" : "/open-store";
   const storeLabel = isSeller ? storeName || "Toko Saya" : "Toko";
@@ -559,15 +554,31 @@ export function NavbarInner({
                 {profileOpen && (
                   <div className="absolute right-0 top-full mt-1 w-44 rounded-md border border-neutral-200 bg-white py-1.5 shadow-lg z-50 animate-in fade-in-50 zoom-in-95">
                     <Link
-                      href={
-                        role === "seller" ? "/dashboard/profile" : "/profile"
-                      }
+                      href="/profile"
                       onClick={() => setProfileOpen(false)}
                       className="flex items-center gap-2 px-3 py-2 text-xs text-neutral-700 hover:bg-neutral-50 transition-colors"
                     >
                       <User className="w-3.5 h-3.5 text-neutral-500" />
-                      <span>Profil Akun</span>
+                      <span>Profil Saya</span>
                     </Link>
+                    <Link
+                      href="/orders"
+                      onClick={() => setProfileOpen(false)}
+                      className="flex items-center gap-2 px-3 py-2 text-xs text-neutral-700 hover:bg-neutral-50 transition-colors"
+                    >
+                      <Receipt className="w-3.5 h-3.5 text-neutral-500" />
+                      <span>Pesanan Saya</span>
+                    </Link>
+                    {isSeller && (
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setProfileOpen(false)}
+                        className="flex items-center gap-2 px-3 py-2 text-xs text-primary-800 font-semibold hover:bg-primary-50 transition-colors"
+                      >
+                        <Store className="w-3.5 h-3.5 text-primary-600" />
+                        <span>Dashboard Toko</span>
+                      </Link>
+                    )}
                     <div className="border-t border-neutral-100 my-1" />
                     <form action={logoutAction} className="w-full">
                       <button

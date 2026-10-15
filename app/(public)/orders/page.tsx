@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { Store } from "lucide-react";
 import { getSession } from "@/lib/auth/session";
 import { PageContainer } from "@/components/layout/page-container";
 import { BuyerOrdersCard } from "@/components/profile/buyer-orders-card";
@@ -19,11 +20,7 @@ export default async function OrdersPage() {
     redirect("/login?next=/orders");
   }
 
-  if (session.role === "seller") {
-    redirect("/dashboard/orders");
-  }
-
-  let userEmail = "";
+  let userEmail = session.email || "";
   if (
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -66,6 +63,21 @@ export default async function OrdersPage() {
             Beli Kopi Lagi →
           </Link>
         </div>
+
+        {session.sellerId && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-lg bg-amber-50/80 border border-amber-200 text-xs text-amber-900">
+            <div className="flex items-center gap-2">
+              <Store className="w-4 h-4 text-amber-700 shrink-0" />
+              <span>Ini riwayat belanja pribadi Anda. Ingin mengelola pesanan masuk dari pembeli toko Anda?</span>
+            </div>
+            <Link
+              href="/dashboard/orders"
+              className="font-bold underline text-amber-800 hover:text-amber-950 shrink-0 sm:ml-2"
+            >
+              Kelola Pesanan Toko Masuk →
+            </Link>
+          </div>
+        )}
 
         <BuyerOrdersCard orders={orders} />
       </PageContainer>

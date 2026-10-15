@@ -33,11 +33,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
     redirect(`/login?next=${encodeURIComponent(next || "/profile")}`);
   }
 
-  if (session.role === "seller") {
-    redirect("/dashboard/profile");
-  }
-
-  let userEmail = "";
+  let userEmail = session.email || "";
   let userName = "";
   let userAvatarUrl = "";
   let userPhone = "";
@@ -136,6 +132,21 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
           Akun Pembeli
         </Badge>
       </div>
+
+      {session.sellerId && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3.5 rounded-lg bg-amber-50/80 border border-amber-200 text-xs text-amber-900">
+          <div className="flex items-center gap-2">
+            <Store className="w-4 h-4 text-amber-700 shrink-0" />
+            <span>Ini profil akun belanja pribadi Anda. Ingin mengedit profil toko/roastery Anda?</span>
+          </div>
+          <Link
+            href="/dashboard/profile"
+            className="font-bold underline text-amber-800 hover:text-amber-950 shrink-0 sm:ml-2"
+          >
+            Edit Profil Toko Roastery →
+          </Link>
+        </div>
+      )}
 
       {/* Alert banner if redirected from checkout gate */}
       {required === "shipping" && (

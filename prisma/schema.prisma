@@ -68,6 +68,9 @@ model User {
   role          Role           @default(BUYER)
   createdAt     DateTime       @default(now())
   sellerProfile SellerProfile?
+  orders        Order[]        @relation("UserOrders")
+  reviews       Review[]
+  addresses     UserAddress[]
 
   @@map("users")
 }
@@ -93,6 +96,7 @@ model SellerProfile {
   listings      Listing[]
   subscriptions Subscription[]
   payments      Payment[]
+  orders        Order[]
 
   @@map("seller_profiles")
 }
@@ -131,6 +135,9 @@ model Listing {
   events       AnalyticsEvent[]
   inquiries    Inquiry[]
   payments     Payment[]
+  orders       Order[]
+  orderItems   OrderItem[]
+  reviews      Review[]
 
   @@index([status, createdAt])
   @@index([sellerId])
@@ -251,3 +258,108 @@ model CoffeeOrigin {
   @@index([country])
   @@map("coffee_origins")
 }
+
+enum OrderStatus {
+  pending_payment
+  paid
+  shipped
+  completed
+  canceled
+  disputed
+}
+
+model Order {
+  id              String        @id @default(uuid())
+  orderNumber     String        @unique @map("order_number")
+  buyerId         String?       @map("buyer_id")
+  buyer           User?         @relation("UserOrders", fields: [buyerId], references: [id], onDelete: SetNull)
+  buyerName       String        @map("buyer_name")
+  buyerEmail      String        @map("buyer_email")
+  buyerPhone      String        @map("buyer_phone")
+  buyerAddress    String        @map("buyer_address")
+  buyerCity       String        @map("buyer_city")
+  sellerId        String        @map("seller_id")
+  seller          SellerProfile @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  listingId       String        @map("listing_id")
+  listing         Listing       @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  quantity        Int           @default(1)
+  itemPrice       Decimal       @map("item_price") @db.Decimal(14, 2)
+  subtotal        Decimal       @db.Decimal(14, 2)
+  shippingCost    Decimal       @default(0) @map("shipping_cost") @db.Decimal(14, 2)
+  serviceFee      Decimal       @default(1500) @map("service_fee") @db.Decimal(14, 2)
+  totalAmount     Decimal       @map("total_amount") @db.Decimal(14, 2)
+  shippingCourier String?       @map("shipping_courier")
+  trackingNumber  String?       @map("tracking_number")
+  status          OrderStatus   @default(pending_payment)
+  snapToken       String?       @map("snap_token")
+  midtransOrderId String?       @unique @map("midtrans_order_id")
+  notes           String?
+  disputeReason   String?       @map("dispute_reason")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  items   OrderItem[]
+  reviews Review[]
+
+  @@index([sellerId])
+  @@index([buyerEmail])
+  @@index([buyerId])
+  @@index([status])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String   @map("order_id")
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  listingId String   @map("listing_id")
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  title     String
+  price     Decimal  @db.Decimal(14, 2)
+  quantity  Int      @default(1)
+  unit      String   @default("250g")
+  grindSize String?  @map("grind_size")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([orderId])
+  @@index([listingId])
+  @@map("order_items")
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  orderId   String?  @map("order_id")
+  order     Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  listingId String   @map("listing_id")
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyerId   String?  @map("buyer_id")
+  buyer     User?    @relation(fields: [buyerId], references: [id], onDelete: SetNull)
+  buyerName String   @map("buyer_name")
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([listingId])
+  @@index([orderId])
+  @@map("reviews")
+}
+
+model UserAddress {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label         String   @default("Utama")
+  recipientName String   @map("recipient_name")
+  phone         String
+  streetAddress String   @map("street_address")
+  city          String
+  province      String
+  postalCode    String?  @map("postal_code")
+  isDefault     Boolean  @default(false) @map("is_default")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("user_addresses")
+}
+

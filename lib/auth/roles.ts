@@ -4,9 +4,16 @@ export type Role = (typeof ROLES)[number];
 export interface Session {
   role: Role;
   sellerId: string | null;
+  userId?: string | null;
+  email?: string | null;
 }
 
-export const GUEST_SESSION: Session = { role: "guest", sellerId: null };
+export const GUEST_SESSION: Session = {
+  role: "guest",
+  sellerId: null,
+  userId: null,
+  email: null,
+};
 
 export function isRole(value: unknown): value is Role {
   return (

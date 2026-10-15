@@ -9,6 +9,7 @@ export const catalogParamsSchema = z.object({
   min_price: z.coerce.number().int().nonnegative().optional(),
   max_price: z.coerce.number().int().nonnegative().optional(),
   verified: z.preprocess((value) => value === true || value === "true", z.boolean()).default(false),
+  ready_stock: z.preprocess((value) => value === true || value === "true", z.boolean()).default(false),
   sort: z.enum(["newest", "price_asc", "price_desc"]).default("newest"),
   page: z.coerce.number().int().min(1).default(1),
   cupping_score: z.coerce.number().min(0).max(100).optional(),
@@ -21,6 +22,7 @@ export const catalogParamsSchema = z.object({
   sangrai: z.string().trim().optional(),
   harga_min: z.coerce.number().int().nonnegative().optional(),
   harga_max: z.coerce.number().int().nonnegative().optional(),
+  stok_tersedia: z.preprocess((value) => value === true || value === "true", z.boolean()).optional(),
   urut: z.string().optional(),
   halaman: z.coerce.number().int().min(1).optional(),
 });
@@ -49,6 +51,7 @@ export function parseCatalogParams(params: Record<string, string | string[] | un
   const maxPrice = value("max_price") || value("harga_max");
   const cuppingScore = value("cupping_score") || value("min_cupping") || value("skor_cupping");
   const verified = value("verified") === "true";
+  const readyStock = value("ready_stock") === "true" || value("stok_tersedia") === "true";
 
   const parsed = catalogParamsSchema.safeParse({
     q: value("q") || "",
@@ -60,6 +63,7 @@ export function parseCatalogParams(params: Record<string, string | string[] | un
     max_price: maxPrice,
     cupping_score: cuppingScore,
     verified,
+    ready_stock: readyStock,
     sort: normalizedSort,
     page,
     kategori: category,
@@ -70,6 +74,7 @@ export function parseCatalogParams(params: Record<string, string | string[] | un
     harga_max: maxPrice,
     min_cupping: cuppingScore,
     skor_cupping: cuppingScore,
+    stok_tersedia: readyStock,
     urut: normalizedSort,
     halaman: page,
   });

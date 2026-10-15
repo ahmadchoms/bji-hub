@@ -20,6 +20,7 @@ export async function CatalogFeed({ params }: { params: CatalogParams }) {
         minPrice: params.min_price ?? params.harga_min,
         maxPrice: params.max_price ?? params.harga_max,
         isVerified: params.verified,
+        readyStock: params.ready_stock,
         search: params.q,
         sort: params.sort,
         minCuppingScore: params.cupping_score ?? params.min_cupping,
@@ -37,6 +38,7 @@ export async function CatalogFeed({ params }: { params: CatalogParams }) {
       max_price: params.max_price !== undefined ? String(params.max_price) : params.harga_max !== undefined ? String(params.harga_max) : undefined,
       cupping_score: params.cupping_score !== undefined ? String(params.cupping_score) : params.min_cupping !== undefined ? String(params.min_cupping) : undefined,
       verified: params.verified ? "true" : undefined,
+      ready_stock: params.ready_stock ? "true" : undefined,
       sort: params.sort !== "newest" ? params.sort : undefined,
     };
     const serialized = new URLSearchParams(

@@ -142,6 +142,11 @@ async function findListings(
     results = results.filter((item) => item.seller.isVerified);
   }
 
+  // Ready stock inventory filter
+  if (filters.readyStock) {
+    results = results.filter((item) => item.stock === undefined || item.stock > 0);
+  }
+
   // Boosted listing filter
   if (filters.isBoosted) {
     results = results.filter((item) => item.isBoosted);

@@ -46,6 +46,7 @@ function buildWhere(filters: ListingFilters): Prisma.ListingWhereInput {
 
   if (filters.isVerified) where.seller = { is: { isVerified: true } };
   if (filters.isBoosted) where.isBoosted = true;
+  if (filters.readyStock) where.status = "active";
 
   const price: Prisma.DecimalFilter = {};
   if (typeof filters.minPrice === "number" && !Number.isNaN(filters.minPrice))

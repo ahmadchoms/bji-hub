@@ -27,6 +27,7 @@ import {
   Copy,
   Check,
   RotateCcw,
+  Truck,
 } from "lucide-react";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
@@ -314,6 +315,26 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
                 <div className="pt-2 pb-1 border-t border-neutral-100">
                   <OrderStatusStepper status={ord.status} />
                 </div>
+
+                {ord.status === "shipped" && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-purple-50/70 border border-purple-200/80 rounded text-xs text-purple-900">
+                    <div className="flex items-center gap-2">
+                      <Truck className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                      <span>
+                        Dalam Pengiriman via{" "}
+                        <strong className="font-semibold">{ord.shippingCourier || "Ekspedisi"}</strong>
+                      </span>
+                    </div>
+                    {(() => {
+                      const etdMatch = ord.shippingCourier?.match(/\(([^)]+)\)/);
+                      return etdMatch ? (
+                        <span className="text-[11px] font-semibold text-purple-900 bg-purple-100/90 border border-purple-300 px-2 py-0.5 rounded">
+                          Estimasi Tiba: {etdMatch[1]}
+                        </span>
+                      ) : null;
+                    })()}
+                  </div>
+                )}
 
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-neutral-100 text-[11px] text-neutral-500">
                   <div className="flex items-center gap-2 flex-wrap">

@@ -2,15 +2,35 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useWishlist } from "@/lib/wishlist";
+import { useWishlist, type WishlistItem } from "@/lib/wishlist";
+import { addToCart } from "@/lib/cart";
 import { PageContainer } from "@/components/layout/page-container";
 import { formatRupiah } from "@/components/shared/price-text";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Heart, Trash2, ArrowRight, Store, Coffee } from "lucide-react";
+import { Heart, Trash2, ArrowRight, Store, Coffee, ShoppingCart } from "lucide-react";
+import { toast } from "sonner";
 
 export default function WishlistPage() {
   const { isLoaded, items, totalItems, removeFromWishlist, clearWishlist } =
     useWishlist();
+
+  const handleAddToCart = (item: WishlistItem) => {
+    addToCart({
+      listingId: item.listingId,
+      slug: item.slug,
+      title: item.title,
+      price: item.price,
+      unit: item.unit,
+      minOrderQty: item.minOrderQty || 1,
+      quantity: item.minOrderQty || 1,
+      imageUrl: item.imageUrl,
+      sellerId: item.sellerId,
+      sellerName: item.sellerName,
+      sellerCity: item.sellerCity,
+      grindSize: "Biji Utuh",
+    });
+    toast.success(`"${item.title}" ditambahkan ke keranjang!`);
+  };
 
   if (!isLoaded) {
     return (
@@ -72,7 +92,7 @@ export default function WishlistPage() {
                 Belum Ada Kopi yang Disimpan
               </h2>
               <p className="text-xs text-neutral-500 max-w-sm mx-auto leading-relaxed">
-                Tekan tombol ikon hati pada kartu produk kopi atau halaman detail untuk menyimpan biji kopi favorit Anda di sini tanpa perlu login.
+                Tekan tombol ikon hati pada kartu produk kopi atau halaman detail untuk menyimpan biji kopi favorit Anda. Otomatis tersimpan dan tersinkronisasi di semua perangkat Anda saat login.
               </p>
             </div>
             <div className="pt-2">
@@ -167,16 +187,27 @@ export default function WishlistPage() {
                 </div>
 
                 {/* Footer Buttons */}
-                <div className="p-3 bg-neutral-50 border-t border-neutral-100 flex items-center justify-between gap-2">
+                <div className="p-3 bg-neutral-50 border-t border-neutral-100 flex items-center gap-1.5">
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon-sm"
                     onClick={() => removeFromWishlist(item.listingId)}
                     title="Hapus dari daftar favorit"
-                    className="text-neutral-400 hover:text-rose-600 hover:bg-rose-50"
+                    className="text-neutral-400 hover:text-rose-600 hover:bg-rose-50 shrink-0"
                   >
                     <Trash2 className="w-4 h-4" />
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleAddToCart(item)}
+                    className="flex-1 text-xs h-8 text-neutral-700 hover:text-neutral-900 border-neutral-300 gap-1.5 px-2 font-medium"
+                  >
+                    <ShoppingCart className="w-3.5 h-3.5 text-primary-600" />
+                    <span>+ Keranjang</span>
                   </Button>
 
                   <Link
@@ -184,10 +215,10 @@ export default function WishlistPage() {
                     className={buttonVariants({
                       variant: "default",
                       size: "sm",
-                      className: "flex-1 text-center justify-center text-xs h-8",
+                      className: "text-center justify-center text-xs h-8 px-2.5 shrink-0",
                     })}
                   >
-                    <span>Pesan Sekarang</span>
+                    <span>Pesan</span>
                     <ArrowRight className="w-3.5 h-3.5 ml-1" />
                   </Link>
                 </div>

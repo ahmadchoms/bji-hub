@@ -186,6 +186,7 @@ export interface ListingFilters {
   maxPrice?: number;
   isVerified?: boolean;
   isBoosted?: boolean;
+  readyStock?: boolean;
   search?: string;
   sort?: "newest" | "price_asc" | "price_desc" | "popular";
   minCuppingScore?: number;

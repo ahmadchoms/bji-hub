@@ -28,6 +28,14 @@ describe("catalog-params.schema", () => {
     expect(params.cupping_score).toBe(85);
   });
 
+  it("parses ready_stock and stok_tersedia flags correctly", () => {
+    const en = parseCatalogParams({ ready_stock: "true" });
+    expect(en.ready_stock).toBe(true);
+
+    const id = parseCatalogParams({ stok_tersedia: "true" });
+    expect(id.ready_stock).toBe(true);
+  });
+
   it("supports legacy Indonesian parameters for backward compatibility", () => {
     const params = parseCatalogParams({
       kategori: "robusta",

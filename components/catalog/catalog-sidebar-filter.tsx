@@ -7,6 +7,7 @@ import {
   RotateCcw,
   Check,
   ShieldCheck,
+  Package,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -71,6 +72,9 @@ export function CatalogSidebarFilter({
   const currentMaxPrice =
     searchParams.get("max_price") || searchParams.get("harga_max") || "";
   const isVerified = searchParams.get("verified") === "true";
+  const isReadyStock =
+    searchParams.get("ready_stock") === "true" ||
+    searchParams.get("stok_tersedia") === "true";
 
   const replaceParam = useCallback(
     (key: string, value: string) => {
@@ -83,6 +87,7 @@ export function CatalogSidebarFilter({
       if (key === "process") params.delete("proses");
       if (key === "roast") params.delete("sangrai");
       if (key === "category") params.delete("kategori");
+      if (key === "ready_stock") params.delete("stok_tersedia");
       if (key === "cupping_score") {
         params.delete("min_cupping");
         params.delete("skor_cupping");
@@ -108,6 +113,7 @@ export function CatalogSidebarFilter({
     currentCupping,
     currentMinPrice || currentMaxPrice,
     isVerified,
+    isReadyStock,
   ].filter(Boolean).length;
 
   const FilterContent = (
@@ -332,6 +338,24 @@ export function CatalogSidebarFilter({
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
             <span className="font-medium text-neutral-800">
               Mitra Terverifikasi Saja
+            </span>
+          </div>
+        </label>
+      </div>
+
+      {/* 8. Ketersediaan Stok */}
+      <div className="pt-3 border-t border-neutral-100">
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <Checkbox
+            checked={isReadyStock}
+            onCheckedChange={(checked) =>
+              replaceParam("ready_stock", checked ? "true" : "")
+            }
+          />
+          <div className="flex items-center gap-1.5">
+            <Package className="w-3.5 h-3.5 text-primary-700" />
+            <span className="font-medium text-neutral-800">
+              Stok Tersedia Saja
             </span>
           </div>
         </label>

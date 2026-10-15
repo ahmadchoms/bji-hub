@@ -8,6 +8,10 @@ import {
   Check,
   ShieldCheck,
   Package,
+  Coffee,
+  MapPin,
+  Flame,
+  Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -28,19 +32,44 @@ interface CatalogSidebarFilterProps {
   className?: string;
 }
 
+const defaultCategories = [
+  { id: "roasted-beans", slug: "roasted-beans", name: "Biji Sangrai (Roasted)" },
+  { id: "green-beans", slug: "green-beans", name: "Biji Mentah (Green Bean)" },
+  { id: "drip-bag", slug: "drip-bag", name: "Drip Bag" },
+  { id: "equipment", slug: "equipment", name: "Alat Seduh" },
+];
+
+const islandPresets = [
+  { slug: "Sumatera", label: "Sumatera" },
+  { slug: "Jawa", label: "Jawa" },
+  { slug: "Bali", label: "Bali & NTT" },
+  { slug: "Sulawesi", label: "Sulawesi" },
+  { slug: "Papua", label: "Papua" },
+];
+
+const defaultRoastLevels = [
+  "Light",
+  "Medium-Light",
+  "Medium",
+  "Medium-Dark",
+  "Dark",
+];
+
+const cuppingScores = [
+  { label: "Semua Skor", min: "" },
+  { label: "80+ Specialty", min: "80" },
+  { label: "82+ Good", min: "82" },
+  { label: "84+ Exemplary", min: "84" },
+  { label: "86+ Excellent", min: "86" },
+  { label: "87+ Microlot", min: "87" },
+  { label: "88+ Outstanding", min: "88" },
+];
+
 const pricePresets = [
   { label: "Semua Harga", min: "", max: "" },
   { label: "< Rp100.000", min: "", max: "100000" },
   { label: "Rp100rb – Rp150rb", min: "100000", max: "150000" },
   { label: "> Rp150.000", min: "150000", max: "" },
-];
-
-const cuppingScores = [
-  { label: "Semua Skor", min: "" },
-  { label: "82+ Good", min: "82" },
-  { label: "84+ Specialty", min: "84" },
-  { label: "86+ Excellent", min: "86" },
-  { label: "88+ Outstanding", min: "88" },
 ];
 
 export function CatalogSidebarFilter({
@@ -66,7 +95,10 @@ export function CatalogSidebarFilter({
   const currentRoast =
     searchParams.get("roast") || searchParams.get("sangrai") || "";
   const currentCupping =
-    searchParams.get("cupping_score") || searchParams.get("min_cupping") || "";
+    searchParams.get("cupping_score") ||
+    searchParams.get("min_cupping") ||
+    searchParams.get("skor_cupping") ||
+    "";
   const currentMinPrice =
     searchParams.get("min_price") || searchParams.get("harga_min") || "";
   const currentMaxPrice =
@@ -75,6 +107,27 @@ export function CatalogSidebarFilter({
   const isReadyStock =
     searchParams.get("ready_stock") === "true" ||
     searchParams.get("stok_tersedia") === "true";
+
+  // Merge default categories with props
+  const allCategories = (() => {
+    const map = new Map<string, { id: string; name: string; slug: string }>();
+    for (const def of defaultCategories) {
+      map.set(def.slug, def);
+    }
+    for (const cat of categories) {
+      if (map.has(cat.slug)) {
+        map.set(cat.slug, { ...map.get(cat.slug)!, ...cat });
+      } else {
+        map.set(cat.slug, cat);
+      }
+    }
+    return Array.from(map.values());
+  })();
+
+  // Merge default roast levels with props
+  const allRoastLevels = Array.from(
+    new Set([...defaultRoastLevels, ...roastLevels]),
+  );
 
   const replaceParam = useCallback(
     (key: string, value: string) => {
@@ -117,8 +170,8 @@ export function CatalogSidebarFilter({
   ].filter(Boolean).length;
 
   const FilterContent = (
-    <div className="space-y-6 text-xs">
-      {/* Header Sidebar Tokopedia */}
+    <div className="space-y-5 text-xs">
+      {/* Header Sidebar Filter */}
       <div className="flex items-center justify-between pb-3 border-b border-neutral-200">
         <div className="flex items-center gap-1.5 font-bold text-neutral-900 text-sm">
           <SlidersHorizontal className="w-4 h-4 text-primary-600" />
@@ -136,48 +189,181 @@ export function CatalogSidebarFilter({
         )}
       </div>
 
-      {/* 1. Kategori Biji Kopi */}
-      {categories.length > 0 && (
-        <div className="space-y-2">
-          <p className="font-bold text-neutral-900">Kategori</p>
-          <div className="space-y-1">
+      {/* 1. Kategori Produk */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-1.5 font-bold text-neutral-900">
+          <Coffee className="w-3.5 h-3.5 text-primary-600" />
+          <span>Kategori</span>
+        </div>
+        <div className="space-y-1">
+          <button
+            type="button"
+            onClick={() => replaceParam("category", "")}
+            className={cn(
+              "w-full text-left px-2.5 py-1.5 rounded-md font-medium transition-colors flex items-center justify-between",
+              !currentCategory
+                ? "bg-primary-50 text-primary-900 font-bold"
+                : "text-neutral-600 hover:bg-neutral-100",
+            )}
+          >
+            <span>Semua Kategori</span>
+            {!currentCategory && <Check className="w-3.5 h-3.5 text-primary-600" />}
+          </button>
+          {allCategories.map((c) => {
+            const active = currentCategory === c.slug;
+            return (
+              <button
+                key={c.id || c.slug}
+                type="button"
+                onClick={() => replaceParam("category", active ? "" : c.slug)}
+                className={cn(
+                  "w-full text-left px-2.5 py-1.5 rounded-md font-medium transition-colors flex items-center justify-between",
+                  active
+                    ? "bg-primary-50 text-primary-900 font-bold"
+                    : "text-neutral-600 hover:bg-neutral-100",
+                )}
+              >
+                <span>{c.name}</span>
+                {active && <Check className="w-3.5 h-3.5 text-primary-600" />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 2. Asal Wilayah / Kepulauan & Origin */}
+      <div className="space-y-2.5 pt-4 border-t border-neutral-100">
+        <div className="flex items-center justify-between font-bold text-neutral-900">
+          <div className="flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5 text-primary-600" />
+            <span>Asal Wilayah</span>
+          </div>
+          {currentOrigin && (
             <button
               type="button"
-              onClick={() => replaceParam("category", "")}
-              className={cn(
-                "w-full text-left px-2.5 py-1.5 rounded-md font-medium transition-colors flex items-center justify-between",
-                !currentCategory
-                  ? "bg-primary-50 text-primary-900 font-bold"
-                  : "text-neutral-600 hover:bg-neutral-100",
-              )}
+              onClick={() => replaceParam("origin", "")}
+              className="text-[10px] text-neutral-400 hover:text-neutral-600 font-semibold"
             >
-              <span>Semua Kategori</span>
-              {!currentCategory && <Check className="w-3.5 h-3.5 text-primary-600" />}
+              Hapus
             </button>
-            {categories.map((c) => {
-              const active = currentCategory === c.slug;
+          )}
+        </div>
+
+        {/* Quick Island Presets */}
+        <div>
+          <span className="text-[10px] text-neutral-400 font-semibold uppercase tracking-wider block mb-1">
+            Kepulauan
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            {islandPresets.map((island) => {
+              const active = currentOrigin.toLowerCase() === island.slug.toLowerCase();
               return (
                 <button
-                  key={c.id}
+                  key={island.slug}
                   type="button"
-                  onClick={() => replaceParam("category", active ? "" : c.slug)}
+                  onClick={() => replaceParam("origin", active ? "" : island.slug)}
                   className={cn(
-                    "w-full text-left px-2.5 py-1.5 rounded-md font-medium transition-colors flex items-center justify-between",
+                    "px-2.5 py-1 rounded border text-[11px] font-medium transition-colors",
                     active
-                      ? "bg-primary-50 text-primary-900 font-bold"
-                      : "text-neutral-600 hover:bg-neutral-100",
+                      ? "border-primary-600 bg-primary-50 text-primary-900 font-bold"
+                      : "border-neutral-200 text-neutral-600 hover:bg-neutral-50",
                   )}
                 >
-                  <span>{c.name}</span>
-                  {active && <Check className="w-3.5 h-3.5 text-primary-600" />}
+                  {island.label}
                 </button>
               );
             })}
           </div>
         </div>
-      )}
 
-      {/* 2. Metode Proses Pascapanen */}
+        {/* Detailed Origins List */}
+        {origins.length > 0 && (
+          <div className="pt-1">
+            <span className="text-[10px] text-neutral-400 font-semibold uppercase tracking-wider block mb-1">
+              Daerah / Penghasil
+            </span>
+            <div className="space-y-1 max-h-40 overflow-y-auto pr-1 scrollbar-none">
+              {origins.map((orig) => {
+                const active = currentOrigin.toLowerCase() === orig.toLowerCase();
+                return (
+                  <button
+                    key={orig}
+                    type="button"
+                    onClick={() => replaceParam("origin", active ? "" : orig)}
+                    className={cn(
+                      "w-full text-left px-2.5 py-1 rounded text-xs transition-colors flex items-center justify-between",
+                      active
+                        ? "bg-primary-50 text-primary-900 font-bold"
+                        : "text-neutral-600 hover:bg-neutral-100",
+                    )}
+                  >
+                    <span className="truncate">{orig}</span>
+                    {active && <Check className="w-3 h-3 text-primary-600 shrink-0" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 3. Tingkat Sangrai (Roast Level) */}
+      <div className="space-y-2 pt-4 border-t border-neutral-100">
+        <div className="flex items-center gap-1.5 font-bold text-neutral-900">
+          <Flame className="w-3.5 h-3.5 text-rose-600" />
+          <span>Tingkat Sangrai</span>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {allRoastLevels.map((roast) => {
+            const active = currentRoast.toLowerCase() === roast.toLowerCase();
+            return (
+              <button
+                key={roast}
+                type="button"
+                onClick={() => replaceParam("roast", active ? "" : roast)}
+                className={cn(
+                  "px-2.5 py-1 rounded border text-[11px] font-medium transition-colors",
+                  active
+                    ? "border-primary-600 bg-primary-50 text-primary-900 font-bold"
+                    : "border-neutral-200 text-neutral-600 hover:bg-neutral-50",
+                )}
+              >
+                {roast}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 4. Skor Cupping SCA */}
+      <div className="space-y-2 pt-4 border-t border-neutral-100">
+        <div className="flex items-center gap-1.5 font-bold text-neutral-900">
+          <Award className="w-3.5 h-3.5 text-amber-600" />
+          <span>Skor Cupping SCA</span>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {cuppingScores.map((score) => {
+            const active = currentCupping === score.min;
+            return (
+              <button
+                key={score.label}
+                type="button"
+                onClick={() => replaceParam("cupping_score", active ? "" : score.min)}
+                className={cn(
+                  "px-2.5 py-1 rounded border text-[11px] font-medium transition-colors",
+                  active
+                    ? "border-amber-600 bg-amber-50 text-amber-900 font-bold"
+                    : "border-neutral-200 text-neutral-600 hover:bg-neutral-50",
+                )}
+              >
+                {score.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 5. Metode Proses Pascapanen */}
       {processes.length > 0 && (
         <div className="space-y-2 pt-4 border-t border-neutral-100">
           <p className="font-bold text-neutral-900">Metode Proses</p>
@@ -204,62 +390,7 @@ export function CatalogSidebarFilter({
         </div>
       )}
 
-      {/* 3. Asal Wilayah / Origin */}
-      {origins.length > 0 && (
-        <div className="space-y-2 pt-4 border-t border-neutral-100">
-          <p className="font-bold text-neutral-900">Asal Wilayah</p>
-          <div className="space-y-1 max-h-48 overflow-y-auto pr-1 scrollbar-none">
-            {origins.map((orig) => {
-              const active = currentOrigin === orig;
-              return (
-                <button
-                  key={orig}
-                  type="button"
-                  onClick={() => replaceParam("origin", active ? "" : orig)}
-                  className={cn(
-                    "w-full text-left px-2.5 py-1 rounded text-xs transition-colors flex items-center justify-between",
-                    active
-                      ? "bg-primary-50 text-primary-900 font-bold"
-                      : "text-neutral-600 hover:bg-neutral-100",
-                  )}
-                >
-                  <span className="truncate">{orig}</span>
-                  {active && <Check className="w-3 h-3 text-primary-600 shrink-0" />}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* 4. Tingkat Sangrai (Roast Level) */}
-      {roastLevels.length > 0 && (
-        <div className="space-y-2 pt-4 border-t border-neutral-100">
-          <p className="font-bold text-neutral-900">Tingkat Sangrai</p>
-          <div className="flex flex-wrap gap-1.5">
-            {roastLevels.map((roast) => {
-              const active = currentRoast === roast;
-              return (
-                <button
-                  key={roast}
-                  type="button"
-                  onClick={() => replaceParam("roast", active ? "" : roast)}
-                  className={cn(
-                    "px-2.5 py-1 rounded border text-[11px] font-medium transition-colors",
-                    active
-                      ? "border-primary-600 bg-primary-50 text-primary-900 font-bold"
-                      : "border-neutral-200 text-neutral-600 hover:bg-neutral-50",
-                  )}
-                >
-                  {roast}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* 5. Rentang Harga */}
+      {/* 6. Rentang Harga */}
       <div className="space-y-2 pt-4 border-t border-neutral-100">
         <p className="font-bold text-neutral-900">Rentang Harga</p>
         <div className="space-y-1.5">
@@ -294,31 +425,6 @@ export function CatalogSidebarFilter({
               >
                 <span>{preset.label}</span>
                 {isMatch && <Check className="w-3 h-3 text-primary-600 shrink-0" />}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 6. Skor Cupping SCA */}
-      <div className="space-y-2 pt-4 border-t border-neutral-100">
-        <p className="font-bold text-neutral-900">Skor Cupping SCA</p>
-        <div className="flex flex-wrap gap-1.5">
-          {cuppingScores.map((score) => {
-            const active = currentCupping === score.min;
-            return (
-              <button
-                key={score.label}
-                type="button"
-                onClick={() => replaceParam("cupping_score", active ? "" : score.min)}
-                className={cn(
-                  "px-2.5 py-1 rounded border text-[11px] font-medium transition-colors",
-                  active
-                    ? "border-primary-600 bg-primary-50 text-primary-900 font-bold"
-                    : "border-neutral-200 text-neutral-600 hover:bg-neutral-50",
-                )}
-              >
-                {score.label}
               </button>
             );
           })}

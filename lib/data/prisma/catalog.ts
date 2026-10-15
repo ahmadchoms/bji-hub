@@ -42,11 +42,13 @@ function buildWhere(filters: ListingFilters): Prisma.ListingWhereInput {
     taste.processMethod = filters.processMethod;
   if (filters.roastLevel && filters.roastLevel !== ALL)
     taste.roastLevel = filters.roastLevel;
+  if (typeof filters.minCuppingScore === "number" && !Number.isNaN(filters.minCuppingScore))
+    taste.cuppingScore = { gte: filters.minCuppingScore };
   if (Object.keys(taste).length > 0) where.tasteProfile = { is: taste };
 
   if (filters.isVerified) where.seller = { is: { isVerified: true } };
   if (filters.isBoosted) where.isBoosted = true;
-  if (filters.readyStock) where.status = "active";
+  if (filters.readyStock) where.stock = { gt: 0 };
 
   const price: Prisma.DecimalFilter = {};
   if (typeof filters.minPrice === "number" && !Number.isNaN(filters.minPrice))

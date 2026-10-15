@@ -40,6 +40,8 @@ function tasteData(data: ListingFormValues) {
     aftertasteScore: data.aftertasteScore ?? null,
     cropYear: data.cropYear ?? null,
     moistureContent: data.moistureContent ?? null,
+    cuppingScore: data.cuppingScore ?? null,
+    altitude: data.altitude ?? null,
     roastDate: new Date(data.roastDate),
   };
 }
@@ -140,6 +142,7 @@ export const sellers: SellerMethods = {
             price: data.price,
             unit: data.unit,
             minOrderQty: data.minOrderQty,
+            stock: data.stock ?? 100,
             status: data.status,
             tasteProfile: { create: tasteData(data) },
             images: { create: imageRows(data) },
@@ -174,6 +177,7 @@ export const sellers: SellerMethods = {
           price: data.price,
           unit: data.unit,
           minOrderQty: data.minOrderQty,
+          ...(data.stock !== undefined ? { stock: data.stock } : {}),
           categoryId: category.id,
           // A listing suspended by an admin cannot be reactivated by the seller.
           status: listing.status === "suspended" ? "suspended" : data.status,

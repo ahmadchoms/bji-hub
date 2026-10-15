@@ -36,6 +36,7 @@ export default async function EditListingPage({
           price: listing.price,
           unit: listing.unit,
           minOrderQty: listing.minOrderQty,
+          stock: listing.stock ?? 100,
           status: listing.status === "suspended" ? "archived" : listing.status,
           originRegion: listing.tasteProfile?.originRegion ?? "",
           processMethod: listing.tasteProfile?.processMethod,
@@ -46,6 +47,8 @@ export default async function EditListingPage({
           sweetnessScore: listing.tasteProfile?.sweetnessScore,
           aromaScore: listing.tasteProfile?.aromaScore,
           aftertasteScore: listing.tasteProfile?.aftertasteScore,
+          cuppingScore: listing.tasteProfile?.cuppingScore,
+          altitude: listing.tasteProfile?.altitude ?? "",
           cropYear: listing.tasteProfile?.cropYear ?? "",
           moistureContent: listing.tasteProfile?.moistureContent,
           images: [...listing.images]

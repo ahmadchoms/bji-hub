@@ -42,7 +42,7 @@ export default async function OrdersPage() {
     userEmail = "pembeli@bijihub.com";
   }
 
-  const orders = await getOrdersByBuyer(userEmail);
+  const orders = await getOrdersByBuyer(userEmail, session.userId);
 
   return (
     <div className="py-8 md:py-12 bg-neutral-50/50 min-h-[80vh]">

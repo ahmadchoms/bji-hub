@@ -124,6 +124,7 @@ model Listing {
   price       Decimal       @db.Decimal(14, 2)
   unit        String
   minOrderQty Int           @default(1)
+  stock       Int           @default(100)
   status      ListingStatus @default(draft)
   isBoosted   Boolean       @default(false)
   boostUntil  DateTime?
@@ -163,6 +164,8 @@ model TasteProfile {
   sweetnessScore  Decimal? @db.Decimal(3, 1)
   aromaScore      Decimal? @db.Decimal(3, 1)
   aftertasteScore Decimal? @db.Decimal(3, 1)
+  cuppingScore    Decimal? @map("cupping_score") @db.Decimal(4, 2)
+  altitude        String?
   roastDate       DateTime
 
   @@index([originRegion])
@@ -293,10 +296,11 @@ model Order {
   status          OrderStatus   @default(pending_payment)
   snapToken       String?       @map("snap_token")
   midtransOrderId String?       @unique @map("midtrans_order_id")
-  notes           String?
-  disputeReason   String?       @map("dispute_reason")
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt @map("updated_at")
+  notes              String?
+  disputeReason      String?       @map("dispute_reason")
+  disputeEvidenceUrl String?       @map("dispute_evidence_url")
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
 
   items   OrderItem[]
   reviews Review[]
@@ -337,6 +341,7 @@ model Review {
   buyerName String   @map("buyer_name")
   rating    Int
   comment   String?
+  imageUrl  String?  @map("image_url")
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([listingId])

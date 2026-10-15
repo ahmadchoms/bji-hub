@@ -128,7 +128,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
   // Cloud database fallback: query previous order shipping details if not in user_metadata
   if (!userPhone || !userCity || !userAddress) {
     try {
-      const pastOrders = await getOrdersByBuyer(userEmail);
+      const pastOrders = await getOrdersByBuyer(userEmail, session.userId);
       if (pastOrders.length > 0) {
         const latest = pastOrders[0];
         userName = userName || latest.buyerName;

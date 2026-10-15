@@ -14,10 +14,17 @@ async function main() {
   console.log("Adding cropYear and moistureContent to taste_profiles, and coffee_origins table...");
   try {
     await pool.query(`
-      -- Add cropYear and moistureContent to taste_profiles
+      -- Add stock to listings
+      ALTER TABLE public.listings
+      ADD COLUMN IF NOT EXISTS stock INTEGER NOT NULL DEFAULT 100;
+
+      -- Add cropYear, moistureContent, cupping_score, and altitude to taste_profiles
       ALTER TABLE public.taste_profiles
       ADD COLUMN IF NOT EXISTS "cropYear" TEXT,
-      ADD COLUMN IF NOT EXISTS "moistureContent" DECIMAL(4, 2);
+      ADD COLUMN IF NOT EXISTS "moistureContent" DECIMAL(4, 2),
+      ADD COLUMN IF NOT EXISTS cupping_score DECIMAL(4, 2),
+      ADD COLUMN IF NOT EXISTS "cuppingScore" DECIMAL(4, 2),
+      ADD COLUMN IF NOT EXISTS altitude TEXT;
 
       -- Create coffee_origins table
       CREATE TABLE IF NOT EXISTS public.coffee_origins (

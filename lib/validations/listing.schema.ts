@@ -24,6 +24,7 @@ const listingBaseSchema = z.object({
   minOrderQty: z
     .number({ message: "Jumlah minimum order wajib diisi" })
     .min(1, "Minimum order minimal 1"),
+  stock: z.number().int().min(0, "Stok minimal 0").optional(),
   status: z.enum(["active", "draft", "archived"], {
     message: "Status listing tidak valid",
   }),
@@ -51,6 +52,8 @@ const listingBaseSchema = z.object({
   aftertasteScore: z.number().min(0).max(5).optional(),
   cropYear: z.string().max(20).optional(),
   moistureContent: z.number().min(0).max(100).optional(),
+  cuppingScore: z.number().min(0).max(100, "Skor cupping maksimal 100").optional(),
+  altitude: z.string().max(50, "Ketinggian maksimal 50 karakter").optional(),
   roastDate: z.string().min(1, "Tanggal sangrai wajib diisi"),
   images: z
     .array(listingImageSchema)

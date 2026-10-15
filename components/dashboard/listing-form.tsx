@@ -80,6 +80,7 @@ export function ListingForm({
       acidityScore: 0,
       bodyScore: 0,
       minOrderQty: 1,
+      stock: 100,
       ...defaultValues,
     },
   });
@@ -241,7 +242,7 @@ export function ListingForm({
           />
         </FormField>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <FormField label="Harga (Rp)" required error={errors.price?.message}>
             <Input
               type="number"
@@ -263,6 +264,21 @@ export function ListingForm({
               type="number"
               {...register("minOrderQty", { valueAsNumber: true })}
               placeholder="1"
+            />
+          </FormField>
+
+          <FormField
+            label="Stok Tersedia"
+            error={errors.stock?.message}
+            helperText="Jumlah inventaris produk"
+          >
+            <Input
+              type="number"
+              min="0"
+              {...register("stock", {
+                setValueAs: (v) => (v === "" || isNaN(v) ? undefined : Number(v)),
+              })}
+              placeholder="100"
             />
           </FormField>
         </div>
@@ -404,6 +420,34 @@ export function ListingForm({
                 setValueAs: (v) => (v === "" || isNaN(v) ? undefined : Number(v)),
               })}
               placeholder="Contoh: 11.2"
+            />
+          </FormField>
+
+          <FormField
+            label="Skor Cupping (SCA)"
+            error={errors.cuppingScore?.message}
+            helperText="Opsional (spesialti: 80 - 100)"
+          >
+            <Input
+              type="number"
+              step="0.25"
+              min="0"
+              max="100"
+              {...register("cuppingScore", {
+                setValueAs: (v) => (v === "" || isNaN(v) ? undefined : Number(v)),
+              })}
+              placeholder="Contoh: 85.5"
+            />
+          </FormField>
+
+          <FormField
+            label="Ketinggian (Altitude)"
+            error={errors.altitude?.message}
+            helperText="Opsional (misal: 1.400 - 1.600 mdpl)"
+          >
+            <Input
+              {...register("altitude")}
+              placeholder="Contoh: 1.400 - 1.600 mdpl"
             />
           </FormField>
         </div>

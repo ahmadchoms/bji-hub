@@ -102,6 +102,7 @@ export async function seedDatabase(
       price: listing.price,
       unit: listing.unit,
       minOrderQty: listing.minOrderQty,
+      stock: listing.stock ?? 100,
       status: listing.status,
       isBoosted: listing.isBoosted,
       boostUntil: date(listing.boostUntil),
@@ -125,6 +126,10 @@ export async function seedDatabase(
               sweetnessScore: listing.tasteProfile.sweetnessScore ?? null,
               aromaScore: listing.tasteProfile.aromaScore ?? null,
               aftertasteScore: listing.tasteProfile.aftertasteScore ?? null,
+              cuppingScore: listing.tasteProfile.cuppingScore ?? null,
+              altitude: listing.tasteProfile.altitude ?? null,
+              cropYear: listing.tasteProfile.cropYear ?? null,
+              moistureContent: listing.tasteProfile.moistureContent ?? null,
               roastDate: new Date(listing.tasteProfile.roastDate),
             },
           ]

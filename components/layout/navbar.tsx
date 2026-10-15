@@ -2,7 +2,7 @@ import { NavbarInner } from "@/components/layout/navbar-inner";
 import { getSession } from "@/lib/auth/session";
 import { getCategories, getSellerById } from "@/lib/data";
 import { createClient } from "@/lib/supabase/server";
-import { getOrdersByBuyer, getOrdersBySeller } from "@/lib/data/orders";
+import { getOrdersByBuyer } from "@/lib/data/orders";
 import { cookies } from "next/headers";
 
 export async function Navbar() {
@@ -71,18 +71,12 @@ export async function Navbar() {
   }
 
   let activeOrdersCount = 0;
-  if (session.role === "seller" && session.sellerId) {
+  if (session.role !== "guest") {
     try {
-      const sellerOrders = await getOrdersBySeller(session.sellerId);
-      activeOrdersCount = sellerOrders.filter((o) =>
-        ["pending_payment", "paid", "shipped", "disputed"].includes(o.status),
-      ).length;
-    } catch {
-      // ignore
-    }
-  } else if (session.role === "buyer" && userEmail) {
-    try {
-      const buyerOrders = await getOrdersByBuyer(userEmail);
+      const buyerOrders = await getOrdersByBuyer(
+        userEmail || "pembeli@bijihub.com",
+        session.userId,
+      );
       activeOrdersCount = buyerOrders.filter((o) =>
         ["pending_payment", "paid", "shipped", "disputed"].includes(o.status),
       ).length;

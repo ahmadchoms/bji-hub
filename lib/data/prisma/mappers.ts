@@ -66,6 +66,8 @@ export function toTaste(row: TasteRow): TasteProfile {
     aftertasteScore: numOrUndef(row.aftertasteScore),
     cropYear: row.cropYear ?? undefined,
     moistureContent: row.moistureContent ? num(row.moistureContent) : undefined,
+    cuppingScore: row.cuppingScore ? num(row.cuppingScore) : undefined,
+    altitude: row.altitude ?? undefined,
     roastDate: iso(row.roastDate),
   };
 }
@@ -81,6 +83,7 @@ export function toListing(row: ListingRow): ListingWithRelations {
     price: num(row.price),
     unit: row.unit,
     minOrderQty: row.minOrderQty,
+    stock: row.stock,
     status: row.status,
     isBoosted: row.isBoosted,
     boostUntil: row.boostUntil ? iso(row.boostUntil) : null,

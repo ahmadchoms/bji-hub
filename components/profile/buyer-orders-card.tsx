@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Order } from "@/types";
 import { formatRupiah } from "@/components/shared/price-text";
@@ -9,25 +10,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ConfirmOrderButton } from "@/components/order/confirm-order-button";
-import { OrderReviewModal } from "@/components/order/order-review-modal";
-import { OrderDisputeModal } from "@/components/order/order-dispute-modal";
-import { ShipmentTrackingModal } from "@/components/order/shipment-tracking-modal";
-import { OrderPrintModal } from "@/components/order/order-print-modal";
-import { OrderStatusStepper } from "@/components/order/order-status-stepper";
+import { OrderDetailDialog } from "@/components/order/order-detail-dialog";
 import {
+  ShoppingBag,
+  Store,
+  MoreHorizontal,
   Package,
-  Clock,
-  ShieldCheck,
-  ArrowRight,
-  AlertCircle,
-  ExternalLink,
   CreditCard,
-  XCircle,
-  MessageCircle,
-  Copy,
-  Check,
-  RotateCcw,
-  Truck,
   Search,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -45,20 +34,19 @@ interface BuyerOrdersCardProps {
 
 type OrderFilter = "all" | "pending_payment" | "paid" | "shipped" | "completed" | "disputed";
 
+function getOrderProductImage(order: Order): string {
+  if ((order as unknown as { listingImageUrl?: string }).listingImageUrl) {
+    return (order as unknown as { listingImageUrl?: string }).listingImageUrl!;
+  }
+  return "https://images.unsplash.com/photo-1587734195503-904fca47e0e9?auto=format&fit=crop&q=80&w=400";
+}
+
 export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
   const router = useRouter();
   const [filter, setFilter] = useState<OrderFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [payingId, setPayingId] = useState<string | null>(null);
   const [cancelingId, setCancelingId] = useState<string | null>(null);
-  const [copiedResiId, setCopiedResiId] = useState<string | null>(null);
-
-  const handleCopyResi = (trackingNumber: string, orderId: string) => {
-    navigator.clipboard.writeText(trackingNumber);
-    setCopiedResiId(orderId);
-    toast.success("Nomor resi kurir disalin!");
-    setTimeout(() => setCopiedResiId(null), 2000);
-  };
 
   const handleReorder = (ord: Order) => {
     addToCart({
@@ -150,9 +138,50 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
     disputed: orders.filter((o) => o.status === "disputed").length,
   };
 
+  const getStatusBadge = (status: Order["status"]) => {
+    switch (status) {
+      case "completed":
+        return (
+          <Badge variant="outline" className="text-emerald-700 bg-emerald-50 border-emerald-300 font-semibold text-[11px]">
+            Selesai
+          </Badge>
+        );
+      case "shipped":
+        return (
+          <Badge variant="outline" className="text-purple-700 bg-purple-50 border-purple-300 font-semibold text-[11px]">
+            Dikirim
+          </Badge>
+        );
+      case "paid":
+        return (
+          <Badge variant="outline" className="text-blue-700 bg-blue-50 border-blue-300 font-semibold text-[11px]">
+            Diproses
+          </Badge>
+        );
+      case "disputed":
+        return (
+          <Badge variant="outline" className="text-rose-700 bg-rose-50 border-rose-300 font-semibold text-[11px]">
+            Komplain
+          </Badge>
+        );
+      case "canceled":
+        return (
+          <Badge variant="outline" className="text-neutral-600 bg-neutral-100 border-neutral-300 font-semibold text-[11px]">
+            Dibatalkan
+          </Badge>
+        );
+      default:
+        return (
+          <Badge variant="outline" className="text-amber-800 bg-amber-50 border-amber-300 font-semibold text-[11px]">
+            Menunggu Pembayaran
+          </Badge>
+        );
+    }
+  };
+
   return (
     <Card className="border-neutral-300">
-      <CardHeader className="space-y-3">
+      <CardHeader className="space-y-3 pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <CardTitle className="text-base text-neutral-900 flex items-center gap-2">
@@ -261,9 +290,9 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
         )}
       </CardHeader>
 
-      <CardContent className="space-y-3 pt-0">
+      <CardContent className="space-y-4 pt-1">
         {filteredOrders.length === 0 ? (
-          <div className="text-center py-6 border border-dashed border-neutral-200 rounded-sm space-y-1.5">
+          <div className="text-center py-8 border border-dashed border-neutral-200 rounded-lg space-y-1.5">
             <p className="text-xs text-neutral-500">
               {orders.length === 0
                 ? "Belum ada riwayat pesanan."
@@ -290,295 +319,161 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
           </div>
         ) : (
           filteredOrders.map((ord) => {
-            // Auto complete deadline calculation: 48 hours from last updated/shipped date
-            const shippedTimestamp = new Date(ord.updatedAt || ord.createdAt).getTime();
-            const autoReleaseDate = new Date(shippedTimestamp + 48 * 60 * 60 * 1000);
-            const isAutoReleasePassed = Date.now() > autoReleaseDate.getTime();
+            const productImg = getOrderProductImage(ord);
 
             return (
               <div
                 key={ord.id}
-                className="p-3.5 border border-neutral-200 rounded-sm space-y-2.5 text-xs hover:border-neutral-300 transition-colors bg-white shadow-xs"
+                className="p-4 sm:p-5 border border-neutral-200/90 rounded-xl space-y-3.5 bg-white shadow-xs hover:border-neutral-300 transition-colors"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-neutral-900">
-                      {ord.orderNumber}
-                    </span>
-                    <span className="text-[11px] text-neutral-400 font-mono">
+                {/* 1. Baris Atas: Ikon Handbag + Belanja + Tanggal + Status Order + No Order */}
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-1.5 font-bold text-neutral-900">
+                      <ShoppingBag className="w-4 h-4 text-neutral-800 shrink-0" />
+                      <span>Belanja</span>
+                    </div>
+                    <span className="text-neutral-500 text-xs">
                       {format(new Date(ord.createdAt), "d MMM yyyy", { locale: idLocale })}
                     </span>
-                  </div>
-                  <Badge
-                    variant="outline"
-                    className={
-                      ord.status === "completed"
-                        ? "text-emerald-700 bg-emerald-50 border-emerald-300"
-                        : ord.status === "disputed"
-                          ? "text-rose-700 bg-rose-50 border-rose-300"
-                          : ord.status === "shipped"
-                            ? "text-purple-700 bg-purple-50 border-purple-300"
-                            : ord.status === "paid"
-                              ? "text-blue-700 bg-blue-50 border-blue-300"
-                              : "text-amber-700 bg-amber-50 border-amber-300"
-                    }
-                  >
-                    {ord.status === "completed"
-                      ? "Selesai"
-                      : ord.status === "disputed"
-                        ? "Komplain"
-                        : ord.status === "shipped"
-                          ? "Dikirim"
-                          : ord.status === "paid"
-                            ? "Diproses"
-                            : "Menunggu Bayar"}
-                  </Badge>
-                </div>
-
-                <div className="flex justify-between items-baseline text-neutral-700">
-                  <div>
-                    {ord.listingSlug ? (
-                      <Link
-                        href={`/product/${ord.listingSlug}`}
-                        className="font-medium text-neutral-900 hover:text-primary-700 hover:underline transition-colors"
-                      >
-                        {ord.listingTitle || `Produk #${ord.listingId}`}
-                      </Link>
-                    ) : (
-                      <span className="font-medium text-neutral-900">
-                        {ord.listingTitle || `Produk #${ord.listingId}`}
-                      </span>
-                    )}
-                    <span className="text-neutral-500 text-[11px] ml-1.5">
-                      ({ord.quantity} pcs/kg)
+                    <div>{getStatusBadge(ord.status)}</div>
+                    <span className="text-neutral-400 font-mono text-[11px]">
+                      {ord.orderNumber}
                     </span>
                   </div>
-                  <span className="font-mono font-bold text-primary-900">
-                    {formatRupiah(ord.totalAmount)}
-                  </span>
                 </div>
 
-                {/* Status Timeline Tracking Stepper */}
-                <div className="pt-2 pb-1 border-t border-neutral-100">
-                  <OrderStatusStepper status={ord.status} />
+                {/* 2. Baris Toko / Seller */}
+                <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-900">
+                  <Store className="w-3.5 h-3.5 text-primary-700 shrink-0" />
+                  <span>{ord.sellerName || "Roastery Biji Hub"}</span>
                 </div>
 
-                {ord.status === "shipped" && (
-                  <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-purple-50/70 border border-purple-200/80 rounded text-xs text-purple-900">
-                    <div className="flex items-center gap-2">
-                      <Truck className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                      <span>
-                        Dalam Pengiriman via{" "}
-                        <strong className="font-semibold">{ord.shippingCourier || "Ekspedisi"}</strong>
-                      </span>
+                {/* 3. Baris Tengah: Gambar Produk + Nama Produk + Qty | Border Vertikal | Total Belanja */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-0.5">
+                  {/* Kiri: Gambar Produk, Nama Produk, Qty */}
+                  <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                    <div className="relative w-16 h-16 sm:w-18 sm:h-18 rounded-lg overflow-hidden bg-neutral-100 border border-neutral-200 shrink-0">
+                      <Image
+                        src={productImg}
+                        alt={ord.listingTitle || "Produk Kopi"}
+                        fill
+                        className="object-cover"
+                      />
                     </div>
-                    {(() => {
-                      const etdMatch = ord.shippingCourier?.match(/\(([^)]+)\)/);
-                      return etdMatch ? (
-                        <span className="text-[11px] font-semibold text-purple-900 bg-purple-100/90 border border-purple-300 px-2 py-0.5 rounded">
-                          Estimasi Tiba: {etdMatch[1]}
-                        </span>
-                      ) : null;
-                    })()}
-                  </div>
-                )}
 
-                <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-neutral-100 text-[11px] text-neutral-500">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span>
-                      Kurir: <strong className="text-neutral-700">{ord.shippingCourier || "Reguler"}</strong>
-                    </span>
-                    {ord.trackingNumber && (
-                      <div className="flex items-center gap-1.5 bg-neutral-100 px-2 py-0.5 rounded border border-neutral-200">
-                        <span className="font-mono font-bold text-neutral-800 text-[10px]">
-                          {ord.trackingNumber}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleCopyResi(ord.trackingNumber!, ord.id)}
-                          className="text-neutral-500 hover:text-neutral-900 transition-colors flex items-center gap-0.5 cursor-pointer"
-                          title="Salin nomor resi kurir"
+                    <div className="min-w-0 flex-1">
+                      {ord.listingSlug ? (
+                        <Link
+                          href={`/product/${ord.listingSlug}`}
+                          className="font-bold text-neutral-900 text-sm hover:text-primary-700 hover:underline transition-colors line-clamp-1 sm:line-clamp-2"
                         >
-                          {copiedResiId === ord.id ? (
-                            <Check className="w-3 h-3 text-emerald-600" />
-                          ) : (
-                            <Copy className="w-3 h-3" />
-                          )}
-                          <span className="text-[10px] font-medium">
-                            {copiedResiId === ord.id ? "Tersalin" : "Salin"}
-                          </span>
-                        </button>
-                      </div>
-                    )}
-                    {ord.trackingNumber && (
-                      <ShipmentTrackingModal
-                        trackingNumber={ord.trackingNumber}
-                        courierCode={ord.shippingCourier || "jne"}
+                          {ord.listingTitle || `Produk #${ord.listingId}`}
+                        </Link>
+                      ) : (
+                        <p className="font-bold text-neutral-900 text-sm line-clamp-1 sm:line-clamp-2">
+                          {ord.listingTitle || `Produk #${ord.listingId}`}
+                        </p>
+                      )}
+                      <p className="text-xs text-neutral-500 mt-1">
+                        {ord.quantity} barang x {formatRupiah(ord.itemPrice)}
+                        {ord.notes && (
+                          <span className="ml-1 text-[11px] text-neutral-400">({ord.notes})</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Kanan: Border Vertikal + Total Belanja */}
+                  <div className="border-t sm:border-t-0 sm:border-l border-neutral-200 pt-2 sm:pt-0 sm:pl-6 shrink-0 sm:min-w-[130px]">
+                    <span className="text-[11px] text-neutral-500 block">Total Belanja</span>
+                    <span className="text-sm sm:text-base font-bold font-mono text-neutral-900 block mt-0.5">
+                      {formatRupiah(ord.totalAmount)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* 4. Baris Bawah Kanan: Lihat Detail Transaksi + Beli Lagi + Menu Aksi */}
+                <div className="flex flex-wrap items-center justify-end gap-2.5 pt-2 border-t border-neutral-100">
+                  {/* Tombol Lihat Detail Transaksi */}
+                  <OrderDetailDialog
+                    order={ord}
+                    productImage={productImg}
+                    onReorder={handleReorder}
+                    onResumePayment={handleResumePayment}
+                    onCancelOrder={handleCancelOrder}
+                    isPaying={payingId === ord.id}
+                    isCanceling={cancelingId === ord.id}
+                    trigger={
+                      <button
+                        type="button"
+                        className="text-xs font-semibold text-primary-900 hover:text-primary-700 hover:underline px-2 py-1 cursor-pointer transition-colors"
+                      >
+                        Lihat Detail Transaksi
+                      </button>
+                    }
+                  />
+
+                  {/* Tombol Aksi Utama */}
+                  {ord.status === "pending_payment" ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={payingId === ord.id}
+                      onClick={() => handleResumePayment(ord)}
+                      className="text-xs font-semibold h-8 px-4 bg-neutral-900 hover:bg-neutral-800 text-white cursor-pointer"
+                    >
+                      <CreditCard className="w-3.5 h-3.5 mr-1.5" />
+                      {payingId === ord.id ? "Memuat..." : "Bayar Sekarang"}
+                    </Button>
+                  ) : ord.status === "shipped" ? (
+                    <div className="flex items-center gap-2">
+                      <ConfirmOrderButton
+                        orderId={ord.id}
                         orderNumber={ord.orderNumber}
                       />
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <a
-                      href={`https://wa.me/6281234567890?text=${encodeURIComponent(
-                        `Halo ${ord.sellerName || "Roastery Biji Hub"}, saya pembeli untuk pesanan #${ord.orderNumber} (${ord.listingTitle || "Kopi"}). Ingin menanyakan status pesanan saya. Terima kasih!`,
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[11px] text-emerald-700 hover:text-emerald-800 flex items-center gap-1 font-medium bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200 transition-colors"
-                      title="Hubungi penjual via WhatsApp"
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => handleReorder(ord)}
+                        className="bg-[#2E150C] hover:bg-[#3D1D10] text-white text-xs font-semibold h-8 px-4 cursor-pointer"
+                      >
+                        Beli Lagi
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => handleReorder(ord)}
+                      className="bg-[#2E150C] hover:bg-[#3D1D10] text-white text-xs font-semibold h-8 px-4 cursor-pointer"
                     >
-                      <MessageCircle className="w-3 h-3 text-emerald-600" />
-                      Chat Penjual
-                    </a>
-                    <OrderPrintModal order={ord} defaultMode="invoice" />
-                    <Link
-                      href={`/order/success?orderNumber=${ord.orderNumber}`}
-                      className="font-medium text-primary-600 hover:text-primary-800 flex items-center gap-0.5"
-                    >
-                      Rincian <ArrowRight className="w-3 h-3" />
-                    </Link>
-                  </div>
-                </div>
+                      Beli Lagi
+                    </Button>
+                  )}
 
-                {/* Pending Payment Action Banner */}
-                {ord.status === "pending_payment" && (() => {
-                  const createdTime = new Date(ord.createdAt).getTime();
-                  const expireDate = new Date(createdTime + 24 * 60 * 60 * 1000);
-                  const isExpired = Date.now() > expireDate.getTime();
-
-                  return (
-                    <div className="pt-2 border-t border-neutral-100 space-y-2 bg-amber-50/70 p-2.5 rounded border border-amber-200 text-xs">
-                      <div className="flex items-start gap-1.5 text-[11px] text-amber-900">
-                        <Clock className="w-3.5 h-3.5 text-amber-700 shrink-0 mt-0.5" />
-                        <div>
-                          <p className="font-semibold text-amber-950">
-                            {isExpired
-                              ? "Batas Waktu Pembayaran Telah Berakhir"
-                              : "Menunggu Penyelesaian Pembayaran (Batas 24 Jam)"}
-                          </p>
-                          <p className="text-amber-800 text-[10px] mt-0.5">
-                            {isExpired
-                              ? "Silakan batalkan pesanan ini atau hubungi tim Biji Hub jika sudah transfer."
-                              : `Selesaikan pembayaran sebelum ${format(expireDate, "d MMMM yyyy, HH:mm", { locale: idLocale })} agar pesanan segera diproses penjual.`}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-amber-200/60">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          disabled={cancelingId === ord.id}
-                          onClick={() => handleCancelOrder(ord.id)}
-                          className="text-[11px] h-7 px-2 text-rose-700 hover:text-rose-800 hover:bg-rose-50 cursor-pointer"
-                        >
-                          <XCircle className="w-3 h-3 mr-1" />
-                          {cancelingId === ord.id ? "Membatalkan..." : "Batalkan Pesanan"}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="primary"
-                          size="sm"
-                          disabled={payingId === ord.id || isExpired}
-                          onClick={() => handleResumePayment(ord)}
-                          className="text-[11px] h-7 px-3 bg-neutral-900 hover:bg-neutral-800 text-white cursor-pointer"
-                        >
-                          <CreditCard className="w-3 h-3 mr-1" />
-                          {payingId === ord.id ? "Memuat..." : "Bayar Sekarang"}
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* Shipped & Auto-Complete Countdown Alert */}
-                {ord.status === "shipped" && (
-                  <div className="pt-2 border-t border-neutral-100 space-y-2 bg-emerald-50/60 p-2.5 rounded border border-emerald-200">
-                    <div className="flex items-start gap-1.5 text-[11px] text-emerald-900">
-                      <Clock className="w-3.5 h-3.5 text-emerald-700 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-semibold">
-                          Garansi Konfirmasi Otomatis (2x24 Jam)
-                        </p>
-                        <p className="text-emerald-800 text-[10px] mt-0.5 leading-relaxed">
-                          {isAutoReleasePassed
-                            ? "Batas waktu 2x24 jam telah tercapai. Pesanan akan diselesaikan otomatis jika tidak ada kendala."
-                            : `Periksa fisik kopi sebelum ${format(autoReleaseDate, "d MMMM yyyy, HH:mm", { locale: idLocale })}. Jika sesuai, silakan konfirmasi penerimaan di bawah.`}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-emerald-200/60">
-                      <span className="text-[10px] font-medium text-emerald-800">
-                        Paket sudah tiba dengan selamat?
-                      </span>
-                      <div className="flex items-center gap-1.5">
-                        <OrderDisputeModal orderId={ord.id} orderNumber={ord.orderNumber} />
-                        <ConfirmOrderButton
-                          orderId={ord.id}
-                          orderNumber={ord.orderNumber}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Disputed Alert Banner */}
-                {ord.status === "disputed" && (
-                  <div className="pt-2 border-t border-neutral-100 space-y-1.5 bg-rose-50/80 p-2.5 rounded border border-rose-200 text-[11px] text-rose-800">
-                    <div className="flex items-center gap-1.5 font-semibold text-rose-950">
-                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                      Komplain Anda Sedang Dalam Peninjauan & Mediasi
-                    </div>
-                    <p className="text-rose-800">
-                      <span className="font-medium">Kendala yang dilaporkan:</span>{" "}
-                      &ldquo;{ord.disputeReason || "Kendala kualitas/pengiriman produk kopi."}&rdquo;
-                    </p>
-                    {ord.disputeEvidenceUrl && (
-                      <div className="pt-0.5">
-                        <a
-                          href={ord.disputeEvidenceUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-[11px] text-rose-700 underline font-medium hover:text-rose-900"
-                        >
-                          <ExternalLink className="w-3 h-3" /> Foto Bukti Kendala Terlampir
-                        </a>
-                      </div>
-                    )}
-                    <p className="text-[10px] text-rose-600 pt-0.5 border-t border-rose-200/60">
-                      Dana transaksi Anda tetap aman terlindungi di sistem Biji Hub dan tidak akan diteruskan ke penjual sampai kendala terselesaikan.
-                    </p>
-                  </div>
-                )}
-
-                {/* Completed Action */}
-                {ord.status === "completed" && (
-                  <div className="pt-2 border-t border-neutral-100 flex items-center justify-between text-[11px] gap-2">
-                    <span className="text-neutral-500 inline-flex items-center gap-1">
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                      Transaksi selesai
-                    </span>
-                    <div className="flex items-center gap-2">
+                  {/* Tombol Menu Titik Tiga (...) sesuai Tokopedia */}
+                  <OrderDetailDialog
+                    order={ord}
+                    productImage={productImg}
+                    onReorder={handleReorder}
+                    onResumePayment={handleResumePayment}
+                    onCancelOrder={handleCancelOrder}
+                    isPaying={payingId === ord.id}
+                    isCanceling={cancelingId === ord.id}
+                    trigger={
                       <Button
                         type="button"
                         variant="outline"
-                        size="sm"
-                        onClick={() => handleReorder(ord)}
-                        className="text-[11px] h-7 px-2.5 gap-1 text-neutral-800 border-neutral-300 hover:bg-neutral-100 cursor-pointer font-medium"
-                        title="Beli lot kopi ini lagi"
+                        size="icon-sm"
+                        className="w-8 h-8 rounded-md border-neutral-300 text-neutral-600 hover:bg-neutral-100 cursor-pointer"
+                        title="Opsi Lainnya"
                       >
-                        <RotateCcw className="w-3 h-3 text-neutral-600" />
-                        <span>Pesan Lagi</span>
+                        <MoreHorizontal className="w-4 h-4" />
                       </Button>
-                      <OrderReviewModal
-                        orderId={ord.id}
-                        listingId={ord.listingId}
-                        listingTitle={ord.listingTitle || "Biji Kopi"}
-                      />
-                    </div>
-                  </div>
-                )}
+                    }
+                  />
+                </div>
               </div>
             );
           })

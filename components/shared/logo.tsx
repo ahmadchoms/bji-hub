@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -24,43 +25,36 @@ export function Logo({
     lg: "text-3xl",
   };
 
-  const iconSizes = {
-    sm: "w-5 h-5",
-    md: "w-7 h-7",
-    lg: "w-9 h-9",
+  const imageSizes = {
+    sm: { width: 28, height: 34, className: "h-7 w-auto" },
+    md: { width: 36, height: 44, className: "h-9 w-auto" },
+    lg: { width: 48, height: 58, className: "h-12 w-auto" },
   };
 
   return (
     <Link
       href="/"
       className={cn(
-        "inline-flex items-center gap-2 group transition-opacity hover:opacity-90 outline-none focus-visible:ring-2 focus-visible:ring-primary-400 rounded-md",
+        "inline-flex items-center gap-2.5 group transition-opacity hover:opacity-90 outline-none focus-visible:ring-2 focus-visible:ring-primary-400 rounded-md",
         className
       )}
       aria-label="Biji - Halaman Utama Direktori Kopi Indonesia"
     >
-      {/* Artisanal Coffee Bean Mark */}
+      {/* Official Biji Brand Mark */}
       <div
         className={cn(
-          "rounded-sm flex items-center justify-center p-1.5",
-          isLight
-            ? "bg-white text-primary-900"
-            : "bg-primary-600 text-white"
+          "relative flex items-center justify-center shrink-0",
+          isLight && "brightness-0 invert"
         )}
       >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className={iconSizes[size]}
-        >
-          {/* Stylized coffee bean with roasted crack curve */}
-          <ellipse cx="12" cy="12" rx="8" ry="10" />
-          <path d="M12 2c-2 4-2 8 0 10s2 6 0 10" />
-        </svg>
+        <Image
+          src="/assets/logo.png"
+          alt="Biji Logo"
+          width={imageSizes[size].width}
+          height={imageSizes[size].height}
+          priority
+          className={cn(imageSizes[size].className, "object-contain shrink-0")}
+        />
       </div>
 
       {!iconOnly && (

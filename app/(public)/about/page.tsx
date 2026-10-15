@@ -24,10 +24,10 @@ export default function TentangPage() {
 
         <section id="keamanan" className="space-y-2">
           <h2 className="font-display text-xl font-semibold text-neutral-900">
-            Keamanan Transaksi & Rekening Bersama (Escrow)
+            Keamanan Transaksi & Perlindungan Pembeli
           </h2>
           <p>
-            Semua transaksi ritel di Biji Hub dilindungi oleh sistem Rekening Bersama Escrow. Dana pembeli ditahan dengan aman dan baru dicairkan ke penjual setelah paket kopi diterima dengan baik dan terverifikasi nomor resi pengirimannya.
+            Semua transaksi di Biji Hub dilindungi dengan sistem garansi penerimaan pesanan. Dana transaksi diproses secara aman oleh Biji Hub dan diteruskan ke penjual setelah paket kopi diterima dengan baik dan terverifikasi nomor resinya.
           </p>
         </section>
 

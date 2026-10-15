@@ -43,7 +43,7 @@ export async function sendOrderPaidEmail(order: Order): Promise<EmailResult> {
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1F1815; background-color: #FAF6F1; border-radius: 8px;">
         <div style="text-align: center; margin-bottom: 24px;">
           <h1 style="color: #2E150C; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">BIJI HUB</h1>
-          <p style="color: #7A4A34; font-size: 13px; margin: 4px 0 0;">Marketplace Biji Kopi Indonesia & Rekening Bersama Escrow</p>
+          <p style="color: #7A4A34; font-size: 13px; margin: 4px 0 0;">Marketplace Biji Kopi Specialty Indonesia</p>
         </div>
 
         <div style="background-color: #ffffff; padding: 24px; border-radius: 8px; border: 1px solid #D8CFC5; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
@@ -51,7 +51,7 @@ export async function sendOrderPaidEmail(order: Order): Promise<EmailResult> {
             <span style="background-color: #DCEEE3; color: #1E4B36; font-size: 11px; font-weight: bold; padding: 4px 10px; rounded: 4px; border-radius: 4px; text-transform: uppercase;">Pembayaran Dikonfirmasi</span>
             <h2 style="margin: 12px 0 4px; font-size: 18px; color: #1F1815;">Halo ${order.buyerName},</h2>
             <p style="color: #4A403A; font-size: 14px; margin: 0; line-height: 1.5;">
-              Pembayaran untuk pesanan <strong style="font-family: monospace;">#${order.orderNumber}</strong> telah berhasil diverifikasi oleh sistem. Dana Anda kini disimpan aman di rekening bersama (escrow) Biji Hub hingga pesanan tiba.
+              Pembayaran untuk pesanan <strong style="font-family: monospace;">#${order.orderNumber}</strong> telah berhasil diverifikasi oleh sistem. Pesanan Anda kini diteruskan ke penjual untuk segera diproses dan dikirim.
             </p>
           </div>
 
@@ -168,7 +168,7 @@ export async function sendOrderShippedEmail(order: Order): Promise<EmailResult> 
         </div>
 
         <div style="text-align: center; margin-top: 20px; font-size: 11px; color: #8C8078;">
-          <p style="margin: 0;">Biji Hub &bull; Garansi Rekening Bersama Escrow</p>
+          <p style="margin: 0;">Biji Hub &bull; Marketplace Kopi Specialty Terpercaya</p>
         </div>
       </div>
     `;

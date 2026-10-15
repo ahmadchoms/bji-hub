@@ -175,7 +175,7 @@ export function NavbarInner({
               Dikirim ke: <strong className="text-neutral-800">Seluruh Indonesia</strong>
             </span>
             <span className="text-neutral-300">|</span>
-            <span className="text-neutral-500">Rekening Escrow Biji Hub Terjamin 100% Aman</span>
+            <span className="text-neutral-500">Transaksi Belanja Kopi 100% Terverifikasi & Terjamin Aman</span>
           </div>
           <div className="flex items-center gap-4 text-neutral-600">
             <Link href="/about" className="hover:text-primary-700 transition-colors">
@@ -382,7 +382,7 @@ export function NavbarInner({
                           className="block p-2 rounded hover:bg-neutral-50 transition-colors border border-neutral-100"
                         >
                           <div className="flex items-center justify-between font-medium text-neutral-900">
-                            <span>Pencairan Dana Escrow</span>
+                            <span>Pencairan Saldo Penjualan</span>
                             <span className="text-[10px] text-neutral-400 font-mono">Info</span>
                           </div>
                           <p className="text-[11px] text-neutral-500 mt-0.5">
@@ -518,7 +518,7 @@ export function NavbarInner({
                         <span className="text-[10px] text-emerald-700 font-mono">WhatsApp 24/7</span>
                       </div>
                       <p className="text-[11px] text-neutral-500 mt-0.5">
-                        Tanyakan seputar escrow, kurir, atau cara mendaftar toko kopi.
+                        Tanyakan seputar pesanan, kurir, atau cara mendaftar toko kopi.
                       </p>
                     </a>
                   </div>

@@ -9,7 +9,7 @@ import { Clock, CheckCircle2, XCircle } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Pencairan Dana Penjual - Admin Biji Hub",
-  description: "Kelola dan verifikasi transfer penarikan dana escrow mitra roastery.",
+  description: "Kelola dan verifikasi transfer penarikan dana penjualan mitra roastery.",
 };
 
 export default async function AdminPayoutsPage() {
@@ -26,7 +26,7 @@ export default async function AdminPayoutsPage() {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Pencairan Dana Penjual (Escrow Payout)"
+        title="Pencairan Dana Penjual (Payout Penjualan)"
         subtitle="Verifikasi rekening tujuan dan konfirmasi transfer hasil penjualan mitra kopi."
       />
 

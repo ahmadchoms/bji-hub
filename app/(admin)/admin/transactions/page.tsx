@@ -63,10 +63,10 @@ export default async function AdminTransaksiPage() {
 
   return (
     <div className="space-y-8">
-      {/* 1. Marketplace Orders & Disputed Escrow Section */}
+      {/* 1. Marketplace Orders & Dispute Resolution Section */}
       <div className="space-y-4">
         <SectionHeader
-          title="Pesanan & Komplain Escrow"
+          title="Pesanan & Mediasi Komplain"
           subtitle={`${orders.length} pesanan marketplace terdaftar di sistem Biji Hub.`}
         />
         <AdminOrderDisputes orders={orders} />

@@ -24,7 +24,7 @@ export default function KontakPage() {
             </div>
             <h2 className="font-bold text-neutral-900 text-sm">Dukungan Email</h2>
             <p className="text-xs text-neutral-500">
-              Pertanyaan umum, kendala akun, verifikasi toko mitra, dan kendala escrow.
+              Pertanyaan umum, kendala akun, verifikasi toko mitra, dan kendala transaksi.
             </p>
             <a
               href="mailto:halo@bijihub.com"

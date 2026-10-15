@@ -28,7 +28,7 @@ export default async function PricingPage() {
   const faqs = [
     {
       q: "Apakah platform Biji Hub memotong persentase komisi dari penjualan kopi saya?",
-      a: "Biji Hub tidak mengambil potongan komisi penjualan dari transaksi Anda. Transaksi diproses secara aman menggunakan Rekening Bersama Escrow resmi dengan biaya pemrosesan standar gateway.",
+      a: "Biji Hub tidak mengambil potongan komisi penjualan dari transaksi Anda. Transaksi diproses secara aman melalui sistem pembayaran resmi dengan biaya pemrosesan standar gateway.",
     },
     {
       q: "Untuk apa biaya langganan ini?",

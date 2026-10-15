@@ -58,7 +58,7 @@ export function OrderDisputeModal({ orderId, orderNumber }: OrderDisputeModalPro
       const res = await disputeOrderAction({ orderId, reason, evidenceUrl });
       if (res.success) {
         toast.success(
-          "Komplain berhasil diajukan. Status pesanan diubah ke Komplain. Dana escrow ditahan dan tim kami akan segera menindaklanjuti.",
+          "Komplain berhasil diajukan. Status pesanan diubah ke Komplain. Pembayaran ditangguhkan dan tim kami akan segera menindaklanjuti.",
         );
         setOpen(false);
         router.refresh();
@@ -89,7 +89,7 @@ export function OrderDisputeModal({ orderId, orderNumber }: OrderDisputeModalPro
               Ajukan Komplain Pesanan ({orderNumber})
             </DialogTitle>
             <DialogDescription className="text-xs text-neutral-500">
-              Pengajuan ini akan menahan pencairan dana ke penjual di rekening escrow sampai kendala diselesaikan.
+              Pengajuan ini akan menahan penerusan dana ke penjual sampai kendala diselesaikan.
             </DialogDescription>
           </DialogHeader>
 
@@ -181,7 +181,7 @@ export function OrderDisputeModal({ orderId, orderNumber }: OrderDisputeModalPro
                     Mengajukan...
                   </>
                 ) : (
-                  "Kirim Komplain & Tahan Escrow"
+                  "Kirim Komplain Pesanan"
                 )}
               </Button>
             </div>

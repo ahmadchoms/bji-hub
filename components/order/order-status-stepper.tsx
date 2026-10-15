@@ -16,7 +16,7 @@ interface StepItem {
 
 const STEPS: StepItem[] = [
   { key: "created", label: "Dibuat", desc: "Pesanan masuk", icon: Clock },
-  { key: "paid", label: "Dibayar", desc: "Escrow aman", icon: CreditCard },
+  { key: "paid", label: "Dibayar", desc: "Terverifikasi", icon: CreditCard },
   { key: "shipped", label: "Dikirim", desc: "Dalam kurir", icon: Truck },
   { key: "completed", label: "Selesai", desc: "Diterima pembeli", icon: CheckCircle2 },
 ];

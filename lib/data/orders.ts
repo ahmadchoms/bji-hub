@@ -119,7 +119,7 @@ export async function getOrderById(idOrNumber: string): Promise<Order | null> {
   if (pool) {
     try {
       const res = await pool.query(
-        `SELECT o.*, l.title as listing_title, s."businessName" as seller_name
+        `SELECT o.*, l.title as listing_title, l.slug as listing_slug, s."businessName" as seller_name
          FROM public.orders o
          LEFT JOIN public.listings l ON o.listing_id = l.id
          LEFT JOIN public.seller_profiles s ON o.seller_id = s.id
@@ -142,6 +142,7 @@ export async function getOrderById(idOrNumber: string): Promise<Order | null> {
           sellerName: row.seller_name,
           listingId: row.listing_id,
           listingTitle: row.listing_title,
+          listingSlug: row.listing_slug ?? null,
           quantity: row.quantity,
           itemPrice: Number(row.item_price),
           subtotal: Number(row.subtotal),
@@ -180,7 +181,7 @@ export async function getOrdersBySeller(sellerId: string): Promise<Order[]> {
   if (pool) {
     try {
       const res = await pool.query(
-        `SELECT o.*, l.title as listing_title
+        `SELECT o.*, l.title as listing_title, l.slug as listing_slug
          FROM public.orders o
          LEFT JOIN public.listings l ON o.listing_id = l.id
          WHERE o.seller_id = $1
@@ -199,6 +200,7 @@ export async function getOrdersBySeller(sellerId: string): Promise<Order[]> {
         sellerId: row.seller_id,
         listingId: row.listing_id,
         listingTitle: row.listing_title,
+        listingSlug: row.listing_slug ?? null,
         quantity: row.quantity,
         itemPrice: Number(row.item_price),
         subtotal: Number(row.subtotal),
@@ -229,7 +231,7 @@ export async function getAllOrders(): Promise<Order[]> {
   if (pool) {
     try {
       const res = await pool.query(
-        `SELECT o.*, l.title as listing_title, s."businessName" as seller_name
+        `SELECT o.*, l.title as listing_title, l.slug as listing_slug, s."businessName" as seller_name
          FROM public.orders o
          LEFT JOIN public.listings l ON o.listing_id = l.id
          LEFT JOIN public.seller_profiles s ON o.seller_id = s.id
@@ -248,6 +250,7 @@ export async function getAllOrders(): Promise<Order[]> {
         sellerName: row.seller_name,
         listingId: row.listing_id,
         listingTitle: row.listing_title,
+        listingSlug: row.listing_slug ?? null,
         quantity: row.quantity,
         itemPrice: Number(row.item_price),
         subtotal: Number(row.subtotal),
@@ -278,7 +281,7 @@ export async function getOrdersByBuyer(buyerIdOrEmail: string): Promise<Order[]>
   if (pool) {
     try {
       const res = await pool.query(
-        `SELECT o.*, l.title as listing_title, s."businessName" as seller_name
+        `SELECT o.*, l.title as listing_title, l.slug as listing_slug, s."businessName" as seller_name
          FROM public.orders o
          LEFT JOIN public.listings l ON o.listing_id = l.id
          LEFT JOIN public.seller_profiles s ON o.seller_id = s.id
@@ -299,6 +302,7 @@ export async function getOrdersByBuyer(buyerIdOrEmail: string): Promise<Order[]>
         sellerName: row.seller_name,
         listingId: row.listing_id,
         listingTitle: row.listing_title,
+        listingSlug: row.listing_slug ?? null,
         quantity: row.quantity,
         itemPrice: Number(row.item_price),
         subtotal: Number(row.subtotal),

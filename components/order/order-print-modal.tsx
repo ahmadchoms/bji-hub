@@ -293,7 +293,7 @@ export function OrderPrintModal({
                     variant="outline"
                     className="mt-1 text-emerald-700 bg-emerald-50 border-emerald-300 text-[10px]"
                   >
-                    LUNAS (ESCROW)
+                    PEMBAYARAN LUNAS
                   </Badge>
                 </div>
               </div>
@@ -388,7 +388,7 @@ export function OrderPrintModal({
                   </span>
                 </div>
                 <div className="flex justify-between text-neutral-600">
-                  <span>Biaya Layanan Escrow Biji Hub</span>
+                  <span>Biaya Layanan Platform</span>
                   <span className="font-mono text-neutral-900">
                     {formatRupiah(order.serviceFee)}
                   </span>

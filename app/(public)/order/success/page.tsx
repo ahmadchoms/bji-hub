@@ -115,10 +115,10 @@ export default async function OrderSuccessPage({
           <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-full text-xs font-medium">
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
             {order.status === "completed"
-              ? "Transaksi Sukses (Dana Telah Diteruskan ke Penjual)"
+              ? "Transaksi Selesai & Berhasil"
               : order.status === "disputed"
-                ? "Dana Escrow Ditahan Sementara (Sedang Dimediasi)"
-                : "Garansi Escrow Biji Hub Aktif (Dana Aman Terlindungi)"}
+                ? "Pembayaran Ditahan Sementara (Sedang Dimediasi)"
+                : "Garansi Pembelian Biji Hub Aktif (Dana Aman Terlindungi)"}
           </div>
 
           <div className="pt-3 pb-1 px-1 sm:px-6">
@@ -133,7 +133,7 @@ export default async function OrderSuccessPage({
                 : order.status === "shipped"
                   ? "Paket Anda sedang dalam perjalanan oleh kurir. Segera periksa paket setelah tiba dan klik konfirmasi di bawah."
                   : isPaid
-                    ? "Dana Anda telah aman tertampung di rekening escrow resmi Biji Hub. Penjual telah diberitahu untuk segera memproses & mengirimkan pesanan."
+                    ? "Pembayaran Anda telah terverifikasi aman di sistem Biji Hub. Penjual telah diberitahu untuk segera memproses & mengirimkan pesanan."
                     : "Menunggu penyelesaian pembayaran. Jika sudah membayar melalui Snap Midtrans, status pesanan akan terbarui secara otomatis."}
           </p>
 
@@ -149,7 +149,7 @@ export default async function OrderSuccessPage({
           )}
         </div>
 
-        {/* Konfirmasi Penerimaan Barang CTA & Escrow Auto-Release Banner (when shipped) */}
+        {/* Konfirmasi Penerimaan Barang CTA & Auto-Release Banner (when shipped) */}
         {order.status === "shipped" && (() => {
           const shippedTimestamp = new Date(order.updatedAt || order.createdAt).getTime();
           const autoReleaseDate = new Date(shippedTimestamp + 48 * 60 * 60 * 1000);
@@ -179,7 +179,7 @@ export default async function OrderSuccessPage({
                   <strong>Garansi Pelepasan Dana Otomatis:</strong>{" "}
                   {isAutoReleasePassed
                     ? "Batas waktu 2x24 jam telah tercapai. Dana akan dicairkan ke penjual jika tidak ada komplain yang diajukan."
-                    : `Batas konfirmasi hingga ${format(autoReleaseDate, "d MMMM yyyy, HH:mm", { locale: idLocale })} sebelum dana escrow diteruskan otomatis ke penjual.`}
+                    : `Batas konfirmasi hingga ${format(autoReleaseDate, "d MMMM yyyy, HH:mm", { locale: idLocale })} sebelum pesanan otomatis diselesaikan oleh sistem.`}
                 </span>
               </div>
             </div>
@@ -279,7 +279,7 @@ export default async function OrderSuccessPage({
           </div>
         </div>
 
-        {/* Cara Kerja Rekening Bersama Escrow */}
+        {/* Garansi Keamanan Transaksi Biji Hub */}
         <div className="bg-emerald-50/60 border border-emerald-200/80 rounded-lg p-5 space-y-3">
           <div className="flex items-center gap-2 text-emerald-900 font-medium text-sm">
             <HelpCircle className="w-4 h-4 text-emerald-700" />
@@ -287,13 +287,13 @@ export default async function OrderSuccessPage({
           </div>
           <ol className="text-xs text-emerald-800 space-y-1.5 list-decimal pl-4">
             <li>
-              <strong>Dana Tersimpan di Escrow Resmi:</strong> Penjual tidak akan menerima uang Anda sampai pesanan sampai di tangan Anda dengan selamat.
+              <strong>Pembayaran Aman & Terlindungi:</strong> Penjual baru menerima pencairan dana setelah pesanan sampai di tangan Anda dengan baik.
             </li>
             <li>
-              <strong>Jaminan Mutu & Keaslian:</strong> Jika produk kopi tidak sesuai atau rusak dalam pengiriman, Anda berhak mengajukan penahanan pencairan dana.
+              <strong>Jaminan Mutu & Keaslian:</strong> Jika produk kopi tidak sesuai atau rusak dalam pengiriman, Anda berhak mengajukan komplain untuk peninjauan.
             </li>
             <li>
-              <strong>Pencairan Otomatis:</strong> Setelah barang diterima dan dikonfirmasi atau dalam waktu 2x24 jam setelah status resi menunjukkan paket terkirim, dana baru akan dicairkan ke penjual.
+              <strong>Konfirmasi Praktis:</strong> Setelah pesanan diterima dan dikonfirmasi atau dalam waktu 2x24 jam setelah resi kurir terkonfirmasi tiba, pesanan dinyatakan selesai otomatis.
             </li>
           </ol>
         </div>

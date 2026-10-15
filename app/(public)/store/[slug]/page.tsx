@@ -298,7 +298,7 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
           {reviews.length === 0 ? (
             <div className="p-6 bg-neutral-50 border border-neutral-200 rounded-lg text-center space-y-1 text-xs text-neutral-500">
               <p className="font-medium text-neutral-700">Belum ada ulasan untuk toko ini.</p>
-              <p>Transaksi dilindungi escrow Biji Hub. Ulasan akan muncul setelah pembeli menyelesaikan pesanan!</p>
+              <p>Setiap transaksi terverifikasi. Ulasan akan muncul setelah pembeli menyelesaikan pesanan!</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

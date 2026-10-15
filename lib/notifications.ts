@@ -18,7 +18,7 @@ Produk: ${data.listingTitle} (${data.quantity} pcs/kg)
 Pembeli: ${data.buyerName}
 Total Pembayaran: ${formatRupiah(data.totalAmount)}
 
-Dana saat ini telah aman tersimpan di Rekening Escrow Biji Hub. Silakan buka Dashboard Penjual Anda untuk memproses dan menginput nomor resi pengiriman: https://bji-hub.vercel.app/dashboard/orders
+Pembayaran telah terverifikasi aman oleh Biji Hub. Silakan buka Dashboard Penjual Anda untuk memproses dan menginput nomor resi pengiriman: https://bji-hub.vercel.app/dashboard/orders
 
 Terima kasih!`;
 

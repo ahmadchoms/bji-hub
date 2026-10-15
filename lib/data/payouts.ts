@@ -173,15 +173,15 @@ export async function createPayoutRequest(data: {
 
 export async function getSellerBalanceSummary(sellerId: string): Promise<{
   availableBalance: number;
-  escrowBalance: number;
+  pendingBalance: number;
   totalWithdrawn: number;
   totalEarned: number;
 }> {
   const orders = await getOrdersBySeller(sellerId);
   const payouts = await getPayoutRequestsBySeller(sellerId);
 
-  // Escrow balance: orders paid or in transit
-  const escrowBalance = orders
+  // Pending balance: orders paid or in transit
+  const pendingBalance = orders
     .filter((o) => o.status === "paid" || o.status === "shipped")
     .reduce((sum, o) => sum + Number(o.subtotal), 0);
 
@@ -199,7 +199,7 @@ export async function getSellerBalanceSummary(sellerId: string): Promise<{
 
   return {
     availableBalance,
-    escrowBalance,
+    pendingBalance,
     totalWithdrawn,
     totalEarned,
   };

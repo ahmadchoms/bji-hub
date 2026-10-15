@@ -240,7 +240,7 @@ export function InvoicePrintView({
             <div className="pt-3 border-t-2 border-neutral-900 flex items-center justify-between text-[11px] text-neutral-500">
               <span className="flex items-center gap-1 font-medium text-neutral-700">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                Biji Hub Escrow Verified Shipping Label
+                Biji Hub Verified Shipping Label
               </span>
               <span className="font-mono">{formattedDate}</span>
             </div>
@@ -260,7 +260,7 @@ export function InvoicePrintView({
                   Marketplace Biji Kopi Sangrai & Green Beans Spesialti Indonesia
                 </p>
                 <p className="text-[11px] text-neutral-400 mt-0.5">
-                  https://bji-hub.vercel.app &bull; Layanan Rekening Bersama Escrow
+                  https://bji-hub.vercel.app &bull; Marketplace Kopi Spesialti Indonesia
                 </p>
               </div>
               <div className="text-right">
@@ -271,7 +271,7 @@ export function InvoicePrintView({
                   INV-{order.orderNumber}
                 </span>
                 <Badge variant="outline" className="mt-2 text-emerald-800 bg-emerald-50 border-emerald-300 font-bold text-xs">
-                  LUNAS (ESCROW)
+                  PEMBAYARAN LUNAS
                 </Badge>
               </div>
             </div>
@@ -371,10 +371,10 @@ export function InvoicePrintView({
             <div className="pt-6 border-t border-neutral-200 space-y-2 text-[11px] text-neutral-500">
               <div className="flex items-center gap-1.5 font-semibold text-emerald-800">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                Sertifikasi Pembayaran Rekening Bersama (Escrow Guarantee)
+                Sertifikasi Bukti Transaksi Resmi
               </div>
               <p className="leading-relaxed">
-                Bukti transaksi ini diterbitkan secara sah oleh sistem Biji Hub. Pembayaran telah diverifikasi secara elektronik melalui Midtrans. Dana pembayaran ditampung aman dalam rekening escrow dan baru diteruskan ke roastery penjual setelah produk dikonfirmasi tiba dengan baik.
+                Bukti transaksi ini diterbitkan secara sah oleh sistem Biji Hub dan berlaku sebagai bukti pembayaran yang valid. Pembayaran telah diverifikasi secara elektronik via payment gateway Midtrans.
               </p>
             </div>
           </div>

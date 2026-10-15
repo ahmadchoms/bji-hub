@@ -29,7 +29,7 @@ import {
 interface SellerFinanceSectionProps {
   balanceSummary: {
     availableBalance: number;
-    escrowBalance: number;
+    pendingBalance: number;
     totalWithdrawn: number;
     totalEarned: number;
   };
@@ -161,20 +161,20 @@ export function SellerFinanceSection({
           </CardContent>
         </Card>
 
-        {/* Saldo Dalam Escrow */}
+        {/* Saldo Tertunda (Pesanan Berjalan) */}
         <Card className="rounded-lg border-blue-200 bg-blue-50/30 shadow-xs">
           <CardContent className="p-5 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-blue-800 flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-blue-600" /> Saldo Dalam Escrow
+                <ShieldCheck className="w-4 h-4 text-blue-600" /> Saldo Tertunda (Pesanan Berjalan)
               </span>
               <Badge variant="outline" className="text-[10px] bg-blue-100 text-blue-800 border-blue-300">
-                Tertahan Aman
+                Pesanan Berjalan
               </Badge>
             </div>
             <div>
               <p className="text-2xl font-bold font-mono text-blue-950">
-                {formatRupiah(balanceSummary.escrowBalance)}
+                {formatRupiah(balanceSummary.pendingBalance)}
               </p>
               <p className="text-[11px] text-blue-700 mt-0.5">
                 Menunggu pengiriman tiba & konfirmasi penerimaan dari pembeli.

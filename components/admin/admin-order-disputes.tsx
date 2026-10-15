@@ -102,7 +102,7 @@ export function AdminOrderDisputes({ orders: initialOrders }: AdminOrderDisputes
   const handleResolve = (orderId: string, decision: "complete" | "cancel") => {
     const confirmMessage =
       decision === "complete"
-        ? "Yakin ingin menyelesaikan pesanan ini dan melepas dana escrow ke penjual?"
+        ? "Yakin ingin menyelesaikan pesanan ini dan melepas dana pembayaran ke penjual?"
         : "Yakin ingin membatalkan pesanan ini dan merefund dana ke pembeli?";
 
     if (!window.confirm(confirmMessage)) return;
@@ -341,7 +341,7 @@ export function AdminOrderDisputes({ orders: initialOrders }: AdminOrderDisputes
                   <div className="p-3 bg-rose-50 border border-rose-200 rounded text-rose-900 space-y-2">
                     <div className="flex items-center gap-1.5 font-semibold text-rose-800">
                       <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                      Komplain Pembeli & Penahanan Dana Escrow
+                      Komplain Pembeli & Penahanan Dana Transaksi
                     </div>
                     <p className="text-rose-800 leading-relaxed pl-5.5">
                       <span className="font-semibold">Alasan Pembeli:</span>{" "}

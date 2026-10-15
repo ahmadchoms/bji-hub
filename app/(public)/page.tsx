@@ -46,7 +46,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                   Bursa Kopi Specialty Nusantara
                 </h1>
                 <p className="text-xs sm:text-sm text-neutral-300 max-w-xl leading-relaxed">
-                  Beli biji mentah (green beans) & sangrai langsung dari petani, koperasi, dan roastery lokal. Transaksi aman dengan escrow, cupping score transparan, dan negosiasi grosir B2B.
+                  Beli biji mentah (green beans) & sangrai langsung dari petani, koperasi, dan roastery lokal. Transaksi aman & terjamin, cupping score transparan, dan negosiasi grosir B2B.
                 </p>
               </div>
 

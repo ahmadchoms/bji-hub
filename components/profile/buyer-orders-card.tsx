@@ -24,10 +24,14 @@ import {
   CreditCard,
   XCircle,
   MessageCircle,
+  Copy,
+  Check,
+  RotateCcw,
 } from "lucide-react";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { toast } from "sonner";
+import { addToCart } from "@/lib/cart";
 import {
   resumeOrderPaymentAction,
   cancelPendingOrderAction,
@@ -44,6 +48,31 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
   const [filter, setFilter] = useState<OrderFilter>("all");
   const [payingId, setPayingId] = useState<string | null>(null);
   const [cancelingId, setCancelingId] = useState<string | null>(null);
+  const [copiedResiId, setCopiedResiId] = useState<string | null>(null);
+
+  const handleCopyResi = (trackingNumber: string, orderId: string) => {
+    navigator.clipboard.writeText(trackingNumber);
+    setCopiedResiId(orderId);
+    toast.success("Nomor resi kurir disalin!");
+    setTimeout(() => setCopiedResiId(null), 2000);
+  };
+
+  const handleReorder = (ord: Order) => {
+    addToCart({
+      listingId: ord.listingId,
+      slug: ord.listingSlug || ord.listingId,
+      title: ord.listingTitle || "Biji Kopi",
+      price: ord.itemPrice,
+      unit: "kg",
+      minOrderQty: 1,
+      quantity: ord.quantity || 1,
+      sellerId: ord.sellerId,
+      sellerName: ord.sellerName || "Roastery Penjual",
+      sellerCity: ord.buyerCity || "Indonesia",
+    });
+    toast.success(`"${ord.listingTitle || "Biji Kopi"}" berhasil ditambahkan ke keranjang belanja!`);
+    router.push("/cart");
+  };
 
   const handleResumePayment = async (order: Order) => {
     setPayingId(order.id);
@@ -260,9 +289,18 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
 
                 <div className="flex justify-between items-baseline text-neutral-700">
                   <div>
-                    <span className="font-medium text-neutral-900">
-                      {ord.listingTitle || `Produk #${ord.listingId}`}
-                    </span>
+                    {ord.listingSlug ? (
+                      <Link
+                        href={`/product/${ord.listingSlug}`}
+                        className="font-medium text-neutral-900 hover:text-primary-700 hover:underline transition-colors"
+                      >
+                        {ord.listingTitle || `Produk #${ord.listingId}`}
+                      </Link>
+                    ) : (
+                      <span className="font-medium text-neutral-900">
+                        {ord.listingTitle || `Produk #${ord.listingId}`}
+                      </span>
+                    )}
                     <span className="text-neutral-500 text-[11px] ml-1.5">
                       ({ord.quantity} pcs/kg)
                     </span>
@@ -278,11 +316,32 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-neutral-100 text-[11px] text-neutral-500">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span>
-                      Kurir: {ord.shippingCourier}{" "}
-                      {ord.trackingNumber && `(Resi: ${ord.trackingNumber})`}
+                      Kurir: <strong className="text-neutral-700">{ord.shippingCourier || "Reguler"}</strong>
                     </span>
+                    {ord.trackingNumber && (
+                      <div className="flex items-center gap-1.5 bg-neutral-100 px-2 py-0.5 rounded border border-neutral-200">
+                        <span className="font-mono font-bold text-neutral-800 text-[10px]">
+                          {ord.trackingNumber}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyResi(ord.trackingNumber!, ord.id)}
+                          className="text-neutral-500 hover:text-neutral-900 transition-colors flex items-center gap-0.5 cursor-pointer"
+                          title="Salin nomor resi kurir"
+                        >
+                          {copiedResiId === ord.id ? (
+                            <Check className="w-3 h-3 text-emerald-600" />
+                          ) : (
+                            <Copy className="w-3 h-3" />
+                          )}
+                          <span className="text-[10px] font-medium">
+                            {copiedResiId === ord.id ? "Tersalin" : "Salin"}
+                          </span>
+                        </button>
+                      </div>
+                    )}
                     {ord.trackingNumber && (
                       <ShipmentTrackingModal
                         trackingNumber={ord.trackingNumber}
@@ -365,18 +424,18 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
                   );
                 })()}
 
-                {/* Shipped & Escrow Auto-Complete Countdown Alert */}
+                {/* Shipped & Auto-Complete Countdown Alert */}
                 {ord.status === "shipped" && (
                   <div className="pt-2 border-t border-neutral-100 space-y-2 bg-emerald-50/60 p-2.5 rounded border border-emerald-200">
                     <div className="flex items-start gap-1.5 text-[11px] text-emerald-900">
                       <Clock className="w-3.5 h-3.5 text-emerald-700 shrink-0 mt-0.5" />
                       <div>
                         <p className="font-semibold">
-                          Garansi Konfirmasi Otomatis (Escrow 2x24 Jam)
+                          Garansi Konfirmasi Otomatis (2x24 Jam)
                         </p>
                         <p className="text-emerald-800 text-[10px] mt-0.5 leading-relaxed">
                           {isAutoReleasePassed
-                            ? "Batas waktu 2x24 jam telah tercapai. Dana akan dicairkan otomatis ke penjual jika tidak ada komplain."
+                            ? "Batas waktu 2x24 jam telah tercapai. Pesanan akan diselesaikan otomatis jika tidak ada kendala."
                             : `Periksa fisik kopi sebelum ${format(autoReleaseDate, "d MMMM yyyy, HH:mm", { locale: idLocale })}. Jika sesuai, silakan konfirmasi penerimaan di bawah.`}
                         </p>
                       </div>
@@ -420,23 +479,36 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
                       </div>
                     )}
                     <p className="text-[10px] text-rose-600 pt-0.5 border-t border-rose-200/60">
-                      Dana Anda tetap aman tertampung di rekening escrow resmi Biji Hub dan tidak akan dicairkan ke penjual sampai kendala terselesaikan.
+                      Dana transaksi Anda tetap aman terlindungi di sistem Biji Hub dan tidak akan diteruskan ke penjual sampai kendala terselesaikan.
                     </p>
                   </div>
                 )}
 
                 {/* Completed Action */}
                 {ord.status === "completed" && (
-                  <div className="pt-2 border-t border-neutral-100 flex items-center justify-between text-[11px]">
+                  <div className="pt-2 border-t border-neutral-100 flex items-center justify-between text-[11px] gap-2">
                     <span className="text-neutral-500 inline-flex items-center gap-1">
                       <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                      Transaksi selesai & aman
+                      Transaksi selesai
                     </span>
-                    <OrderReviewModal
-                      orderId={ord.id}
-                      listingId={ord.listingId}
-                      listingTitle={ord.listingTitle || "Biji Kopi"}
-                    />
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleReorder(ord)}
+                        className="text-[11px] h-7 px-2.5 gap-1 text-neutral-800 border-neutral-300 hover:bg-neutral-100 cursor-pointer font-medium"
+                        title="Beli lot kopi ini lagi"
+                      >
+                        <RotateCcw className="w-3 h-3 text-neutral-600" />
+                        <span>Pesan Lagi</span>
+                      </Button>
+                      <OrderReviewModal
+                        orderId={ord.id}
+                        listingId={ord.listingId}
+                        listingTitle={ord.listingTitle || "Biji Kopi"}
+                      />
+                    </div>
                   </div>
                 )}
               </div>

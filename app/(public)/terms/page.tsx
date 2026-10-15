@@ -3,7 +3,7 @@ import { PageContainer } from "@/components/layout/page-container";
 export const metadata = {
   title: "Syarat & Ketentuan - Biji Hub",
   description:
-    "Syarat dan ketentuan bertransaksi, perlindungan escrow, dan ketentuan toko di marketplace Biji Hub.",
+    "Syarat dan ketentuan bertransaksi, perlindungan pembeli, dan ketentuan toko di marketplace Biji Hub.",
 };
 
 export default function SyaratPage() {
@@ -16,10 +16,10 @@ export default function SyaratPage() {
 
         <section className="space-y-2">
           <h2 className="font-display text-xl font-semibold text-neutral-900">
-            1. Transaksi & Pembayaran Escrow
+            1. Transaksi & Pembayaran Terjamin
           </h2>
           <p>
-            Setiap transaksi pembelian produk melalui Biji Hub dilindungi oleh Rekening Bersama Escrow. Pembayaran ditampung di rekening penampung resmi sampai pesanan diterima oleh pembeli. Penjual akan menerima pencairan dana setelah pembeli melakukan konfirmasi penerimaan atau otomatis 2x24 jam setelah resi kurir terkonfirmasi terkirim.
+            Setiap transaksi pembelian produk melalui Biji Hub dilindungi dengan sistem garansi penerimaan pesanan. Pembayaran disimpan aman sampai pesanan tiba dan diterima oleh pembeli. Penjual akan menerima pencairan dana setelah pembeli melakukan konfirmasi penerimaan atau otomatis 2x24 jam setelah resi kurir terkonfirmasi terkirim.
           </p>
         </section>
 

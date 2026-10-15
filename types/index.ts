@@ -270,6 +270,7 @@ export interface Order {
   sellerName?: string;
   listingId: string;
   listingTitle?: string;
+  listingSlug?: string;
   quantity: number;
   itemPrice: number;
   subtotal: number;

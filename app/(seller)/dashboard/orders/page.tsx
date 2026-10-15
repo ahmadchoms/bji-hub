@@ -14,7 +14,7 @@ import { Package, Truck, CheckCircle2, Clock } from "lucide-react";
 
 export const metadata = {
   title: "Pesanan Masuk & Saldo - Biji Hub Seller",
-  description: "Kelola pesanan pembeli, saldo escrow, dan penarikan dana ke rekening bank.",
+  description: "Kelola pesanan pembeli, saldo penjualan, dan penarikan dana ke rekening bank.",
 };
 
 export default async function DashboardOrdersPage() {
@@ -40,10 +40,10 @@ export default async function DashboardOrdersPage() {
     <div className="space-y-8">
       <SectionHeader
         title="Pesanan Masuk & Keuangan"
-        subtitle="Kelola pesanan pembeli, input resi, dan pantau pencairan saldo rekening escrow Anda."
+        subtitle="Kelola pesanan pembeli, input resi, dan pantau pencairan saldo penjualan Anda."
       />
 
-      {/* Saldo Escrow & Penarikan Dana Section */}
+      {/* Saldo & Penarikan Dana Section */}
       <SellerFinanceSection
         balanceSummary={balanceSummary}
         bankDetails={bankDetails}

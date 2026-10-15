@@ -56,7 +56,7 @@ export default async function OrdersPage() {
               Riwayat Pesanan Saya
             </h1>
             <p className="text-xs text-neutral-500 mt-0.5">
-              Pantau status pesanan, pembayaran rekening escrow, dan nomor resi pengiriman Anda.
+              Pantau status pesanan, verifikasi pembayaran, dan nomor resi pengiriman Anda.
             </p>
           </div>
           <Link

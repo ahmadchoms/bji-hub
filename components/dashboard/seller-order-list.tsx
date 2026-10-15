@@ -143,7 +143,7 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
         setShowReshipForm((prev) => ({ ...prev, [orderId]: false }));
         toast.success(
           resolution === "refund"
-            ? "Komplain disetujui. Dana escrow telah dikembalikan ke pembeli."
+            ? "Komplain disetujui. Dana transaksi telah dikembalikan ke pembeli."
             : "Paket pengganti berhasil dicatat. Status pesanan kembali menjadi 'Dikirim'."
         );
       } else {
@@ -492,7 +492,7 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
                   <div className="p-3 bg-rose-50 border border-rose-200 rounded text-xs text-rose-800 space-y-1">
                     <div className="flex items-center gap-1.5 font-semibold text-rose-900">
                       <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                      Pesanan Dalam Komplain Pembeli (Dana Escrow Ditahan)
+                      Pesanan Dalam Komplain Pembeli (Pencairan Ditangguhkan)
                     </div>
                     <p className="text-rose-700 pl-5.5">
                       <span className="font-medium">Alasan:</span> {order.disputeReason || "Menunggu verifikasi admin."}
@@ -600,11 +600,11 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
                   </div>
                 )}
 
-                {/* Footer Escrow notice */}
+                {/* Footer payout notice */}
                 <div className="flex items-center gap-1.5 text-[11px] text-emerald-800 bg-emerald-50/70 px-3 py-1.5 rounded">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                   <span>
-                    Dana escrow otomatis dicairkan ke rekening Anda saat pembeli konfirmasi paket
+                    Dana penjualan otomatis diteruskan ke saldo Anda saat pembeli mengonfirmasi paket
                     diterima dengan baik.
                   </span>
                 </div>

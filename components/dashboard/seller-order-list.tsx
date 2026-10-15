@@ -101,7 +101,7 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
             trackingNumber: resi,
           });
 
-          toast.success("Nomor resi disimpan. Pesanan beralih ke 'Dikirim'.", {
+          toast.success("Nomor resi disimpan & email dikirim ke pembeli. Pesanan beralih ke 'Dikirim'.", {
             description: `Beri tahu ${targetOrder.buyerName} via WhatsApp bahwa paket telah dikirim?`,
             duration: 8000,
             action: {
@@ -112,7 +112,7 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
             },
           });
         } else {
-          toast.success("Nomor resi berhasil disimpan. Status pesanan diubah ke 'Dikirim'.");
+          toast.success("Nomor resi disimpan & email dikirim ke pembeli. Status pesanan diubah ke 'Dikirim'.");
         }
       } else {
         toast.error(res.error || "Gagal memperbarui nomor resi");

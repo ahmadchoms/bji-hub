@@ -275,6 +275,24 @@ export function SellerFinanceSection({
                   </p>
                 </div>
 
+                {/* Rincian Transparan Pencairan Dana */}
+                {parseInt(withdrawAmount.replace(/[^0-9]/g, ""), 10) >= 10000 && (
+                  <div className="p-3 bg-neutral-50 rounded border border-neutral-200 text-xs space-y-1.5 font-mono">
+                    <div className="flex justify-between text-neutral-600">
+                      <span>Nominal Pengajuan:</span>
+                      <span>{formatRupiah(parseInt(withdrawAmount.replace(/[^0-9]/g, ""), 10))}</span>
+                    </div>
+                    <div className="flex justify-between text-emerald-700">
+                      <span>Biaya Transfer Platform:</span>
+                      <span>Rp 0 (Gratis)</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-neutral-900 pt-1.5 border-t border-neutral-200">
+                      <span>Estimasi Masuk Rekening:</span>
+                      <span className="text-emerald-800">{formatRupiah(parseInt(withdrawAmount.replace(/[^0-9]/g, ""), 10))}</span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-neutral-700">Catatan (Opsional)</label>
                   <Input

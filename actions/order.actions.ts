@@ -373,7 +373,13 @@ export async function sellerResolveDisputeAction(
     if (!newTrackingNumber || newTrackingNumber.trim().length < 3) {
       return fail("Nomor resi paket pengganti wajib diisi");
     }
-    await updateOrderStatus(order.id, "shipped", newTrackingNumber.trim());
+    const cleanReship = newTrackingNumber.trim();
+    await updateOrderStatus(order.id, "shipped", cleanReship);
+    sendOrderShippedEmail({
+      ...order,
+      status: "shipped",
+      trackingNumber: cleanReship,
+    }).catch((err) => console.error("Failed to send reship email:", err));
   }
 
   revalidatePath("/order/success");

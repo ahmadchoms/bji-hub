@@ -196,7 +196,11 @@ export async function createCheckoutOrderAction(
   });
 
   // 5. Cloud Sync: Automatically sync the buyer's shipping address to their cloud profile & session
-  if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  if (
+    process.env.DATA_SOURCE !== "mock" &&
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
     try {
       const supabase = await createClient();
       const {

@@ -33,12 +33,36 @@ export function getStoredWishlist(): WishlistItem[] {
   }
 }
 
+export async function syncWishlistWithCloud(): Promise<void> {
+  if (typeof window === "undefined") return;
+  try {
+    const { syncCloudWishlistAction } = await import("@/actions/wishlist.actions");
+    const local = getStoredWishlist();
+    const res = await syncCloudWishlistAction(local);
+    if (res.success && res.data?.items) {
+      const merged = res.data.items;
+      if (JSON.stringify(merged) !== JSON.stringify(local)) {
+        memoryWishlist = merged;
+        try {
+          localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(merged));
+          window.dispatchEvent(new Event("biji-wishlist-changed"));
+        } catch {
+          // ignore
+        }
+      }
+    }
+  } catch {
+    // Graceful fallback for offline / mock testing
+  }
+}
+
 function saveWishlist(items: WishlistItem[]): void {
   memoryWishlist = items;
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(items));
     window.dispatchEvent(new Event("biji-wishlist-changed"));
+    syncWishlistWithCloud().catch(() => {});
   } catch {
     // Ignore storage quota errors
   }
@@ -140,6 +164,7 @@ export function useWishlist() {
 
   useEffect(() => {
     setIsClient(true);
+    syncWishlistWithCloud().catch(() => {});
   }, []);
 
   const totalItems = isClient ? items.length : 0;

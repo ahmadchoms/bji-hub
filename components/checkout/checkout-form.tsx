@@ -665,7 +665,7 @@ export function CheckoutForm({
 
         {/* Pilihan Ekspedisi / Kurir */}
         <div className="border border-neutral-300 bg-surface-base rounded-sm p-5 space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-200 pb-2.5">
             <div>
               <h3 className="font-display text-base font-semibold text-neutral-900 flex items-center gap-2">
                 <Truck className="w-4 h-4 text-primary-700" /> Pilihan Pengiriman
@@ -674,6 +674,9 @@ export function CheckoutForm({
                 Estimasi dari gudang {listing.seller.businessName} ({listing.seller.city}).
               </p>
             </div>
+            <span className="text-[11px] font-mono font-medium text-neutral-700 bg-neutral-100 border border-neutral-300 px-2 py-0.5 rounded">
+              Bobot Paket: {(totalWeightGrams / 1000).toFixed(1)} kg
+            </span>
           </div>
 
           {isLoadingShipping ? (
@@ -724,7 +727,7 @@ export function CheckoutForm({
                         {rate.courierName} — {rate.service}
                       </p>
                       <p className="text-[11px] text-neutral-600 mt-0.5">
-                        Estimasi: {rate.etd} • {rate.description}
+                        Estimasi Tiba: <strong className="text-neutral-900 font-semibold">{rate.etd}</strong> • {rate.description}
                       </p>
                     </div>
                   </div>
@@ -784,6 +787,26 @@ export function CheckoutForm({
               {formatRupiah(totalAmount)}
             </span>
           </div>
+
+          {selectedCourier && (
+            <div className="p-3 bg-neutral-50 rounded border border-neutral-200 text-xs space-y-1.5">
+              <div className="flex items-center justify-between font-medium text-neutral-900">
+                <span className="flex items-center gap-1.5">
+                  <Truck className="w-3.5 h-3.5 text-primary-700" />
+                  {selectedCourier.courierName} ({selectedCourier.service})
+                </span>
+                <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
+                  Tiba: {selectedCourier.etd}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-neutral-500 pt-1 border-t border-neutral-200/60">
+                <span>Total Berat Paket:</span>
+                <span className="font-mono font-semibold text-neutral-800">
+                  {(totalWeightGrams / 1000).toFixed(1)} kg
+                </span>
+              </div>
+            </div>
+          )}
 
           {listing.stock === 0 && (
             <div className="p-3 bg-rose-50 border border-rose-200 rounded text-rose-800 text-xs">

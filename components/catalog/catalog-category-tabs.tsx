@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
-import { Award, MapPin } from "lucide-react";
+import { Award, MapPin, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const categoryTabs = [
@@ -11,6 +11,15 @@ const categoryTabs = [
   { slug: "green-beans", label: "Biji Mentah (Green Bean)" },
   { slug: "drip-bag", label: "Drip Bag" },
   { slug: "equipment", label: "Alat Seduh" },
+];
+
+const roastPresets = [
+  { slug: "", label: "Semua Sangrai" },
+  { slug: "Light", label: "Light" },
+  { slug: "Medium-Light", label: "Medium-Light" },
+  { slug: "Medium", label: "Medium" },
+  { slug: "Medium-Dark", label: "Medium-Dark" },
+  { slug: "Dark", label: "Dark" },
 ];
 
 const islandPresets = [
@@ -44,6 +53,23 @@ export function CatalogCategoryTabs() {
     "";
   const currentOrigin =
     searchParams.get("origin") || searchParams.get("asal") || "";
+  const currentRoast =
+    searchParams.get("roast") || searchParams.get("sangrai") || "";
+
+  const handleRoastClick = (slug: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (!slug) {
+      params.delete("roast");
+      params.delete("sangrai");
+    } else {
+      params.set("roast", slug);
+      params.delete("sangrai");
+    }
+    params.delete("page");
+    startTransition(() => {
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    });
+  };
 
   const handleCategoryClick = (slug: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -160,6 +186,33 @@ export function CatalogCategoryTabs() {
                 "px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors shrink-0 whitespace-nowrap",
                 isActive
                   ? "bg-amber-600 text-white font-semibold shadow-2xs"
+                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 hover:text-neutral-900",
+              )}
+            >
+              {preset.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Roast Level Presets */}
+      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none text-[11px]">
+        <span className="text-neutral-500 font-medium shrink-0 flex items-center gap-1 mr-1">
+          <Flame className="w-3.5 h-3.5 text-rose-600" />
+          Sangrai:
+        </span>
+        {roastPresets.map((preset) => {
+          const isActive =
+            currentRoast.toLowerCase() === preset.slug.toLowerCase();
+          return (
+            <button
+              key={preset.slug || "all-roasts"}
+              type="button"
+              onClick={() => handleRoastClick(preset.slug)}
+              className={cn(
+                "px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors shrink-0 whitespace-nowrap",
+                isActive
+                  ? "bg-rose-700 text-white font-semibold shadow-2xs"
                   : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 hover:text-neutral-900",
               )}
             >

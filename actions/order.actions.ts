@@ -2,6 +2,8 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase/server";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 import { getListingBySlug, getListingById } from "@/lib/data";
 import {
@@ -192,6 +194,44 @@ export async function createCheckoutOrderAction(
     midtransOrderId,
     notes: combinedNotes || null,
   });
+
+  // 5. Cloud Sync: Automatically sync the buyer's shipping address to their cloud profile & session
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    try {
+      const supabase = await createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.auth.updateUser({
+          data: {
+            name: buyerName.trim(),
+            phone: buyerPhone.trim(),
+            address: buyerAddress.trim(),
+            city: buyerCity.trim(),
+          },
+        });
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  try {
+    const cookieStore = await cookies();
+    cookieStore.set(
+      "biji-buyer-profile",
+      JSON.stringify({
+        name: buyerName.trim(),
+        phone: buyerPhone.trim(),
+        address: buyerAddress.trim(),
+        city: buyerCity.trim(),
+      }),
+      { path: "/", httpOnly: true, maxAge: 60 * 60 * 24 * 30 },
+    );
+  } catch {
+    // ignore
+  }
 
   return ok({
     orderId: order.id,

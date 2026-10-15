@@ -7,6 +7,7 @@ import { PageContainer } from "@/components/layout/page-container";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
 import { createClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth/session";
+import { getOrdersByBuyer } from "@/lib/data/orders";
 import type { BuyerAddress } from "@/types";
 
 interface CheckoutPageProps {
@@ -118,6 +119,22 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
             userAddress = userAddress || primary.address || "";
           }
         }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // Cloud database fallback: query previous order shipping details if not in user_metadata
+  if (!userPhone || !userCity || !userAddress) {
+    try {
+      const pastOrders = await getOrdersByBuyer(userEmail);
+      if (pastOrders.length > 0) {
+        const latest = pastOrders[0];
+        userName = userName || latest.buyerName;
+        userPhone = userPhone || latest.buyerPhone;
+        userCity = userCity || latest.buyerCity;
+        userAddress = userAddress || latest.buyerAddress;
       }
     } catch {
       // ignore

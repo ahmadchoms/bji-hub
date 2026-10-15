@@ -148,15 +148,20 @@ export function SellerFinanceSection({
                 Dari pesanan yang sudah dikonfirmasi selesai oleh pembeli.
               </p>
             </div>
-            <div className="pt-2 border-t border-emerald-100">
+            <div className="pt-2 border-t border-emerald-100 space-y-1.5">
               <Button
                 size="sm"
                 disabled={balanceSummary.availableBalance < 10000}
                 onClick={() => setShowWithdrawForm(true)}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-8 gap-1.5"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-8 gap-1.5 cursor-pointer disabled:bg-neutral-200 disabled:text-neutral-400"
               >
                 <ArrowUpRight className="w-3.5 h-3.5" /> Tarik Dana ke Rekening
               </Button>
+              {balanceSummary.availableBalance < 10000 && (
+                <p className="text-[10px] text-amber-800 bg-amber-50/90 border border-amber-200 p-1.5 rounded leading-tight">
+                  Min. penarikan Rp 10.000 (Kurang {formatRupiah(10000 - balanceSummary.availableBalance)}). Saldo tertunda pesanan berjalan: {formatRupiah(balanceSummary.pendingBalance)}.
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>

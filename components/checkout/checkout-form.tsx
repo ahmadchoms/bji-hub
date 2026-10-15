@@ -34,6 +34,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { calculateShippingRates, ShippingRate } from "@/lib/shipping";
 import { createCheckoutOrderAction } from "@/actions/order.actions";
+import { updateBuyerProfileAction } from "@/actions/auth.actions";
 import { useCart } from "@/lib/cart";
 import { cn } from "@/lib/utils";
 
@@ -517,6 +518,15 @@ export function CheckoutForm({
                       return;
                     }
                     setIsEditingAddress(false);
+                    // Sync to cloud in background so address persists across devices
+                    updateBuyerProfileAction({
+                      name: buyerName.trim(),
+                      phone: buyerPhone.trim(),
+                      province: buyerProvince.trim(),
+                      city: buyerCity.trim(),
+                      postalCode: buyerPostalCode.trim(),
+                      address: buyerAddress.trim(),
+                    }).catch(() => {});
                     toast.success("Alamat pengiriman diperbarui");
                   }}
                   className="text-xs h-8 gap-1.5"

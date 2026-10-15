@@ -3,6 +3,7 @@ import {
   sendOrderPaidEmail,
   sendOrderShippedEmail,
   sendLowStockAlertEmail,
+  sendNewOrderSellerEmail,
 } from "./email";
 import type { Order } from "@/types";
 
@@ -63,6 +64,16 @@ describe("Transactional Email Handler", () => {
       listingTitle: "Gayo Bourbon Anaerobic",
       remainingStock: 3,
       unit: "200g",
+    });
+    expect(result.success).toBe(true);
+    expect(result.mocked).toBe(true);
+  });
+
+  it("handles new order alert to seller mock when RESEND_API_KEY is not defined", async () => {
+    const result = await sendNewOrderSellerEmail({
+      order: mockOrder,
+      sellerEmail: "seller@example.com",
+      sellerName: "Pak Hendra",
     });
     expect(result.success).toBe(true);
     expect(result.mocked).toBe(true);

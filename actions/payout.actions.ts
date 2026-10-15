@@ -14,9 +14,16 @@ import {
 } from "@/lib/data/payouts";
 
 const bankDetailsSchema = z.object({
-  bankName: z.string().min(2, "Nama bank wajib diisi (contoh: BCA, Mandiri, BRI)"),
-  bankAccountNumber: z.string().min(5, "Nomor rekening wajib minimal 5 digit"),
-  bankAccountHolder: z.string().min(2, "Nama pemilik rekening wajib diisi"),
+  bankName: z.string().trim().min(2, "Nama bank wajib dipilih/diisi"),
+  bankAccountNumber: z
+    .string()
+    .trim()
+    .regex(/^[0-9]{7,18}$/, "Nomor rekening harus berupa 7 hingga 18 digit angka"),
+  bankAccountHolder: z
+    .string()
+    .trim()
+    .min(3, "Nama pemilik rekening minimal 3 karakter")
+    .max(100, "Nama pemilik rekening maksimal 100 karakter"),
 });
 
 export type BankDetailsFormValues = z.infer<typeof bankDetailsSchema>;
@@ -36,6 +43,7 @@ export async function updateSellerBankAction(
 
   await updateSellerBankDetails(sellerId, parsed.data);
   revalidatePath("/dashboard/orders");
+  revalidatePath("/dashboard/profile");
 
   return ok(parsed.data);
 }

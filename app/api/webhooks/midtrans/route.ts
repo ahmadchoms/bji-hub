@@ -45,10 +45,23 @@ export async function POST(req: NextRequest) {
     const updated = await updateOrderStatus(order.id, orderStatus);
     if (updated && orderStatus === "paid") {
       try {
-        const { sendOrderPaidEmail } = await import("@/lib/email");
+        const { sendOrderPaidEmail, sendNewOrderSellerEmail } = await import("@/lib/email");
         sendOrderPaidEmail(order).catch((e) =>
           console.error("Failed to send order paid email from webhook:", e)
         );
+
+        const { getSellerById } = await import("@/lib/data");
+        getSellerById(order.sellerId)
+          .then((seller) => {
+            sendNewOrderSellerEmail({
+              order,
+              sellerEmail: seller?.user?.email,
+              sellerName: seller?.businessName || order.sellerName,
+            }).catch((e) =>
+              console.error("Failed to send seller new order email from webhook:", e)
+            );
+          })
+          .catch(() => {});
       } catch {
         // Non-blocking
       }

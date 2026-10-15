@@ -274,3 +274,90 @@ export async function sendLowStockAlertEmail({
     };
   }
 }
+
+/**
+ * Sends new order alert notification email to seller when buyer payment is verified.
+ */
+export async function sendNewOrderSellerEmail({
+  order,
+  sellerEmail,
+  sellerName,
+}: {
+  order: Order;
+  sellerEmail?: string;
+  sellerName?: string;
+}): Promise<EmailResult> {
+  const resend = getResend();
+  const targetEmail = sellerEmail || "seller@bijihub.id";
+  const ordersUrl = `${APP_URL}/dashboard/orders`;
+
+  if (!resend || !sellerEmail) {
+    console.log(`[EMAIL MOCK] New Order Notification to ${targetEmail}:`, {
+      orderNumber: order.orderNumber,
+      product: order.listingTitle,
+      quantity: order.quantity,
+      subtotal: order.subtotal,
+    });
+    return { success: true, mocked: true };
+  }
+
+  try {
+    const htmlContent = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1F1815; background-color: #FAF6F1; border-radius: 8px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h1 style="color: #2E150C; margin: 0; font-size: 26px; font-weight: 800;">BIJI HUB</h1>
+          <p style="color: #7A4A34; font-size: 13px; margin: 4px 0 0;">Notifikasi Pesanan Masuk</p>
+        </div>
+
+        <div style="background-color: #ffffff; padding: 24px; border-radius: 8px; border: 1px solid #D8CFC5;">
+          <span style="background-color: #DCEEE3; color: #1E4B36; font-size: 11px; font-weight: bold; padding: 4px 10px; border-radius: 4px; text-transform: uppercase;">Pesanan Baru Perlu Dikirim</span>
+          <h2 style="margin: 12px 0 4px; font-size: 18px; color: #1F1815;">Halo ${sellerName || order.sellerName || "Roastery Penjual"},</h2>
+          <p style="color: #4A403A; font-size: 14px; margin: 0 0 16px; line-height: 1.5;">
+            Ada pesanan baru yang telah lunas diverifikasi untuk toko Anda. Mohon segera siapkan dan kemas produk kopi sesuai rincian berikut:
+          </p>
+
+          <div style="background-color: #FAF6F1; border-left: 3px solid #2F6D4F; padding: 14px; margin-bottom: 16px; font-size: 13px;">
+            <p style="margin: 0 0 4px;"><strong>Nomor Pesanan:</strong> <span style="font-family: monospace;">#${order.orderNumber}</span></p>
+            <p style="margin: 0 0 4px;"><strong>Produk:</strong> ${order.listingTitle || "Biji Kopi Spesialti"} (${order.quantity} pcs/kg)</p>
+            <p style="margin: 0 0 4px;"><strong>Pendapatan Bersih:</strong> <strong style="color: #2E150C;">${formatRupiah(order.subtotal)}</strong></p>
+            <p style="margin: 0 0 4px;"><strong>Ekspedisi Kurir:</strong> ${order.shippingCourier || "JNE"}</p>
+            ${order.notes ? `<p style="margin: 4px 0 0; color: #7A4A34;"><strong>Catatan Pembeli:</strong> ${order.notes}</p>` : ""}
+          </div>
+
+          <div style="background-color: #ffffff; border: 1px solid #E5DFD7; padding: 12px; border-radius: 6px; font-size: 12px; color: #4A403A; margin-bottom: 16px;">
+            <strong>Tujuan Pengiriman:</strong><br/>
+            ${order.buyerName} (${order.buyerPhone})<br/>
+            ${order.buyerAddress}, ${order.buyerCity}
+          </div>
+
+          <div style="text-align: center; margin-top: 20px;">
+            <a href="${ordersUrl}" style="display: inline-block; background-color: #2E150C; color: #ffffff; text-decoration: none; font-size: 13px; font-weight: bold; padding: 12px 24px; border-radius: 6px;">Buka Dashboard Pesanan & Input Resi</a>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px; font-size: 11px; color: #8C8078;">
+          <p style="margin: 0;">Biji Hub Merchant Services &bull; Marketplace Kopi Specialty Indonesia</p>
+        </div>
+      </div>
+    `;
+
+    const res = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: targetEmail,
+      subject: `[Biji Hub] Pesanan Baru Masuk #${order.orderNumber}: Segera Kemas & Kirim`,
+      html: htmlContent,
+    });
+
+    return {
+      success: true,
+      messageId: res.data?.id,
+    };
+  } catch (error) {
+    console.error("Failed to send seller new order email:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to send email",
+    };
+  }
+}
+

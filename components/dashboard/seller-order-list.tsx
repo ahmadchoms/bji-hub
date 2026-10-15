@@ -24,6 +24,8 @@ import {
   MessageCircle,
   Search,
   RotateCcw,
+  Printer,
+  FileText,
 } from "lucide-react";
 import { buildShipmentNotificationUrl } from "@/lib/notifications";
 import { ExportCsvButton } from "@/components/shared/export-csv-button";
@@ -447,6 +449,39 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
                           </div>
                         </div>
                       ) : null}
+
+                      <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-neutral-100">
+                        <OrderPrintModal
+                          order={order}
+                          defaultMode="shipping_label"
+                          trigger={
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs gap-1.5 font-medium border-neutral-300 hover:bg-neutral-100 text-neutral-800 cursor-pointer"
+                            >
+                              <Printer className="w-3.5 h-3.5 text-neutral-600" />
+                              Cetak Label Pengiriman
+                            </Button>
+                          }
+                        />
+                        <OrderPrintModal
+                          order={order}
+                          defaultMode="invoice"
+                          trigger={
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-xs gap-1.5 text-neutral-600 hover:bg-neutral-100 cursor-pointer"
+                            >
+                              <FileText className="w-3.5 h-3.5" />
+                              Invoice
+                            </Button>
+                          }
+                        />
+                      </div>
 
                       {canInputResi && (
                         <div className="mt-3 space-y-2">

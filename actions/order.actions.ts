@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
-import { getListingBySlug, getListingById } from "@/lib/data";
+import { getListingBySlug, getListingById, getSellerById } from "@/lib/data";
 import {
   createOrder,
   getOrderById,
@@ -16,7 +16,11 @@ import { createReview } from "@/lib/data/reviews";
 import { createMidtransSnapToken } from "@/lib/midtrans";
 import { getSession, requireRole } from "@/lib/auth/session";
 import { trackShipmentWaybill, type WaybillTrackingResult } from "@/lib/shipping";
-import { sendOrderPaidEmail, sendOrderShippedEmail } from "@/lib/email";
+import {
+  sendOrderPaidEmail,
+  sendOrderShippedEmail,
+  sendNewOrderSellerEmail,
+} from "@/lib/email";
 
 const checkoutItemSchema = z.object({
   listingId: z.string().min(1, "ID produk wajib diisi"),
@@ -255,6 +259,22 @@ export async function confirmOrderPaymentAction(
   sendOrderPaidEmail({ ...order, status: "paid" }).catch((err) =>
     console.error("Failed to send paid email:", err),
   );
+
+  getSellerById(order.sellerId)
+    .then((seller) => {
+      sendNewOrderSellerEmail({
+        order: { ...order, status: "paid" },
+        sellerEmail: seller?.user?.email,
+        sellerName: seller?.businessName || order.sellerName,
+      }).catch((err) =>
+        console.error("Failed to send seller new order email:", err),
+      );
+    })
+    .catch(() => {});
+
+  revalidatePath("/orders");
+  revalidatePath("/order/success");
+  revalidatePath("/dashboard/orders");
   return ok({ success: true });
 }
 
@@ -287,6 +307,7 @@ export async function completeOrderAction(
   if (!order) return fail("Pesanan tidak ditemukan");
 
   await updateOrderStatus(order.id, "completed");
+  revalidatePath("/orders");
   revalidatePath("/order/success");
   revalidatePath("/profile");
   revalidatePath("/dashboard/orders");
@@ -436,6 +457,16 @@ export async function submitReviewAction(
     comment: parsed.data.comment,
     imageUrl: parsed.data.imageUrl,
   });
+
+  revalidatePath("/orders");
+  revalidatePath("/order/success");
+  getListingById(parsed.data.listingId)
+    .then((listing) => {
+      if (listing?.slug) {
+        revalidatePath(`/product/${listing.slug}`);
+      }
+    })
+    .catch(() => {});
 
   return ok({ reviewId: review.id });
 }

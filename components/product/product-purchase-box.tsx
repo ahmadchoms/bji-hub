@@ -21,6 +21,7 @@ export function ProductPurchaseBox({ listing }: ProductPurchaseBoxProps) {
 
   const [selectedGrind, setSelectedGrind] = useState<GrindSize>("Biji Utuh");
   const [quantity, setQuantity] = useState<number>(listing.minOrderQty || 1);
+  const [confirmedGreenBean, setConfirmedGreenBean] = useState(false);
 
   const isOutOfStock = listing.stock === 0;
   const maxStock = listing.stock !== undefined ? listing.stock : 9999;
@@ -122,10 +123,32 @@ export function ProductPurchaseBox({ listing }: ProductPurchaseBoxProps) {
         </div>
       )}
 
-      {/* Green Bean Notice */}
+      {/* Green Bean Purchase Protection Notice & Confirmation */}
       {isGreenBean && (
-        <div className="text-[11px] bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-2 rounded">
-          🌱 <strong>Biji Kopi Mentah (Green Bean):</strong> Biji belum disangrai, siap untuk di-roasting sesuai profil preferensi roastery Anda.
+        <div className="p-3.5 bg-amber-50/90 border border-amber-300 rounded text-xs space-y-2.5">
+          <div className="flex items-start gap-2">
+            <span className="text-base shrink-0">⚠️</span>
+            <div className="space-y-1">
+              <h4 className="font-bold text-amber-950">
+                Perlindungan Pembelian: Biji Mentah (Green Bean)
+              </h4>
+              <p className="text-[11px] text-amber-900 leading-relaxed">
+                Produk ini adalah <strong>Biji Kopi Mentah yang belum disangrai</strong>. Jangan dimasukkan langsung ke dalam mesin grinder seduh biasa karena biji masih sangat keras dan belum siap seduh. Khusus untuk kebutuhan sangrai roastery atau home-roaster.
+              </p>
+            </div>
+          </div>
+
+          <label className="flex items-start gap-2 pt-1 border-t border-amber-200/80 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={confirmedGreenBean}
+              onChange={(e) => setConfirmedGreenBean(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-amber-400 text-primary-600 focus:ring-primary-500 cursor-pointer"
+            />
+            <span className="text-[11px] font-medium text-amber-950">
+              Saya mengonfirmasi bahwa saya memahami produk ini adalah biji kopi mentah belum disangrai.
+            </span>
+          </label>
         </div>
       )}
 
@@ -180,13 +203,25 @@ export function ProductPurchaseBox({ listing }: ProductPurchaseBoxProps) {
           </button>
         ) : (
           <>
-            <Link
-              href={directCheckoutUrl}
-              className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-4 rounded-sm text-base shadow-xs flex items-center justify-center transition-colors"
-            >
-              <ShieldCheck className="w-5 h-5 mr-2 text-primary-200" />
-              Beli Langsung
-            </Link>
+            {!isGreenBean || confirmedGreenBean ? (
+              <Link
+                href={directCheckoutUrl}
+                className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-4 rounded-sm text-base shadow-xs flex items-center justify-center transition-colors"
+              >
+                <ShieldCheck className="w-5 h-5 mr-2 text-primary-200" />
+                Beli Langsung
+              </Link>
+            ) : (
+              <button
+                type="button"
+                disabled
+                className="w-full bg-neutral-200 text-neutral-400 font-medium py-3 px-4 rounded-sm text-base cursor-not-allowed flex items-center justify-center border border-neutral-300"
+                title="Konfirmasi peringatan Green Bean di atas untuk melanjutkan pembelian"
+              >
+                <ShieldCheck className="w-5 h-5 mr-2 text-neutral-400" />
+                Beli Langsung
+              </button>
+            )}
 
             <AddToCartButton
               item={{
@@ -204,8 +239,15 @@ export function ProductPurchaseBox({ listing }: ProductPurchaseBoxProps) {
                 grindSize: isCoffeeBean ? selectedGrind : undefined,
               }}
               grindSize={isCoffeeBean ? selectedGrind : undefined}
+              disabled={isGreenBean && !confirmedGreenBean}
               className="w-full justify-center h-11 text-sm font-medium"
             />
+
+            {isGreenBean && !confirmedGreenBean && (
+              <p className="text-[11px] text-amber-800 text-center font-medium italic">
+                Harap centang konfirmasi Green Bean di atas untuk melanjutkan pemesanan.
+              </p>
+            )}
           </>
         )}
       </div>

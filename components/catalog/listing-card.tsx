@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { formatRupiah } from "@/components/shared/price-text";
 import { TrackVisible } from "../shared/track-visible";
 import { CompareButton } from "./compare-button";
+import { WishlistButton } from "@/components/wishlist/wishlist-button";
 
 interface ListingCardProps {
   listing: ListingWithRelations;
@@ -40,7 +41,8 @@ export function ListingCard({
   return (
     <li className={cn("relative min-w-0 group/item", className)}>
       {isAd && <TrackVisible listingId={listing.id} type="impression" />}
-      <div className="absolute top-2 right-2 z-20">
+      <div className="absolute top-2 right-2 z-20 flex flex-col gap-1.5">
+        <WishlistButton listing={listing} variant="icon" />
         <CompareButton listing={listing} variant="icon" />
       </div>
       <Link

@@ -17,6 +17,7 @@ import {
   X,
   MapPin,
   Package,
+  Heart,
 } from "lucide-react";
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ import { cn } from "@/lib/utils";
 import { logoutAction } from "@/actions/auth.actions";
 import type { Role } from "@/lib/auth/roles";
 import { CartNavBadge } from "@/components/cart/cart-nav-badge";
+import { WishlistNavBadge } from "@/components/wishlist/wishlist-nav-badge";
 import type { Category } from "@/types";
 
 const TRENDING_SEARCHES = [
@@ -49,6 +51,7 @@ interface NavbarInnerProps {
     avatarUrl?: string;
   } | null;
   storeName?: string | null;
+  activeOrdersCount?: number;
 }
 
 export function NavbarInner({
@@ -56,6 +59,7 @@ export function NavbarInner({
   categories = [],
   user,
   storeName,
+  activeOrdersCount = 0,
 }: NavbarInnerProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -310,10 +314,13 @@ export function NavbarInner({
             </div>
           </div>
 
-          {/* Sisi Kanan: Keranjang, Notifikasi, Riwayat, Pesan | Toko | Profil */}
+          {/* Sisi Kanan: Keranjang, Favorit, Notifikasi, Riwayat, Pesan | Toko | Profil */}
           <div className="flex items-center gap-1 shrink-0">
             {/* Keranjang */}
             <CartNavBadge />
+
+            {/* Favorit / Wishlist */}
+            <WishlistNavBadge />
 
             {/* Notifikasi */}
             <div className="relative" ref={notifMenuRef}>
@@ -336,6 +343,22 @@ export function NavbarInner({
                       Update Baru
                     </span>
                   </div>
+
+                  {activeOrdersCount > 0 && (
+                    <div className="p-2 rounded bg-amber-50 border border-amber-200 text-amber-900 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 font-semibold text-[11px]">
+                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                        <span>{activeOrdersCount} Pesanan Aktif</span>
+                      </div>
+                      <Link
+                        href={ordersHref}
+                        onClick={() => setNotifOpen(false)}
+                        className="text-[10px] font-bold text-amber-800 underline hover:text-amber-950"
+                      >
+                        Pantau →
+                      </Link>
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     {isSeller ? (
@@ -415,11 +438,20 @@ export function NavbarInner({
             {/* Riwayat */}
             <Link
               href={ordersHref}
-              className="p-2 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-md transition-colors"
-              title="Riwayat Pesanan"
+              className="relative p-2 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-md transition-colors"
+              title={
+                activeOrdersCount > 0
+                  ? `Riwayat Pesanan (${activeOrdersCount} aktif)`
+                  : "Riwayat Pesanan"
+              }
               aria-label="Riwayat Pesanan"
             >
               <Receipt className="w-4 h-4" />
+              {activeOrdersCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-amber-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 animate-in zoom-in-50">
+                  {activeOrdersCount > 9 ? "9+" : activeOrdersCount}
+                </span>
+              )}
             </Link>
 
             {/* Pesan */}
@@ -650,6 +682,7 @@ export function NavbarInner({
 
           <div className="flex items-center gap-1.5">
             <CartNavBadge />
+            <WishlistNavBadge />
 
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger
@@ -718,12 +751,28 @@ export function NavbarInner({
                     </p>
 
                     <Link
-                      href={ordersHref}
+                      href="/wishlist"
                       onClick={() => setMobileOpen(false)}
                       className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md"
                     >
-                      <Receipt className="w-4 h-4 text-neutral-500" />
-                      <span>Riwayat Pesanan</span>
+                      <Heart className="w-4 h-4 text-rose-500" />
+                      <span>Kopi Favorit</span>
+                    </Link>
+
+                    <Link
+                      href={ordersHref}
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center justify-between px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Receipt className="w-4 h-4 text-neutral-500" />
+                        <span>Riwayat Pesanan</span>
+                      </div>
+                      {activeOrdersCount > 0 && (
+                        <span className="bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                          {activeOrdersCount} aktif
+                        </span>
+                      )}
                     </Link>
 
                     <Link

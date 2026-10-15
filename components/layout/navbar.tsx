@@ -2,6 +2,7 @@ import { NavbarInner } from "@/components/layout/navbar-inner";
 import { getSession } from "@/lib/auth/session";
 import { getCategories, getSellerById } from "@/lib/data";
 import { createClient } from "@/lib/supabase/server";
+import { getOrdersByBuyer, getOrdersBySeller } from "@/lib/data/orders";
 import { cookies } from "next/headers";
 
 export async function Navbar() {
@@ -22,6 +23,7 @@ export async function Navbar() {
 
   let userName = "";
   let userAvatarUrl = "";
+  let userEmail = "";
 
   if (
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
@@ -33,6 +35,7 @@ export async function Navbar() {
         data: { user },
       } = await supabase.auth.getUser();
       if (user) {
+        userEmail = user.email || "";
         userName =
           ((user.user_metadata?.name ||
             user.user_metadata?.full_name ||
@@ -52,6 +55,7 @@ export async function Navbar() {
         const parsed = JSON.parse(raw);
         userName = parsed.name || "";
         userAvatarUrl = parsed.avatarUrl || "";
+        userEmail = parsed.email || userEmail;
       }
     } catch {
       // ignore
@@ -60,6 +64,31 @@ export async function Navbar() {
 
   if (!userName && session.role !== "guest") {
     userName = session.role === "seller" ? "Penjual" : "Akbar Hakim";
+  }
+
+  if (!userEmail && session.role === "buyer") {
+    userEmail = "pembeli@bijihub.com";
+  }
+
+  let activeOrdersCount = 0;
+  if (session.role === "seller" && session.sellerId) {
+    try {
+      const sellerOrders = await getOrdersBySeller(session.sellerId);
+      activeOrdersCount = sellerOrders.filter((o) =>
+        ["pending_payment", "paid", "shipped", "disputed"].includes(o.status),
+      ).length;
+    } catch {
+      // ignore
+    }
+  } else if (session.role === "buyer" && userEmail) {
+    try {
+      const buyerOrders = await getOrdersByBuyer(userEmail);
+      activeOrdersCount = buyerOrders.filter((o) =>
+        ["pending_payment", "paid", "shipped", "disputed"].includes(o.status),
+      ).length;
+    } catch {
+      // ignore
+    }
   }
 
   const firstName = userName ? userName.trim().split(/\s+/)[0] : "";
@@ -74,6 +103,7 @@ export async function Navbar() {
           : null
       }
       storeName={storeName}
+      activeOrdersCount={activeOrdersCount}
     />
   );
 }

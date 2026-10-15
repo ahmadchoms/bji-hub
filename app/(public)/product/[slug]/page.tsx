@@ -14,6 +14,7 @@ import { B2BNegotiationBox } from "@/components/catalog/b2b-negotiation-box";
 import { SampleRequestModal } from "@/components/catalog/sample-request-modal";
 import { CuppingSheetModal } from "@/components/catalog/cupping-sheet-modal";
 import { CompareButton } from "@/components/catalog/compare-button";
+import { WishlistButton } from "@/components/wishlist/wishlist-button";
 import { ProductStickyCTA } from "@/components/catalog/product-sticky-cta";
 import { TrackOnMount } from "@/components/shared/track-visible";
 import { Star } from "lucide-react";
@@ -319,7 +320,10 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
               <CuppingSheetModal listing={listing} />
 
-              <CompareButton listing={listing} variant="button" />
+              <div className="grid grid-cols-2 gap-2">
+                <WishlistButton listing={listing} variant="button" />
+                <CompareButton listing={listing} variant="button" />
+              </div>
 
               {/* Seller card */}
               <div className="p-4 border border-neutral-300 rounded-sm flex items-center justify-between gap-3">

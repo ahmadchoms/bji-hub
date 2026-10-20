@@ -583,15 +583,16 @@ function toTasteProfile(
   data: ListingFormValues,
   id: string,
 ) {
+  if (!data.originRegion) return null;
   return {
     id,
     listingId,
     originRegion: data.originRegion,
-    processMethod: data.processMethod,
-    roastLevel: data.roastLevel,
-    flavorNotes: data.flavorNotes,
-    acidityScore: data.acidityScore,
-    bodyScore: data.bodyScore,
+    processMethod: data.processMethod ?? "Wash",
+    roastLevel: data.roastLevel ?? "Medium",
+    flavorNotes: data.flavorNotes ?? "",
+    acidityScore: data.acidityScore ?? 0,
+    bodyScore: data.bodyScore ?? 0,
     sweetnessScore: data.sweetnessScore,
     aromaScore: data.aromaScore,
     aftertasteScore: data.aftertasteScore,
@@ -599,7 +600,9 @@ function toTasteProfile(
     altitude: data.altitude,
     cropYear: data.cropYear,
     moistureContent: data.moistureContent,
-    roastDate: new Date(data.roastDate).toISOString(),
+    roastDate: data.roastDate
+      ? new Date(data.roastDate).toISOString()
+      : new Date().toISOString(),
   };
 }
 
@@ -631,7 +634,8 @@ export async function createListing(
     seller,
     category,
     images: toImages(id, data),
-    tasteProfile: toTasteProfile(id, data, `taste-${id}`),
+    tasteProfile:
+      category.slug === "equipment" ? null : toTasteProfile(id, data, `taste-${id}`),
   };
   mockListings.unshift(listing);
   return listing;
@@ -659,11 +663,14 @@ export async function updateListing(
     category,
     images: toImages(listing.id, data),
     status: listing.status === "suspended" ? "suspended" : data.status,
-    tasteProfile: toTasteProfile(
-      listing.id,
-      data,
-      listing.tasteProfile?.id ?? `taste-${listing.id}`,
-    ),
+    tasteProfile:
+      category.slug === "equipment"
+        ? null
+        : toTasteProfile(
+            listing.id,
+            data,
+            listing.tasteProfile?.id ?? `taste-${listing.id}`,
+          ),
   });
   return listing;
 }

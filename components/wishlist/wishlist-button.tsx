@@ -4,6 +4,8 @@ import { Heart } from "lucide-react";
 import { useWishlist, listingToWishlistItem } from "@/lib/wishlist";
 import type { ListingWithRelations } from "@/types";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { checkAuthAction } from "@/actions/auth.actions";
 
 interface WishlistButtonProps {
   listing: ListingWithRelations;
@@ -19,9 +21,28 @@ export function WishlistButton({
   const { isSaved, toggleWishlist, isLoaded } = useWishlist();
   const saved = isLoaded && isSaved(listing.id);
 
-  const handleToggle = (e: React.MouseEvent) => {
+  const handleToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    const isAuthed = await checkAuthAction();
+    if (!isAuthed) {
+      toast.error(
+        "Silakan masuk (login) terlebih dahulu untuk menyimpan ke daftar favorit.",
+        {
+          action: {
+            label: "Masuk",
+            onClick: () => {
+              const current =
+                typeof window !== "undefined" ? window.location.pathname : "/";
+              window.location.href = `/login?next=${encodeURIComponent(current)}`;
+            },
+          },
+        },
+      );
+      return;
+    }
+
     toggleWishlist(listingToWishlistItem(listing));
   };
 

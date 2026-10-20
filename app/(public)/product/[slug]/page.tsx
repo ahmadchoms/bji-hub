@@ -263,6 +263,9 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                   {listing.category.name}
                 </span>
                 {listing.seller.isVerified && <VerifiedBadge size="sm" />}
+                <span className="text-[10px] font-mono text-neutral-400 bg-neutral-100 px-1.5 py-0.5 rounded border border-neutral-200" title="Kode Unik Lot/SKU">
+                  SKU: #{listing.id.slice(-6).toUpperCase()}
+                </span>
               </div>
 
               {/* Title & Origin */}

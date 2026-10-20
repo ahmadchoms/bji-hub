@@ -7,19 +7,14 @@ import { ListingWithRelations } from "@/types";
 import { PriceText, formatRupiah } from "@/components/shared/price-text";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { ProductShippingEstimator } from "@/components/product/product-shipping-estimator";
-import { GRIND_SIZE_OPTIONS, GrindSize } from "@/lib/coffee-constants";
-import { cn } from "@/lib/utils";
 
 interface ProductPurchaseBoxProps {
   listing: ListingWithRelations;
 }
 
 export function ProductPurchaseBox({ listing }: ProductPurchaseBoxProps) {
-  const isCoffeeBean =
-    listing.category.slug !== "equipment" && listing.category.slug !== "green-beans";
   const isGreenBean = listing.category.slug === "green-beans";
 
-  const [selectedGrind, setSelectedGrind] = useState<GrindSize>("Biji Utuh");
   const [quantity, setQuantity] = useState<number>(listing.minOrderQty || 1);
   const [confirmedGreenBean, setConfirmedGreenBean] = useState(false);
 
@@ -35,9 +30,7 @@ export function ProductPurchaseBox({ listing }: ProductPurchaseBoxProps) {
   };
 
   const subtotal = Number(listing.price) * quantity;
-  const directCheckoutUrl = `/checkout/${listing.slug}?grind=${encodeURIComponent(
-    isCoffeeBean ? selectedGrind : "",
-  )}&qty=${quantity}`;
+  const directCheckoutUrl = `/checkout/${listing.slug}?qty=${quantity}`;
 
   return (
     <div className="space-y-4">
@@ -81,44 +74,6 @@ export function ProductPurchaseBox({ listing }: ProductPurchaseBoxProps) {
           <span className="text-base">⚠️</span>
           <div>
             <strong>Stok Habis:</strong> Kuota lot ini telah habis terjual. Silakan gunakan opsi negosiasi atau minta sampel di bawah untuk batch berikutnya.
-          </div>
-        </div>
-      )}
-
-      {/* Option 1: Grind Size Selection (For Roasted Beans / Single Lot) */}
-      {isCoffeeBean && !isOutOfStock && (
-        <div className="space-y-2 pt-1">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold text-neutral-900">
-              Pilihan Bentuk / Gilingan
-            </label>
-            <span className="text-[11px] text-neutral-500 font-mono">
-              Diproses segar saat pesan
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            {GRIND_SIZE_OPTIONS.map((opt) => {
-              const isSelected = selectedGrind === opt.value;
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setSelectedGrind(opt.value)}
-                  className={cn(
-                    "p-2.5 text-left rounded border transition-all text-xs flex flex-col justify-between",
-                    isSelected
-                      ? "border-primary-600 bg-primary-50/70 text-primary-950 font-medium ring-1 ring-primary-600"
-                      : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50",
-                  )}
-                >
-                  <span className="font-semibold">{opt.value}</span>
-                  <span className="text-[10px] text-neutral-500 mt-0.5 line-clamp-1">
-                    {opt.desc}
-                  </span>
-                </button>
-              );
-            })}
           </div>
         </div>
       )}
@@ -236,9 +191,7 @@ export function ProductPurchaseBox({ listing }: ProductPurchaseBoxProps) {
                 sellerId: listing.sellerId,
                 sellerName: listing.seller.businessName,
                 sellerCity: listing.seller.city,
-                grindSize: isCoffeeBean ? selectedGrind : undefined,
               }}
-              grindSize={isCoffeeBean ? selectedGrind : undefined}
               disabled={isGreenBean && !confirmedGreenBean}
               className="w-full justify-center h-11 text-sm font-medium"
             />

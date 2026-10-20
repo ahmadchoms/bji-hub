@@ -118,9 +118,11 @@ export function ListingForm({
   };
 
   const selectedCategoryId = watch("categoryId");
-  const selectedCategoryName = categories.find(
+  const selectedCategory = categories.find(
     (c) => c.id === selectedCategoryId,
-  )?.name;
+  );
+  const selectedCategoryName = selectedCategory?.name;
+  const isEquipment = selectedCategory?.slug === "equipment";
 
   const selectedStatus = watch("status");
   const selectedStatusLabel = STATUS_OPTIONS.find(
@@ -285,17 +287,27 @@ export function ListingForm({
       </div>
 
       {/* 3. Spesifikasi & Profil Rasa */}
-      <div className="border border-neutral-300 bg-surface-base rounded-sm p-6 space-y-5">
-        <div>
+      {isEquipment ? (
+        <div className="border border-neutral-300 bg-surface-base rounded-sm p-6 space-y-2">
           <h3 className="font-display text-lg text-neutral-900 font-semibold">
-            Spesifikasi & Karakter Rasa
+            Spesifikasi Produk (Alat & Peralatan)
           </h3>
-          <p className="text-xs text-neutral-600 mt-0.5">
-            Data origin, sangrai, dan skor evaluasi cupping untuk visualisasi radar chart rasa.
+          <p className="text-xs text-neutral-600 leading-relaxed">
+            Kategori alat seduh dan perlengkapan barista (Equipment) tidak memerlukan spesifikasi profil rasa kopi (seperti origin daerah asal, proses paska panen, tingkat sangrai, dan catatan rasa). Informasi judul, foto, deskripsi, harga, dan stok di atas sudah mencukupi untuk pembeli.
           </p>
         </div>
+      ) : (
+        <div className="border border-neutral-300 bg-surface-base rounded-sm p-6 space-y-5">
+          <div>
+            <h3 className="font-display text-lg text-neutral-900 font-semibold">
+              Spesifikasi & Karakter Rasa
+            </h3>
+            <p className="text-xs text-neutral-600 mt-0.5">
+              Data origin, sangrai, dan skor evaluasi cupping untuk visualisasi radar chart rasa.
+            </p>
+          </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <FormField
             label="Daerah Asal (Origin)"
             required
@@ -526,6 +538,7 @@ export function ListingForm({
           </div>
         </div>
       </div>
+      )}
 
       {/* Action Buttons */}
       <div className="flex items-center justify-end gap-3 pt-2">

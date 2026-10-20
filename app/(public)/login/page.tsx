@@ -22,7 +22,6 @@ function LoginForm() {
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -108,7 +107,7 @@ function LoginForm() {
               <button
                 type="button"
                 onClick={() =>
-                  toast.info("Demo mode: gunakan kredensial apa saja")
+                  toast.info("Silakan hubungi bantuan Biji Hub untuk mereset kata sandi Anda.")
                 }
                 className="text-primary-600 hover:underline font-medium"
               >
@@ -136,52 +135,6 @@ function LoginForm() {
               )}
             </Button>
           </form>
-
-          {/* Quick Demo Credentials for Lecturer & Testing */}
-          <div className="bg-amber-50/80 border border-amber-200 rounded p-3 text-xs space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="font-semibold text-amber-950 text-[11px]">Akun Pengujian Demo (1-Klik Isi):</span>
-              <span className="text-[10px] text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded font-mono">Demo Mode</span>
-            </div>
-            <div className="grid grid-cols-3 gap-1.5">
-              <button
-                type="button"
-                onClick={() => {
-                  setValue("email", "buyer@bijihub.com");
-                  setValue("password", "password123");
-                  toast.info("Akun Pembeli diisi (buyer@bijihub.com)");
-                }}
-                className="py-1 px-1.5 bg-white border border-amber-300 rounded text-center hover:bg-amber-100 transition-colors cursor-pointer"
-              >
-                <span className="block font-medium text-neutral-800 text-[11px]">Pembeli</span>
-                <span className="block text-[10px] text-neutral-500 font-mono">buyer@</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setValue("email", "seller@bijihub.com");
-                  setValue("password", "password123");
-                  toast.info("Akun Penjual diisi (seller@bijihub.com)");
-                }}
-                className="py-1 px-1.5 bg-white border border-amber-300 rounded text-center hover:bg-amber-100 transition-colors cursor-pointer"
-              >
-                <span className="block font-medium text-neutral-800 text-[11px]">Penjual</span>
-                <span className="block text-[10px] text-neutral-500 font-mono">seller@</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setValue("email", "admin@bijihub.com");
-                  setValue("password", "password123");
-                  toast.info("Akun Admin diisi (admin@bijihub.com)");
-                }}
-                className="py-1 px-1.5 bg-white border border-amber-300 rounded text-center hover:bg-amber-100 transition-colors cursor-pointer"
-              >
-                <span className="block font-medium text-neutral-800 text-[11px]">Admin</span>
-                <span className="block text-[10px] text-neutral-500 font-mono">admin@</span>
-              </button>
-            </div>
-          </div>
 
           <div className="text-center text-xs text-neutral-600 pt-2 border-t border-neutral-300">
             <span>Belum punya toko? </span>

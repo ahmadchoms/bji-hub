@@ -33,6 +33,11 @@ async function setMockSession(role: Role): Promise<void> {
   });
 }
 
+export async function checkAuthAction(): Promise<boolean> {
+  const session = await getSession();
+  return session.role !== "guest";
+}
+
 export async function loginAction(
   input: unknown,
   next?: string,

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useWishlist, type WishlistItem } from "@/lib/wishlist";
@@ -9,12 +10,34 @@ import { formatRupiah } from "@/components/shared/price-text";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Heart, Trash2, ArrowRight, Store, Coffee, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
+import { checkAuthAction } from "@/actions/auth.actions";
 
 export default function WishlistPage() {
   const { isLoaded, items, totalItems, removeFromWishlist, clearWishlist } =
     useWishlist();
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
-  const handleAddToCart = (item: WishlistItem) => {
+  useEffect(() => {
+    checkAuthAction().then((authed) => setIsLoggedIn(authed));
+  }, []);
+
+  const handleAddToCart = async (item: WishlistItem) => {
+    const isAuthed = await checkAuthAction();
+    if (!isAuthed) {
+      toast.error(
+        "Silakan masuk (login) terlebih dahulu untuk menyimpan ke keranjang.",
+        {
+          action: {
+            label: "Masuk",
+            onClick: () => {
+              window.location.href = "/login?next=/wishlist";
+            },
+          },
+        },
+      );
+      return;
+    }
+
     addToCart({
       listingId: item.listingId,
       slug: item.slug,
@@ -32,7 +55,7 @@ export default function WishlistPage() {
     toast.success(`"${item.title}" ditambahkan ke keranjang!`);
   };
 
-  if (!isLoaded) {
+  if (!isLoaded || isLoggedIn === null) {
     return (
       <div className="py-12 bg-neutral-50/50 min-h-[70vh]">
         <PageContainer className="max-w-5xl mx-auto">
@@ -41,6 +64,34 @@ export default function WishlistPage() {
               <span className="w-2 h-2 rounded-full bg-primary-600 animate-ping" />
               Memuat daftar favorit...
             </div>
+          </div>
+        </PageContainer>
+      </div>
+    );
+  }
+
+  if (isLoggedIn === false) {
+    return (
+      <div className="py-16 md:py-24 text-center">
+        <PageContainer className="max-w-md mx-auto space-y-4">
+          <div className="w-16 h-16 rounded-full bg-rose-50 flex items-center justify-center mx-auto text-rose-600">
+            <Heart className="w-8 h-8" />
+          </div>
+          <h1 className="text-xl font-bold font-display text-neutral-900">
+            Masuk untuk Mengakses Favorit
+          </h1>
+          <p className="text-xs text-neutral-600 max-w-sm mx-auto leading-relaxed">
+            Demi keamanan akun Anda, silakan masuk ke akun Biji Hub untuk menyimpan dan melihat koleksi kopi favorit Anda.
+          </p>
+          <div className="pt-2">
+            <Link
+              href="/login?next=/wishlist"
+              className={buttonVariants({
+                className: "bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold px-6",
+              })}
+            >
+              Masuk ke Akun
+            </Link>
           </div>
         </PageContainer>
       </div>

@@ -20,12 +20,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Save, Store } from "lucide-react";
+import { Loader2, Save, Store, Camera, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VerifiedBadge } from "@/components/shared/verified-badge";
 import { useRouter } from "next/navigation";
 import { updateProfileAction } from "@/actions/seller.actions";
 import { fetchProvinces, fetchRegencies, type RegionItem } from "@/lib/regions";
+import { uploadImage } from "@/lib/upload-client";
 
 interface ProfileFormProps {
   seller: SellerProfile;
@@ -35,6 +36,8 @@ interface ProfileFormProps {
 export function ProfileForm({ seller, className }: ProfileFormProps) {
   const router = useRouter();
   const isInitialMount = useRef(true);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   const [provinces, setProvinces] = useState<RegionItem[]>([]);
   const [cities, setCities] = useState<RegionItem[]>([]);
@@ -178,6 +181,32 @@ export function ProfileForm({ seller, className }: ProfileFormProps) {
     }
   };
 
+  const handleLogoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingLogo(true);
+    try {
+      const res = await uploadImage(file);
+      setValue("avatarUrl", res.url, { shouldValidate: true, shouldDirty: true });
+      toast.success("Logo toko berhasil diunggah!");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Gagal mengunggah logo toko",
+      );
+    } finally {
+      setIsUploadingLogo(false);
+      if (logoInputRef.current) logoInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    setValue("avatarUrl", "", { shouldValidate: true, shouldDirty: true });
+    if (logoInputRef.current) logoInputRef.current.value = "";
+  };
+
+  const currentAvatarUrl = watch("avatarUrl");
+
   return (
     <div className={cn("space-y-8", className)}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
@@ -187,29 +216,81 @@ export function ProfileForm({ seller, className }: ProfileFormProps) {
           </h3>
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pb-4 border-b border-neutral-200">
-            <div className="w-16 h-16 rounded-full border border-neutral-300 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0">
-              {watch("avatarUrl") ? (
+            <div className="relative w-20 h-20 rounded-full border border-neutral-300 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0">
+              {currentAvatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={watch("avatarUrl")}
+                  src={currentAvatarUrl}
                   alt="Logo Toko"
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <Store className="w-7 h-7 text-neutral-400" />
+                <Store className="w-8 h-8 text-neutral-400" />
+              )}
+              {isUploadingLogo && (
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                  <Loader2 className="w-5 h-5 text-white animate-spin" />
+                </div>
               )}
             </div>
-            <div className="flex-1 w-full space-y-1">
-              <FormField
-                label="URL Logo / Foto Toko"
-                error={errors.avatarUrl?.message}
-                helperText="Tautan langsung ke logo atau foto toko (JPG/PNG/WebP)."
-              >
-                <Input
-                  {...register("avatarUrl")}
-                  placeholder="https://example.com/logo.jpg"
-                />
-              </FormField>
+
+            <div className="flex-1 w-full space-y-2">
+              <div>
+                <label className="text-xs font-semibold text-neutral-800 block">
+                  Logo / Foto Profil Toko
+                </label>
+                <p className="text-[11px] text-neutral-500">
+                  Unggah logo resmi toko atau roastery Anda dari perangkat (JPG, PNG, atau WEBP, maks 2MB).
+                </p>
+              </div>
+
+              <input
+                type="file"
+                ref={logoInputRef}
+                accept="image/*"
+                onChange={handleLogoFile}
+                className="hidden"
+              />
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={isUploadingLogo}
+                  onClick={() => logoInputRef.current?.click()}
+                  className="text-xs h-8 border-neutral-300 hover:bg-neutral-50 text-neutral-800"
+                >
+                  {isUploadingLogo ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+                      Mengunggah...
+                    </>
+                  ) : (
+                    <>
+                      <Camera className="w-3.5 h-3.5 text-neutral-600 mr-1.5" />
+                      {currentAvatarUrl ? "Ganti Logo dari Perangkat" : "Unggah Logo dari Perangkat"}
+                    </>
+                  )}
+                </Button>
+
+                {currentAvatarUrl && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={isUploadingLogo}
+                    onClick={handleRemoveLogo}
+                    className="text-xs h-8 text-neutral-500 hover:text-rose-600"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 mr-1" /> Hapus
+                  </Button>
+                )}
+              </div>
+
+              {errors.avatarUrl?.message && (
+                <p className="text-[11px] text-rose-600">{errors.avatarUrl.message}</p>
+              )}
             </div>
           </div>
 

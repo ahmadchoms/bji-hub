@@ -27,14 +27,18 @@ function toSellerWithRelations(row: SellerRow): SellerWithRelations {
   };
 }
 
+function hasTasteProfile(data: ListingFormValues, categorySlug?: string) {
+  return categorySlug !== "equipment" && Boolean(data.originRegion);
+}
+
 function tasteData(data: ListingFormValues) {
   return {
-    originRegion: data.originRegion,
-    processMethod: data.processMethod,
-    roastLevel: data.roastLevel,
-    flavorNotes: data.flavorNotes,
-    acidityScore: data.acidityScore,
-    bodyScore: data.bodyScore,
+    originRegion: data.originRegion ?? "",
+    processMethod: data.processMethod ?? "Wash",
+    roastLevel: data.roastLevel ?? "Medium",
+    flavorNotes: data.flavorNotes ?? "",
+    acidityScore: data.acidityScore ?? 0,
+    bodyScore: data.bodyScore ?? 0,
     sweetnessScore: data.sweetnessScore ?? null,
     aromaScore: data.aromaScore ?? null,
     aftertasteScore: data.aftertasteScore ?? null,
@@ -42,7 +46,7 @@ function tasteData(data: ListingFormValues) {
     moistureContent: data.moistureContent ?? null,
     cuppingScore: data.cuppingScore ?? null,
     altitude: data.altitude ?? null,
-    roastDate: new Date(data.roastDate),
+    roastDate: data.roastDate ? new Date(data.roastDate) : new Date(),
   };
 }
 
@@ -144,7 +148,7 @@ export const sellers: SellerMethods = {
             minOrderQty: data.minOrderQty,
             stock: data.stock ?? 100,
             status: data.status,
-            tasteProfile: { create: tasteData(data) },
+            tasteProfile: hasTasteProfile(data, category.slug) ? { create: tasteData(data) } : undefined,
             images: { create: imageRows(data) },
           },
           include: listingInclude,
@@ -162,7 +166,7 @@ export const sellers: SellerMethods = {
     const prisma = getPrisma();
     const [listing, category] = await Promise.all([
       prisma.listing.findUnique({ where: { id: listingId }, select: { sellerId: true, status: true } }),
-      prisma.category.findUnique({ where: { id: data.categoryId }, select: { id: true } }),
+      prisma.category.findUnique({ where: { id: data.categoryId }, select: { id: true, slug: true } }),
     ]);
     if (!listing || listing.sellerId !== sellerId || !category) return null;
 
@@ -182,7 +186,9 @@ export const sellers: SellerMethods = {
           // A listing suspended by an admin cannot be reactivated by the seller.
           status: listing.status === "suspended" ? "suspended" : data.status,
           images: { create: imageRows(data) },
-          tasteProfile: { upsert: { create: taste, update: taste } },
+          tasteProfile: hasTasteProfile(data, category.slug)
+            ? { upsert: { create: taste, update: taste } }
+            : undefined,
         },
         include: listingInclude,
       });

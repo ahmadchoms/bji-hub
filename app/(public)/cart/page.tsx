@@ -9,6 +9,7 @@ import { formatRupiah } from "@/components/shared/price-text";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { checkAuthAction } from "@/actions/auth.actions";
 import {
   ShoppingCart,
   Trash2,
@@ -33,6 +34,11 @@ export default function CartPage() {
 
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [initialized, setInitialized] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    checkAuthAction().then((authed) => setIsLoggedIn(authed));
+  }, []);
 
   // Initialize selected keys with all items once cart is loaded
   useEffect(() => {
@@ -112,12 +118,40 @@ export default function CartPage() {
       ? `Beli (${firstSelectedSellerItems.length})`
       : "Beli";
 
-  if (!isLoaded) {
+  if (!isLoaded || isLoggedIn === null) {
     return (
       <div className="py-16 text-center">
         <PageContainer className="max-w-md mx-auto space-y-4">
           <div className="w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-xs text-neutral-500">Memuat keranjang belanja...</p>
+        </PageContainer>
+      </div>
+    );
+  }
+
+  if (isLoggedIn === false) {
+    return (
+      <div className="py-16 md:py-24 text-center">
+        <PageContainer className="max-w-md mx-auto space-y-4">
+          <div className="w-16 h-16 rounded-full bg-primary-50 flex items-center justify-center mx-auto text-primary-600">
+            <ShoppingCart className="w-8 h-8" />
+          </div>
+          <h1 className="text-xl font-bold font-display text-neutral-900">
+            Masuk untuk Mengakses Keranjang
+          </h1>
+          <p className="text-xs text-neutral-600 max-w-sm mx-auto leading-relaxed">
+            Demi keamanan dan kemudahan transaksi Anda, silakan masuk ke akun Biji Hub untuk melihat dan mengelola keranjang belanja Anda.
+          </p>
+          <div className="pt-2">
+            <Link
+              href="/login?next=/cart"
+              className={buttonVariants({
+                className: "bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold px-6",
+              })}
+            >
+              Masuk ke Akun
+            </Link>
+          </div>
         </PageContainer>
       </div>
     );

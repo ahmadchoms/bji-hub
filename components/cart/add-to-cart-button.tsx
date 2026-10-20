@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { addToCart, type CartItem } from "@/lib/cart";
 import { ShoppingCart, Check } from "lucide-react";
+import { toast } from "sonner";
+import { checkAuthAction } from "@/actions/auth.actions";
 
 interface AddToCartButtonProps {
   item: Omit<CartItem, "quantity"> & { quantity?: number };
@@ -28,9 +30,27 @@ export function AddToCartButton({
 }: AddToCartButtonProps) {
   const [added, setAdded] = useState(false);
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    const isAuthed = await checkAuthAction();
+    if (!isAuthed) {
+      toast.error(
+        "Silakan masuk (login) terlebih dahulu untuk menyimpan ke keranjang.",
+        {
+          action: {
+            label: "Masuk",
+            onClick: () => {
+              const current =
+                typeof window !== "undefined" ? window.location.pathname : "/";
+              window.location.href = `/login?next=${encodeURIComponent(current)}`;
+            },
+          },
+        },
+      );
+      return;
+    }
 
     addToCart({
       ...item,

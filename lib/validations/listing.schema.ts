@@ -28,25 +28,16 @@ const listingBaseSchema = z.object({
   status: z.enum(["active", "draft", "archived"], {
     message: "Status listing tidak valid",
   }),
-  originRegion: z.string().min(1, "Daerah asal wajib diisi"),
-  processMethod: z.enum(
-    ["Wash", "Natural", "Honey", "Wet Hulled", "Anaerobic"],
-    {
-      message: "Metode proses tidak valid",
-    },
-  ),
-  roastLevel: z.enum(
-    ["Light", "Medium-Light", "Medium", "Medium-Dark", "Dark"],
-    {
-      message: "Tingkat sangrai tidak valid",
-    },
-  ),
-  flavorNotes: z
-    .string()
-    .min(3, "Catatan rasa minimal 3 karakter")
-    .max(200, "Catatan rasa maksimal 200 karakter"),
-  acidityScore: z.number().min(0).max(5, "Skor maksimal 5"),
-  bodyScore: z.number().min(0).max(5, "Skor maksimal 5"),
+  originRegion: z.string().optional(),
+  processMethod: z
+    .enum(["Wash", "Natural", "Honey", "Wet Hulled", "Anaerobic"])
+    .optional(),
+  roastLevel: z
+    .enum(["Light", "Medium-Light", "Medium", "Medium-Dark", "Dark"])
+    .optional(),
+  flavorNotes: z.string().max(200, "Catatan rasa maksimal 200 karakter").optional(),
+  acidityScore: z.number().min(0).max(5, "Skor maksimal 5").optional(),
+  bodyScore: z.number().min(0).max(5, "Skor maksimal 5").optional(),
   sweetnessScore: z.number().min(0).max(5).optional(),
   aromaScore: z.number().min(0).max(5).optional(),
   aftertasteScore: z.number().min(0).max(5).optional(),
@@ -54,7 +45,7 @@ const listingBaseSchema = z.object({
   moistureContent: z.number().min(0).max(100).optional(),
   cuppingScore: z.number().min(0).max(100, "Skor cupping maksimal 100").optional(),
   altitude: z.string().max(50, "Ketinggian maksimal 50 karakter").optional(),
-  roastDate: z.string().min(1, "Tanggal sangrai wajib diisi"),
+  roastDate: z.string().optional(),
   images: z
     .array(listingImageSchema)
     .max(IMAGE_RULES.maxCount, `Maksimal ${IMAGE_RULES.maxCount} foto`),

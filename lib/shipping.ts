@@ -88,19 +88,17 @@ function getFallbackRates(params: CalculateShippingParams): ShippingRate[] {
   return rates;
 }
 
-let cachedCities: { city_id: string; city_name: string; type: string }[] | null = null;
+const cachedDestinationIds = new Map<string, string>();
 
 function getRajaOngkirBaseUrl(): string {
   if (process.env.RAJAONGKIR_BASE_URL) return process.env.RAJAONGKIR_BASE_URL.replace(/\/+$/, "");
-  const accountType = (process.env.RAJAONGKIR_ACCOUNT_TYPE || "starter").toLowerCase();
-  if (accountType === "pro") return "https://pro.rajaongkir.com/api";
-  if (accountType === "basic") return "https://api.rajaongkir.com/basic";
-  return "https://api.rajaongkir.com/starter";
+  return "https://rajaongkir.komerce.id/api/v1";
 }
 
-async function getRajaOngkirCityId(
+async function getRajaOngkirDestinationId(
   cityName: string,
   apiKey: string,
+  baseUrl: string,
 ): Promise<string | null> {
   const clean = cityName
     .toLowerCase()
@@ -108,36 +106,29 @@ async function getRajaOngkirCityId(
     .trim();
   if (!clean) return null;
 
-  try {
-    if (!cachedCities) {
-      const baseUrl = getRajaOngkirBaseUrl();
-      const res = await fetch(`${baseUrl}/city`, {
-        headers: { key: apiKey },
-        signal: AbortSignal.timeout(2500),
-      });
-      if (res.ok) {
-        const json = await res.json();
-        cachedCities = json?.rajaongkir?.results || [];
-      }
-    }
+  if (cachedDestinationIds.has(clean)) {
+    return cachedDestinationIds.get(clean)!;
+  }
 
-    if (cachedCities && cachedCities.length > 0) {
-      let found = cachedCities.find(
-        (c) =>
-          c.city_name.toLowerCase() === clean ||
-          `${c.type.toLowerCase()} ${c.city_name.toLowerCase()}` === cityName.toLowerCase().trim(),
-      );
-      if (!found) {
-        found = cachedCities.find(
-          (c) =>
-            c.city_name.toLowerCase().includes(clean) ||
-            clean.includes(c.city_name.toLowerCase()),
-        );
+  try {
+    const res = await fetch(
+      `${baseUrl}/destination/domestic-destination?search=${encodeURIComponent(clean)}`,
+      {
+        headers: { key: apiKey },
+        signal: AbortSignal.timeout(3500),
+      },
+    );
+    if (res.ok) {
+      const json = await res.json();
+      const first = json?.data?.[0];
+      if (first?.id) {
+        const idStr = String(first.id);
+        cachedDestinationIds.set(clean, idStr);
+        return idStr;
       }
-      return found ? found.city_id : null;
     }
   } catch {
-    // ignore
+    // fallback
   }
   return null;
 }
@@ -148,6 +139,7 @@ async function fetchRajaOngkirCost(
   weightGrams: number,
   courier: string,
   apiKey: string,
+  baseUrl: string,
 ): Promise<ShippingRate[]> {
   const body = new URLSearchParams({
     origin: originId,
@@ -156,37 +148,46 @@ async function fetchRajaOngkirCost(
     courier,
   });
 
-  const baseUrl = getRajaOngkirBaseUrl();
-  const res = await fetch(`${baseUrl}/cost`, {
+  const res = await fetch(`${baseUrl}/calculate/domestic-cost`, {
     method: "POST",
     headers: {
       key: apiKey,
       "content-type": "application/x-www-form-urlencoded",
     },
     body: body.toString(),
-    signal: AbortSignal.timeout(3000),
+    signal: AbortSignal.timeout(3500),
   });
 
   if (!res.ok) return [];
   const json = await res.json();
-  const results = json?.rajaongkir?.results?.[0];
-  if (!results?.costs) return [];
+  const list = json?.data;
+  if (!Array.isArray(list)) return [];
 
-  return results.costs.map(
-    (c: {
-      service: string;
-      description?: string;
-      cost: { value: number; etd: string }[];
-    }) => ({
-      id: `${courier}-${c.service.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
-      courierCode: courier,
-      courierName: results.name || courier.toUpperCase(),
-      service: c.service,
-      cost: Number(c.cost?.[0]?.value || 0),
-      etd: c.cost?.[0]?.etd ? `${c.cost[0].etd} hari` : "2-3 hari",
-      description: c.description || `Layanan ${c.service}`,
-    }),
-  );
+  return list
+    .filter((c: { cost?: number }) => Number(c.cost || 0) > 0)
+    .map(
+      (c: {
+        name?: string;
+        code?: string;
+        service: string;
+        description?: string;
+        cost: number;
+        etd?: string;
+      }) => {
+        const cleanEtd = c.etd
+          ? `${c.etd.replace(/days?/gi, "").trim()} hari`
+          : "2-3 hari";
+        return {
+          id: `${c.code || courier}-${c.service.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${c.cost}`,
+          courierCode: c.code || courier,
+          courierName: c.name || courier.toUpperCase(),
+          service: c.service,
+          cost: Number(c.cost || 0),
+          etd: cleanEtd,
+          description: c.description || `Layanan ${c.service}`,
+        };
+      },
+    );
 }
 
 export async function calculateShippingRates(
@@ -196,17 +197,29 @@ export async function calculateShippingRates(
 
   if (apiKey) {
     try {
-      const originId = await getRajaOngkirCityId(params.originCity, apiKey);
-      const destId = await getRajaOngkirCityId(params.destinationCity, apiKey);
+      const baseUrl = getRajaOngkirBaseUrl();
+      const originId = await getRajaOngkirDestinationId(
+        params.originCity,
+        apiKey,
+        baseUrl,
+      );
+      const destId = await getRajaOngkirDestinationId(
+        params.destinationCity,
+        apiKey,
+        baseUrl,
+      );
 
       if (originId && destId) {
-        const [jneRates, posRates, tikiRates] = await Promise.all([
-          fetchRajaOngkirCost(originId, destId, params.weightGrams, "jne", apiKey),
-          fetchRajaOngkirCost(originId, destId, params.weightGrams, "pos", apiKey),
-          fetchRajaOngkirCost(originId, destId, params.weightGrams, "tiki", apiKey),
+        const [jneRates, sicepatRates, tikiRates] = await Promise.all([
+          fetchRajaOngkirCost(originId, destId, params.weightGrams, "jne", apiKey, baseUrl),
+          fetchRajaOngkirCost(originId, destId, params.weightGrams, "sicepat", apiKey, baseUrl),
+          fetchRajaOngkirCost(originId, destId, params.weightGrams, "tiki", apiKey, baseUrl),
         ]);
 
-        const combined = [...jneRates, ...posRates, ...tikiRates].filter((r) => r.cost > 0);
+        const combined = [...jneRates, ...sicepatRates, ...tikiRates].filter(
+          (r) => r.cost > 0,
+        );
+
         if (combined.length > 0) {
           if (params.weightGrams >= 5000) {
             const kg = Math.ceil(params.weightGrams / 1000);
@@ -263,39 +276,54 @@ export async function trackShipmentWaybill(
   if (apiKey) {
     try {
       const body = new URLSearchParams({
+        awb: trackingNumber.trim(),
         waybill: trackingNumber.trim(),
         courier: cleanCourier,
       });
 
       const baseUrl = getRajaOngkirBaseUrl();
-      const res = await fetch(`${baseUrl}/waybill`, {
+      const trackUrl = baseUrl.includes("komerce.id")
+        ? `${baseUrl}/track/waybill`
+        : `${baseUrl}/waybill`;
+
+      const res = await fetch(trackUrl, {
         method: "POST",
         headers: {
           key: apiKey,
           "content-type": "application/x-www-form-urlencoded",
         },
         body: body.toString(),
-        signal: AbortSignal.timeout(3000),
+        signal: AbortSignal.timeout(3500),
       });
 
       if (res.ok) {
         const json = await res.json();
-        const result = json?.rajaongkir?.result;
-        if (result && result.manifest) {
-          const manifests: WaybillManifest[] = (result.manifest || []).map((m: Record<string, string>) => ({
-            manifestDescription: m.manifest_description,
-            manifestDate: m.manifest_date,
-            manifestTime: m.manifest_time,
-            cityName: m.city_name,
-          }));
+        const result = json?.data || json?.rajaongkir?.result;
+        if (result) {
+          const rawManifests = result.manifest || result.history || [];
+          const manifests: WaybillManifest[] = (Array.isArray(rawManifests) ? rawManifests : []).map(
+            (m: Record<string, string>) => ({
+              manifestDescription:
+                m.manifest_description || m.note || m.desc || "Dalam transit kurir",
+              manifestDate:
+                m.manifest_date || m.date || new Date().toISOString().slice(0, 10),
+              manifestTime: m.manifest_time || m.time || "00:00",
+              cityName: m.city_name || m.location || "Pusat Transit",
+            }),
+          );
+
+          const summary = result.summary || result;
+          const isDelivered =
+            summary?.status === "DELIVERED" ||
+            result.delivery_status?.status === "DELIVERED";
 
           return {
-            waybillNumber: result.summary?.waybill_number || trackingNumber,
-            courierName: result.summary?.courier_name || cleanCourier.toUpperCase(),
-            service: result.summary?.service_code || "REG",
-            status: result.summary?.status === "DELIVERED" ? "DELIVERED" : "ON_PROCESS",
-            receiverName: result.delivery_status?.pod_receiver,
-            date: result.summary?.waybill_date || new Date().toISOString(),
+            waybillNumber: summary?.awb || summary?.waybill_number || trackingNumber,
+            courierName: summary?.courier || cleanCourier.toUpperCase(),
+            service: summary?.service || "REG",
+            status: isDelivered ? "DELIVERED" : "ON_PROCESS",
+            receiverName: result.delivery_status?.pod_receiver || summary?.receiver_name,
+            date: summary?.date || new Date().toISOString(),
             manifests: manifests.reverse(),
           };
         }

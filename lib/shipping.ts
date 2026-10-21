@@ -90,6 +90,14 @@ function getFallbackRates(params: CalculateShippingParams): ShippingRate[] {
 
 let cachedCities: { city_id: string; city_name: string; type: string }[] | null = null;
 
+function getRajaOngkirBaseUrl(): string {
+  if (process.env.RAJAONGKIR_BASE_URL) return process.env.RAJAONGKIR_BASE_URL.replace(/\/+$/, "");
+  const accountType = (process.env.RAJAONGKIR_ACCOUNT_TYPE || "starter").toLowerCase();
+  if (accountType === "pro") return "https://pro.rajaongkir.com/api";
+  if (accountType === "basic") return "https://api.rajaongkir.com/basic";
+  return "https://api.rajaongkir.com/starter";
+}
+
 async function getRajaOngkirCityId(
   cityName: string,
   apiKey: string,
@@ -102,9 +110,10 @@ async function getRajaOngkirCityId(
 
   try {
     if (!cachedCities) {
-      const res = await fetch("https://api.rajaongkir.com/starter/city", {
+      const baseUrl = getRajaOngkirBaseUrl();
+      const res = await fetch(`${baseUrl}/city`, {
         headers: { key: apiKey },
-        signal: AbortSignal.timeout(4000),
+        signal: AbortSignal.timeout(2500),
       });
       if (res.ok) {
         const json = await res.json();
@@ -113,12 +122,18 @@ async function getRajaOngkirCityId(
     }
 
     if (cachedCities && cachedCities.length > 0) {
-      const found = cachedCities.find(
+      let found = cachedCities.find(
         (c) =>
           c.city_name.toLowerCase() === clean ||
-          c.city_name.toLowerCase().includes(clean) ||
-          clean.includes(c.city_name.toLowerCase()),
+          `${c.type.toLowerCase()} ${c.city_name.toLowerCase()}` === cityName.toLowerCase().trim(),
       );
+      if (!found) {
+        found = cachedCities.find(
+          (c) =>
+            c.city_name.toLowerCase().includes(clean) ||
+            clean.includes(c.city_name.toLowerCase()),
+        );
+      }
       return found ? found.city_id : null;
     }
   } catch {
@@ -141,14 +156,15 @@ async function fetchRajaOngkirCost(
     courier,
   });
 
-  const res = await fetch("https://api.rajaongkir.com/starter/cost", {
+  const baseUrl = getRajaOngkirBaseUrl();
+  const res = await fetch(`${baseUrl}/cost`, {
     method: "POST",
     headers: {
       key: apiKey,
       "content-type": "application/x-www-form-urlencoded",
     },
     body: body.toString(),
-    signal: AbortSignal.timeout(5000),
+    signal: AbortSignal.timeout(3000),
   });
 
   if (!res.ok) return [];
@@ -184,12 +200,13 @@ export async function calculateShippingRates(
       const destId = await getRajaOngkirCityId(params.destinationCity, apiKey);
 
       if (originId && destId) {
-        const [jneRates, posRates] = await Promise.all([
+        const [jneRates, posRates, tikiRates] = await Promise.all([
           fetchRajaOngkirCost(originId, destId, params.weightGrams, "jne", apiKey),
           fetchRajaOngkirCost(originId, destId, params.weightGrams, "pos", apiKey),
+          fetchRajaOngkirCost(originId, destId, params.weightGrams, "tiki", apiKey),
         ]);
 
-        const combined = [...jneRates, ...posRates].filter((r) => r.cost > 0);
+        const combined = [...jneRates, ...posRates, ...tikiRates].filter((r) => r.cost > 0);
         if (combined.length > 0) {
           if (params.weightGrams >= 5000) {
             const kg = Math.ceil(params.weightGrams / 1000);
@@ -250,14 +267,15 @@ export async function trackShipmentWaybill(
         courier: cleanCourier,
       });
 
-      const res = await fetch("https://api.rajaongkir.com/starter/waybill", {
+      const baseUrl = getRajaOngkirBaseUrl();
+      const res = await fetch(`${baseUrl}/waybill`, {
         method: "POST",
         headers: {
           key: apiKey,
           "content-type": "application/x-www-form-urlencoded",
         },
         body: body.toString(),
-        signal: AbortSignal.timeout(5000),
+        signal: AbortSignal.timeout(3000),
       });
 
       if (res.ok) {

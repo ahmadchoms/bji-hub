@@ -24,6 +24,7 @@ import { OrderReviewModal } from "@/components/order/order-review-modal";
 import { ShipmentTrackingModal } from "@/components/order/shipment-tracking-modal";
 import { OrderPrintModal } from "@/components/order/order-print-modal";
 import { OrderStatusStepper } from "@/components/order/order-status-stepper";
+import { ResumePaymentButton } from "@/components/order/resume-payment-button";
 import { buildOrderPaidNotificationUrl } from "@/lib/notifications";
 
 export const metadata: Metadata = {
@@ -48,7 +49,27 @@ export default async function OrderSuccessPage({
     await searchParams;
   const lookupId = orderNumber || order_number || orderId || order_id || id;
 
-  const order = lookupId ? await getOrderById(lookupId) : null;
+  let order = lookupId ? await getOrderById(lookupId) : null;
+
+  if (order && order.status === "pending_payment" && process.env.MIDTRANS_SERVER_KEY) {
+    try {
+      const { checkMidtransStatus, mapMidtransStatus } = await import("@/lib/midtrans");
+      const { updateOrderStatus } = await import("@/lib/data/orders");
+      const midtransData = await checkMidtransStatus(order.midtransOrderId || order.orderNumber);
+      if (midtransData) {
+        const mapped = mapMidtransStatus(midtransData.transactionStatus, midtransData.fraudStatus);
+        if (mapped === "paid") {
+          await updateOrderStatus(order.id, "paid");
+          order = { ...order, status: "paid" };
+        } else if (mapped === "failed") {
+          await updateOrderStatus(order.id, "canceled");
+          order = { ...order, status: "canceled" };
+        }
+      }
+    } catch {
+      // non-blocking fallback
+    }
+  }
 
   if (!order) {
     return (
@@ -148,6 +169,24 @@ export default async function OrderSuccessPage({
             </div>
           )}
         </div>
+
+        {/* Tombol Bayar Sekarang / Cek Status jika pending payment */}
+        {order.status === "pending_payment" && (
+          <div className="p-4 sm:p-5 bg-amber-50 border border-amber-200 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+            <div className="space-y-0.5">
+              <p className="text-sm font-bold text-amber-950 flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-amber-700" /> Belum Menyelesaikan Pembayaran?
+              </p>
+              <p className="text-xs text-amber-900/80">
+                Klik tombol di samping untuk membuka jendela Midtrans Snap atau verifikasi status pembayaran terbaru.
+              </p>
+            </div>
+            <ResumePaymentButton
+              orderId={order.id}
+              orderNumber={order.orderNumber}
+            />
+          </div>
+        )}
 
         {/* Konfirmasi Penerimaan Barang CTA & Auto-Release Banner (when shipped) */}
         {order.status === "shipped" && (() => {

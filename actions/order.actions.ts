@@ -13,9 +13,18 @@ import {
   autoCompleteExpiredShippedOrders,
 } from "@/lib/data/orders";
 import { createReview } from "@/lib/data/reviews";
-import { createMidtransSnapToken } from "@/lib/midtrans";
+import {
+  createMidtransSnapToken,
+  checkMidtransStatus,
+  mapMidtransStatus,
+} from "@/lib/midtrans";
 import { getSession, requireRole } from "@/lib/auth/session";
-import { trackShipmentWaybill, type WaybillTrackingResult } from "@/lib/shipping";
+import {
+  calculateShippingRates,
+  trackShipmentWaybill,
+  type ShippingRate,
+  type WaybillTrackingResult,
+} from "@/lib/shipping";
 import {
   sendOrderPaidEmail,
   sendOrderShippedEmail,
@@ -477,6 +486,21 @@ export async function submitReviewAction(
   return ok({ reviewId: review.id });
 }
 
+export async function getShippingRatesAction(params: {
+  originCity: string;
+  originProvince?: string;
+  destinationCity: string;
+  destinationProvince?: string;
+  weightGrams: number;
+}): Promise<ActionResult<ShippingRate[]>> {
+  try {
+    const rates = await calculateShippingRates(params);
+    return ok(rates);
+  } catch {
+    return fail("Gagal menghitung ongkos kirim");
+  }
+}
+
 export async function trackShipmentAction(
   trackingNumber: string,
   courierCode?: string,
@@ -547,5 +571,57 @@ export async function resumeOrderPaymentAction(
     totalAmount: order.totalAmount,
   });
 }
+
+export async function checkOrderPaymentStatusAction(
+  orderIdOrNumber: string,
+): Promise<ActionResult<{ status: string; isPaid: boolean }>> {
+  const order = await getOrderById(orderIdOrNumber);
+  if (!order) return fail("Pesanan tidak ditemukan");
+
+  if (
+    order.status === "paid" ||
+    order.status === "shipped" ||
+    order.status === "completed"
+  ) {
+    return ok({ status: order.status, isPaid: true });
+  }
+
+  if (process.env.MIDTRANS_SERVER_KEY) {
+    try {
+      const midtransData = await checkMidtransStatus(
+        order.midtransOrderId || order.orderNumber,
+      );
+      if (midtransData) {
+        const mapped = mapMidtransStatus(
+          midtransData.transactionStatus,
+          midtransData.fraudStatus,
+        );
+        if (mapped === "paid") {
+          await updateOrderStatus(order.id, "paid");
+          sendOrderPaidEmail({ ...order, status: "paid" }).catch(() => {});
+          getSellerById(order.sellerId)
+            .then((seller) => {
+              sendNewOrderSellerEmail({
+                order: { ...order, status: "paid" },
+                sellerEmail: seller?.user?.email,
+                sellerName: seller?.businessName || order.sellerName,
+              }).catch(() => {});
+            })
+            .catch(() => {});
+
+          revalidatePath("/order/success");
+          revalidatePath("/profile");
+          revalidatePath("/dashboard/orders");
+          return ok({ status: "paid", isPaid: true });
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  return ok({ status: order.status, isPaid: false });
+}
+
 
 

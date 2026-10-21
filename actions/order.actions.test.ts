@@ -7,7 +7,11 @@ vi.mock("@/lib/data", async () => {
   return mockRepository;
 });
 
-import { createCheckoutOrderAction } from "./order.actions";
+import {
+  createCheckoutOrderAction,
+  getShippingRatesAction,
+  checkOrderPaymentStatusAction,
+} from "./order.actions";
 import { getOrderById } from "@/lib/data/orders";
 
 describe("createCheckoutOrderAction", () => {
@@ -153,5 +157,53 @@ describe("createCheckoutOrderAction", () => {
     }
 
     spy.mockRestore();
+  });
+
+  it("calculates shipping rates via getShippingRatesAction server action", async () => {
+    const prevKey = process.env.RAJAONGKIR_API_KEY;
+    delete process.env.RAJAONGKIR_API_KEY;
+
+    try {
+      const res = await getShippingRatesAction({
+        originCity: "Takengon",
+        originProvince: "Aceh",
+        destinationCity: "Bandung",
+        destinationProvince: "Jawa Barat",
+        weightGrams: 2000,
+      });
+
+      expect(res.success).toBe(true);
+      if (!res.success) return;
+
+      expect(res.data.length).toBeGreaterThan(0);
+      const jne = res.data.find((r) => r.courierCode === "jne");
+      expect(jne).toBeDefined();
+      expect(jne?.cost).toBeGreaterThan(0);
+    } finally {
+      if (prevKey) process.env.RAJAONGKIR_API_KEY = prevKey;
+    }
+  });
+
+  it("checks order payment status via checkOrderPaymentStatusAction", async () => {
+    const created = await createCheckoutOrderAction({
+      listingId: "list-1",
+      quantity: 1,
+      buyerName: "Tester Payment",
+      buyerEmail: "tester@example.com",
+      buyerPhone: "081234567890",
+      buyerAddress: "Jl. Test No. 1",
+      buyerCity: "Bandung",
+      shippingCourier: "JNE",
+      shippingCost: 10000,
+    });
+
+    expect(created.success).toBe(true);
+    if (!created.success) return;
+
+    const res = await checkOrderPaymentStatusAction(created.data.orderId);
+    expect(res.success).toBe(true);
+    if (!res.success) return;
+    expect(res.data.status).toBe("pending_payment");
+    expect(res.data.isPaid).toBe(false);
   });
 });

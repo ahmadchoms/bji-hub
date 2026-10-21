@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/shared/providers";
+import { PageProgressBar } from "@/components/shared/page-progress-bar";
 import { Toaster } from "@/components/ui/sonner";
 import Script from "next/script";
 
@@ -66,7 +67,9 @@ const snapScriptUrl =
   process.env.MIDTRANS_IS_PRODUCTION === "true"
     ? "https://app.midtrans.com/snap/snap.js"
     : "https://app.sandbox.midtrans.com/snap/snap.js";
-const clientKey = process.env.MIDTRANS_CLIENT_KEY;
+const clientKey =
+  process.env.MIDTRANS_CLIENT_KEY ||
+  process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY;
 
 export default function RootLayout({
   children,
@@ -80,6 +83,7 @@ export default function RootLayout({
     >
       <body className="font-sans bg-background text-foreground antialiased min-h-screen">
         <Providers>
+          <PageProgressBar />
           {children}
           <Toaster position="top-right" />
         </Providers>
@@ -87,7 +91,7 @@ export default function RootLayout({
           <Script
             src={snapScriptUrl}
             data-client-key={clientKey}
-            strategy="lazyOnload"
+            strategy="afterInteractive"
           />
         )}
       </body>

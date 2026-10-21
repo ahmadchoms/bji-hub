@@ -8,13 +8,18 @@ import { Order } from "@/types";
 import { formatRupiah } from "@/components/shared/price-text";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { ConfirmOrderButton } from "@/components/order/confirm-order-button";
 import { OrderDetailDialog } from "@/components/order/order-detail-dialog";
 import {
   ShoppingBag,
   Store,
-  MoreHorizontal,
   Package,
   CreditCard,
   Search,
@@ -32,7 +37,8 @@ interface BuyerOrdersCardProps {
   orders: Order[];
 }
 
-type OrderFilter = "all" | "pending_payment" | "paid" | "shipped" | "completed" | "disputed";
+type OrderFilter =
+  "all" | "pending_payment" | "paid" | "shipped" | "completed" | "disputed";
 
 function getOrderProductImage(order: Order): string {
   if ((order as unknown as { listingImageUrl?: string }).listingImageUrl) {
@@ -61,7 +67,9 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
       sellerName: ord.sellerName || "Roastery Penjual",
       sellerCity: ord.buyerCity || "Indonesia",
     });
-    toast.success(`"${ord.listingTitle || "Biji Kopi"}" berhasil ditambahkan ke keranjang belanja!`);
+    toast.success(
+      `"${ord.listingTitle || "Biji Kopi"}" berhasil ditambahkan ke keranjang belanja!`,
+    );
     router.push("/cart");
   };
 
@@ -77,9 +85,17 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
     if (
       snapToken &&
       typeof window !== "undefined" &&
-      (window as unknown as { snap?: { pay: (token: string, options: unknown) => void } }).snap
+      (
+        window as unknown as {
+          snap?: { pay: (token: string, options: unknown) => void };
+        }
+      ).snap
     ) {
-      const snap = (window as unknown as { snap: { pay: (token: string, options: unknown) => void } }).snap;
+      const snap = (
+        window as unknown as {
+          snap: { pay: (token: string, options: unknown) => void };
+        }
+      ).snap;
       snap.pay(snapToken, {
         onSuccess: async () => {
           toast.success("Pembayaran berhasil!");
@@ -122,7 +138,13 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
       const matchSeller = (o.sellerName || "").toLowerCase().includes(q);
       const matchResi = (o.trackingNumber || "").toLowerCase().includes(q);
       const matchCourier = (o.shippingCourier || "").toLowerCase().includes(q);
-      if (!matchNum && !matchTitle && !matchSeller && !matchResi && !matchCourier) {
+      if (
+        !matchNum &&
+        !matchTitle &&
+        !matchSeller &&
+        !matchResi &&
+        !matchCourier
+      ) {
         return false;
       }
     }
@@ -131,7 +153,8 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
 
   const counts = {
     all: orders.length,
-    pending_payment: orders.filter((o) => o.status === "pending_payment").length,
+    pending_payment: orders.filter((o) => o.status === "pending_payment")
+      .length,
     paid: orders.filter((o) => o.status === "paid").length,
     shipped: orders.filter((o) => o.status === "shipped").length,
     completed: orders.filter((o) => o.status === "completed").length,
@@ -142,37 +165,55 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
     switch (status) {
       case "completed":
         return (
-          <Badge variant="outline" className="text-emerald-700 bg-emerald-50 border-emerald-300 font-semibold text-[11px]">
+          <Badge
+            variant="outline"
+            className="text-emerald-700 bg-emerald-50 border-emerald-300 font-semibold text-[11px]"
+          >
             Selesai
           </Badge>
         );
       case "shipped":
         return (
-          <Badge variant="outline" className="text-purple-700 bg-purple-50 border-purple-300 font-semibold text-[11px]">
+          <Badge
+            variant="outline"
+            className="text-purple-700 bg-purple-50 border-purple-300 font-semibold text-[11px]"
+          >
             Dikirim
           </Badge>
         );
       case "paid":
         return (
-          <Badge variant="outline" className="text-blue-700 bg-blue-50 border-blue-300 font-semibold text-[11px]">
+          <Badge
+            variant="outline"
+            className="text-blue-700 bg-blue-50 border-blue-300 font-semibold text-[11px]"
+          >
             Diproses
           </Badge>
         );
       case "disputed":
         return (
-          <Badge variant="outline" className="text-rose-700 bg-rose-50 border-rose-300 font-semibold text-[11px]">
+          <Badge
+            variant="outline"
+            className="text-rose-700 bg-rose-50 border-rose-300 font-semibold text-[11px]"
+          >
             Komplain
           </Badge>
         );
       case "canceled":
         return (
-          <Badge variant="outline" className="text-neutral-600 bg-neutral-100 border-neutral-300 font-semibold text-[11px]">
+          <Badge
+            variant="outline"
+            className="text-neutral-600 bg-neutral-100 border-neutral-300 font-semibold text-[11px]"
+          >
             Dibatalkan
           </Badge>
         );
       default:
         return (
-          <Badge variant="outline" className="text-amber-800 bg-amber-50 border-amber-300 font-semibold text-[11px]">
+          <Badge
+            variant="outline"
+            className="text-amber-800 bg-amber-50 border-amber-300 font-semibold text-[11px]"
+          >
             Menunggu Pembayaran
           </Badge>
         );
@@ -334,7 +375,9 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
                       <span>Belanja</span>
                     </div>
                     <span className="text-neutral-500 text-xs">
-                      {format(new Date(ord.createdAt), "d MMM yyyy", { locale: idLocale })}
+                      {format(new Date(ord.createdAt), "d MMM yyyy", {
+                        locale: idLocale,
+                      })}
                     </span>
                     <div>{getStatusBadge(ord.status)}</div>
                     <span className="text-neutral-400 font-mono text-[11px]">
@@ -378,7 +421,9 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
                       <p className="text-xs text-neutral-500 mt-1">
                         {ord.quantity} barang x {formatRupiah(ord.itemPrice)}
                         {ord.notes && (
-                          <span className="ml-1 text-[11px] text-neutral-400">({ord.notes})</span>
+                          <span className="ml-1 text-[11px] text-neutral-400">
+                            ({ord.notes})
+                          </span>
                         )}
                       </p>
                     </div>
@@ -386,7 +431,9 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
 
                   {/* Kanan: Border Vertikal + Total Belanja */}
                   <div className="border-t sm:border-t-0 sm:border-l border-neutral-200 pt-2 sm:pt-0 sm:pl-6 shrink-0 sm:min-w-[130px]">
-                    <span className="text-[11px] text-neutral-500 block">Total Belanja</span>
+                    <span className="text-[11px] text-neutral-500 block">
+                      Total Belanja
+                    </span>
                     <span className="text-sm sm:text-base font-bold font-mono text-neutral-900 block mt-0.5">
                       {formatRupiah(ord.totalAmount)}
                     </span>
@@ -451,28 +498,6 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
                       Beli Lagi
                     </Button>
                   )}
-
-                  {/* Tombol Menu Titik Tiga (...) sesuai Tokopedia */}
-                  <OrderDetailDialog
-                    order={ord}
-                    productImage={productImg}
-                    onReorder={handleReorder}
-                    onResumePayment={handleResumePayment}
-                    onCancelOrder={handleCancelOrder}
-                    isPaying={payingId === ord.id}
-                    isCanceling={cancelingId === ord.id}
-                    trigger={
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon-sm"
-                        className="w-8 h-8 rounded-md border-neutral-300 text-neutral-600 hover:bg-neutral-100 cursor-pointer"
-                        title="Opsi Lainnya"
-                      >
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    }
-                  />
                 </div>
               </div>
             );

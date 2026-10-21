@@ -32,8 +32,11 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { calculateShippingRates, ShippingRate } from "@/lib/shipping";
-import { createCheckoutOrderAction } from "@/actions/order.actions";
+import type { ShippingRate } from "@/lib/shipping";
+import {
+  createCheckoutOrderAction,
+  getShippingRatesAction,
+} from "@/actions/order.actions";
 import { updateBuyerProfileAction } from "@/actions/auth.actions";
 import { useCart } from "@/lib/cart";
 import { cn } from "@/lib/utils";
@@ -137,13 +140,14 @@ export function CheckoutForm({
     setIsLoadingShipping(true);
     const timer = setTimeout(async () => {
       try {
-        const rates = await calculateShippingRates({
+        const res = await getShippingRatesAction({
           originCity: listing.seller.city,
           originProvince: listing.seller.province,
           destinationCity: cleanCity,
           weightGrams: totalWeightGrams,
         });
-        if (!canceled) {
+        if (!canceled && res.success && res.data) {
+          const rates = res.data;
           setShippingRates(rates);
           if (rates.length > 0) {
             setSelectedCourierId((prev) =>
@@ -246,6 +250,10 @@ export function CheckoutForm({
             },
             onError: () => {
               toast.error("Pembayaran dibatalkan atau gagal.");
+            },
+            onClose: () => {
+              toast.info("Jendela pembayaran ditutup.");
+              router.push(`/order/success?orderNumber=${orderNumber}`);
             },
           });
         } else {

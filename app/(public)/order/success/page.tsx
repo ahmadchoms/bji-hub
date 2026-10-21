@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getOrderById } from "@/lib/data/orders";
+import { getSession } from "@/lib/auth/session";
 import { PageContainer } from "@/components/layout/page-container";
 import { formatRupiah } from "@/components/shared/price-text";
 import { buttonVariants } from "@/components/ui/button";
@@ -86,6 +87,32 @@ export default async function OrderSuccessPage({
           </p>
           <Link href="/" className={buttonVariants({ className: "w-full" })}>
             Kembali ke Beranda
+          </Link>
+        </PageContainer>
+      </div>
+    );
+  }
+
+  const session = await getSession();
+  const isBuyer = Boolean(session.userId && order.buyerId && session.userId === order.buyerId);
+  const isSeller = Boolean(session.sellerId && order.sellerId === session.sellerId);
+  const isAdmin = session.role === "admin";
+
+  if (order.buyerId && !isBuyer && !isSeller && !isAdmin) {
+    return (
+      <div className="py-16 text-center">
+        <PageContainer className="max-w-md mx-auto space-y-4">
+          <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center mx-auto text-neutral-500">
+            <Package className="w-6 h-6" />
+          </div>
+          <h1 className="text-xl font-bold text-neutral-900">
+            Akses Terbatas
+          </h1>
+          <p className="text-sm text-neutral-600">
+            Anda tidak memiliki izin untuk melihat rincian pesanan ini. Silakan login dengan akun yang sesuai.
+          </p>
+          <Link href="/login" className={buttonVariants({ className: "w-full" })}>
+            Masuk ke Akun
           </Link>
         </PageContainer>
       </div>

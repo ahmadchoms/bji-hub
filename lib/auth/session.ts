@@ -39,10 +39,10 @@ export async function getSession(): Promise<Session> {
             id: user.id,
             email: user.email ?? "",
             role:
-              user.user_metadata?.role === "seller"
-                ? "SELLER"
-                : user.user_metadata?.role === "admin"
-                  ? "ADMIN"
+              user.email === process.env.ADMIN_EMAIL
+                ? "ADMIN"
+                : user.user_metadata?.role === "seller"
+                  ? "SELLER"
                   : "BUYER",
           },
           update: {},
@@ -69,7 +69,15 @@ export async function getSession(): Promise<Session> {
     }
   }
 
-  // 2. Mock session fallback (preserves Vitest test suite)
+  // 2. Mock session fallback (only allowed in test/dev or mock mode, never in production with DB)
+  const isMockAllowed =
+    process.env.DATA_SOURCE === "mock" ||
+    process.env.NODE_ENV !== "production";
+
+  if (!isMockAllowed) {
+    return GUEST_SESSION;
+  }
+
   const raw = store.get(MOCK_SESSION_COOKIE)?.value;
   if (!isRole(raw) || raw === "guest") return GUEST_SESSION;
   return {

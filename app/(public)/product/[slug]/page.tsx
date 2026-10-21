@@ -118,7 +118,9 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     <div className="py-8 md:py-12 space-y-10 pb-20 md:pb-0">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+        }}
       />
       <TrackOnMount listingId={listing.id} type="view" />
       <ProductStickyCTA

@@ -16,7 +16,10 @@ export function verifyMidtransSignature(payload: {
   const raw = `${payload.order_id}${payload.status_code}${payload.gross_amount}${serverKey}`;
   const calculated = crypto.createHash("sha512").update(raw).digest("hex");
 
-  return calculated === payload.signature_key;
+  const a = Buffer.from(calculated, "utf8");
+  const b = Buffer.from(payload.signature_key, "utf8");
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
 }
 
 /**

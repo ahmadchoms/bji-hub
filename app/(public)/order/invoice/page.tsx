@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getOrderById } from "@/lib/data/orders";
+import { getSession } from "@/lib/auth/session";
 import { InvoicePrintView } from "@/components/order/invoice-print-view";
 
 export const metadata: Metadata = {
@@ -38,6 +39,15 @@ export default async function InvoicePage({ searchParams }: InvoicePageProps) {
 
   const order = await getOrderById(lookupId);
   if (!order) {
+    notFound();
+  }
+
+  const session = await getSession();
+  const isBuyer = Boolean(session.userId && order.buyerId && session.userId === order.buyerId);
+  const isSeller = Boolean(session.sellerId && order.sellerId === session.sellerId);
+  const isAdmin = session.role === "admin";
+
+  if (!isBuyer && !isSeller && !isAdmin) {
     notFound();
   }
 

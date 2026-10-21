@@ -267,6 +267,11 @@ export async function createCheckoutOrderAction(
 export async function confirmOrderPaymentAction(
   orderIdOrNumber: string,
 ): Promise<ActionResult<{ success: boolean }>> {
+  const session = await getSession();
+  if (session.role !== "admin") {
+    return fail("Hanya admin yang dapat mengonfirmasi pembayaran secara manual.");
+  }
+
   const order = await getOrderById(orderIdOrNumber);
   if (!order) return fail("Pesanan tidak ditemukan");
 
@@ -301,8 +306,15 @@ export async function updateShipmentTrackingAction(
     return fail("Nomor resi pengiriman tidak valid");
   }
 
+  const session = await getSession();
   const order = await getOrderById(orderId);
   if (!order) return fail("Pesanan tidak ditemukan");
+
+  const isSeller = Boolean(session.sellerId && order.sellerId === session.sellerId);
+  const isAdmin = session.role === "admin";
+  if (!isSeller && !isAdmin) {
+    return fail("Anda tidak memiliki akses untuk memperbarui resi pesanan ini");
+  }
 
   const cleanResi = trackingNumber.trim();
   await updateOrderStatus(order.id, "shipped", cleanResi);
@@ -318,8 +330,15 @@ export async function updateShipmentTrackingAction(
 export async function completeOrderAction(
   orderId: string,
 ): Promise<ActionResult<{ success: boolean }>> {
+  const session = await getSession();
   const order = await getOrderById(orderId);
   if (!order) return fail("Pesanan tidak ditemukan");
+
+  const isBuyer = Boolean(session.userId && order.buyerId === session.userId);
+  const isAdmin = session.role === "admin";
+  if (!isBuyer && !isAdmin) {
+    return fail("Hanya pembeli yang bersangkutan yang dapat mengonfirmasi pesanan diterima");
+  }
 
   await updateOrderStatus(order.id, "completed");
   revalidatePath("/orders");
@@ -343,8 +362,15 @@ export async function disputeOrderAction(
     return fail("Data komplain tidak valid", parsed.error.flatten().fieldErrors as Record<string, string[]>);
   }
 
+  const session = await getSession();
   const order = await getOrderById(parsed.data.orderId);
   if (!order) return fail("Pesanan tidak ditemukan");
+
+  const isBuyer = Boolean(session.userId && order.buyerId === session.userId);
+  const isAdmin = session.role === "admin";
+  if (!isBuyer && !isAdmin) {
+    return fail("Hanya pembeli yang bersangkutan yang dapat mengajukan komplain");
+  }
 
   if (order.status !== "shipped" && order.status !== "paid") {
     return fail("Hanya pesanan yang sudah dibayar atau dikirim yang dapat diajukan komplain");
@@ -455,18 +481,29 @@ export async function submitReviewAction(
   }
 
   const session = await getSession();
-  const buyerId = session.role === "buyer" ? (session as unknown as { userId?: string }).userId ?? null : null;
+  if (session.role === "guest" || !session.userId) {
+    return fail("Silakan login untuk memberikan ulasan");
+  }
 
   let buyerName = "Pembeli Biji Hub";
   if (parsed.data.orderId) {
     const order = await getOrderById(parsed.data.orderId);
-    if (order?.buyerName) buyerName = order.buyerName;
+    if (!order) {
+      return fail("Pesanan tidak ditemukan");
+    }
+    if (order.buyerId && order.buyerId !== session.userId) {
+      return fail("Anda hanya dapat mengulas produk dari pesanan Anda sendiri");
+    }
+    if (order.status !== "completed") {
+      return fail("Ulasan hanya dapat diberikan setelah pesanan selesai diterima");
+    }
+    if (order.buyerName) buyerName = order.buyerName;
   }
 
   const review = await createReview({
     orderId: parsed.data.orderId,
     listingId: parsed.data.listingId,
-    buyerId,
+    buyerId: session.userId,
     buyerName,
     rating: parsed.data.rating,
     comment: parsed.data.comment,
@@ -524,8 +561,11 @@ export async function cancelPendingOrderAction(
     return fail("Hanya pesanan yang belum dibayar yang dapat dibatalkan");
   }
 
-  if (session.role === "guest") {
-    return fail("Silakan login untuk membatalkan pesanan ini");
+  const isBuyer = Boolean(session.userId && order.buyerId === session.userId);
+  const isSeller = Boolean(session.sellerId && order.sellerId === session.sellerId);
+  const isAdmin = session.role === "admin";
+  if (!isBuyer && !isSeller && !isAdmin) {
+    return fail("Anda tidak memiliki akses untuk membatalkan pesanan ini");
   }
 
   await updateOrderStatus(order.id, "canceled");
@@ -544,8 +584,15 @@ export async function resumeOrderPaymentAction(
     totalAmount: number;
   }>
 > {
+  const session = await getSession();
   const order = await getOrderById(orderId);
   if (!order) return fail("Pesanan tidak ditemukan");
+
+  const isBuyer = Boolean(session.userId && order.buyerId === session.userId);
+  const isAdmin = session.role === "admin";
+  if (!isBuyer && !isAdmin) {
+    return fail("Anda tidak memiliki akses ke pembayaran pesanan ini");
+  }
 
   if (order.status !== "pending_payment") {
     return fail("Pesanan ini sudah diproses atau telah selesai");

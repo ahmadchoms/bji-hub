@@ -63,76 +63,10 @@ export async function loginAction(
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     try {
       const supabase = await createClient();
-      let { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: parsed.data.email,
         password: parsed.data.password,
       });
-
-      // If user is unconfirmed, auto-confirm via admin API and retry
-      if (
-        error &&
-        (error.message?.includes("Email not confirmed") ||
-          (error as unknown as { code?: string }).code === "email_not_confirmed")
-      ) {
-        const admin = createAdminClient();
-        if (admin) {
-          const { data: userList } = await admin.auth.admin.listUsers();
-          const target = userList?.users?.find(
-            (u) => u.email?.toLowerCase() === parsed.data.email.toLowerCase()
-          );
-          if (target) {
-            await admin.auth.admin.updateUserById(target.id, { email_confirm: true });
-            const retry = await supabase.auth.signInWithPassword({
-              email: parsed.data.email,
-              password: parsed.data.password,
-            });
-            data = retry.data;
-            error = retry.error;
-          }
-        }
-      }
-
-      // Self-heal: if invalid credentials and password is 'password123', check if user is a seed user in DB
-      if (
-        error &&
-        parsed.data.password === "password123" &&
-        (error.message?.includes("Invalid login credentials") ||
-          (error as unknown as { code?: string }).code === "invalid_credentials")
-      ) {
-        const admin = createAdminClient();
-        if (admin) {
-          const prisma = getPrisma();
-          const dbUser = await prisma.user.findFirst({
-            where: { email: { equals: parsed.data.email, mode: "insensitive" } },
-          });
-          if (dbUser) {
-            const { data: userList } = await admin.auth.admin.listUsers();
-            const existingAuth = userList?.users?.find(
-              (u) => u.email?.toLowerCase() === parsed.data.email.toLowerCase()
-            );
-            if (existingAuth) {
-              await admin.auth.admin.updateUserById(existingAuth.id, {
-                password: "password123",
-                email_confirm: true,
-              });
-            } else {
-              await admin.auth.admin.createUser({
-                id: dbUser.id,
-                email: dbUser.email,
-                password: "password123",
-                email_confirm: true,
-                user_metadata: { role: dbUser.role.toLowerCase() },
-              });
-            }
-            const retry = await supabase.auth.signInWithPassword({
-              email: parsed.data.email,
-              password: parsed.data.password,
-            });
-            data = retry.data;
-            error = retry.error;
-          }
-        }
-      }
 
       if (error) {
         if (
@@ -169,11 +103,21 @@ export async function loginAction(
         return ok({ redirectTo: safeNextPath(next, homeFor(role)) });
       }
     } catch {
-      // Fall through to mock session if Supabase throws or offline
+      if (process.env.DATA_SOURCE !== "mock" && process.env.NODE_ENV === "production") {
+        return fail("Layanan autentikasi sedang bermasalah. Silakan coba beberapa saat lagi.");
+      }
     }
   }
 
-  // Fallback mock session for local demo/testing
+  // Fallback mock session for local test suite & mock mode ONLY
+  const isMockAllowed =
+    process.env.DATA_SOURCE === "mock" ||
+    process.env.NODE_ENV !== "production";
+
+  if (!isMockAllowed) {
+    return fail("Email atau kata sandi tidak sesuai.");
+  }
+
   const role = mockRoleFromEmail(parsed.data.email);
   await setMockSession(role);
   return ok({ redirectTo: safeNextPath(next, homeFor(role)) });
@@ -275,11 +219,21 @@ export async function registerAction(
         return ok({ redirectTo: "/" });
       }
     } catch {
-      // Fall through to mock session if Supabase throws or offline
+      if (process.env.DATA_SOURCE !== "mock" && process.env.NODE_ENV === "production") {
+        return fail("Layanan pendaftaran sedang bermasalah. Silakan coba beberapa saat lagi.");
+      }
     }
   }
 
-  // Fallback mock session for local demo/testing
+  // Fallback mock session for local test suite & mock mode ONLY
+  const isMockAllowed =
+    process.env.DATA_SOURCE === "mock" ||
+    process.env.NODE_ENV !== "production";
+
+  if (!isMockAllowed) {
+    return fail("Pendaftaran gagal.");
+  }
+
   await setMockSession("buyer");
   return ok({ redirectTo: "/" });
 }
@@ -349,11 +303,21 @@ export async function becomeSellerAction(
         return ok({ redirectTo: "/dashboard" });
       }
     } catch {
-      // Fall through to mock session
+      if (process.env.DATA_SOURCE !== "mock" && process.env.NODE_ENV === "production") {
+        return fail("Gagal mendaftarkan toko. Silakan coba beberapa saat lagi.");
+      }
     }
   }
 
-  // Fallback mock session for local demo/testing
+  // Fallback mock session for local test suite & mock mode ONLY
+  const isMockAllowed =
+    process.env.DATA_SOURCE === "mock" ||
+    process.env.NODE_ENV !== "production";
+
+  if (!isMockAllowed) {
+    return fail("Gagal mendaftarkan toko.");
+  }
+
   await setMockSession("seller");
   return ok({ redirectTo: "/dashboard" });
 }

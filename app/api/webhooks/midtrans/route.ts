@@ -42,6 +42,19 @@ export async function POST(req: NextRequest) {
 
   const order = await getOrderById(body.order_id);
   if (order) {
+    const grossAmount = Math.round(Number(body.gross_amount));
+    if (isNaN(grossAmount) || grossAmount !== Math.round(order.totalAmount)) {
+      console.error(
+        `Gross amount mismatch for order ${order.id}: expected ${order.totalAmount}, got ${body.gross_amount}`
+      );
+      return NextResponse.json({ error: "Amount mismatch" }, { status: 400 });
+    }
+
+    // Prevent state regression if order is already processed
+    if (["paid", "shipped", "completed"].includes(order.status) && orderStatus !== "paid") {
+      return NextResponse.json({ received: true, ignored: "Already processed" });
+    }
+
     const updated = await updateOrderStatus(order.id, orderStatus);
     if (updated && orderStatus === "paid") {
       try {
@@ -80,6 +93,18 @@ export async function POST(req: NextRequest) {
 
   if (!payment) {
     return NextResponse.json({ error: "Payment not found" }, { status: 404 });
+  }
+
+  const grossAmount = Math.round(Number(body.gross_amount));
+  if (isNaN(grossAmount) || grossAmount !== Math.round(Number(payment.amount))) {
+    console.error(
+      `Gross amount mismatch for payment ${payment.id}: expected ${payment.amount}, got ${body.gross_amount}`
+    );
+    return NextResponse.json({ error: "Amount mismatch" }, { status: 400 });
+  }
+
+  if (payment.status === "paid" && nextStatus !== "paid") {
+    return NextResponse.json({ received: true, ignored: "Payment already settled" });
   }
 
   // 3. Process Subscription / Boost Payment

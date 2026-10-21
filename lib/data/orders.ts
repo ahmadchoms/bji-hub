@@ -107,6 +107,9 @@ export async function createOrder(data: {
       );
     } catch (e) {
       console.error("Failed to insert order to postgres, using memory fallback:", e);
+      if (process.env.NODE_ENV === "production" || process.env.DATA_SOURCE === "prisma") {
+        throw new Error("Gagal menyimpan pesanan ke database");
+      }
     }
   }
 
@@ -414,6 +417,15 @@ export async function incrementListingStock(
   return { success: false };
 }
 
+const VALID_ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  pending_payment: ["pending_payment", "paid", "shipped", "canceled"],
+  paid: ["paid", "shipped", "canceled", "disputed", "completed"],
+  shipped: ["shipped", "completed", "disputed"],
+  disputed: ["disputed", "completed", "canceled", "paid", "shipped"],
+  completed: ["completed"],
+  canceled: ["canceled"],
+};
+
 export async function updateOrderStatus(
   orderId: string,
   status: OrderStatus,
@@ -421,12 +433,24 @@ export async function updateOrderStatus(
   disputeReason?: string,
   disputeEvidenceUrl?: string,
 ): Promise<boolean> {
+  const currentOrder = await getOrderById(orderId);
+  if (currentOrder) {
+    if (
+      currentOrder.status !== status &&
+      !VALID_ORDER_TRANSITIONS[currentOrder.status]?.includes(status)
+    ) {
+      console.warn(
+        `Invalid order status transition from ${currentOrder.status} to ${status} for order ${orderId}`
+      );
+      return false;
+    }
+  }
+
   const pool = getPool();
   const now = new Date().toISOString();
 
   // If status is transitioning to paid, trigger stock decrement
   if (status === "paid") {
-    const currentOrder = await getOrderById(orderId);
     if (
       currentOrder &&
       currentOrder.status !== "paid" &&
@@ -457,7 +481,6 @@ export async function updateOrderStatus(
 
   // If status is transitioning to canceled from a paid order, restore inventory
   if (status === "canceled") {
-    const currentOrder = await getOrderById(orderId);
     if (
       currentOrder &&
       currentOrder.status === "paid" &&

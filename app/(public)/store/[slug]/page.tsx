@@ -106,7 +106,9 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
     <div className="py-8 md:py-12 space-y-10">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+        }}
       />
       <PageContainer className="space-y-8">
         <nav

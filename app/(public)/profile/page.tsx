@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
+import { readBuyerProfileCookie } from "@/lib/auth/buyer-profile";
 import { PageContainer } from "@/components/layout/page-container";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -76,19 +77,16 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 
   try {
     const cookieStore = await cookies();
-    const raw = cookieStore.get("biji-buyer-profile")?.value;
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      userName = userName || parsed.name || "";
-      userAvatarUrl = userAvatarUrl || parsed.avatarUrl || "";
-      userPhone = userPhone || parsed.phone || "";
-      userProvince = userProvince || parsed.province || "";
-      userCity = userCity || parsed.city || "";
-      userPostalCode = userPostalCode || parsed.postalCode || "";
-      userAddress = userAddress || parsed.address || "";
-      if (!userAddresses.length && Array.isArray(parsed.addresses) && parsed.addresses.length > 0) {
-        userAddresses = parsed.addresses;
-      }
+    const profile = readBuyerProfileCookie(cookieStore);
+    userName = userName || profile.name || "";
+    userAvatarUrl = userAvatarUrl || profile.avatarUrl || "";
+    userPhone = userPhone || profile.phone || "";
+    userProvince = userProvince || profile.province || "";
+    userCity = userCity || profile.city || "";
+    userPostalCode = userPostalCode || profile.postalCode || "";
+    userAddress = userAddress || profile.address || "";
+    if (!userAddresses.length && profile.addresses && profile.addresses.length > 0) {
+      userAddresses = profile.addresses as any;
     }
   } catch {
     // ignore

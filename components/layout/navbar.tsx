@@ -1,5 +1,6 @@
 import { NavbarInner } from "@/components/layout/navbar-inner";
 import { getSession } from "@/lib/auth/session";
+import { readBuyerProfileCookie } from "@/lib/auth/buyer-profile";
 import { getCategories, getSellerById } from "@/lib/data";
 import { createClient } from "@/lib/supabase/server";
 import { getOrdersByBuyer } from "@/lib/data/orders";
@@ -50,13 +51,9 @@ export async function Navbar() {
   if (!userName && session.role !== "guest") {
     try {
       const cookieStore = await cookies();
-      const raw = cookieStore.get("biji-buyer-profile")?.value;
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        userName = parsed.name || "";
-        userAvatarUrl = parsed.avatarUrl || "";
-        userEmail = parsed.email || userEmail;
-      }
+      const profile = readBuyerProfileCookie(cookieStore);
+      userName = profile.name || "";
+      userAvatarUrl = profile.avatarUrl || "";
     } catch {
       // ignore
     }

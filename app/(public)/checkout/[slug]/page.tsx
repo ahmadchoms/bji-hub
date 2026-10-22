@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth/session";
 import { getOrdersByBuyer } from "@/lib/data/orders";
 import type { BuyerAddress } from "@/types";
+import { readBuyerProfileCookie } from "@/lib/auth/buyer-profile";
 
 interface CheckoutPageProps {
   params: Promise<{ slug: string }>;
@@ -97,27 +98,24 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
   if (!userPhone || !userCity || !userAddress || userAddresses.length === 0) {
     try {
       const cookieStore = await cookies();
-      const raw = cookieStore.get("biji-buyer-profile")?.value;
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        userName = userName || parsed.name || "";
-        userPhone = userPhone || parsed.phone || "";
-        userProvince = userProvince || parsed.province || "";
-        userCity = userCity || parsed.city || "";
-        userPostalCode = userPostalCode || parsed.postalCode || "";
-        userAddress = userAddress || parsed.address || "";
-        if (Array.isArray(parsed.addresses) && parsed.addresses.length > 0) {
-          if (userAddresses.length === 0) {
-            userAddresses = parsed.addresses as BuyerAddress[];
-          }
-          const primary = (parsed.addresses as BuyerAddress[]).find((a) => a.isPrimary) || (parsed.addresses[0] as BuyerAddress);
-          if (primary) {
-            userPhone = userPhone || primary.phone || "";
-            userProvince = userProvince || primary.province || "";
-            userCity = userCity || primary.city || "";
-            userPostalCode = userPostalCode || primary.postalCode || "";
-            userAddress = userAddress || primary.address || "";
-          }
+      const profile = readBuyerProfileCookie(cookieStore);
+      userName = userName || profile.name || "";
+      userPhone = userPhone || profile.phone || "";
+      userProvince = userProvince || profile.province || "";
+      userCity = userCity || profile.city || "";
+      userPostalCode = userPostalCode || profile.postalCode || "";
+      userAddress = userAddress || profile.address || "";
+      if (profile.addresses && profile.addresses.length > 0) {
+        if (userAddresses.length === 0) {
+          userAddresses = profile.addresses as BuyerAddress[];
+        }
+        const primary = profile.addresses.find((a) => a.isPrimary) || profile.addresses[0];
+        if (primary) {
+          userPhone = userPhone || primary.phone || "";
+          userProvince = userProvince || primary.province || "";
+          userCity = userCity || primary.city || "";
+          userPostalCode = userPostalCode || primary.postalCode || "";
+          userAddress = userAddress || primary.address || "";
         }
       }
     } catch {

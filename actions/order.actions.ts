@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { randomBytes } from "crypto";
 import { createClient } from "@/lib/supabase/server";
+import { readBuyerProfileCookie, serializeBuyerProfile, BUYER_PROFILE_COOKIE } from "@/lib/auth/buyer-profile";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 import { getListingBySlug, getListingById, getSellerById } from "@/lib/data";
 import {
@@ -308,16 +309,21 @@ export async function createCheckoutOrderAction(
 
   try {
     const cookieStore = await cookies();
-    cookieStore.set(
-      "biji-buyer-profile",
-      JSON.stringify({
-        name: buyerName.trim(),
-        phone: buyerPhone.trim(),
-        address: buyerAddress.trim(),
-        city: buyerCity.trim(),
-      }),
-      { path: "/", httpOnly: true, maxAge: 60 * 60 * 24 * 30 },
-    );
+    const existing = readBuyerProfileCookie(cookieStore);
+    const serialized = serializeBuyerProfile({
+      ...existing,
+      name: buyerName.trim(),
+      phone: buyerPhone.trim(),
+      address: buyerAddress.trim(),
+      city: buyerCity.trim(),
+    });
+    cookieStore.set(BUYER_PROFILE_COOKIE, serialized, {
+      path: "/",
+      httpOnly: true,
+      maxAge: 60 * 60 * 24 * 30,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
   } catch {
     // ignore
   }

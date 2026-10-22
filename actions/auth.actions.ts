@@ -1,3 +1,4 @@
+import { z } from "zod";
 "use server";
 
 import { cookies } from "next/headers";
@@ -21,6 +22,7 @@ import { getPrisma } from "@/lib/data/prisma/client";
 import { slugify } from "@/lib/slug";
 import { checkRateLimit } from "@/lib/rate-limit";
 import type { BuyerAddress } from "@/types";
+import { readBuyerProfileCookie, serializeBuyerProfile, BUYER_PROFILE_COOKIE, buyerAddressSchema } from "@/lib/auth/buyer-profile";
 
 async function setMockSession(role: Role): Promise<void> {
   const store = await cookies();
@@ -325,11 +327,15 @@ export async function updateBuyerProfileAction(input: {
   }
 
   const cookieStore = await cookies();
-  const existingCookieRaw = cookieStore.get("biji-buyer-profile")?.value;
-  const existingData = existingCookieRaw ? JSON.parse(existingCookieRaw) : {};
+  const existingData = readBuyerProfileCookie(cookieStore);
 
-  const currentAddresses = input.addresses ?? existingData.addresses ?? [];
-  const primaryAddr = currentAddresses.find((a: BuyerAddress) => a.isPrimary) || currentAddresses[0];
+  const rawAddresses = input.addresses ?? (existingData.addresses as BuyerAddress[]) ?? [];
+  const parsedAddresses = z.array(buyerAddressSchema).max(10, "Maksimal 10 alamat tersimpan").safeParse(rawAddresses);
+  if (!parsedAddresses.success) {
+    return fail(parsedAddresses.error.issues[0]?.message || "Format alamat tidak valid");
+  }
+  const currentAddresses = parsedAddresses.data as BuyerAddress[];
+  const primaryAddr = currentAddresses.find((a) => a.isPrimary) || currentAddresses[0];
 
   const resolvedProvince = input.province?.trim() || primaryAddr?.province || existingData.province || null;
   const resolvedCity = input.city?.trim() || primaryAddr?.city || existingData.city || null;
@@ -371,22 +377,26 @@ export async function updateBuyerProfileAction(input: {
   }
 
   try {
-    cookieStore.set(
-      "biji-buyer-profile",
-      JSON.stringify({
-        name: input.name.trim(),
-        avatarUrl: input.avatarUrl?.trim() || null,
-        phone: input.phone?.trim() || null,
-        province: resolvedProvince,
-        city: resolvedCity,
-        postalCode: resolvedPostal,
-        address: resolvedAddress,
-        addresses: currentAddresses,
-      }),
-      { path: "/", httpOnly: true, maxAge: 60 * 60 * 24 * 7 },
-    );
-  } catch {
-    // ignore
+    const payload = {
+      name: input.name.trim(),
+      avatarUrl: input.avatarUrl?.trim() || null,
+      phone: input.phone?.trim() || null,
+      province: resolvedProvince,
+      city: resolvedCity,
+      postalCode: resolvedPostal,
+      address: resolvedAddress,
+      addresses: currentAddresses,
+    };
+    const serialized = serializeBuyerProfile(payload);
+    cookieStore.set(BUYER_PROFILE_COOKIE, serialized, {
+      path: "/",
+      httpOnly: true,
+      maxAge: 60 * 60 * 24 * 7,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
+  } catch (err: any) {
+    return fail(err?.message || "Gagal menyimpan cookie profil.");
   }
 
   return ok({ success: true });
@@ -399,7 +409,12 @@ export async function updateBuyerAddressesAction(
     return fail("Format daftar alamat tidak valid.");
   }
 
-  const primary = addresses.find((a) => a.isPrimary) || addresses[0];
+  const parsedAddresses = z.array(buyerAddressSchema).max(10, "Maksimal 10 alamat tersimpan").safeParse(addresses);
+  if (!parsedAddresses.success) {
+    return fail(parsedAddresses.error.issues[0]?.message || "Format alamat tidak valid");
+  }
+  const validAddresses = parsedAddresses.data as BuyerAddress[];
+  const primary = validAddresses.find((a) => a.isPrimary) || validAddresses[0];
 
   if (
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
@@ -413,7 +428,7 @@ export async function updateBuyerAddressesAction(
       if (user) {
         await supabase.auth.updateUser({
           data: {
-            addresses,
+            addresses: validAddresses,
             province: primary ? primary.province.trim() : null,
             city: primary ? primary.city.trim() : null,
             postal_code: primary ? (primary.postalCode?.trim() || null) : null,
@@ -428,24 +443,26 @@ export async function updateBuyerAddressesAction(
 
   try {
     const store = await cookies();
-    const existingRaw = store.get("biji-buyer-profile")?.value;
-    const existing = existingRaw ? JSON.parse(existingRaw) : {};
-    store.set(
-      "biji-buyer-profile",
-      JSON.stringify({
-        ...existing,
-        addresses,
-        province: primary ? primary.province.trim() : existing.province || null,
-        city: primary ? primary.city.trim() : existing.city || null,
-        postalCode: primary ? (primary.postalCode?.trim() || null) : existing.postalCode || null,
-        address: primary ? primary.address.trim() : existing.address || null,
-      }),
-      { path: "/", httpOnly: true, maxAge: 60 * 60 * 24 * 7 },
-    );
-  } catch {
-    // ignore
+    const existing = readBuyerProfileCookie(store);
+    const payload = {
+      ...existing,
+      addresses: validAddresses,
+      province: primary ? primary.province.trim() : existing.province || null,
+      city: primary ? primary.city.trim() : existing.city || null,
+      postalCode: primary ? (primary.postalCode?.trim() || null) : existing.postalCode || null,
+      address: primary ? primary.address.trim() : existing.address || null,
+    };
+    const serialized = serializeBuyerProfile(payload);
+    store.set(BUYER_PROFILE_COOKIE, serialized, {
+      path: "/",
+      httpOnly: true,
+      maxAge: 60 * 60 * 24 * 7,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
+  } catch (err: any) {
+    return fail(err?.message || "Gagal menyimpan cookie profil.");
   }
 
   return ok({ success: true });
 }
-

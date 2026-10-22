@@ -1,15 +1,49 @@
 import type { NextConfig } from "next";
 
+const isProd = process.env.NODE_ENV === "production";
+
+const cspDirectives = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://app.midtrans.com https://app.sandbox.midtrans.com",
+  "connect-src 'self' https://app.midtrans.com https://app.sandbox.midtrans.com https://*.supabase.co wss://*.supabase.co https://rajaongkir.komerce.id https://pro.rajaongkir.com",
+  "img-src 'self' data: blob: https://images.unsplash.com https://*.supabase.co",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self' data:",
+  "frame-src 'self' https://app.midtrans.com https://app.sandbox.midtrans.com",
+  "object-src 'none'",
+  "base-uri 'self'",
+].join("; ");
+
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
-  { key: "X-XSS-Protection", value: "1; mode=block" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
     key: "Permissions-Policy",
     value: "camera=(), microphone=(), geolocation=()",
   },
+  {
+    key: "Content-Security-Policy-Report-Only",
+    value: cspDirectives,
+  },
+  ...(isProd
+    ? [
+        {
+          key: "Strict-Transport-Security",
+          value: "max-age=31536000; includeSubDomains",
+        },
+      ]
+    : []),
 ];
+
+let supabaseHostname = "*.supabase.co";
+if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  try {
+    supabaseHostname = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname;
+  } catch {
+    // fallback to wildcard pattern
+  }
+}
 
 const nextConfig: NextConfig = {
   compress: true,
@@ -23,8 +57,18 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "*.supabase.co",
+        hostname: supabaseHostname,
+        pathname: "/storage/v1/object/public/**",
       },
+      ...(supabaseHostname !== "*.supabase.co"
+        ? [
+            {
+              protocol: "https" as const,
+              hostname: "*.supabase.co",
+              pathname: "/storage/v1/object/public/**",
+            },
+          ]
+        : []),
     ],
   },
   async redirects() {

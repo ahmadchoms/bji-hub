@@ -167,8 +167,8 @@ export function CheckoutForm({
           weightGrams: totalWeightGrams,
         });
         if (!canceled) {
-          if (res.success && res.data) {
-            const rates = res.data;
+          if (res.success) {
+            const rates = res.data ?? [];
             setShippingRates(rates);
             if (rates.length > 0) {
               setSelectedCourierId((prev) =>

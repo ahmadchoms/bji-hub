@@ -10,9 +10,9 @@ import {
 } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 import { getPrisma } from "@/lib/data/prisma/client";
-import { isMockAuthAllowed } from "@/lib/auth/mock-guard";
+import { isMockAuthAllowed, MOCK_SESSION_COOKIE } from "@/lib/auth/mock-guard";
 
-export { MOCK_SESSION_COOKIE } from "@/lib/auth/mock-guard";
+export { MOCK_SESSION_COOKIE };
 const MOCK_SELLER_ID = "seller-1";
 
 /**

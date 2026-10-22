@@ -24,6 +24,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
+  // Handle Midtrans Dashboard "Test Notification" Ping
+  if (parsed.orderRef.startsWith("payment_notif_test")) {
+    return NextResponse.json({ received: true, mode: "test_notification" });
+  }
+
   // 2. Check if it is a marketplace product order
   const { transitionOrderStatus, getOrderById } = await import("@/lib/data/orders");
   const orderStatus =
@@ -89,7 +94,8 @@ export async function POST(req: NextRequest) {
   });
 
   if (!payment) {
-    return NextResponse.json({ error: "Payment not found" }, { status: 404 });
+    logger.warn("Webhook received for unknown order or payment", { orderRef: parsed.orderRef });
+    return NextResponse.json({ received: true, ignored: "not_found" });
   }
 
   if (parsed.amount === null || Math.round(parsed.amount) !== Math.round(Number(payment.amount))) {

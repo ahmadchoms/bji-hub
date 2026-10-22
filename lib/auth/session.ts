@@ -9,8 +9,9 @@ import {
 } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 import { getPrisma } from "@/lib/data/prisma/client";
+import { isMockAuthAllowed } from "@/lib/auth/mock-guard";
 
-export const MOCK_SESSION_COOKIE = "biji-mock-session";
+export { MOCK_SESSION_COOKIE } from "@/lib/auth/mock-guard";
 const MOCK_SELLER_ID = "seller-1";
 
 /**
@@ -70,11 +71,7 @@ export async function getSession(): Promise<Session> {
   }
 
   // 2. Mock session fallback (only allowed in test/dev or mock mode, never in production with DB)
-  const isMockAllowed =
-    process.env.DATA_SOURCE === "mock" ||
-    process.env.NODE_ENV !== "production";
-
-  if (!isMockAllowed) {
+  if (!isMockAuthAllowed()) {
     return GUEST_SESSION;
   }
 

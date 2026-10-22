@@ -8,6 +8,7 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
   DATA_SOURCE: z.enum(["mock", "prisma", "postgres"]).default("mock"),
+  ALLOW_MOCK_AUTH: z.string().optional(),
 
   // Database
   DATABASE_URL: z.string().optional(),
@@ -29,12 +30,21 @@ const envSchema = z.object({
 
   // Scheduled Jobs
   CRON_SECRET: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.NODE_ENV === "production" && !process.env.DATA_SOURCE) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "DATA_SOURCE wajib diisi di production",
+      path: ["DATA_SOURCE"],
+    });
+  }
 });
 
 export const env = envSchema.parse({
   NODE_ENV: process.env.NODE_ENV,
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   DATA_SOURCE: process.env.DATA_SOURCE,
+  ALLOW_MOCK_AUTH: process.env.ALLOW_MOCK_AUTH,
   DATABASE_URL: process.env.DATABASE_URL,
   DIRECT_URL: process.env.DIRECT_URL,
   NEXT_PUBLIC_MIDTRANS_CLIENT_KEY: process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY,

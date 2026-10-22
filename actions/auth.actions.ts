@@ -15,6 +15,7 @@ import {
   type Role,
 } from "@/lib/auth/roles";
 import { MOCK_SESSION_COOKIE, getSession } from "@/lib/auth/session";
+import { isMockAuthAllowed } from "@/lib/auth/mock-guard";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getPrisma } from "@/lib/data/prisma/client";
@@ -103,18 +104,14 @@ export async function loginAction(
         return ok({ redirectTo: safeNextPath(next, homeFor(role)) });
       }
     } catch {
-      if (process.env.DATA_SOURCE !== "mock" && process.env.NODE_ENV === "production") {
+      if (!isMockAuthAllowed()) {
         return fail("Layanan autentikasi sedang bermasalah. Silakan coba beberapa saat lagi.");
       }
     }
   }
 
   // Fallback mock session for local test suite & mock mode ONLY
-  const isMockAllowed =
-    process.env.DATA_SOURCE === "mock" ||
-    process.env.NODE_ENV !== "production";
-
-  if (!isMockAllowed) {
+  if (!isMockAuthAllowed()) {
     return fail("Email atau kata sandi tidak sesuai.");
   }
 
@@ -219,18 +216,14 @@ export async function registerAction(
         return ok({ redirectTo: "/" });
       }
     } catch {
-      if (process.env.DATA_SOURCE !== "mock" && process.env.NODE_ENV === "production") {
+      if (!isMockAuthAllowed()) {
         return fail("Layanan pendaftaran sedang bermasalah. Silakan coba beberapa saat lagi.");
       }
     }
   }
 
   // Fallback mock session for local test suite & mock mode ONLY
-  const isMockAllowed =
-    process.env.DATA_SOURCE === "mock" ||
-    process.env.NODE_ENV !== "production";
-
-  if (!isMockAllowed) {
+  if (!isMockAuthAllowed()) {
     return fail("Pendaftaran gagal.");
   }
 
@@ -303,18 +296,14 @@ export async function becomeSellerAction(
         return ok({ redirectTo: "/dashboard" });
       }
     } catch {
-      if (process.env.DATA_SOURCE !== "mock" && process.env.NODE_ENV === "production") {
+      if (!isMockAuthAllowed()) {
         return fail("Gagal mendaftarkan toko. Silakan coba beberapa saat lagi.");
       }
     }
   }
 
   // Fallback mock session for local test suite & mock mode ONLY
-  const isMockAllowed =
-    process.env.DATA_SOURCE === "mock" ||
-    process.env.NODE_ENV !== "production";
-
-  if (!isMockAllowed) {
+  if (!isMockAuthAllowed()) {
     return fail("Gagal mendaftarkan toko.");
   }
 

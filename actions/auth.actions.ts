@@ -17,7 +17,6 @@ import {
 import { MOCK_SESSION_COOKIE, getSession } from "@/lib/auth/session";
 import { isMockAuthAllowed } from "@/lib/auth/mock-guard";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { getPrisma } from "@/lib/data/prisma/client";
 import { slugify } from "@/lib/slug";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -144,62 +143,35 @@ export async function registerAction(
   }
 
   // Real Supabase Auth & Prisma record creation
-  if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  if (
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
     try {
       const supabase = await createClient();
-      const admin = createAdminClient();
-      let userId: string | null = null;
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-      if (admin) {
-        // Create user with pre-confirmed email via Admin API
-        const { data, error } = await admin.auth.admin.createUser({
-          email: parsed.data.email,
-          password: parsed.data.password,
-          email_confirm: true,
-          user_metadata: {
+      const { data, error } = await supabase.auth.signUp({
+        email: parsed.data.email,
+        password: parsed.data.password,
+        options: {
+          data: {
             name: parsed.data.name,
-            role: "buyer",
           },
-        });
+          emailRedirectTo: `${appUrl}/auth/callback?next=/`,
+        },
+      });
 
-        if (error) {
-          if (
-            error.message?.includes("already been registered") ||
-            (error as unknown as { code?: string }).code === "email_exists"
-          ) {
-            return fail("Email sudah terdaftar. Silakan login.");
-          }
-          return fail(error.message || "Pendaftaran gagal. Silakan coba lagi.");
-        }
-        userId = data.user?.id ?? null;
-
-        // Auto sign-in so user is instantly authenticated in cookieStore
-        await supabase.auth.signInWithPassword({
-          email: parsed.data.email,
-          password: parsed.data.password,
-        });
-      } else {
-        const { data, error } = await supabase.auth.signUp({
-          email: parsed.data.email,
-          password: parsed.data.password,
-          options: {
-            data: {
-              name: parsed.data.name,
-              role: "buyer",
-            },
-          },
-        });
-
-        if (error) {
-          return fail(
-            error.message?.includes("already registered")
-              ? "Email sudah terdaftar. Silakan login."
-              : error.message || "Pendaftaran gagal. Silakan coba lagi."
-          );
-        }
-        userId = data.user?.id ?? null;
+      if (error) {
+        return fail(
+          error.message?.includes("already registered") ||
+            error.message?.includes("already been registered")
+            ? "Email sudah terdaftar. Silakan login."
+            : error.message || "Pendaftaran gagal. Silakan coba lagi.",
+        );
       }
 
+      const userId = data.user?.id ?? null;
       if (userId) {
         if (process.env.DATA_SOURCE !== "mock") {
           const prisma = getPrisma();
@@ -212,18 +184,27 @@ export async function registerAction(
             },
             update: {
               email: parsed.data.email,
-              role: "BUYER",
             },
           });
         }
-        return ok({ redirectTo: "/" });
+        return ok({ redirectTo: "/login?verify=1" });
       }
     } catch {
       if (!isMockAuthAllowed()) {
-        return fail("Layanan pendaftaran sedang bermasalah. Silakan coba beberapa saat lagi.");
+        return fail(
+          "Layanan pendaftaran sedang bermasalah. Silakan coba beberapa saat lagi.",
+        );
       }
     }
   }
+
+  if (isMockAuthAllowed()) {
+    const role = "buyer";
+    await setMockSession(role);
+    return ok({ redirectTo: "/" });
+  }
+
+  return ok({ redirectTo: "/login?verify=1" });
 
   // Fallback mock session for local test suite & mock mode ONLY
   if (!isMockAuthAllowed()) {

@@ -68,6 +68,24 @@ function LoginForm() {
             </p>
           </div>
 
+          {searchParams.get("verify") === "1" && (
+            <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded text-emerald-900 text-xs leading-relaxed space-y-1">
+              <p className="font-semibold">Pendaftaran Berhasil!</p>
+              <p>
+                Kami telah mengirimkan tautan konfirmasi ke email Anda. Silakan periksa inbox (atau folder spam) untuk mengaktifkan akun Anda sebelum masuk.
+              </p>
+            </div>
+          )}
+
+          {searchParams.get("error") === "verification_failed" && (
+            <div className="p-3.5 bg-rose-50 border border-rose-300 rounded text-rose-900 text-xs leading-relaxed space-y-1">
+              <p className="font-semibold">Konfirmasi Email Gagal</p>
+              <p>
+                Tautan konfirmasi tidak valid atau sudah kedaluwarsa. Silakan masuk jika akun sudah terdaftar, atau coba lakukan pendaftaran ulang.
+              </p>
+            </div>
+          )}
+
           <form
             onSubmit={handleSubmit(onSubmit)}
             className="space-y-4"

@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { randomBytes } from "crypto";
 import { PayoutRequest, PayoutStatus } from "@/types";
 import { getOrdersBySeller } from "@/lib/data/orders";
 
@@ -31,6 +32,10 @@ export interface SellerBankDetails {
   bankAccountNumber: string;
   bankAccountHolder: string;
 }
+
+export type AtomicPayoutResult =
+  | { ok: true; payout: PayoutRequest }
+  | { ok: false; reason: string };
 
 export async function getSellerBankDetails(
   sellerId: string,
@@ -120,14 +125,14 @@ export async function getPayoutRequestsBySeller(
   return mockPayoutRequests.filter((p) => p.sellerId === sellerId);
 }
 
-export async function createPayoutRequest(data: {
+export async function createPayoutRequestAtomic(data: {
   sellerId: string;
   amount: number;
   bankDetails: SellerBankDetails;
   notes?: string;
-}): Promise<PayoutRequest> {
+}): Promise<AtomicPayoutResult> {
   const pool = getPool();
-  const id = `po-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+  const id = `po-${Date.now()}-${randomBytes(3).toString("hex")}`;
   const now = new Date().toISOString();
 
   const newPayout: PayoutRequest = {
@@ -144,8 +149,34 @@ export async function createPayoutRequest(data: {
   };
 
   if (pool) {
+    const client = await pool.connect();
     try {
-      await pool.query(
+      await client.query("BEGIN");
+      await client.query(
+        `SELECT id FROM public.seller_profiles WHERE id = $1 FOR UPDATE`,
+        [data.sellerId],
+      );
+
+      const aggRes = await client.query(
+        `SELECT
+          COALESCE((SELECT SUM(subtotal) FROM public.orders WHERE seller_id = $1 AND status = 'completed'), 0) AS earned,
+          COALESCE((SELECT SUM(amount) FROM public.payout_requests WHERE seller_id = $1 AND status IN ('pending', 'processed')), 0) AS withdrawn`,
+        [data.sellerId],
+      );
+
+      const earned = Number(aggRes.rows[0]?.earned || 0);
+      const withdrawn = Number(aggRes.rows[0]?.withdrawn || 0);
+      const available = earned - withdrawn;
+
+      if (data.amount > available) {
+        await client.query("ROLLBACK");
+        return {
+          ok: false,
+          reason: `Saldo siap ditarik tidak mencukupi (Saldo tersedia: Rp ${Math.max(0, available).toLocaleString("id-ID")})`,
+        };
+      }
+
+      await client.query(
         `INSERT INTO public.payout_requests (
           id, seller_id, amount, bank_name, bank_account_number, bank_account_holder, status, notes, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
@@ -162,13 +193,42 @@ export async function createPayoutRequest(data: {
           now,
         ],
       );
+
+      await client.query("COMMIT");
+      return { ok: true, payout: newPayout };
     } catch (e) {
-      console.error("Failed to insert payout request to postgres:", e);
+      await client.query("ROLLBACK");
+      console.error("Failed to execute atomic payout in postgres:", e);
+      throw e;
+    } finally {
+      client.release();
     }
   }
 
+  // In-memory mock check
+  const summary = await getSellerBalanceSummary(data.sellerId);
+  if (data.amount > summary.availableBalance) {
+    return {
+      ok: false,
+      reason: `Saldo siap ditarik tidak mencukupi (Saldo tersedia: Rp ${Math.max(0, summary.availableBalance).toLocaleString("id-ID")})`,
+    };
+  }
+
   mockPayoutRequests.unshift(newPayout);
-  return newPayout;
+  return { ok: true, payout: newPayout };
+}
+
+export async function createPayoutRequest(data: {
+  sellerId: string;
+  amount: number;
+  bankDetails: SellerBankDetails;
+  notes?: string;
+}): Promise<PayoutRequest> {
+  const res = await createPayoutRequestAtomic(data);
+  if (!res.ok) {
+    throw new Error(res.reason);
+  }
+  return res.payout;
 }
 
 export async function getSellerBalanceSummary(sellerId: string): Promise<{
@@ -177,6 +237,34 @@ export async function getSellerBalanceSummary(sellerId: string): Promise<{
   totalWithdrawn: number;
   totalEarned: number;
 }> {
+  const pool = getPool();
+  if (pool) {
+    try {
+      const aggRes = await pool.query(
+        `SELECT
+          COALESCE((SELECT SUM(subtotal) FROM public.orders WHERE seller_id = $1 AND status = 'completed'), 0) AS earned,
+          COALESCE((SELECT SUM(subtotal) FROM public.orders WHERE seller_id = $1 AND status IN ('paid', 'shipped')), 0) AS pending,
+          COALESCE((SELECT SUM(amount) FROM public.payout_requests WHERE seller_id = $1 AND status IN ('pending', 'processed')), 0) AS withdrawn`,
+        [sellerId],
+      );
+
+      const totalEarned = Number(aggRes.rows[0]?.earned || 0);
+      const pendingBalance = Number(aggRes.rows[0]?.pending || 0);
+      const totalWithdrawn = Number(aggRes.rows[0]?.withdrawn || 0);
+      const availableBalance = Math.max(0, totalEarned - totalWithdrawn);
+
+      return {
+        availableBalance,
+        pendingBalance,
+        totalWithdrawn,
+        totalEarned,
+      };
+    } catch (e) {
+      console.error("Failed to query seller balance summary in postgres:", e);
+      throw e;
+    }
+  }
+
   const orders = await getOrdersBySeller(sellerId);
   const payouts = await getPayoutRequestsBySeller(sellerId);
 
@@ -253,28 +341,22 @@ export async function updatePayoutStatus(
 
   if (pool) {
     try {
-      if (notes) {
-        await pool.query(
-          `UPDATE public.payout_requests
-           SET status = $1, notes = $2, updated_at = $3
-           WHERE id = $4`,
-          [status, notes, now, payoutId],
-        );
-      } else {
-        await pool.query(
-          `UPDATE public.payout_requests
-           SET status = $1, updated_at = $2
-           WHERE id = $3`,
-          [status, now, payoutId],
-        );
-      }
-      return true;
-    } catch {
-      // Fall through
+      const res = await pool.query(
+        `UPDATE public.payout_requests
+         SET status = $1, notes = COALESCE($2, notes), updated_at = $3
+         WHERE id = $4 AND status = 'pending'`,
+        [status, notes ?? null, now, payoutId],
+      );
+      return (res.rowCount ?? 0) > 0;
+    } catch (e) {
+      console.error("Failed to update payout status in postgres:", e);
+      throw e;
     }
   }
 
-  const existing = mockPayoutRequests.find((p) => p.id === payoutId);
+  const existing = mockPayoutRequests.find(
+    (p) => p.id === payoutId && p.status === "pending",
+  );
   if (existing) {
     existing.status = status;
     if (notes) existing.notes = notes;

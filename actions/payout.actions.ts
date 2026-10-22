@@ -8,7 +8,7 @@ import {
   getSellerBankDetails,
   updateSellerBankDetails,
   getSellerBalanceSummary,
-  createPayoutRequest,
+  createPayoutRequestAtomic,
   updatePayoutStatus,
   type SellerBankDetails,
 } from "@/lib/data/payouts";
@@ -71,27 +71,22 @@ export async function requestPayoutAction(
     return fail("Silakan lengkapi informasi rekening bank tujuan terlebih dahulu");
   }
 
-  const summary = await getSellerBalanceSummary(sellerId);
-  if (parsed.data.amount > summary.availableBalance) {
-    return fail(
-      `Saldo siap ditarik tidak mencukupi (Saldo tersedia: Rp ${summary.availableBalance.toLocaleString(
-        "id-ID",
-      )})`,
-    );
-  }
-
-  const payout = await createPayoutRequest({
+  const result = await createPayoutRequestAtomic({
     sellerId,
     amount: parsed.data.amount,
     bankDetails,
     notes: parsed.data.notes,
   });
 
+  if (!result.ok) {
+    return fail(result.reason);
+  }
+
   revalidatePath("/dashboard/orders");
 
   return ok({
-    payoutId: payout.id,
-    amount: payout.amount,
+    payoutId: result.payout.id,
+    amount: result.payout.amount,
   });
 }
 
@@ -118,7 +113,7 @@ export async function updatePayoutStatusAction(
   );
 
   if (!success) {
-    return fail("Pengajuan penarikan dana tidak ditemukan");
+    return fail("Pengajuan tidak ditemukan atau sudah diproses");
   }
 
   revalidatePath("/admin/payouts");

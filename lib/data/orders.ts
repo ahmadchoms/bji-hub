@@ -46,6 +46,7 @@ export async function createOrder(data: {
   shippingCourier: string;
   snapToken?: string | null;
   midtransOrderId?: string | null;
+  paymentProvider?: string;
   notes?: string | null;
   idempotencyKey?: string | null;
   accessToken?: string | null;
@@ -80,6 +81,7 @@ export async function createOrder(data: {
     status: "pending_payment",
     snapToken: data.snapToken ?? null,
     midtransOrderId,
+    paymentProvider: data.paymentProvider ?? "midtrans",
     notes: data.notes ?? null,
     accessToken,
     idempotencyKey: data.idempotencyKey ?? null,
@@ -97,9 +99,9 @@ export async function createOrder(data: {
           id, order_number, buyer_id, buyer_name, buyer_email, buyer_phone,
           buyer_address, buyer_city, seller_id, listing_id, quantity, item_price,
           subtotal, shipping_cost, service_fee, total_amount, shipping_courier,
-          status, snap_token, midtrans_order_id, notes, access_token, idempotency_key, created_at, updated_at
+          status, snap_token, midtrans_order_id, notes, access_token, idempotency_key, payment_provider, created_at, updated_at
         ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26
         )
         ON CONFLICT (idempotency_key) WHERE idempotency_key IS NOT NULL
         DO NOTHING
@@ -128,6 +130,7 @@ export async function createOrder(data: {
           data.notes ?? null,
           accessToken,
           data.idempotencyKey ?? null,
+          data.paymentProvider ?? "midtrans",
           now,
           now,
         ],
@@ -270,6 +273,7 @@ export async function getOrderById(idOrNumber: string): Promise<Order | null> {
           status: row.status as OrderStatus,
           snapToken: row.snap_token,
           midtransOrderId: row.midtrans_order_id,
+          paymentProvider: row.payment_provider ?? "midtrans",
           notes: row.notes,
           accessToken: row.access_token ?? null,
           idempotencyKey: row.idempotency_key ?? null,
@@ -334,6 +338,7 @@ export async function getOrdersBySeller(sellerId: string): Promise<Order[]> {
         status: row.status as OrderStatus,
         snapToken: row.snap_token,
         midtransOrderId: row.midtrans_order_id,
+        paymentProvider: row.payment_provider ?? "midtrans",
         notes: row.notes,
         disputeReason: row.dispute_reason ?? null,
         disputeEvidenceUrl: row.dispute_evidence_url ?? null,
@@ -386,6 +391,7 @@ export async function getAllOrders(): Promise<Order[]> {
         status: row.status as OrderStatus,
         snapToken: row.snap_token,
         midtransOrderId: row.midtrans_order_id,
+        paymentProvider: row.payment_provider ?? "midtrans",
         notes: row.notes,
         disputeReason: row.dispute_reason ?? null,
         disputeEvidenceUrl: row.dispute_evidence_url ?? null,
@@ -443,6 +449,7 @@ export async function getOrdersByBuyer(
         status: row.status as OrderStatus,
         snapToken: row.snap_token,
         midtransOrderId: row.midtrans_order_id,
+        paymentProvider: row.payment_provider ?? "midtrans",
         notes: row.notes,
         disputeReason: row.dispute_reason ?? null,
         disputeEvidenceUrl: row.dispute_evidence_url ?? null,

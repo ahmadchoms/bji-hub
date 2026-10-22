@@ -296,6 +296,7 @@ model Order {
   status          OrderStatus   @default(pending_payment)
   snapToken       String?       @map("snap_token")
   midtransOrderId String?       @unique @map("midtrans_order_id")
+  paymentProvider String        @default("midtrans") @map("payment_provider")
   accessToken     String?       @map("access_token")
   idempotencyKey  String?       @unique @map("idempotency_key")
   notes              String?

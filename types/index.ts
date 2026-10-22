@@ -283,6 +283,7 @@ export interface Order {
   status: OrderStatus;
   snapToken?: string | null;
   midtransOrderId?: string | null;
+  paymentProvider?: string;
   notes?: string | null;
   disputeReason?: string | null;
   disputeEvidenceUrl?: string | null;

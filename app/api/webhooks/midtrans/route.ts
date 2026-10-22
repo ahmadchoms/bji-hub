@@ -1,52 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyMidtransSignature, mapMidtransStatus } from "@/lib/midtrans";
+import { getPaymentProvider } from "@/lib/payments";
 import { getPrisma } from "@/lib/data/prisma/client";
 import { logger } from "@/lib/logger";
 
 /**
  * Midtrans HTTP Notification Webhook Handler
- * Verifies SHA-512 signature and updates payment status accordingly.
+ * Verifies signature and updates payment status accordingly.
  */
 export async function POST(req: NextRequest) {
-  let body: {
-    order_id: string;
-    status_code: string;
-    gross_amount: string;
-    signature_key?: string;
-    transaction_status?: string;
-    fraud_status?: string;
-  };
-
+  let rawBody: string;
   try {
-    body = await req.json();
+    rawBody = await req.text();
   } catch {
-    // ignore: invalid webhook body JSON parsing
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    // ignore: invalid webhook body reading
+    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
+  const provider = getPaymentProvider();
+  const parsed = await provider.parseWebhook(rawBody);
+
   // 1. Signature Verification
-  if (!verifyMidtransSignature(body)) {
+  if (!parsed) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
   // 2. Check if it is a marketplace product order
   const { transitionOrderStatus, getOrderById } = await import("@/lib/data/orders");
-  const nextStatus = mapMidtransStatus(
-    body.transaction_status,
-    body.fraud_status
-  );
   const orderStatus =
-    nextStatus === "paid"
+    parsed.status === "paid"
       ? "paid"
-      : nextStatus === "failed"
-        ? "canceled"
-        : "pending_payment";
+      : parsed.status === "pending"
+        ? "pending_payment"
+        : "canceled";
 
-  const order = await getOrderById(body.order_id);
+  const order = await getOrderById(parsed.orderRef);
   if (order) {
-    const grossAmount = Math.round(Number(body.gross_amount));
-    if (isNaN(grossAmount) || grossAmount !== Math.round(order.totalAmount)) {
-      logger.error("Gross amount mismatch for order", undefined, { orderId: order.id, expected: order.totalAmount, got: body.gross_amount });
+    if (parsed.amount === null || Math.round(parsed.amount) !== Math.round(order.totalAmount)) {
+      logger.error("Gross amount mismatch for order", undefined, {
+        orderId: order.id,
+        expected: order.totalAmount,
+        got: parsed.amount,
+      });
       return NextResponse.json({ error: "Amount mismatch" }, { status: 400 });
     }
 
@@ -91,20 +85,30 @@ export async function POST(req: NextRequest) {
 
   const prisma = getPrisma();
   const payment = await prisma.payment.findUnique({
-    where: { midtransOrderId: body.order_id },
+    where: { midtransOrderId: parsed.orderRef },
   });
 
   if (!payment) {
     return NextResponse.json({ error: "Payment not found" }, { status: 404 });
   }
 
-  const grossAmount = Math.round(Number(body.gross_amount));
-  if (isNaN(grossAmount) || grossAmount !== Math.round(Number(payment.amount))) {
-    logger.error("Gross amount mismatch for payment", undefined, { paymentId: payment.id, expected: payment.amount, got: body.gross_amount });
+  if (parsed.amount === null || Math.round(parsed.amount) !== Math.round(Number(payment.amount))) {
+    logger.error("Gross amount mismatch for payment", undefined, {
+      paymentId: payment.id,
+      expected: payment.amount,
+      got: parsed.amount,
+    });
     return NextResponse.json({ error: "Amount mismatch" }, { status: 400 });
   }
 
-  if (payment.status === "paid" && nextStatus !== "paid") {
+  const nextPaymentStatus =
+    parsed.status === "paid"
+      ? "paid"
+      : parsed.status === "pending"
+        ? "pending"
+        : "failed";
+
+  if (payment.status === "paid" && nextPaymentStatus !== "paid") {
     return NextResponse.json({ received: true, ignored: "Payment already settled" });
   }
 
@@ -113,13 +117,13 @@ export async function POST(req: NextRequest) {
     await tx.payment.update({
       where: { id: payment.id },
       data: {
-        status: nextStatus,
-        paidAt: nextStatus === "paid" ? new Date() : null,
+        status: nextPaymentStatus,
+        paidAt: nextPaymentStatus === "paid" ? new Date() : null,
       },
     });
 
     // If subscription payment succeeded, activate subscription
-    if (nextStatus === "paid" && payment.subscriptionId) {
+    if (nextPaymentStatus === "paid" && payment.subscriptionId) {
       await tx.subscription.update({
         where: { id: payment.subscriptionId },
         data: { status: "active" },
@@ -127,7 +131,7 @@ export async function POST(req: NextRequest) {
     }
 
     // If boost payment succeeded, ensure listing is boosted
-    if (nextStatus === "paid" && payment.listingId && payment.type === "boost") {
+    if (nextPaymentStatus === "paid" && payment.listingId && payment.type === "boost") {
       await tx.listing.update({
         where: { id: payment.listingId },
         data: { isBoosted: true },

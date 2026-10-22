@@ -52,12 +52,15 @@ export async function subscribePlanAction(input: unknown): Promise<
   if (!result) return fail("Gagal memproses langganan");
 
   let snapToken: string | null = null;
-  if (amount > 0 && process.env.MIDTRANS_SERVER_KEY) {
-    const { createMidtransSnapToken } = await import("@/lib/midtrans");
-    snapToken = await createMidtransSnapToken({
-      orderId: result.payment.midtransOrderId,
-      grossAmount: amount,
+  if (amount > 0) {
+    const { getPaymentProvider } = await import("@/lib/payments");
+    const paymentRes = await getPaymentProvider().createPayment({
+      orderRef: result.payment.midtransOrderId,
+      amount,
+      customer: { name: "Seller", email: "seller@bijihub.com" },
+      items: [],
     });
+    snapToken = paymentRes?.clientToken ?? null;
   }
 
   refresh();
@@ -106,21 +109,24 @@ export async function syncPaymentStatusAction(
   await requireSeller("/dashboard/billing");
   if (!orderId) return fail("ID Order tidak valid");
 
-  const { checkMidtransStatus, mapMidtransStatus } = await import(
-    "@/lib/midtrans"
-  );
-  const midtransRes = await checkMidtransStatus(orderId);
+  const { getPaymentProvider } = await import("@/lib/payments");
+  const provider = getPaymentProvider();
+  const paymentRes = await provider.getStatus(orderId);
 
-  if (!midtransRes) {
+  if (!paymentRes) {
     return fail(
-      "Transaksi belum ditemukan di Midtrans atau Server Key belum dikonfigurasi."
+      "Transaksi belum ditemukan di penyedia pembayaran atau belum dikonfigurasi."
     );
   }
 
-  const nextStatus = mapMidtransStatus(
-    midtransRes.transactionStatus,
-    midtransRes.fraudStatus
-  );
+  const nextStatus =
+    paymentRes.status === "paid"
+      ? "paid"
+      : paymentRes.status === "failed" ||
+          paymentRes.status === "canceled" ||
+          paymentRes.status === "expired"
+        ? "failed"
+        : "pending";
 
   if (process.env.DATA_SOURCE === "prisma") {
     const { getPrisma } = await import("@/lib/data/prisma/client");

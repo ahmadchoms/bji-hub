@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { checkMidtransStatus, mapMidtransStatus } from "@/lib/midtrans";
+import { getPaymentProvider } from "@/lib/payments";
 import { getPrisma } from "@/lib/data/prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +25,7 @@ export async function GET(req: Request) {
 
   const prisma = getPrisma();
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const provider = getPaymentProvider();
   const pendingPayments = await prisma.payment.findMany({
     where: {
       status: "pending",
@@ -40,13 +41,17 @@ export async function GET(req: Request) {
       continue;
     }
 
-    const midtransRes = await checkMidtransStatus(pay.midtransOrderId);
-    if (!midtransRes) continue;
+    const statusResult = await provider.getStatus(pay.midtransOrderId);
+    if (!statusResult) continue;
 
-    const nextStatus = mapMidtransStatus(
-      midtransRes.transactionStatus,
-      midtransRes.fraudStatus
-    );
+    const nextStatus =
+      statusResult.status === "paid"
+        ? "paid"
+        : statusResult.status === "failed" ||
+            statusResult.status === "canceled" ||
+            statusResult.status === "expired"
+          ? "failed"
+          : "pending";
 
     if (nextStatus !== "pending") {
       await prisma.$transaction(async (tx) => {

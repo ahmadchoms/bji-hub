@@ -21,6 +21,7 @@
     "db:studio": "prisma studio",
     "admin:promote": "node scripts/promote-admin.mjs",
     "db:migrate:orders-hardening": "node scripts/migrate-order-hardening.mjs",
+    "db:migrate:payment-provider": "node scripts/migrate-payment-provider.mjs",
     "db:push": "prisma db push"
   },
   "dependencies": {

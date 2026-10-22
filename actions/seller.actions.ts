@@ -145,12 +145,16 @@ export async function purchaseBoostAction(
   if (!payment) return fail("Gagal memproses boost");
 
   let snapToken: string | null = null;
-  if (charge.amount > 0 && process.env.MIDTRANS_SERVER_KEY) {
-    const { createMidtransSnapToken } = await import("@/lib/midtrans");
-    snapToken = await createMidtransSnapToken({
-      orderId: payment.midtransOrderId,
-      grossAmount: charge.amount,
+  if (charge.amount > 0) {
+    const { getPaymentProvider } = await import("@/lib/payments");
+    const provider = getPaymentProvider();
+    const paymentRes = await provider.createPayment({
+      orderRef: payment.midtransOrderId,
+      amount: charge.amount,
+      customer: { name: "Seller", email: "seller@bijihub.com" },
+      items: [],
     });
+    snapToken = paymentRes?.clientToken ?? null;
   }
 
   revalidatePath("/dashboard/billing");

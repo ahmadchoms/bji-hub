@@ -268,12 +268,29 @@ export function CheckoutForm({
           idempotencyKeyRef.current = crypto.randomUUID();
         }
 
-        const { snapToken, orderNumber, accessToken } = res.data;
+        const { snapToken, orderNumber, accessToken, payment } = res.data;
         const redirectUrl = accessToken
           ? `/order/success?orderNumber=${orderNumber}&t=${encodeURIComponent(accessToken)}`
           : `/order/success?orderNumber=${orderNumber}`;
 
-        if (!snapToken) {
+        const providerId = payment?.provider ?? "midtrans";
+
+        if (providerId === "mock") {
+          if (activeItems && activeItems.length > 0) {
+            activeItems.forEach((i) => removeFromCart(i.listingId, i.grindSize));
+          }
+          toast.success("Pesanan simulasi berhasil dibuat!");
+          router.push(redirectUrl);
+          return;
+        }
+
+        if (providerId !== "midtrans") {
+          toast.error("Metode pembayaran tidak tersedia");
+          return;
+        }
+
+        const tokenToPay = payment?.token || snapToken;
+        if (!tokenToPay) {
           toast.error(
             "Pembayaran belum bisa dimulai. Pesanan Anda tersimpan, lanjutkan dari halaman pesanan.",
           );
@@ -281,7 +298,7 @@ export function CheckoutForm({
           return;
         }
 
-        const paidInitiated = pay(snapToken, {
+        const paidInitiated = pay(tokenToPay, {
           onSuccess: () => {
             if (activeItems && activeItems.length > 0) {
               activeItems.forEach((i) => removeFromCart(i.listingId, i.grindSize));

@@ -17,11 +17,7 @@ import {
   autoCompleteExpiredShippedOrders,
 } from "@/lib/data/orders";
 import { createReview } from "@/lib/data/reviews";
-import {
-  createMidtransSnapToken,
-  checkMidtransStatus,
-  mapMidtransStatus,
-} from "@/lib/midtrans";
+import { getPaymentProvider } from "@/lib/payments";
 import { getSession, requireRole } from "@/lib/auth/session";
 import { canAccessOrder } from "@/lib/auth/order-access";
 import { logger } from "@/lib/logger";
@@ -74,6 +70,10 @@ export async function createCheckoutOrderAction(
     orderId: string;
     orderNumber: string;
     snapToken: string | null;
+    payment: {
+      provider: "midtrans" | "mock";
+      token: string | null;
+    };
     totalAmount: number;
     accessToken: string;
   }>
@@ -260,29 +260,43 @@ export async function createCheckoutOrderAction(
     totalAmount,
     shippingCourier: serverShippingCourier,
     midtransOrderId: orderNumber,
+    paymentProvider: getPaymentProvider().id,
     notes: combinedNotes || null,
     idempotencyKey,
     accessToken,
     items: orderItemsData,
   });
 
-  // 7. Request Midtrans Snap Token
+  // 7. Request Payment Token via provider
+  const provider = getPaymentProvider();
   let snapToken: string | null = null;
-  if (process.env.MIDTRANS_SERVER_KEY) {
-    try {
-      snapToken = await createMidtransSnapToken({
-        orderId: order.midtransOrderId || order.orderNumber,
-        grossAmount: order.totalAmount,
-        customerName: buyerName,
-        customerEmail: buyerEmail,
-      });
+  let paymentToken: string | null = null;
+  try {
+    const paymentResult = await provider.createPayment({
+      orderRef: order.midtransOrderId || order.orderNumber,
+      amount: order.totalAmount,
+      customer: {
+        name: buyerName,
+        email: buyerEmail,
+        phone: buyerPhone,
+      },
+      items: orderItemsData.map((item) => ({
+        id: item.listingId,
+        name: item.title,
+        price: item.unitPrice,
+        quantity: item.quantity,
+      })),
+    });
+    if (paymentResult) {
+      paymentToken = paymentResult.clientToken;
+      snapToken = paymentResult.clientToken;
       if (snapToken) {
         await updateOrderSnapToken(order.id, snapToken);
       }
-    } catch {
-      // ignore: optional operation fallback
-      // Payment gateway timeout / mock offline
     }
+  } catch {
+    // ignore: optional operation fallback
+    // Payment gateway timeout / mock offline
   }
 
   // 8. Cloud sync buyer profile
@@ -336,6 +350,10 @@ export async function createCheckoutOrderAction(
     orderId: order.id,
     orderNumber: order.orderNumber,
     snapToken,
+    payment: {
+      provider: provider.id,
+      token: paymentToken,
+    },
     totalAmount: order.totalAmount,
     accessToken: order.accessToken || accessToken,
   });
@@ -687,6 +705,10 @@ export async function resumeOrderPaymentAction(
 ): Promise<
   ActionResult<{
     snapToken: string | null;
+    payment: {
+      provider: "midtrans" | "mock";
+      token: string | null;
+    };
     orderNumber: string;
     totalAmount: number;
   }>
@@ -703,17 +725,28 @@ export async function resumeOrderPaymentAction(
     return fail("Pesanan ini sudah diproses atau telah selesai");
   }
 
+  const provider = getPaymentProvider();
   let snapToken = order.snapToken;
-  if (!snapToken && process.env.MIDTRANS_SERVER_KEY) {
+  if (!snapToken) {
     try {
-      snapToken = await createMidtransSnapToken({
-        orderId: order.midtransOrderId || order.orderNumber,
-        grossAmount: order.totalAmount,
-        customerName: order.buyerName,
-        customerEmail: order.buyerEmail,
+      const paymentResult = await provider.createPayment({
+        orderRef: order.midtransOrderId || order.orderNumber,
+        amount: order.totalAmount,
+        customer: {
+          name: order.buyerName,
+          email: order.buyerEmail,
+          phone: order.buyerPhone,
+        },
+        items: (order.items || []).map((item) => ({
+          id: item.listingId,
+          name: item.title || "Produk",
+          price: item.unitPrice,
+          quantity: item.quantity,
+        })),
       });
-      if (snapToken) {
-        await updateOrderSnapToken(order.id, snapToken);
+      if (paymentResult?.clientToken) {
+        snapToken = paymentResult.clientToken;
+        await updateOrderSnapToken(order.id, paymentResult.clientToken);
       }
     } catch {
       // ignore: optional operation fallback
@@ -723,6 +756,10 @@ export async function resumeOrderPaymentAction(
 
   return ok({
     snapToken: snapToken ?? null,
+    payment: {
+      provider: provider.id,
+      token: snapToken ?? null,
+    },
     orderNumber: order.orderNumber,
     totalAmount: order.totalAmount,
   });
@@ -748,40 +785,33 @@ export async function checkOrderPaymentStatusAction(
     return ok({ status: order.status, isPaid: true });
   }
 
-  if (process.env.MIDTRANS_SERVER_KEY) {
-    try {
-      const midtransData = await checkMidtransStatus(
-        order.midtransOrderId || order.orderNumber,
-      );
-      if (midtransData) {
-        const mapped = mapMidtransStatus(
-          midtransData.transactionStatus,
-          midtransData.fraudStatus,
-        );
-        if (mapped === "paid") {
-          const applied = await updateOrderStatus(order.id, "paid");
-          if (applied) {
-            sendOrderPaidEmail({ ...order, status: "paid" }).catch(() => {});
-            getSellerById(order.sellerId)
-              .then((seller) => {
-                sendNewOrderSellerEmail({
-                  order: { ...order, status: "paid" },
-                  sellerEmail: seller?.user?.email,
-                  sellerName: seller?.businessName || order.sellerName,
-                }).catch(() => {});
-              })
-              .catch(() => {});
-          }
-
-          revalidatePath("/order/success");
-          revalidatePath("/profile");
-          revalidatePath("/dashboard/orders");
-          return ok({ status: "paid", isPaid: true });
-        }
+  const provider = getPaymentProvider();
+  try {
+    const statusResult = await provider.getStatus(
+      order.midtransOrderId || order.orderNumber,
+    );
+    if (statusResult && statusResult.status === "paid") {
+      const applied = await updateOrderStatus(order.id, "paid");
+      if (applied) {
+        sendOrderPaidEmail({ ...order, status: "paid" }).catch(() => {});
+        getSellerById(order.sellerId)
+          .then((seller) => {
+            sendNewOrderSellerEmail({
+              order: { ...order, status: "paid" },
+              sellerEmail: seller?.user?.email,
+              sellerName: seller?.businessName || order.sellerName,
+            }).catch(() => {});
+          })
+          .catch(() => {});
       }
-    } catch {
-      // ignore: optional buyer profile sync to supabase
+
+      revalidatePath("/order/success");
+      revalidatePath("/profile");
+      revalidatePath("/dashboard/orders");
+      return ok({ status: "paid", isPaid: true });
     }
+  } catch {
+    // ignore: optional buyer profile sync to supabase
   }
 
   return ok({ status: order.status, isPaid: false });

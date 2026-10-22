@@ -13,11 +13,14 @@ import { CreditCard, RefreshCw, Loader2 } from "lucide-react";
 interface ResumePaymentButtonProps {
   orderId: string;
   orderNumber: string;
+  accessToken?: string;
   className?: string;
 }
 
 export function ResumePaymentButton({
   orderId,
+  orderNumber: _orderNumber,
+  accessToken,
   className,
 }: ResumePaymentButtonProps) {
   const router = useRouter();
@@ -27,7 +30,7 @@ export function ResumePaymentButton({
   const handlePay = async () => {
     setIsPaying(true);
     try {
-      const res = await resumeOrderPaymentAction(orderId);
+      const res = await resumeOrderPaymentAction(orderId, accessToken);
       if (!res.success) {
         toast.error(res.error || "Gagal memproses pembayaran");
         return;
@@ -74,7 +77,7 @@ export function ResumePaymentButton({
 
   const handleCheckStatus = () => {
     startCheckingTransition(async () => {
-      const res = await checkOrderPaymentStatusAction(orderId);
+      const res = await checkOrderPaymentStatusAction(orderId, accessToken);
       if (res.success && res.data?.isPaid) {
         toast.success("Pembayaran telah terverifikasi!");
         router.refresh();

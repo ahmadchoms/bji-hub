@@ -1,5 +1,6 @@
 import { Pool } from "pg";
-import { Order, OrderStatus } from "@/types";
+import { randomBytes } from "crypto";
+import { Order, OrderItem, OrderStatus } from "@/types";
 import { mockListings } from "@/lib/mock/data";
 
 let poolInstance: Pool | null = null;
@@ -16,8 +17,17 @@ function getPool(): Pool | null {
 // In-memory mock storage fallback for vitest & offline local development
 const mockOrders: Order[] = [];
 
+export function generateOrderNumber(): string {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const rand = randomBytes(4).toString("hex").toUpperCase();
+  return `ORD-${yyyy}${mm}${dd}-${rand}`;
+}
+
 export async function createOrder(data: {
-  orderNumber: string;
+  orderNumber?: string;
   buyerId?: string | null;
   buyerName: string;
   buyerEmail: string;
@@ -34,16 +44,22 @@ export async function createOrder(data: {
   totalAmount: number;
   shippingCourier: string;
   snapToken?: string | null;
-  midtransOrderId: string;
+  midtransOrderId?: string | null;
   notes?: string | null;
+  idempotencyKey?: string | null;
+  accessToken?: string | null;
+  items?: OrderItem[];
 }): Promise<Order> {
   const pool = getPool();
-  const id = `ord-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+  const id = `ord-${Date.now()}-${randomBytes(3).toString("hex")}`;
   const now = new Date().toISOString();
+  const orderNumber = data.orderNumber || generateOrderNumber();
+  const midtransOrderId = data.midtransOrderId || orderNumber;
+  const accessToken = data.accessToken || randomBytes(24).toString("base64url");
 
   const newOrder: Order = {
     id,
-    orderNumber: data.orderNumber,
+    orderNumber,
     buyerId: data.buyerId ?? null,
     buyerName: data.buyerName,
     buyerEmail: data.buyerEmail,
@@ -62,26 +78,34 @@ export async function createOrder(data: {
     trackingNumber: null,
     status: "pending_payment",
     snapToken: data.snapToken ?? null,
-    midtransOrderId: data.midtransOrderId,
+    midtransOrderId,
     notes: data.notes ?? null,
+    accessToken,
+    idempotencyKey: data.idempotencyKey ?? null,
+    items: data.items,
     createdAt: now,
     updatedAt: now,
   };
 
   if (pool) {
+    const client = await pool.connect();
     try {
-      await pool.query(
+      await client.query("BEGIN");
+      const insertRes = await client.query(
         `INSERT INTO public.orders (
           id, order_number, buyer_id, buyer_name, buyer_email, buyer_phone,
           buyer_address, buyer_city, seller_id, listing_id, quantity, item_price,
           subtotal, shipping_cost, service_fee, total_amount, shipping_courier,
-          status, snap_token, midtrans_order_id, notes, created_at, updated_at
+          status, snap_token, midtrans_order_id, notes, access_token, idempotency_key, created_at, updated_at
         ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23
-        )`,
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25
+        )
+        ON CONFLICT (idempotency_key) WHERE idempotency_key IS NOT NULL
+        DO NOTHING
+        RETURNING id`,
         [
           id,
-          data.orderNumber,
+          orderNumber,
           data.buyerId ?? null,
           data.buyerName,
           data.buyerEmail,
@@ -99,22 +123,87 @@ export async function createOrder(data: {
           data.shippingCourier,
           "pending_payment",
           data.snapToken ?? null,
-          data.midtransOrderId,
+          midtransOrderId,
           data.notes ?? null,
+          accessToken,
+          data.idempotencyKey ?? null,
           now,
           now,
         ],
       );
-    } catch (e) {
-      console.error("Failed to insert order to postgres, using memory fallback:", e);
-      if (process.env.NODE_ENV === "production" || process.env.DATA_SOURCE === "prisma") {
-        throw new Error("Gagal menyimpan pesanan ke database");
+
+      if (insertRes.rowCount === 0 && data.idempotencyKey) {
+        await client.query("ROLLBACK");
+        const existing = await getOrderById(data.idempotencyKey);
+        if (existing) return existing;
       }
+
+      if (data.items && data.items.length > 0) {
+        for (const item of data.items) {
+          const itemId = `item-${Date.now()}-${randomBytes(3).toString("hex")}`;
+          await client.query(
+            `INSERT INTO public.order_items (
+              id, order_id, listing_id, title, price, quantity, unit, grind_size, created_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+            [
+              itemId,
+              id,
+              item.listingId,
+              item.title || "Produk",
+              item.unitPrice,
+              item.quantity,
+              item.unit || "250g",
+              item.grindSize ?? null,
+              now,
+            ],
+          );
+        }
+      }
+
+      await client.query("COMMIT");
+      const saved = await getOrderById(id);
+      return saved || newOrder;
+    } catch (e) {
+      await client.query("ROLLBACK");
+      console.error("Failed to insert order to postgres:", e);
+      throw new Error("Gagal menyimpan pesanan");
+    } finally {
+      client.release();
     }
+  }
+
+  if (data.idempotencyKey) {
+    const existingByIdem = mockOrders.find((o) => o.idempotencyKey === data.idempotencyKey);
+    if (existingByIdem) return existingByIdem;
   }
 
   mockOrders.unshift(newOrder);
   return newOrder;
+}
+
+export async function updateOrderSnapToken(
+  orderId: string,
+  snapToken: string,
+): Promise<boolean> {
+  const pool = getPool();
+  if (pool) {
+    try {
+      const res = await pool.query(
+        `UPDATE public.orders SET snap_token = $1, updated_at = NOW() WHERE id = $2 OR order_number = $2`,
+        [snapToken, orderId],
+      );
+      return (res.rowCount ?? 0) > 0;
+    } catch {
+      return false;
+    }
+  }
+
+  const existing = mockOrders.find((o) => o.id === orderId || o.orderNumber === orderId);
+  if (existing) {
+    existing.snapToken = snapToken;
+    return true;
+  }
+  return false;
 }
 
 export async function getOrderById(idOrNumber: string): Promise<Order | null> {
@@ -126,12 +215,34 @@ export async function getOrderById(idOrNumber: string): Promise<Order | null> {
          FROM public.orders o
          LEFT JOIN public.listings l ON o.listing_id = l.id
          LEFT JOIN public.seller_profiles s ON o.seller_id = s.id
-         WHERE o.id = $1 OR o.order_number = $1 OR o.midtrans_order_id = $1
+         WHERE o.id = $1 OR o.order_number = $1 OR o.midtrans_order_id = $1 OR o.idempotency_key = $1
          LIMIT 1`,
         [idOrNumber],
       );
       if (res.rows.length > 0) {
         const row = res.rows[0];
+        let items: OrderItem[] | undefined;
+        try {
+          const itemsRes = await pool.query(
+            `SELECT * FROM public.order_items WHERE order_id = $1`,
+            [row.id],
+          );
+          if (itemsRes.rows.length > 0) {
+            items = itemsRes.rows.map((ir) => ({
+              id: ir.id,
+              orderId: ir.order_id,
+              listingId: ir.listing_id,
+              title: ir.title,
+              unitPrice: Number(ir.price),
+              quantity: Number(ir.quantity),
+              unit: ir.unit,
+              grindSize: ir.grind_size,
+            }));
+          }
+        } catch {
+          // order_items might not exist yet in legacy DB
+        }
+
         return {
           id: row.id,
           orderNumber: row.order_number,
@@ -158,6 +269,9 @@ export async function getOrderById(idOrNumber: string): Promise<Order | null> {
           snapToken: row.snap_token,
           midtransOrderId: row.midtrans_order_id,
           notes: row.notes,
+          accessToken: row.access_token ?? null,
+          idempotencyKey: row.idempotency_key ?? null,
+          items,
           disputeReason: row.dispute_reason ?? null,
           disputeEvidenceUrl: row.dispute_evidence_url ?? null,
           createdAt: row.created_at,
@@ -174,7 +288,8 @@ export async function getOrderById(idOrNumber: string): Promise<Order | null> {
       (o) =>
         o.id === idOrNumber ||
         o.orderNumber === idOrNumber ||
-        o.midtransOrderId === idOrNumber,
+        o.midtransOrderId === idOrNumber ||
+        o.idempotencyKey === idOrNumber,
     ) ?? null
   );
 }

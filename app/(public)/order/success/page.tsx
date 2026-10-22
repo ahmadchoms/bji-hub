@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getOrderById } from "@/lib/data/orders";
 import { getSession } from "@/lib/auth/session";
+import { canAccessOrder } from "@/lib/auth/order-access";
 import { PageContainer } from "@/components/layout/page-container";
 import { formatRupiah } from "@/components/shared/price-text";
 import { buttonVariants } from "@/components/ui/button";
@@ -26,6 +27,7 @@ import { ShipmentTrackingModal } from "@/components/order/shipment-tracking-moda
 import { OrderPrintModal } from "@/components/order/order-print-modal";
 import { OrderStatusStepper } from "@/components/order/order-status-stepper";
 import { ResumePaymentButton } from "@/components/order/resume-payment-button";
+import { PaymentStatusPoller } from "@/components/order/payment-status-poller";
 import { buildOrderPaidNotificationUrl } from "@/lib/notifications";
 
 export const metadata: Metadata = {
@@ -40,37 +42,18 @@ interface OrderSuccessPageProps {
     orderNumber?: string;
     order_number?: string;
     id?: string;
+    t?: string;
   }>;
 }
 
 export default async function OrderSuccessPage({
   searchParams,
 }: OrderSuccessPageProps) {
-  const { orderId, order_id, orderNumber, order_number, id } =
+  const { orderId, order_id, orderNumber, order_number, id, t } =
     await searchParams;
   const lookupId = orderNumber || order_number || orderId || order_id || id;
 
-  let order = lookupId ? await getOrderById(lookupId) : null;
-
-  if (order && order.status === "pending_payment" && process.env.MIDTRANS_SERVER_KEY) {
-    try {
-      const { checkMidtransStatus, mapMidtransStatus } = await import("@/lib/midtrans");
-      const { updateOrderStatus } = await import("@/lib/data/orders");
-      const midtransData = await checkMidtransStatus(order.midtransOrderId || order.orderNumber);
-      if (midtransData) {
-        const mapped = mapMidtransStatus(midtransData.transactionStatus, midtransData.fraudStatus);
-        if (mapped === "paid") {
-          await updateOrderStatus(order.id, "paid");
-          order = { ...order, status: "paid" };
-        } else if (mapped === "failed") {
-          await updateOrderStatus(order.id, "canceled");
-          order = { ...order, status: "canceled" };
-        }
-      }
-    } catch {
-      // non-blocking fallback
-    }
-  }
+  const order = lookupId ? await getOrderById(lookupId) : null;
 
   if (!order) {
     return (
@@ -94,11 +77,7 @@ export default async function OrderSuccessPage({
   }
 
   const session = await getSession();
-  const isBuyer = Boolean(session.userId && order.buyerId && session.userId === order.buyerId);
-  const isSeller = Boolean(session.sellerId && order.sellerId === session.sellerId);
-  const isAdmin = session.role === "admin";
-
-  if (order.buyerId && !isBuyer && !isSeller && !isAdmin) {
+  if (!canAccessOrder(order, session, t)) {
     return (
       <div className="py-16 text-center">
         <PageContainer className="max-w-md mx-auto space-y-4">
@@ -109,7 +88,7 @@ export default async function OrderSuccessPage({
             Akses Terbatas
           </h1>
           <p className="text-sm text-neutral-600">
-            Anda tidak memiliki izin untuk melihat rincian pesanan ini. Silakan login dengan akun yang sesuai.
+            Anda tidak memiliki izin untuk melihat rincian pesanan ini. Silakan login dengan akun yang sesuai atau gunakan tautan resmi Anda.
           </p>
           <Link href="/login" className={buttonVariants({ className: "w-full" })}>
             Masuk ke Akun
@@ -200,17 +179,22 @@ export default async function OrderSuccessPage({
         {/* Tombol Bayar Sekarang / Cek Status jika pending payment */}
         {order.status === "pending_payment" && (
           <div className="p-4 sm:p-5 bg-amber-50 border border-amber-200 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
-            <div className="space-y-0.5">
+            <div className="space-y-1">
               <p className="text-sm font-bold text-amber-950 flex items-center gap-1.5">
                 <Clock className="w-4 h-4 text-amber-700" /> Belum Menyelesaikan Pembayaran?
               </p>
               <p className="text-xs text-amber-900/80">
                 Klik tombol di samping untuk membuka jendela Midtrans Snap atau verifikasi status pembayaran terbaru.
               </p>
+              <PaymentStatusPoller
+                orderId={order.id}
+                accessToken={t || order.accessToken || undefined}
+              />
             </div>
             <ResumePaymentButton
               orderId={order.id}
               orderNumber={order.orderNumber}
+              accessToken={t || order.accessToken || undefined}
             />
           </div>
         )}

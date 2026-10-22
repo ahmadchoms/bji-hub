@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -39,6 +39,8 @@ import {
 } from "@/actions/order.actions";
 import { updateBuyerProfileAction } from "@/actions/auth.actions";
 import { useCart } from "@/lib/cart";
+import { computeTotalWeightGrams } from "@/lib/shipping-weight";
+import { useSnap } from "@/hooks/use-snap";
 import { cn } from "@/lib/utils";
 
 interface CheckoutFormProps {
@@ -108,6 +110,17 @@ export function CheckoutForm({
   const [shippingRates, setShippingRates] = useState<ShippingRate[]>([]);
   const [selectedCourierId, setSelectedCourierId] = useState<string>("");
   const [isLoadingShipping, setIsLoadingShipping] = useState<boolean>(false);
+  const [shippingError, setShippingError] = useState<string | null>(null);
+  const [shippingRetryCount, setShippingRetryCount] = useState<number>(0);
+
+  const { pay } = useSnap();
+  const idempotencyKeyRef = useRef<string>("");
+  if (!idempotencyKeyRef.current) {
+    idempotencyKeyRef.current =
+      typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `idem-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  }
 
   const selectedCourier =
     shippingRates.find((r) => r.id === selectedCourierId) || null;
@@ -121,7 +134,10 @@ export function CheckoutForm({
     ? activeItems.reduce((acc, i) => acc + i.price * i.quantity, 0)
     : Number(listing.price) * quantity;
 
-  const totalWeightGrams = Math.max(1000, activeQuantity * 1000);
+  const weightItems = activeItems
+    ? activeItems.map((i) => ({ quantity: i.quantity, unit: i.unit }))
+    : [{ quantity, unit: listing.unit }];
+  const totalWeightGrams = computeTotalWeightGrams(weightItems, activeQuantity);
   const shippingCost = selectedCourier?.cost || 0;
   const serviceFee = 1500;
   const totalAmount = subtotal + shippingCost + serviceFee;
@@ -134,28 +150,40 @@ export function CheckoutForm({
       setShippingRates([]);
       setSelectedCourierId("");
       setIsLoadingShipping(false);
+      setShippingError(null);
       return;
     }
 
     setIsLoadingShipping(true);
+    setShippingError(null);
+
     const timer = setTimeout(async () => {
       try {
         const res = await getShippingRatesAction({
           originCity: listing.seller.city,
           originProvince: listing.seller.province,
           destinationCity: cleanCity,
+          destinationProvince: buyerProvince,
           weightGrams: totalWeightGrams,
         });
-        if (!canceled && res.success && res.data) {
-          const rates = res.data;
-          setShippingRates(rates);
-          if (rates.length > 0) {
-            setSelectedCourierId((prev) =>
-              rates.some((r) => r.id === prev) ? prev : rates[0].id,
-            );
+        if (!canceled) {
+          if (res.success && res.data) {
+            const rates = res.data;
+            setShippingRates(rates);
+            if (rates.length > 0) {
+              setSelectedCourierId((prev) =>
+                rates.some((r) => r.id === prev) ? prev : rates[0].id,
+              );
+            } else {
+              setSelectedCourierId("");
+            }
           } else {
-            setSelectedCourierId("");
+            setShippingError(res.error || "Gagal menghitung ongkos kirim");
           }
+        }
+      } catch {
+        if (!canceled) {
+          setShippingError("Terjadi gangguan jaringan saat menghitung ongkos kirim.");
         }
       } finally {
         if (!canceled) setIsLoadingShipping(false);
@@ -166,11 +194,15 @@ export function CheckoutForm({
       canceled = true;
       clearTimeout(timer);
     };
-  }, [totalWeightGrams, buyerCity, listing.seller.city, listing.seller.province]);
+  }, [totalWeightGrams, buyerCity, buyerProvince, listing.seller.city, listing.seller.province, shippingRetryCount]);
 
   const handlePay = () => {
     if (!buyerName.trim()) {
       toast.error("Nama penerima wajib diisi");
+      return;
+    }
+    if (!buyerEmail.trim() || !buyerEmail.includes("@")) {
+      toast.error("Alamat email penerima wajib diisi dengan format yang valid");
       return;
     }
     if (!buyerPhone.trim()) {
@@ -185,8 +217,12 @@ export function CheckoutForm({
       toast.error("Alamat pengiriman lengkap wajib diisi");
       return;
     }
-    if (!selectedCourier) {
-      toast.error("Silakan masukkan kota dan pilih opsi pengiriman terlebih dahulu");
+    if (isLoadingShipping) {
+      toast.error("Mohon tunggu, opsi pengiriman sedang dimuat...");
+      return;
+    }
+    if (shippingError || !selectedCourier) {
+      toast.error("Silakan tentukan alamat tujuan dan pilih opsi pengiriman yang valid");
       return;
     }
 
@@ -200,15 +236,16 @@ export function CheckoutForm({
         const res = await createCheckoutOrderAction({
           listingId: listing.id,
           quantity: activeQuantity,
-          buyerName,
-          buyerEmail: buyerEmail || "buyer@bijihub.com",
-          buyerPhone,
-          buyerAddress,
-          buyerCity,
-          shippingCourier: `${selectedCourier.courierName} ${selectedCourier.service}`,
-          shippingCost,
+          buyerName: buyerName.trim(),
+          buyerEmail: buyerEmail.trim(),
+          buyerPhone: buyerPhone.trim(),
+          buyerAddress: buyerAddress.trim(),
+          buyerCity: buyerCity.trim(),
+          buyerProvince: buyerProvince?.trim(),
+          shippingRateId: selectedCourier.id,
+          idempotencyKey: idempotencyKeyRef.current,
           grindSize: grindParam,
-          notes,
+          notes: notes.trim(),
           ...(activeItems && activeItems.length > 0
             ? {
                 items: activeItems.map((i) => ({
@@ -225,43 +262,51 @@ export function CheckoutForm({
           return;
         }
 
-        // Clean items from cart if checkout came from cart
-        if (activeItems && activeItems.length > 0) {
-          activeItems.forEach((i) => removeFromCart(i.listingId, i.grindSize));
+        // Reset idempotencyKey on successful creation so a new checkout session has a fresh key
+        if (typeof crypto !== "undefined" && crypto.randomUUID) {
+          idempotencyKeyRef.current = crypto.randomUUID();
         }
 
-        const { snapToken, orderNumber } = res.data;
+        const { snapToken, orderNumber, accessToken } = res.data;
+        const redirectUrl = accessToken
+          ? `/order/success?orderNumber=${orderNumber}&t=${encodeURIComponent(accessToken)}`
+          : `/order/success?orderNumber=${orderNumber}`;
 
-        // If Midtrans Snap is loaded on window
-        if (
-          snapToken &&
-          typeof window !== "undefined" &&
-          (window as unknown as { snap?: { pay: (token: string, options: unknown) => void } }).snap
-        ) {
-          const snap = (window as unknown as { snap: { pay: (token: string, options: unknown) => void } }).snap;
-          snap.pay(snapToken, {
-            onSuccess: () => {
-              toast.success("Pembayaran berhasil!");
-              router.push(`/order/success?orderNumber=${orderNumber}`);
-            },
-            onPending: () => {
-              toast.info("Menunggu pembayaran Anda diselesaikan.");
-              router.push(`/order/success?orderNumber=${orderNumber}`);
-            },
-            onError: () => {
-              toast.error("Pembayaran dibatalkan atau gagal.");
-            },
-            onClose: () => {
-              toast.info("Jendela pembayaran ditutup.");
-              router.push(`/order/success?orderNumber=${orderNumber}`);
-            },
-          });
-        } else {
-          // Mock or offline fallback
-          toast.success("Pesanan berhasil dibuat!", {
-            description: `Nomor pesanan: ${orderNumber}`,
-          });
-          router.push(`/order/success?orderNumber=${orderNumber}`);
+        if (!snapToken) {
+          toast.error(
+            "Pembayaran belum bisa dimulai. Pesanan Anda tersimpan, lanjutkan dari halaman pesanan.",
+          );
+          router.push(redirectUrl);
+          return;
+        }
+
+        const paidInitiated = pay(snapToken, {
+          onSuccess: () => {
+            if (activeItems && activeItems.length > 0) {
+              activeItems.forEach((i) => removeFromCart(i.listingId, i.grindSize));
+            }
+            toast.success("Pembayaran berhasil!");
+            router.push(redirectUrl);
+          },
+          onPending: () => {
+            if (activeItems && activeItems.length > 0) {
+              activeItems.forEach((i) => removeFromCart(i.listingId, i.grindSize));
+            }
+            toast.info("Menunggu pembayaran Anda diselesaikan.");
+            router.push(redirectUrl);
+          },
+          onError: () => {
+            toast.error("Pembayaran dibatalkan atau gagal.");
+          },
+          onClose: () => {
+            toast.info("Jendela pembayaran ditutup.");
+            router.push(redirectUrl);
+          },
+        });
+
+        if (!paidInitiated) {
+          toast.info("Jendela pembayaran otomatis tidak terbuka. Silakan lanjutkan dari rincian pesanan.");
+          router.push(redirectUrl);
         }
       } catch {
         toast.error("Terjadi kesalahan saat memproses pembayaran.");
@@ -692,6 +737,19 @@ export function CheckoutForm({
               <Loader2 className="w-5 h-5 mx-auto animate-spin text-primary-600" />
               <p>Menghubungkan ke ekspedisi & menghitung tarif pengiriman...</p>
             </div>
+          ) : shippingError ? (
+            <div className="p-6 border border-dashed border-rose-300 bg-rose-50/50 rounded-sm text-center text-xs text-rose-900 space-y-2">
+              <p className="font-semibold">{shippingError}</p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShippingRetryCount((c) => c + 1)}
+                className="text-xs border-rose-300 text-rose-800 hover:bg-rose-100"
+              >
+                Coba Hitung Ulang
+              </Button>
+            </div>
           ) : !buyerCity.trim() || buyerCity.trim().length < 3 ? (
             <div className="p-6 border border-dashed border-neutral-300 rounded-sm text-center text-xs text-neutral-500 space-y-1.5 bg-neutral-50/60">
               <MapPin className="w-5 h-5 mx-auto text-neutral-400" />
@@ -826,7 +884,13 @@ export function CheckoutForm({
             type="button"
             variant="primary"
             size="lg"
-            disabled={isPending || !selectedCourier || listing.stock === 0}
+            disabled={
+              isPending ||
+              !selectedCourier ||
+              listing.stock === 0 ||
+              isLoadingShipping ||
+              Boolean(shippingError)
+            }
             onClick={handlePay}
             className="w-full justify-center gap-2 font-semibold"
           >

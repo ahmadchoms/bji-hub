@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeAll } from "vitest";
+import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
+import { randomUUID } from "crypto";
 
 process.env.DATA_SOURCE = "mock";
 
@@ -15,7 +16,20 @@ import {
 import { getOrderById } from "@/lib/data/orders";
 
 describe("createCheckoutOrderAction", () => {
-  it("creates a single-item checkout order successfully", async () => {
+  const savedRajaKey = process.env.RAJAONGKIR_API_KEY;
+
+  beforeAll(() => {
+    delete process.env.RAJAONGKIR_API_KEY;
+  });
+
+  afterAll(() => {
+    if (savedRajaKey) {
+      process.env.RAJAONGKIR_API_KEY = savedRajaKey;
+    }
+  });
+
+  it("creates a single-item checkout order successfully and ignores manipulated client shipping cost", async () => {
+    const idempotencyKey = randomUUID();
     const res = await createCheckoutOrderAction({
       listingId: "list-1",
       quantity: 2,
@@ -24,8 +38,10 @@ describe("createCheckoutOrderAction", () => {
       buyerPhone: "081234567890",
       buyerAddress: "Jl. Dago No. 100",
       buyerCity: "Bandung",
-      shippingCourier: "JNE REG",
-      shippingCost: 18000,
+      buyerProvince: "Jawa Barat",
+      shippingRateId: "jne-reg",
+      shippingCost: 100, // manipulated by malicious client!
+      idempotencyKey,
       notes: "Tolong segera dikirim",
     });
 
@@ -33,27 +49,33 @@ describe("createCheckoutOrderAction", () => {
     if (!res.success) return;
 
     expect(res.data.orderNumber).toMatch(/^ORD-/);
+    expect(res.data.accessToken).toBeDefined();
+
     const order = await getOrderById(res.data.orderId);
     expect(order).toBeDefined();
     expect(order?.buyerName).toBe("Budi Santoso");
     expect(order?.quantity).toBe(2);
+    // Manipulated shipping cost 100 was ignored in favor of real server rate (e.g. >= 9000)
+    expect(order?.shippingCost).toBeGreaterThan(100);
   });
 
   it("creates a multi-item checkout order with aggregated subtotal and notes", async () => {
+    const idempotencyKey = randomUUID();
+    // list-1 (135,000) and list-9 (65,000) are both seller-1
     const res = await createCheckoutOrderAction({
       listingId: "list-1",
-      quantity: 1, // Fallback quantity
+      quantity: 1,
       buyerName: "Dewi Lestari",
       buyerEmail: "dewi@example.com",
       buyerPhone: "081987654321",
       buyerAddress: "Jl. Dipatiukur No. 12",
       buyerCity: "Bandung",
-      shippingCourier: "SiCepat REG",
-      shippingCost: 22000,
+      shippingRateId: "jne-reg",
+      idempotencyKey,
       notes: "Giling kasar untuk French Press",
       items: [
         { listingId: "list-1", quantity: 2 },
-        { listingId: "list-2", quantity: 1 },
+        { listingId: "list-9", quantity: 1 },
       ],
     });
 
@@ -62,13 +84,61 @@ describe("createCheckoutOrderAction", () => {
 
     const order = await getOrderById(res.data.orderId);
     expect(order).toBeDefined();
-    expect(order?.quantity).toBe(3); // 2 + 1
+    expect(order?.quantity).toBe(3);
     expect(order?.notes).toContain("Paket Pesanan:");
     expect(order?.notes).toContain("Giling kasar untuk French Press");
-    // list-1 price: 135000 * 2 = 270000; list-2 price: 110000 * 1 = 110000. Subtotal: 380000
-    // totalAmount: 380000 + 22000 + 1500 = 403500
-    expect(order?.subtotal).toBe(380000);
-    expect(order?.totalAmount).toBe(403500);
+    // list-1 price: 135000 * 2 = 270000; list-9 price: 65000 * 1 = 65000. Subtotal: 335000
+    expect(order?.subtotal).toBe(335000);
+  });
+
+  it("rejects multi-item checkout if items belong to different sellers", async () => {
+    const idempotencyKey = randomUUID();
+    // list-1 is seller-1; list-2 is seller-2
+    const res = await createCheckoutOrderAction({
+      listingId: "list-1",
+      quantity: 1,
+      buyerName: "Buyer Multi",
+      buyerEmail: "multi@example.com",
+      buyerPhone: "081234567890",
+      buyerAddress: "Jl. Merdeka",
+      buyerCity: "Jakarta",
+      shippingRateId: "jne-reg",
+      idempotencyKey,
+      items: [
+        { listingId: "list-1", quantity: 1 },
+        { listingId: "list-2", quantity: 1 },
+      ],
+    });
+
+    expect(res.success).toBe(false);
+    if (!res.success) {
+      expect(res.error).toContain("Satu pembayaran hanya untuk satu toko");
+    }
+  });
+
+  it("is idempotent: two calls with same idempotencyKey return the same order", async () => {
+    const idempotencyKey = randomUUID();
+    const payload = {
+      listingId: "list-1",
+      quantity: 1,
+      buyerName: "Idempotent Buyer",
+      buyerEmail: "idem@example.com",
+      buyerPhone: "081234567890",
+      buyerAddress: "Jl. Asia Afrika",
+      buyerCity: "Bandung",
+      shippingRateId: "jne-reg",
+      idempotencyKey,
+    };
+
+    const first = await createCheckoutOrderAction(payload);
+    const second = await createCheckoutOrderAction(payload);
+
+    expect(first.success).toBe(true);
+    expect(second.success).toBe(true);
+    if (!first.success || !second.success) return;
+
+    expect(first.data.orderNumber).toBe(second.data.orderNumber);
+    expect(first.data.orderId).toBe(second.data.orderId);
   });
 
   it("fails if any product minimum order quantity is not met", async () => {
@@ -80,8 +150,8 @@ describe("createCheckoutOrderAction", () => {
       buyerPhone: "081234567890",
       buyerAddress: "Jl. Dago",
       buyerCity: "Bandung",
-      shippingCourier: "JNE",
-      shippingCost: 10000,
+      shippingRateId: "jne-reg",
+      idempotencyKey: randomUUID(),
     });
 
     expect(res.success).toBe(false);
@@ -96,8 +166,8 @@ describe("createCheckoutOrderAction", () => {
       buyerPhone: "081234567890",
       buyerAddress: "Jl. Riau No. 15",
       buyerCity: "Bandung",
-      shippingCourier: "JNE REG",
-      shippingCost: 15000,
+      shippingRateId: "jne-reg",
+      idempotencyKey: randomUUID(),
       grindSize: "Giling Halus",
       notes: "Tolong pack rapi",
     });
@@ -120,8 +190,8 @@ describe("createCheckoutOrderAction", () => {
       buyerPhone: "081234567890",
       buyerAddress: "Jl. Sudirman",
       buyerCity: "Jakarta",
-      shippingCourier: "JNE",
-      shippingCost: 10000,
+      shippingRateId: "jne-reg",
+      idempotencyKey: randomUUID(),
     });
 
     expect(res.success).toBe(false);
@@ -147,8 +217,8 @@ describe("createCheckoutOrderAction", () => {
       buyerPhone: "081234567890",
       buyerAddress: "Jl. Takengon",
       buyerCity: "Takengon",
-      shippingCourier: "JNE",
-      shippingCost: 10000,
+      shippingRateId: "jne-reg",
+      idempotencyKey: randomUUID(),
     });
 
     expect(res.success).toBe(false);
@@ -160,31 +230,24 @@ describe("createCheckoutOrderAction", () => {
   });
 
   it("calculates shipping rates via getShippingRatesAction server action", async () => {
-    const prevKey = process.env.RAJAONGKIR_API_KEY;
-    delete process.env.RAJAONGKIR_API_KEY;
+    const res = await getShippingRatesAction({
+      originCity: "Takengon",
+      originProvince: "Aceh",
+      destinationCity: "Bandung",
+      destinationProvince: "Jawa Barat",
+      weightGrams: 2000,
+    });
 
-    try {
-      const res = await getShippingRatesAction({
-        originCity: "Takengon",
-        originProvince: "Aceh",
-        destinationCity: "Bandung",
-        destinationProvince: "Jawa Barat",
-        weightGrams: 2000,
-      });
+    expect(res.success).toBe(true);
+    if (!res.success) return;
 
-      expect(res.success).toBe(true);
-      if (!res.success) return;
-
-      expect(res.data.length).toBeGreaterThan(0);
-      const jne = res.data.find((r) => r.courierCode === "jne");
-      expect(jne).toBeDefined();
-      expect(jne?.cost).toBeGreaterThan(0);
-    } finally {
-      if (prevKey) process.env.RAJAONGKIR_API_KEY = prevKey;
-    }
+    expect(res.data.length).toBeGreaterThan(0);
+    const jne = res.data.find((r) => r.courierCode === "jne");
+    expect(jne).toBeDefined();
+    expect(jne?.cost).toBeGreaterThan(0);
   });
 
-  it("checks order payment status via checkOrderPaymentStatusAction", async () => {
+  it("checks order payment status via checkOrderPaymentStatusAction with valid token", async () => {
     const created = await createCheckoutOrderAction({
       listingId: "list-1",
       quantity: 1,
@@ -193,14 +256,17 @@ describe("createCheckoutOrderAction", () => {
       buyerPhone: "081234567890",
       buyerAddress: "Jl. Test No. 1",
       buyerCity: "Bandung",
-      shippingCourier: "JNE",
-      shippingCost: 10000,
+      shippingRateId: "jne-reg",
+      idempotencyKey: randomUUID(),
     });
 
     expect(created.success).toBe(true);
     if (!created.success) return;
 
-    const res = await checkOrderPaymentStatusAction(created.data.orderId);
+    const res = await checkOrderPaymentStatusAction(
+      created.data.orderId,
+      created.data.accessToken,
+    );
     expect(res.success).toBe(true);
     if (!res.success) return;
     expect(res.data.status).toBe("pending_payment");

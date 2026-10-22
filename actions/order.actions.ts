@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
+import { randomBytes } from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 import { getListingBySlug, getListingById, getSellerById } from "@/lib/data";
@@ -10,6 +11,8 @@ import {
   createOrder,
   getOrderById,
   updateOrderStatus,
+  updateOrderSnapToken,
+  generateOrderNumber,
   autoCompleteExpiredShippedOrders,
 } from "@/lib/data/orders";
 import { createReview } from "@/lib/data/reviews";
@@ -19,6 +22,8 @@ import {
   mapMidtransStatus,
 } from "@/lib/midtrans";
 import { getSession, requireRole } from "@/lib/auth/session";
+import { canAccessOrder } from "@/lib/auth/order-access";
+import { computeTotalWeightGrams } from "@/lib/shipping-weight";
 import {
   calculateShippingRates,
   trackShipmentWaybill,
@@ -45,8 +50,11 @@ const checkoutSchema = z.object({
   buyerPhone: z.string().min(8, "Nomor telepon/WhatsApp wajib diisi"),
   buyerAddress: z.string().min(5, "Alamat pengiriman minimal 5 karakter"),
   buyerCity: z.string().min(2, "Kota pengiriman wajib diisi"),
-  shippingCourier: z.string().min(1, "Kurir pengiriman wajib dipilih"),
-  shippingCost: z.number().min(0, "Ongkos kirim tidak valid"),
+  buyerProvince: z.string().optional(),
+  shippingRateId: z.string().min(1, "Opsi pengiriman wajib dipilih"),
+  idempotencyKey: z.string().uuid("Kunci idempotensi tidak valid"),
+  shippingCost: z.number().optional(), // ignored in favor of server calculation
+  shippingCourier: z.string().optional(), // ignored in favor of server calculation
   grindSize: z.string().optional(),
   notes: z.string().max(500).optional(),
   items: z.array(checkoutItemSchema).optional(),
@@ -62,6 +70,7 @@ export async function createCheckoutOrderAction(
     orderNumber: string;
     snapToken: string | null;
     totalAmount: number;
+    accessToken: string;
   }>
 > {
   const parsed = checkoutSchema.safeParse(input);
@@ -80,118 +89,154 @@ export async function createCheckoutOrderAction(
     buyerPhone,
     buyerAddress,
     buyerCity,
-    shippingCourier,
-    shippingCost,
+    buyerProvince,
+    shippingRateId,
+    idempotencyKey,
     grindSize,
     notes,
     items,
   } = parsed.data;
 
-  // 1. Fetch primary listing details
-  const listing =
-    (await getListingById(listingId)) || (await getListingBySlug(listingId));
-  if (!listing) {
-    return fail("Produk tidak ditemukan atau sudah tidak tersedia");
+  // 1. Normalize & deduplicate items (same listingId + grindSize)
+  const rawItems =
+    items && items.length > 0
+      ? items
+      : [{ listingId, quantity, grindSize }];
+
+  const deduplicatedMap = new Map<
+    string,
+    { listingId: string; quantity: number; grindSize?: string }
+  >();
+
+  for (const it of rawItems) {
+    const key = `${it.listingId}::${it.grindSize || ""}`;
+    const existing = deduplicatedMap.get(key);
+    if (existing) {
+      existing.quantity += it.quantity;
+    } else {
+      deduplicatedMap.set(key, { ...it });
+    }
+  }
+  const normalizedItems = Array.from(deduplicatedMap.values());
+
+  // 2. Fetch and validate all listings
+  const resolvedItems = [];
+  for (const it of normalizedItems) {
+    const l =
+      (await getListingById(it.listingId)) ||
+      (await getListingBySlug(it.listingId));
+    if (!l) {
+      return fail(
+        `Salah satu produk dalam pesanan tidak ditemukan (${it.listingId})`,
+      );
+    }
+    if (l.status && l.status !== "active") {
+      return fail(`Produk "${l.title}" sedang tidak aktif atau diarsipkan`);
+    }
+    if (l.stock === 0) {
+      return fail(`Maaf, stok untuk "${l.title}" telah habis terjual`);
+    }
+    if (l.stock !== undefined && it.quantity > l.stock) {
+      return fail(
+        `Pesanan untuk "${l.title}" (${it.quantity}) melebihi stok yang tersedia (${l.stock} ${l.unit})`,
+      );
+    }
+    if (l.minOrderQty !== undefined && it.quantity < l.minOrderQty) {
+      return fail(
+        `Minimal pemesanan untuk ${l.title} adalah ${l.minOrderQty} ${l.unit}`,
+      );
+    }
+    resolvedItems.push({
+      listing: l,
+      quantity: it.quantity,
+      grindSize: it.grindSize,
+    });
   }
 
-  const session = await getSession();
+  // 3. Enforce single seller across all items
+  const targetSellerId = resolvedItems[0].listing.sellerId;
+  for (const it of resolvedItems) {
+    if (it.listing.sellerId !== targetSellerId) {
+      return fail(
+        "Satu pembayaran hanya untuk satu toko. Pisahkan produk dari toko berbeda ke checkout terpisah.",
+      );
+    }
+  }
 
   // Self-purchase prevention
-  if (session.sellerId && listing.sellerId === session.sellerId) {
+  const session = await getSession();
+  if (session.sellerId && targetSellerId === session.sellerId) {
     return fail("Anda tidak dapat membeli produk dari toko Anda sendiri.");
   }
 
-  // Stock check guard
-  if (listing.stock === 0) {
-    return fail(`Maaf, stok untuk "${listing.title}" telah habis terjual`);
-  }
-
-  // 2. Compute items breakdown (multi-item vs single item)
+  // 4. Calculate subtotal and build items breakdown
   let subtotal = 0;
-  let totalQuantity = quantity;
-  let itemPrice = Number(listing.price);
-  let multiItemSummary = "";
+  let totalQuantity = 0;
+  const summaryList: string[] = [];
+  const weightItems: { quantity: number; unit?: string | null }[] = [];
+  const orderItemsData = [];
 
-  if (items && items.length > 0) {
-    let computedSubtotal = 0;
-    let computedTotalQty = 0;
-    const summaryList: string[] = [];
-
-    for (const item of items) {
-      const itemListing =
-        (await getListingById(item.listingId)) || (await getListingBySlug(item.listingId));
-      if (!itemListing) {
-        return fail(`Salah satu produk dalam pesanan tidak ditemukan (${item.listingId})`);
-      }
-      if (itemListing.stock === 0) {
-        return fail(`Maaf, stok untuk "${itemListing.title}" telah habis terjual`);
-      }
-      if (itemListing.stock !== undefined && item.quantity > itemListing.stock) {
-        return fail(
-          `Pesanan untuk "${itemListing.title}" (${item.quantity}) melebihi stok yang tersedia (${itemListing.stock} ${itemListing.unit})`,
-        );
-      }
-      if (item.quantity < itemListing.minOrderQty) {
-        return fail(
-          `Minimal pemesanan untuk ${itemListing.title} adalah ${itemListing.minOrderQty} ${itemListing.unit}`,
-        );
-      }
-      computedSubtotal += Number(itemListing.price) * item.quantity;
-      computedTotalQty += item.quantity;
-      const grindNote = item.grindSize ? ` [${item.grindSize}]` : "";
-      summaryList.push(
-        `${itemListing.title}${grindNote} (${item.quantity} ${itemListing.unit})`,
-      );
-    }
-
-    subtotal = computedSubtotal;
-    totalQuantity = computedTotalQty;
-    itemPrice = Math.round(subtotal / Math.max(1, totalQuantity));
-    if (summaryList.length > 1) {
-      multiItemSummary = `[Paket Pesanan: ${summaryList.join(", ")}]`;
-    }
-  } else {
-    if (listing.stock !== undefined && quantity > listing.stock) {
-      return fail(
-        `Pesanan (${quantity}) melebihi stok yang tersedia (${listing.stock} ${listing.unit})`,
-      );
-    }
-    if (quantity < listing.minOrderQty) {
-      return fail(
-        `Minimal pemesanan untuk produk ini adalah ${listing.minOrderQty} ${listing.unit}`,
-      );
-    }
-    subtotal = itemPrice * quantity;
+  for (const it of resolvedItems) {
+    const { listing: l, quantity: q, grindSize: gs } = it;
+    const itemSubtotal = Number(l.price) * q;
+    subtotal += itemSubtotal;
+    totalQuantity += q;
+    weightItems.push({ quantity: q, unit: l.unit });
+    const grindNote = gs ? ` [${gs}]` : "";
+    summaryList.push(`${l.title}${grindNote} (${q} ${l.unit})`);
+    orderItemsData.push({
+      listingId: l.id,
+      title: l.title,
+      unitPrice: Number(l.price),
+      quantity: q,
+      unit: l.unit || "250g",
+      grindSize: gs || null,
+    });
   }
 
-  const serviceFee = 1500; // Biaya layanan platform Biji Hub
-  const totalAmount = subtotal + shippingCost + serviceFee;
-  const singleItemGrind = !items && grindSize ? `[Gilingan: ${grindSize}]` : "";
+  // 5. Server-side shipping recalculation
+  const totalWeightGrams = computeTotalWeightGrams(weightItems, totalQuantity);
+  const seller = await getSellerById(targetSellerId);
+  const originCity =
+    seller?.city || resolvedItems[0].listing.seller?.city || "Jakarta";
+  const originProvince =
+    seller?.province || resolvedItems[0].listing.seller?.province;
+
+  const rates = await calculateShippingRates({
+    originCity,
+    originProvince,
+    destinationCity: buyerCity,
+    destinationProvince: buyerProvince,
+    weightGrams: totalWeightGrams,
+  });
+
+  const matchedRate = rates.find(
+    (r) => r.id === shippingRateId || r.id.startsWith(shippingRateId + "-"),
+  );
+  if (!matchedRate) {
+    return fail("Opsi pengiriman tidak valid, silakan pilih ulang");
+  }
+
+  const serverShippingCost = matchedRate.cost;
+  const serverShippingCourier = `${matchedRate.courierName} ${matchedRate.service}`;
+
+  const serviceFee = 1500;
+  const totalAmount = subtotal + serverShippingCost + serviceFee;
+  const multiItemSummary =
+    summaryList.length > 1 ? `[Paket Pesanan: ${summaryList.join(", ")}]` : "";
+  const singleItemGrind =
+    summaryList.length === 1 && resolvedItems[0].grindSize
+      ? `[Gilingan: ${resolvedItems[0].grindSize}]`
+      : "";
   const combinedNotes = [multiItemSummary || singleItemGrind, notes]
     .filter(Boolean)
     .join(" ");
 
-  const orderNumber = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(
-    100 + Math.random() * 900,
-  )}`;
-  const midtransOrderId = orderNumber;
-
-  // 3. Request Snap Token from Midtrans
-  let snapToken: string | null = null;
-  try {
-    snapToken = await createMidtransSnapToken({
-      orderId: midtransOrderId,
-      grossAmount: totalAmount,
-      customerName: buyerName,
-      customerEmail: buyerEmail,
-    });
-  } catch {
-    // If offline / sandbox mock
-  }
-
+  const orderNumber = generateOrderNumber();
+  const accessToken = randomBytes(24).toString("base64url");
   const buyerId = session.userId ?? null;
 
-  // 4. Save order to database
+  // 6. Persist order first (atomic with order_items in DB mode)
   const order = await createOrder({
     orderNumber,
     buyerId,
@@ -200,21 +245,41 @@ export async function createCheckoutOrderAction(
     buyerPhone,
     buyerAddress,
     buyerCity,
-    sellerId: listing.sellerId,
-    listingId: listing.id,
+    sellerId: targetSellerId,
+    listingId: resolvedItems[0].listing.id,
     quantity: totalQuantity,
-    itemPrice,
+    itemPrice: Number(resolvedItems[0].listing.price),
     subtotal,
-    shippingCost,
+    shippingCost: serverShippingCost,
     serviceFee,
     totalAmount,
-    shippingCourier,
-    snapToken,
-    midtransOrderId,
+    shippingCourier: serverShippingCourier,
+    midtransOrderId: orderNumber,
     notes: combinedNotes || null,
+    idempotencyKey,
+    accessToken,
+    items: orderItemsData,
   });
 
-  // 5. Cloud Sync: Automatically sync the buyer's shipping address to their cloud profile & session
+  // 7. Request Midtrans Snap Token
+  let snapToken: string | null = null;
+  if (process.env.MIDTRANS_SERVER_KEY) {
+    try {
+      snapToken = await createMidtransSnapToken({
+        orderId: order.midtransOrderId || order.orderNumber,
+        grossAmount: order.totalAmount,
+        customerName: buyerName,
+        customerEmail: buyerEmail,
+      });
+      if (snapToken) {
+        await updateOrderSnapToken(order.id, snapToken);
+      }
+    } catch {
+      // Payment gateway timeout / mock offline
+    }
+  }
+
+  // 8. Cloud sync buyer profile
   if (
     process.env.DATA_SOURCE !== "mock" &&
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
@@ -260,7 +325,8 @@ export async function createCheckoutOrderAction(
     orderId: order.id,
     orderNumber: order.orderNumber,
     snapToken,
-    totalAmount,
+    totalAmount: order.totalAmount,
+    accessToken: order.accessToken || accessToken,
   });
 }
 
@@ -552,6 +618,7 @@ export async function trackShipmentAction(
 
 export async function cancelPendingOrderAction(
   orderId: string,
+  accessToken?: string,
 ): Promise<ActionResult<{ success: boolean }>> {
   const session = await getSession();
   const order = await getOrderById(orderId);
@@ -561,10 +628,7 @@ export async function cancelPendingOrderAction(
     return fail("Hanya pesanan yang belum dibayar yang dapat dibatalkan");
   }
 
-  const isBuyer = Boolean(session.userId && order.buyerId === session.userId);
-  const isSeller = Boolean(session.sellerId && order.sellerId === session.sellerId);
-  const isAdmin = session.role === "admin";
-  if (!isBuyer && !isSeller && !isAdmin) {
+  if (!canAccessOrder(order, session, accessToken)) {
     return fail("Anda tidak memiliki akses untuk membatalkan pesanan ini");
   }
 
@@ -577,6 +641,7 @@ export async function cancelPendingOrderAction(
 
 export async function resumeOrderPaymentAction(
   orderId: string,
+  accessToken?: string,
 ): Promise<
   ActionResult<{
     snapToken: string | null;
@@ -588,9 +653,7 @@ export async function resumeOrderPaymentAction(
   const order = await getOrderById(orderId);
   if (!order) return fail("Pesanan tidak ditemukan");
 
-  const isBuyer = Boolean(session.userId && order.buyerId === session.userId);
-  const isAdmin = session.role === "admin";
-  if (!isBuyer && !isAdmin) {
+  if (!canAccessOrder(order, session, accessToken)) {
     return fail("Anda tidak memiliki akses ke pembayaran pesanan ini");
   }
 
@@ -599,7 +662,7 @@ export async function resumeOrderPaymentAction(
   }
 
   let snapToken = order.snapToken;
-  if (!snapToken) {
+  if (!snapToken && process.env.MIDTRANS_SERVER_KEY) {
     try {
       snapToken = await createMidtransSnapToken({
         orderId: order.midtransOrderId || order.orderNumber,
@@ -607,6 +670,9 @@ export async function resumeOrderPaymentAction(
         customerName: order.buyerName,
         customerEmail: order.buyerEmail,
       });
+      if (snapToken) {
+        await updateOrderSnapToken(order.id, snapToken);
+      }
     } catch {
       // offline / mock fallback
     }
@@ -621,9 +687,15 @@ export async function resumeOrderPaymentAction(
 
 export async function checkOrderPaymentStatusAction(
   orderIdOrNumber: string,
+  accessToken?: string,
 ): Promise<ActionResult<{ status: string; isPaid: boolean }>> {
+  const session = await getSession();
   const order = await getOrderById(orderIdOrNumber);
   if (!order) return fail("Pesanan tidak ditemukan");
+
+  if (!canAccessOrder(order, session, accessToken)) {
+    return fail("Anda tidak memiliki akses ke pesanan ini");
+  }
 
   if (
     order.status === "paid" ||
@@ -671,6 +743,7 @@ export async function checkOrderPaymentStatusAction(
 
   return ok({ status: order.status, isPaid: false });
 }
+
 
 
 

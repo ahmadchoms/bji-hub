@@ -88,7 +88,8 @@ export function OrderPrintModal({
 
   const handlePrint = () => {
     // Open clean print page in new tab and auto-trigger window.print()
-    const printUrl = `/order/invoice?orderNumber=${order.orderNumber}&mode=${mode}&autoPrint=true`;
+    const tokenQuery = order.accessToken ? `&t=${encodeURIComponent(order.accessToken)}` : "";
+    const printUrl = `/order/invoice?orderNumber=${order.orderNumber}&mode=${mode}&autoPrint=true${tokenQuery}`;
     window.open(printUrl, "_blank", "width=850,height=900");
   };
 
@@ -428,7 +429,7 @@ export function OrderPrintModal({
 
           <div className="flex items-center gap-2">
             <a
-              href={`/order/invoice?orderNumber=${order.orderNumber}&mode=${mode}`}
+              href={`/order/invoice?orderNumber=${order.orderNumber}&mode=${mode}${order.accessToken ? `&t=${encodeURIComponent(order.accessToken)}` : ""}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-xs text-neutral-600 hover:text-neutral-900 px-3 py-1.5 rounded border border-neutral-300 font-medium"

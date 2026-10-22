@@ -6,7 +6,9 @@ import {
   createOrder,
   getOrderById,
   updateOrderStatus,
+  transitionOrderStatus,
   autoCompleteExpiredShippedOrders,
+  autoCancelExpiredPendingOrders,
 } from "@/lib/data/orders";
 
 describe("orders data layer & auto-complete", () => {
@@ -34,8 +36,12 @@ describe("orders data layer & auto-complete", () => {
     expect(order.orderNumber).toBe(orderNumber);
     expect(order.status).toBe("pending_payment");
 
-    // Transition to shipped
-    await updateOrderStatus(order.id, "shipped", "JNE123456");
+    // Transition to paid first, then shipped
+    const paidRes = await updateOrderStatus(order.id, "paid");
+    expect(paidRes).toBe(true);
+
+    const shipRes = await updateOrderStatus(order.id, "shipped", "JNE123456");
+    expect(shipRes).toBe(true);
     let updated = await getOrderById(order.id);
     expect(updated?.status).toBe("shipped");
     expect(updated?.trackingNumber).toBe("JNE123456");
@@ -75,7 +81,8 @@ describe("orders data layer & auto-complete", () => {
       midtransOrderId: orderNumber,
     });
 
-    // Mark as shipped with old date (8 days ago)
+    // Mark as paid then shipped with old date
+    await updateOrderStatus(order.id, "paid");
     await updateOrderStatus(order.id, "shipped", "EXP888");
     const fetched = await getOrderById(order.id);
     if (fetched) {
@@ -91,18 +98,60 @@ describe("orders data layer & auto-complete", () => {
     expect(after?.status).toBe("completed");
   });
 
-  it("decrements listing stock when order status transitions to paid", async () => {
-    const { mockListings } = await import("@/lib/mock/data");
-    const listing = mockListings[0];
-    listing.stock = 20;
-
-    const orderNumber = `ORD-STOCK-${Date.now()}`;
+  it("enforces state machine transition restrictions", async () => {
+    const orderNumber = `ORD-RESTRICT-${Date.now()}`;
     const order = await createOrder({
       orderNumber,
-      buyerName: "Stock Buyer",
-      buyerEmail: "stock@example.com",
-      buyerPhone: "08123456780",
-      buyerAddress: "Jl Kopi No 10",
+      buyerName: "Restrict Buyer",
+      buyerEmail: "restrict@example.com",
+      buyerPhone: "08123456781",
+      buyerAddress: "Jl Aman No 1",
+      buyerCity: "Bandung",
+      sellerId: "seller-1",
+      listingId: "list-1",
+      quantity: 1,
+      itemPrice: 50000,
+      subtotal: 50000,
+      shippingCost: 10000,
+      serviceFee: 1500,
+      totalAmount: 61500,
+      shippingCourier: "JNE",
+      midtransOrderId: orderNumber,
+    });
+
+    // pending_payment -> shipped is rejected
+    const r1 = await transitionOrderStatus(order.id, "shipped");
+    expect(r1.applied).toBe(false);
+
+    // pending_payment -> paid is accepted
+    const r2 = await transitionOrderStatus(order.id, "paid");
+    expect(r2.applied).toBe(true);
+
+    // paid -> completed is rejected (must be shipped first)
+    const r3 = await transitionOrderStatus(order.id, "completed");
+    expect(r3.applied).toBe(false);
+
+    // paid -> canceled is accepted
+    const r4 = await transitionOrderStatus(order.id, "canceled");
+    expect(r4.applied).toBe(true);
+
+    // canceled -> paid is rejected
+    const r5 = await transitionOrderStatus(order.id, "paid");
+    expect(r5.applied).toBe(false);
+  });
+
+  it("decrements listing stock once on multiple transition calls and restores on cancel", async () => {
+    const { mockListings } = await import("@/lib/mock/data");
+    const listing = mockListings[0];
+    listing.stock = 30;
+
+    const orderNumber = `ORD-MULTI-CALL-${Date.now()}`;
+    const order = await createOrder({
+      orderNumber,
+      buyerName: "Idempotent Buyer",
+      buyerEmail: "idem@example.com",
+      buyerPhone: "08123456782",
+      buyerAddress: "Jl Kopi No 11",
       buyerCity: "Bandung",
       sellerId: listing.sellerId,
       listingId: listing.id,
@@ -116,15 +165,52 @@ describe("orders data layer & auto-complete", () => {
       midtransOrderId: orderNumber,
     });
 
-    expect(listing.stock).toBe(20);
+    // First paid call: applied and stock decreases
+    const call1 = await transitionOrderStatus(order.id, "paid");
+    expect(call1.applied).toBe(true);
+    expect(listing.stock).toBe(25);
 
-    // Transition to paid
-    await updateOrderStatus(order.id, "paid");
-    expect(listing.stock).toBe(15);
+    // Second paid call: idempotent, not applied, stock untouched
+    const call2 = await transitionOrderStatus(order.id, "paid");
+    expect(call2.applied).toBe(false);
+    expect(listing.stock).toBe(25);
 
-    // Transitioning from paid to canceled restores stock
-    await updateOrderStatus(order.id, "canceled");
-    expect(listing.stock).toBe(20);
+    // paid -> canceled restores stock
+    const call3 = await transitionOrderStatus(order.id, "canceled");
+    expect(call3.applied).toBe(true);
+    expect(listing.stock).toBe(30);
+  });
+
+  it("pending_payment -> canceled does not change stock", async () => {
+    const { mockListings } = await import("@/lib/mock/data");
+    const listing = mockListings[0];
+    const initialStock = listing.stock ?? 30;
+
+    const orderNumber = `ORD-CANCEL-PENDING-${Date.now()}`;
+    const order = await createOrder({
+      orderNumber,
+      buyerName: "Never Paid Buyer",
+      buyerEmail: "never@example.com",
+      buyerPhone: "08123456783",
+      buyerAddress: "Jl Belum Bayar No 1",
+      buyerCity: "Jakarta",
+      sellerId: listing.sellerId,
+      listingId: listing.id,
+      quantity: 3,
+      itemPrice: 50000,
+      subtotal: 150000,
+      shippingCost: 10000,
+      serviceFee: 1500,
+      totalAmount: 161500,
+      shippingCourier: "JNE",
+      midtransOrderId: orderNumber,
+    });
+
+    expect(listing.stock).toBe(initialStock);
+
+    const cancelRes = await transitionOrderStatus(order.id, "canceled");
+    expect(cancelRes.applied).toBe(true);
+    expect(listing.stock).toBe(initialStock);
   });
 
   it("auto-cancels pending orders older than 24 hours", async () => {
@@ -150,11 +236,9 @@ describe("orders data layer & auto-complete", () => {
 
     const fetched = await getOrderById(order.id);
     if (fetched) {
-      // 25 hours ago
       fetched.createdAt = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString();
     }
 
-    const { autoCancelExpiredPendingOrders } = await import("@/lib/data/orders");
     const result = await autoCancelExpiredPendingOrders(24);
     expect(result.canceledCount).toBeGreaterThanOrEqual(1);
     expect(result.orderIds).toContain(order.id);

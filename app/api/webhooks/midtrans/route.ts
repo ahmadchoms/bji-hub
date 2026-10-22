@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 2. Check if it is a marketplace product order
-  const { updateOrderStatus, getOrderById } = await import("@/lib/data/orders");
+  const { transitionOrderStatus, getOrderById } = await import("@/lib/data/orders");
   const nextStatus = mapMidtransStatus(
     body.transaction_status,
     body.fraud_status
@@ -50,13 +50,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Amount mismatch" }, { status: 400 });
     }
 
-    // Prevent state regression if order is already processed
-    if (["paid", "shipped", "completed"].includes(order.status) && orderStatus !== "paid") {
-      return NextResponse.json({ received: true, ignored: "Already processed" });
+    const transitionRes = await transitionOrderStatus(order.id, orderStatus);
+    if (!transitionRes.applied) {
+      if (order.status === orderStatus) {
+        return NextResponse.json({ received: true, ignored: "duplicate" });
+      }
+      return NextResponse.json({ received: true, ignored: "invalid_transition" });
     }
 
-    const updated = await updateOrderStatus(order.id, orderStatus);
-    if (updated && orderStatus === "paid") {
+    if (orderStatus === "paid") {
       try {
         const { sendOrderPaidEmail, sendNewOrderSellerEmail } = await import("@/lib/email");
         sendOrderPaidEmail(order).catch((e) =>

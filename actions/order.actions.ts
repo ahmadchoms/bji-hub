@@ -644,17 +644,19 @@ export async function checkOrderPaymentStatusAction(
           midtransData.fraudStatus,
         );
         if (mapped === "paid") {
-          await updateOrderStatus(order.id, "paid");
-          sendOrderPaidEmail({ ...order, status: "paid" }).catch(() => {});
-          getSellerById(order.sellerId)
-            .then((seller) => {
-              sendNewOrderSellerEmail({
-                order: { ...order, status: "paid" },
-                sellerEmail: seller?.user?.email,
-                sellerName: seller?.businessName || order.sellerName,
-              }).catch(() => {});
-            })
-            .catch(() => {});
+          const applied = await updateOrderStatus(order.id, "paid");
+          if (applied) {
+            sendOrderPaidEmail({ ...order, status: "paid" }).catch(() => {});
+            getSellerById(order.sellerId)
+              .then((seller) => {
+                sendNewOrderSellerEmail({
+                  order: { ...order, status: "paid" },
+                  sellerEmail: seller?.user?.email,
+                  sellerName: seller?.businessName || order.sellerName,
+                }).catch(() => {});
+              })
+              .catch(() => {});
+          }
 
           revalidatePath("/order/success");
           revalidatePath("/profile");

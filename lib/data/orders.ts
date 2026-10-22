@@ -417,14 +417,220 @@ export async function incrementListingStock(
   return { success: false };
 }
 
-const VALID_ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  pending_payment: ["pending_payment", "paid", "shipped", "canceled"],
-  paid: ["paid", "shipped", "canceled", "disputed", "completed"],
-  shipped: ["shipped", "completed", "disputed"],
-  disputed: ["disputed", "completed", "canceled", "paid", "shipped"],
-  completed: ["completed"],
-  canceled: ["canceled"],
+const ALLOWED_FROM: Record<OrderStatus, OrderStatus[]> = {
+  pending_payment: [],
+  paid: ["pending_payment"],
+  shipped: ["paid", "disputed"],
+  completed: ["shipped", "disputed"],
+  disputed: ["paid", "shipped"],
+  canceled: ["pending_payment", "paid", "disputed"],
 };
+const RESTOCK_ON_CANCEL_FROM: OrderStatus[] = ["paid", "disputed"];
+
+export interface TransitionExtra {
+  trackingNumber?: string;
+  disputeReason?: string;
+  disputeEvidenceUrl?: string;
+}
+
+export async function transitionOrderStatus(
+  orderId: string,
+  to: OrderStatus,
+  extra: TransitionExtra = {},
+): Promise<{ applied: boolean; order: Order | null }> {
+  const pool = getPool();
+  const now = new Date().toISOString();
+
+  if (pool) {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      // 1. Lock the order row
+      const selectRes = await client.query(
+        `SELECT id, status, listing_id, quantity, seller_id
+         FROM public.orders
+         WHERE id = $1 OR order_number = $1 OR midtrans_order_id = $1
+         FOR UPDATE`,
+        [orderId],
+      );
+
+      if (selectRes.rowCount === 0) {
+        await client.query("ROLLBACK");
+        return { applied: false, order: null };
+      }
+
+      const row = selectRes.rows[0];
+      const currentStatus = row.status as OrderStatus;
+      const internalOrderId = row.id;
+
+      // Idempotent: already in destination status
+      if (currentStatus === to) {
+        await client.query("ROLLBACK");
+        const existingOrder = await getOrderById(internalOrderId);
+        return { applied: false, order: existingOrder };
+      }
+
+      // Check allowed transition
+      const allowedOrigins = ALLOWED_FROM[to] || [];
+      if (!allowedOrigins.includes(currentStatus)) {
+        await client.query("ROLLBACK");
+        const existingOrder = await getOrderById(internalOrderId);
+        return { applied: false, order: existingOrder };
+      }
+
+      // 2. Update status and extra fields
+      await client.query(
+        `UPDATE public.orders
+         SET status = $1,
+             updated_at = $2,
+             tracking_number = COALESCE($3, tracking_number),
+             dispute_reason = COALESCE($4, dispute_reason),
+             dispute_evidence_url = COALESCE($5, dispute_evidence_url)
+         WHERE id = $6`,
+        [
+          to,
+          now,
+          extra.trackingNumber ?? null,
+          extra.disputeReason ?? null,
+          extra.disputeEvidenceUrl ?? null,
+          internalOrderId,
+        ],
+      );
+
+      // 3. Stock management
+      const itemsRes = await client.query(
+        `SELECT listing_id, quantity FROM public.order_items WHERE order_id = $1`,
+        [internalOrderId],
+      );
+      const itemsToUpdate =
+        itemsRes.rows.length > 0
+          ? itemsRes.rows.map((r) => ({ listingId: r.listing_id, quantity: Number(r.quantity) }))
+          : row.listing_id
+            ? [{ listingId: row.listing_id, quantity: Number(row.quantity || 1) }]
+            : [];
+
+      let lowStockAlert: { sellerId: string; listingTitle: string; remainingStock: number } | null = null;
+
+      if (to === "paid") {
+        for (const item of itemsToUpdate) {
+          const stockRes = await client.query(
+            `UPDATE public.listings
+             SET stock = GREATEST(stock - $1, 0),
+                 status = CASE WHEN stock - $1 <= 0 THEN 'archived' ELSE status END
+             WHERE id = $2 AND stock IS NOT NULL
+             RETURNING stock, title`,
+            [item.quantity, item.listingId],
+          );
+          if (stockRes.rows.length > 0) {
+            const rem = Number(stockRes.rows[0].stock);
+            if (rem <= 5) {
+              lowStockAlert = {
+                sellerId: row.seller_id,
+                listingTitle: stockRes.rows[0].title || "Produk",
+                remainingStock: rem,
+              };
+            }
+          }
+        }
+      } else if (to === "canceled" && RESTOCK_ON_CANCEL_FROM.includes(currentStatus)) {
+        for (const item of itemsToUpdate) {
+          await client.query(
+            `UPDATE public.listings
+             SET stock = stock + $1,
+                 status = CASE WHEN status = 'archived' THEN 'active' ELSE status END
+             WHERE id = $2 AND stock IS NOT NULL`,
+            [item.quantity, item.listingId],
+          );
+        }
+      }
+
+      await client.query("COMMIT");
+
+      // Send low-stock alert email to the actual seller email if applicable
+      if (lowStockAlert) {
+        import("@/lib/data")
+          .then(({ getSellerById }) => getSellerById(lowStockAlert!.sellerId))
+          .then((seller) => {
+            if (seller?.user?.email) {
+              import("@/lib/email").then(({ sendLowStockAlertEmail }) => {
+                sendLowStockAlertEmail({
+                  sellerEmail: seller.user!.email,
+                  sellerName: seller.businessName || "Penjual",
+                  listingTitle: lowStockAlert!.listingTitle,
+                  remainingStock: lowStockAlert!.remainingStock,
+                  unit: "unit",
+                }).catch(() => {});
+              });
+            }
+          })
+          .catch(() => {});
+      }
+
+      const updated = await getOrderById(internalOrderId);
+      return { applied: true, order: updated };
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+
+  // Mock / In-Memory Mode
+  const existing = mockOrders.find(
+    (o) =>
+      o.id === orderId ||
+      o.orderNumber === orderId ||
+      o.midtransOrderId === orderId,
+  );
+  if (!existing) {
+    return { applied: false, order: null };
+  }
+
+  if (existing.status === to) {
+    return { applied: false, order: existing };
+  }
+
+  const allowed = ALLOWED_FROM[to] || [];
+  if (!allowed.includes(existing.status)) {
+    return { applied: false, order: existing };
+  }
+
+  const prevStatus = existing.status;
+  existing.status = to;
+  if (extra.trackingNumber) existing.trackingNumber = extra.trackingNumber;
+  if (extra.disputeReason) existing.disputeReason = extra.disputeReason;
+  if (extra.disputeEvidenceUrl) existing.disputeEvidenceUrl = extra.disputeEvidenceUrl;
+  existing.updatedAt = now;
+
+  if (to === "paid") {
+    const listing = mockListings.find((l) => l.id === existing.listingId);
+    if (listing && typeof listing.stock === "number") {
+      listing.stock = Math.max(0, listing.stock - (existing.quantity || 1));
+      if (listing.stock <= 0) listing.status = "archived";
+      if (listing.stock <= 5) {
+        import("@/lib/email").then(({ sendLowStockAlertEmail }) => {
+          sendLowStockAlertEmail({
+            sellerEmail: "seller@bijihub.id",
+            sellerName: existing.sellerName || "Penjual",
+            listingTitle: existing.listingTitle || listing.title,
+            remainingStock: listing.stock!,
+            unit: listing.unit || "unit",
+          }).catch(() => {});
+        }).catch(() => {});
+      }
+    }
+  } else if (to === "canceled" && RESTOCK_ON_CANCEL_FROM.includes(prevStatus)) {
+    const listing = mockListings.find((l) => l.id === existing.listingId);
+    if (listing && typeof listing.stock === "number") {
+      listing.stock = listing.stock + (existing.quantity || 1);
+      if (listing.status === "archived") listing.status = "active";
+    }
+  }
+
+  return { applied: true, order: existing };
+}
 
 export async function updateOrderStatus(
   orderId: string,
@@ -433,112 +639,12 @@ export async function updateOrderStatus(
   disputeReason?: string,
   disputeEvidenceUrl?: string,
 ): Promise<boolean> {
-  const currentOrder = await getOrderById(orderId);
-  if (currentOrder) {
-    if (
-      currentOrder.status !== status &&
-      !VALID_ORDER_TRANSITIONS[currentOrder.status]?.includes(status)
-    ) {
-      console.warn(
-        `Invalid order status transition from ${currentOrder.status} to ${status} for order ${orderId}`
-      );
-      return false;
-    }
-  }
-
-  const pool = getPool();
-  const now = new Date().toISOString();
-
-  // If status is transitioning to paid, trigger stock decrement
-  if (status === "paid") {
-    if (
-      currentOrder &&
-      currentOrder.status !== "paid" &&
-      currentOrder.listingId &&
-      currentOrder.quantity
-    ) {
-      const dec = await decrementListingStock(
-        currentOrder.listingId,
-        currentOrder.quantity,
-      );
-      if (dec.success && typeof dec.remainingStock === "number" && dec.remainingStock <= 5) {
-        import("@/lib/email")
-          .then(({ sendLowStockAlertEmail }) => {
-            sendLowStockAlertEmail({
-              sellerEmail: "roastery@bijihub.id",
-              sellerName: currentOrder.sellerName || "Penjual",
-              listingTitle: currentOrder.listingTitle || "Biji Kopi",
-              remainingStock: dec.remainingStock!,
-              unit: "unit",
-            }).catch((err) =>
-              console.error("Failed to send low stock notification:", err),
-            );
-          })
-          .catch(() => {});
-      }
-    }
-  }
-
-  // If status is transitioning to canceled from a paid order, restore inventory
-  if (status === "canceled") {
-    if (
-      currentOrder &&
-      currentOrder.status === "paid" &&
-      currentOrder.listingId &&
-      currentOrder.quantity
-    ) {
-      await incrementListingStock(currentOrder.listingId, currentOrder.quantity);
-    }
-  }
-
-  if (pool) {
-    try {
-      let res;
-      if (trackingNumber) {
-        res = await pool.query(
-          `UPDATE public.orders
-           SET status = $1, tracking_number = $2, updated_at = $3
-           WHERE id = $4 OR order_number = $4 OR midtrans_order_id = $4`,
-          [status, trackingNumber, now, orderId],
-        );
-      } else if (disputeReason) {
-        res = await pool.query(
-          `UPDATE public.orders
-           SET status = $1, dispute_reason = $2, dispute_evidence_url = $3, updated_at = $4
-           WHERE id = $5 OR order_number = $5 OR midtrans_order_id = $5`,
-          [status, disputeReason, disputeEvidenceUrl ?? null, now, orderId],
-        );
-      } else {
-        res = await pool.query(
-          `UPDATE public.orders
-           SET status = $1, updated_at = $2
-           WHERE id = $3 OR order_number = $3 OR midtrans_order_id = $3`,
-          [status, now, orderId],
-        );
-      }
-      if (res && res.rowCount && res.rowCount > 0) {
-        return true;
-      }
-    } catch {
-      // Fall through
-    }
-  }
-
-  const existing = mockOrders.find(
-    (o) =>
-      o.id === orderId ||
-      o.orderNumber === orderId ||
-      o.midtransOrderId === orderId,
-  );
-  if (existing) {
-    existing.status = status;
-    if (trackingNumber) existing.trackingNumber = trackingNumber;
-    if (disputeReason) existing.disputeReason = disputeReason;
-    if (disputeEvidenceUrl) existing.disputeEvidenceUrl = disputeEvidenceUrl;
-    existing.updatedAt = now;
-    return true;
-  }
-  return false;
+  const res = await transitionOrderStatus(orderId, status, {
+    trackingNumber,
+    disputeReason,
+    disputeEvidenceUrl,
+  });
+  return res.applied;
 }
 
 export async function autoCompleteExpiredShippedOrders(
@@ -561,8 +667,10 @@ export async function autoCompleteExpiredShippedOrders(
         [cutoffDate],
       );
       res.rows.forEach((r) => completedIds.push(r.id));
+      return { completedCount: completedIds.length, orderIds: completedIds };
     } catch (e) {
       console.error("Failed to auto-complete orders in postgres:", e);
+      throw e;
     }
   }
 
@@ -600,8 +708,10 @@ export async function autoCancelExpiredPendingOrders(
         [cutoffDate],
       );
       res.rows.forEach((r) => canceledIds.push(r.id));
+      return { canceledCount: canceledIds.length, orderIds: canceledIds };
     } catch (e) {
       console.error("Failed to auto-cancel expired pending orders in postgres:", e);
+      throw e;
     }
   }
 

@@ -110,10 +110,6 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
     ];
   }
 
-  if (!userEmail) {
-    userEmail = "pembeli@bijihub.com";
-  }
-
   return (
     <PageContainer className="py-10 md:py-16 max-w-2xl space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

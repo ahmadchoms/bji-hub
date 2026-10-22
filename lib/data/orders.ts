@@ -395,9 +395,9 @@ export async function getAllOrders(): Promise<Order[]> {
 }
 
 export async function getOrdersByBuyer(
-  buyerIdOrEmail: string,
-  emailOrIdFallback?: string | null,
+  buyerId: string,
 ): Promise<Order[]> {
+  if (!buyerId) return [];
   const pool = getPool();
   if (pool) {
     try {
@@ -406,9 +406,9 @@ export async function getOrdersByBuyer(
          FROM public.orders o
          LEFT JOIN public.listings l ON o.listing_id = l.id
          LEFT JOIN public.seller_profiles s ON o.seller_id = s.id
-         WHERE o.buyer_id = $1 OR o.buyer_email = $1 OR ($2::text IS NOT NULL AND (o.buyer_id = $2 OR o.buyer_email = $2))
+         WHERE o.buyer_id = $1
          ORDER BY o.created_at DESC`,
-        [buyerIdOrEmail, emailOrIdFallback ?? null],
+        [buyerId],
       );
       return res.rows.map((row) => ({
         id: row.id,
@@ -446,13 +446,7 @@ export async function getOrdersByBuyer(
     }
   }
 
-  return mockOrders.filter(
-    (o) =>
-      o.buyerId === buyerIdOrEmail ||
-      o.buyerEmail === buyerIdOrEmail ||
-      (emailOrIdFallback &&
-        (o.buyerId === emailOrIdFallback || o.buyerEmail === emailOrIdFallback)),
-  );
+  return mockOrders.filter((o) => o.buyerId === buyerId);
 }
 
 export async function decrementListingStock(

@@ -66,17 +66,10 @@ export async function Navbar() {
     userName = session.role === "seller" ? "Penjual" : "Akbar Hakim";
   }
 
-  if (!userEmail && session.role === "buyer") {
-    userEmail = "pembeli@bijihub.com";
-  }
-
   let activeOrdersCount = 0;
-  if (session.role !== "guest") {
+  if (session.role !== "guest" && session.userId) {
     try {
-      const buyerOrders = await getOrdersByBuyer(
-        userEmail || "pembeli@bijihub.com",
-        session.userId,
-      );
+      const buyerOrders = await getOrdersByBuyer(session.userId);
       activeOrdersCount = buyerOrders.filter((o) =>
         ["pending_payment", "paid", "shipped", "disputed"].includes(o.status),
       ).length;

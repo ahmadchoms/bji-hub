@@ -127,22 +127,20 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
 
   // Cloud database fallback: query previous order shipping details if not in user_metadata
   if (!userPhone || !userCity || !userAddress) {
-    try {
-      const pastOrders = await getOrdersByBuyer(userEmail, session.userId);
-      if (pastOrders.length > 0) {
-        const latest = pastOrders[0];
-        userName = userName || latest.buyerName;
-        userPhone = userPhone || latest.buyerPhone;
-        userCity = userCity || latest.buyerCity;
-        userAddress = userAddress || latest.buyerAddress;
+    if (session.userId) {
+      try {
+        const pastOrders = await getOrdersByBuyer(session.userId);
+        if (pastOrders.length > 0) {
+          const latest = pastOrders[0];
+          userName = userName || latest.buyerName;
+          userPhone = userPhone || latest.buyerPhone;
+          userCity = userCity || latest.buyerCity;
+          userAddress = userAddress || latest.buyerAddress;
+        }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
     }
-  }
-
-  if (!userEmail) {
-    userEmail = "pembeli@bijihub.com";
   }
 
   // 2. Profile Gating: Ensure essential order delivery data is completed

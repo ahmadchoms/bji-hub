@@ -16,33 +16,11 @@ export const metadata: Metadata = {
 export default async function OrdersPage() {
   const session = await getSession();
 
-  if (session.role === "guest") {
+  if (session.role === "guest" || !session.userId) {
     redirect("/login?next=/orders");
   }
 
-  let userEmail = session.email || "";
-  if (
-    process.env.NEXT_PUBLIC_SUPABASE_URL &&
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  ) {
-    try {
-      const supabase = await createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user?.email) {
-        userEmail = user.email;
-      }
-    } catch {
-      // ignore
-    }
-  }
-
-  if (!userEmail) {
-    userEmail = "pembeli@bijihub.com";
-  }
-
-  const orders = await getOrdersByBuyer(userEmail, session.userId);
+  const orders = await getOrdersByBuyer(session.userId);
 
   return (
     <div className="py-8 md:py-12 bg-neutral-50/50 min-h-[80vh]">

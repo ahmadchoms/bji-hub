@@ -1,5 +1,4 @@
 import { z } from "zod";
-import type { BuyerAddress } from "@/types";
 
 export const BUYER_PROFILE_COOKIE = "biji-buyer-profile";
 export const MAX_COOKIE_SIZE_BYTES = 4096;

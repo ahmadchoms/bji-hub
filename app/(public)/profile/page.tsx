@@ -86,7 +86,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
     userPostalCode = userPostalCode || profile.postalCode || "";
     userAddress = userAddress || profile.address || "";
     if (!userAddresses.length && profile.addresses && profile.addresses.length > 0) {
-      userAddresses = profile.addresses as any;
+      userAddresses = profile.addresses as unknown as BuyerAddress[];
     }
   } catch {
     // ignore

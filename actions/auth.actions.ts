@@ -1,5 +1,6 @@
-import { z } from "zod";
 "use server";
+
+import { z } from "zod";
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -408,8 +409,8 @@ export async function updateBuyerProfileAction(input: {
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
     });
-  } catch (err: any) {
-    return fail(err?.message || "Gagal menyimpan cookie profil.");
+  } catch (err: unknown) {
+    return fail(err instanceof Error ? err.message : String(err) || "Gagal menyimpan cookie profil.");
   }
 
   return ok({ success: true });
@@ -473,8 +474,8 @@ export async function updateBuyerAddressesAction(
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
     });
-  } catch (err: any) {
-    return fail(err?.message || "Gagal menyimpan cookie profil.");
+  } catch (err: unknown) {
+    return fail(err instanceof Error ? err.message : String(err) || "Gagal menyimpan cookie profil.");
   }
 
   return ok({ success: true });

@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { Pool } from "pg";
 import { randomBytes } from "crypto";
 import { Order, OrderItem, OrderStatus } from "@/types";
@@ -165,7 +166,7 @@ export async function createOrder(data: {
       return saved || newOrder;
     } catch (e) {
       await client.query("ROLLBACK");
-      console.error("Failed to insert order to postgres:", e);
+      logger.error("order.insert_failed", e);
       throw new Error("Gagal menyimpan pesanan");
     } finally {
       client.release();
@@ -193,7 +194,8 @@ export async function updateOrderSnapToken(
         [snapToken, orderId],
       );
       return (res.rowCount ?? 0) > 0;
-    } catch {
+    } catch (err) {
+      logger.error("order.update_snap_token_failed", err, { orderId });
       return false;
     }
   }
@@ -240,7 +242,7 @@ export async function getOrderById(idOrNumber: string): Promise<Order | null> {
             }));
           }
         } catch {
-          // order_items might not exist yet in legacy DB
+          // ignore: order_items table might not exist yet in legacy DB schema
         }
 
         return {
@@ -279,6 +281,8 @@ export async function getOrderById(idOrNumber: string): Promise<Order | null> {
         };
       }
     } catch {
+      // ignore: fallback to mock store in dev when DB query fails
+      logger.warn("order.db_query_fallback");
       // Fall through
     }
   }
@@ -337,6 +341,8 @@ export async function getOrdersBySeller(sellerId: string): Promise<Order[]> {
         updatedAt: row.updated_at,
       }));
     } catch {
+      // ignore: fallback to mock store in dev when DB query fails
+      logger.warn("order.db_query_fallback");
       // Fall through
     }
   }
@@ -387,6 +393,8 @@ export async function getAllOrders(): Promise<Order[]> {
         updatedAt: row.updated_at,
       }));
     } catch {
+      // ignore: fallback to mock store in dev when DB query fails
+      logger.warn("order.db_query_fallback");
       // Fall through
     }
   }
@@ -442,6 +450,8 @@ export async function getOrdersByBuyer(
         updatedAt: row.updated_at,
       }));
     } catch {
+      // ignore: fallback to mock store in dev when DB query fails
+      logger.warn("order.db_query_fallback");
       // Fall through
     }
   }
@@ -474,6 +484,8 @@ export async function decrementListingStock(
         return { success: true, remainingStock: remaining };
       }
     } catch {
+      // ignore: fallback to mock store in dev when DB query fails
+      logger.warn("order.db_query_fallback");
       // Postgres column may not exist yet, fall through to in-memory
     }
   }
@@ -510,6 +522,8 @@ export async function incrementListingStock(
         return { success: true, newStock: Number(res.rows[0].stock) };
       }
     } catch {
+      // ignore: fallback to mock store in dev when DB query fails
+      logger.warn("order.db_query_fallback");
       // Postgres fallback
     }
   }
@@ -669,7 +683,7 @@ export async function transitionOrderStatus(
                   listingTitle: lowStockAlert!.listingTitle,
                   remainingStock: lowStockAlert!.remainingStock,
                   unit: "unit",
-                }).catch(() => {});
+                }).catch((e) => { logger.warn("order.low_stock_email_failed", e); });
               });
             }
           })

@@ -17,7 +17,7 @@ export async function getClientIp(): Promise<string> {
     const cfIp = headerList.get("cf-connecting-ip")?.trim();
     if (cfIp) return cfIp;
   } catch {
-    // headers() might throw outside request lifecycle (e.g. CLI or tests)
+    // ignore: headers() might throw outside request lifecycle (e.g. CLI or tests)
   }
   return "127.0.0.1";
 }

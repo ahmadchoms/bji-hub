@@ -148,6 +148,7 @@ export function AdminOrderDisputes({ orders: initialOrders }: AdminOrderDisputes
         toast.error(res.error || "Gagal menjalankan auto-complete pesanan");
       }
     } catch {
+      // ignore: UI error toast already handled in catch block
       toast.error("Terjadi kesalahan saat memproses pesanan");
     } finally {
       setIsAutoCompleting(false);

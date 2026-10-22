@@ -29,6 +29,7 @@ export function getStoredWishlist(): WishlistItem[] {
     const raw = localStorage.getItem(WISHLIST_STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
+    // ignore: localStorage wishlist read error
     return [];
   }
 }
@@ -47,11 +48,12 @@ export async function syncWishlistWithCloud(): Promise<void> {
           localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(merged));
           window.dispatchEvent(new Event("biji-wishlist-changed"));
         } catch {
-          // ignore
+          // ignore: cookie JSON parsing error
         }
       }
     }
   } catch {
+    // ignore: wishlist storage fallback
     // Graceful fallback for offline / mock testing
   }
 }
@@ -64,6 +66,7 @@ function saveWishlist(items: WishlistItem[]): void {
     window.dispatchEvent(new Event("biji-wishlist-changed"));
     syncWishlistWithCloud().catch(() => {});
   } catch {
+    // ignore: wishlist storage fallback
     // Ignore storage quota errors
   }
 }

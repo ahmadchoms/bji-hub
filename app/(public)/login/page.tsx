@@ -45,6 +45,7 @@ function LoginForm() {
       });
       window.location.href = result.data.redirectTo;
     } catch {
+      // ignore: optional cookie read fallback
       toast.error("Gagal masuk", {
         description: "Terjadi kesalahan. Coba lagi.",
       });

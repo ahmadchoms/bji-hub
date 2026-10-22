@@ -56,6 +56,7 @@ export function SellerOnboardingForm() {
         const data = await fetchProvinces();
         if (!ignore) setProvinces(data);
       } catch {
+        // ignore: UI error toast already handled
         if (!ignore) toast.error("Gagal memuat daftar provinsi");
       } finally {
         if (!ignore) setLoadingProvinces(false);
@@ -79,6 +80,7 @@ export function SellerOnboardingForm() {
         const data = await fetchRegencies(selectedProvinceId);
         if (!ignore) setCities(data);
       } catch {
+        // ignore: UI error toast already handled
         if (!ignore) toast.error("Gagal memuat daftar kota/kabupaten");
       } finally {
         if (!ignore) setLoadingCities(false);
@@ -112,6 +114,7 @@ export function SellerOnboardingForm() {
       });
       window.location.href = result.data.redirectTo;
     } catch {
+      // ignore: UI error toast already handled
       toast.error("Gagal membuka toko", {
         description: "Terjadi kesalahan saat memproses data.",
       });

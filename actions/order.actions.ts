@@ -280,6 +280,7 @@ export async function createCheckoutOrderAction(
         await updateOrderSnapToken(order.id, snapToken);
       }
     } catch {
+      // ignore: optional operation fallback
       // Payment gateway timeout / mock offline
     }
   }
@@ -306,7 +307,7 @@ export async function createCheckoutOrderAction(
         });
       }
     } catch {
-      // ignore
+      // ignore: user order lookup fallback
     }
   }
 
@@ -328,7 +329,7 @@ export async function createCheckoutOrderAction(
       secure: process.env.NODE_ENV === "production",
     });
   } catch {
-    // ignore
+    // ignore: optional buyer profile cookie persistence
   }
 
   return ok({
@@ -626,6 +627,7 @@ export async function getShippingRatesAction(params: {
     const rates = await calculateShippingRates(params);
     return ok(rates);
   } catch {
+    logger.warn("shipping.calculation_failed", { origin: params.originCity, dest: params.destinationCity });
     return fail("Gagal menghitung ongkos kirim");
   }
 }
@@ -714,6 +716,7 @@ export async function resumeOrderPaymentAction(
         await updateOrderSnapToken(order.id, snapToken);
       }
     } catch {
+      // ignore: optional operation fallback
       // offline / mock fallback
     }
   }
@@ -777,7 +780,7 @@ export async function checkOrderPaymentStatusAction(
         }
       }
     } catch {
-      // ignore
+      // ignore: optional buyer profile sync to supabase
     }
   }
 

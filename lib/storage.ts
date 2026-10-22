@@ -125,6 +125,7 @@ export function isOwnedImageUrl(url: string): boolean {
         return true;
       }
     } catch {
+      // ignore: URL parse failure returns false
       // bukan URL absolut yang valid; lanjut ke pemeriksaan prefix lokal
     }
   }

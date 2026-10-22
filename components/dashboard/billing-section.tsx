@@ -101,6 +101,7 @@ export function BillingSection({
         router.refresh();
       }
     } catch {
+      // ignore: UI error toast already handled
       toast.error("Gagal memeriksa status pembayaran");
     } finally {
       setSyncingOrderId(null);
@@ -158,6 +159,7 @@ export function BillingSection({
       setSelectedDuration("");
       router.refresh();
     } catch {
+      // ignore: UI error toast already handled
       toast.error("Boost gagal diproses", {
         description: "Terjadi kesalahan. Coba lagi.",
       });

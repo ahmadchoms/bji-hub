@@ -70,6 +70,7 @@ export function readBuyerProfileCookie(store: CookieReader): BuyerProfileData {
     }
     return result.data;
   } catch {
+    // ignore: cookie parsing fallback to default empty profile
     return { addresses: [] };
   }
 }

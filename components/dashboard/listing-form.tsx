@@ -111,6 +111,7 @@ export function ListingForm({
       router.push("/dashboard/listing");
       router.refresh();
     } catch {
+      // ignore: UI error toast already handled
       toast.error("Gagal menyimpan produk", {
         description: "Terjadi kesalahan. Coba lagi.",
       });

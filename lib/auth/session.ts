@@ -25,6 +25,7 @@ export const getSession = cache(async (): Promise<Session> => {
   try {
     store = await cookies();
   } catch {
+    // ignore: cookies() might throw outside request lifecycle
     return GUEST_SESSION;
   }
 
@@ -71,7 +72,7 @@ export const getSession = cache(async (): Promise<Session> => {
         }
       }
     } catch {
-      // Fall through to mock session if Supabase throws
+      // ignore: Supabase auth throws when session cookie is missing or invalid
     }
   }
 

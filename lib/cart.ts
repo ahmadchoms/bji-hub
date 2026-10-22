@@ -30,6 +30,7 @@ export function getStoredCart(): CartItem[] {
     const raw = localStorage.getItem(CART_STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
+    // ignore: localStorage might be unavailable or disabled in browser
     return [];
   }
 }
@@ -41,6 +42,7 @@ function saveCart(items: CartItem[]): void {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
     window.dispatchEvent(new Event("biji-cart-changed"));
   } catch {
+    // ignore: localStorage read/write fallback
     // Ignore storage quota errors
   }
 }

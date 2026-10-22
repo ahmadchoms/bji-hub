@@ -88,6 +88,7 @@ export function ProfileForm({ seller, className }: ProfileFormProps) {
           }
         }
       } catch {
+        // ignore: UI error toast already handled
         if (!ignore) toast.error("Gagal memuat data provinsi");
       } finally {
         if (!ignore) setLoadingProvinces(false);
@@ -126,6 +127,7 @@ export function ProfileForm({ seller, className }: ProfileFormProps) {
           }
         }
       } catch {
+        // ignore: UI error toast already handled
         if (!ignore) toast.error("Gagal memuat data kota/kabupaten");
       } finally {
         if (!ignore) setLoadingCities(false);
@@ -175,6 +177,7 @@ export function ProfileForm({ seller, className }: ProfileFormProps) {
       });
       router.refresh();
     } catch {
+      // ignore: UI error toast already handled
       toast.error("Gagal memperbarui profil", {
         description: "Terjadi kesalahan. Coba lagi.",
       });

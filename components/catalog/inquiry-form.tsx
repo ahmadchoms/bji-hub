@@ -71,6 +71,7 @@ export function InquiryForm({
       });
       reset();
     } catch {
+      // ignore: UI error toast already handled
       toast.error("Gagal mengirim permintaan", {
         description: "Silakan periksa koneksi internet Anda dan coba lagi.",
       });

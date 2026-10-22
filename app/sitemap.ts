@@ -35,6 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     return [...staticRoutes, ...productRoutes, ...storeRoutes];
   } catch {
+    // ignore: dynamic sitemap fetch fallback to static
     return staticRoutes;
   }
 }

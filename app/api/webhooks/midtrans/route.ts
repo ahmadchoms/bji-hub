@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json();
   } catch {
+    // ignore: invalid webhook body JSON parsing
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
@@ -77,6 +78,7 @@ export async function POST(req: NextRequest) {
           })
           .catch(() => {});
       } catch {
+        // ignore: invalid webhook body JSON parsing
         // Non-blocking
       }
     }

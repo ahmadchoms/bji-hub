@@ -71,6 +71,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
         }
       }
     } catch {
+      // ignore: optional profile cookie read fallback
       // ignore
     }
   }
@@ -89,6 +90,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
       userAddresses = profile.addresses as unknown as BuyerAddress[];
     }
   } catch {
+    // ignore: optional profile cookie read fallback
     // ignore
   }
 

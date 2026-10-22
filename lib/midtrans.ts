@@ -72,6 +72,7 @@ export async function createMidtransSnapToken(params: {
     const data = await res.json();
     return data.token || null;
   } catch {
+    // ignore: midtrans network error returns null to trigger fallback
     return null;
   }
 }
@@ -142,6 +143,7 @@ export async function checkMidtransStatus(orderId: string): Promise<{
       paymentType: data.payment_type,
     };
   } catch {
+    // ignore: midtrans network error returns null
     return null;
   }
 }

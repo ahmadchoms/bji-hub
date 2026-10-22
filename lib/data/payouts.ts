@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { Pool } from "pg";
 import { randomBytes } from "crypto";
 import { PayoutRequest, PayoutStatus } from "@/types";
@@ -57,7 +58,8 @@ export async function getSellerBankDetails(
         };
       }
     } catch {
-      // Fall through to mock
+      // ignore: seller bank details query fallback to mock store in dev
+      logger.warn("payout.get_bank_details_fallback", { sellerId });
     }
   }
 
@@ -85,7 +87,8 @@ export async function updateSellerBankDetails(
       mockBankDetails[sellerId] = details;
       return true;
     } catch (e) {
-      console.error("Failed to update bank details in postgres:", e);
+      logger.error("payout.update_bank_details_failed", e, { sellerId });
+      return false;
     }
   }
 
@@ -118,7 +121,8 @@ export async function getPayoutRequestsBySeller(
         updatedAt: row.updated_at,
       }));
     } catch {
-      // Fall through
+      // ignore: payout requests table fallback to mock store in dev
+      logger.warn("payout.get_by_seller_fallback", { sellerId });
     }
   }
 
@@ -320,6 +324,7 @@ export async function getAllPayoutRequests(): Promise<
         updatedAt: row.updated_at,
       }));
     } catch {
+      // ignore: payouts db query fallback to mock store in dev
       // Fall through
     }
   }
@@ -349,7 +354,7 @@ export async function updatePayoutStatus(
       );
       return (res.rowCount ?? 0) > 0;
     } catch (e) {
-      console.error("Failed to update payout status in postgres:", e);
+      logger.error("payout.update_status_failed", e, { payoutId });
       throw e;
     }
   }

@@ -164,7 +164,7 @@ async function getRajaOngkirDestinationId(
       }
     }
   } catch {
-    // fallback
+    // ignore: RajaOngkir destination search failure falls back to null
   }
   return null;
 }
@@ -276,7 +276,7 @@ export async function calculateShippingRates(
         }
       }
     } catch {
-      // Fall through to fallback
+      // ignore: RajaOngkir calculation failure falls back to domestic matrix
     }
   }
 
@@ -367,6 +367,7 @@ export async function trackShipmentWaybill(
         }
       }
     } catch {
+      // ignore: shipping tracking network failure fallback
       // Fall through to simulated domestic waybill tracking
     }
   }

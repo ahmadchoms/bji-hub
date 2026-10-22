@@ -182,6 +182,7 @@ export function CheckoutForm({
           }
         }
       } catch {
+        // ignore: UI error toast already handled
         if (!canceled) {
           setShippingError("Terjadi gangguan jaringan saat menghitung ongkos kirim.");
         }
@@ -309,6 +310,7 @@ export function CheckoutForm({
           router.push(redirectUrl);
         }
       } catch {
+        // ignore: UI error toast already handled
         toast.error("Terjadi kesalahan saat memproses pembayaran.");
       }
     });

@@ -77,6 +77,7 @@ export async function fetchProvinces(): Promise<RegionItem[]> {
     cache.set("provinces", data);
     return data;
   } catch {
+    // ignore: network failure fallback to static province list
     cache.set("provinces", FALLBACK_PROVINCES);
     return FALLBACK_PROVINCES;
   }

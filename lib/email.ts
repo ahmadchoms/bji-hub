@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { Resend } from "resend";
 import type { Order } from "@/types";
 import { formatRupiah } from "@/lib/utils";
@@ -106,7 +107,7 @@ export async function sendOrderPaidEmail(order: Order): Promise<EmailResult> {
       messageId: res.data?.id,
     };
   } catch (error) {
-    console.error("Failed to send order paid email:", error);
+    logger.warn("email.send_failed", { orderId: order.id, type: "order_paid" });
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to send email",
@@ -185,7 +186,7 @@ export async function sendOrderShippedEmail(order: Order): Promise<EmailResult> 
       messageId: res.data?.id,
     };
   } catch (error) {
-    console.error("Failed to send order shipped email:", error);
+    logger.warn("email.send_failed", { orderId: order.id, type: "order_shipped" });
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to send email",

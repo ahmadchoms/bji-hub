@@ -18,6 +18,7 @@ export async function Navbar() {
         storeName = seller.businessName;
       }
     } catch {
+      // ignore: optional session/cookie fallback in navbar
       // ignore
     }
   }
@@ -44,6 +45,7 @@ export async function Navbar() {
         userAvatarUrl = (user.user_metadata?.avatar_url as string) || "";
       }
     } catch {
+      // ignore: optional session/cookie fallback in navbar
       // ignore
     }
   }
@@ -55,6 +57,7 @@ export async function Navbar() {
       userName = profile.name || "";
       userAvatarUrl = profile.avatarUrl || "";
     } catch {
+      // ignore: optional session/cookie fallback in navbar
       // ignore
     }
   }
@@ -71,6 +74,7 @@ export async function Navbar() {
         ["pending_payment", "paid", "shipped", "disputed"].includes(o.status),
       ).length;
     } catch {
+      // ignore: optional session/cookie fallback in navbar
       // ignore
     }
   }

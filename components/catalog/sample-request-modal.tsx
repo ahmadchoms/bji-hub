@@ -93,6 +93,7 @@ export function SampleRequestModal({
           : "Permintaan sampel berhasil diajukan via WhatsApp!",
       );
     } catch {
+      // ignore: UI error toast already handled
       toast.error("Gagal mengirim permintaan, coba lagi.");
     } finally {
       setSubmitting(false);

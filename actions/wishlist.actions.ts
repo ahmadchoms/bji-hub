@@ -53,6 +53,7 @@ export async function syncCloudWishlistAction(
 
     return ok({ items: merged });
   } catch {
+    // ignore: cookie fallback in server action
     return ok({ items: localItems });
   }
 }

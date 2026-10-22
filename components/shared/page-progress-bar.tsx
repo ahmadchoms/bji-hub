@@ -96,6 +96,7 @@ function PageProgressBarInner() {
 
         start();
       } catch {
+        // ignore: browser history manipulation fallback
         // Ignore invalid URLs
       }
     };

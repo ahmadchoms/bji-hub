@@ -20,6 +20,7 @@ async function prepare(file: File): Promise<File> {
     });
     return compressed.size < file.size ? compressed : file;
   } catch {
+    // ignore: image compression fallback to original file
     return file;
   }
 }

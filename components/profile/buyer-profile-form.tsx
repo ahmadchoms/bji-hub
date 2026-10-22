@@ -138,6 +138,7 @@ export function BuyerProfileForm({
       toast.success("Biodata diri berhasil diperbarui!");
       router.refresh();
     } catch {
+      // ignore: UI error toast already handled
       toast.error("Terjadi kesalahan saat menyimpan biodata.");
     } finally {
       setIsSubmittingBio(false);
@@ -206,6 +207,7 @@ export function BuyerProfileForm({
       router.refresh();
       return true;
     } catch {
+      // ignore: UI error toast already handled
       toast.error("Terjadi kesalahan saat memperbarui alamat.");
       return false;
     } finally {

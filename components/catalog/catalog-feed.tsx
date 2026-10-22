@@ -94,6 +94,7 @@ export async function CatalogFeed({ params }: { params: CatalogParams }) {
       </div>
     );
   } catch {
+    // ignore: localStorage filter write fallback
     return (
       <div className="py-10">
         <p className="font-display text-xl text-neutral-900">

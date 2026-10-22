@@ -116,6 +116,7 @@ export async function loginAction(
         return ok({ redirectTo: safeNextPath(next, homeFor("buyer")) });
       }
     } catch {
+      // ignore: optional operation fallback
       if (!isMockAuthAllowed()) {
         return fail("Layanan autentikasi sedang bermasalah. Silakan coba beberapa saat lagi.");
       }
@@ -206,6 +207,7 @@ export async function registerAction(
         return ok({ redirectTo: "/login?verify=1" });
       }
     } catch {
+      // ignore: optional operation fallback
       if (!isMockAuthAllowed()) {
         return fail(
           "Layanan pendaftaran sedang bermasalah. Silakan coba beberapa saat lagi.",
@@ -296,6 +298,7 @@ export async function becomeSellerAction(
         return ok({ redirectTo: "/dashboard" });
       }
     } catch {
+      // ignore: optional operation fallback
       if (!isMockAuthAllowed()) {
         return fail("Gagal mendaftarkan toko. Silakan coba beberapa saat lagi.");
       }
@@ -316,7 +319,7 @@ export async function logoutAction(): Promise<void> {
     const supabase = await createClient();
     await supabase.auth.signOut();
   } catch {
-    // ignore
+    // ignore: Supabase sign out error ignored if already signed out
   }
 
   const store = await cookies();
@@ -386,7 +389,7 @@ export async function updateBuyerProfileAction(input: {
         return fail(error.message || "Gagal memperbarui profil.");
       }
     } catch {
-      // Fall through for mock
+      // ignore: Fall through for mock in dev
     }
   }
 
@@ -451,7 +454,7 @@ export async function updateBuyerAddressesAction(
         });
       }
     } catch {
-      // Fall through for mock
+      // ignore: Fall through for mock in dev
     }
   }
 

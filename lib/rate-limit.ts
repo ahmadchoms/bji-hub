@@ -59,7 +59,7 @@ export async function checkRateLimit(
         };
       }
     } catch {
-      // Graceful fallback to memory store
+      // ignore: Upstash Redis fetch failure falls back to memory store
     }
   }
 

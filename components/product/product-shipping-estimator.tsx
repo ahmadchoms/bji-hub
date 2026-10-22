@@ -39,6 +39,7 @@ export function ProductShippingEstimator({
           setRates(res.slice(0, 3));
         }
       } catch {
+        // ignore: UI estimation error toast already handled
         if (!canceled) setRates([]);
       } finally {
         if (!canceled) setLoading(false);

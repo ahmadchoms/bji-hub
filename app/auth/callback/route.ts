@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(`${origin}${next}`);
       }
     } catch {
+      // ignore: code exchange failure redirects to error login
       // Fall through to error redirect
     }
   }

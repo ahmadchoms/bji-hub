@@ -1,5 +1,7 @@
 "use server";
 
+import { logger } from "@/lib/logger";
+
 import { z } from "zod";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 import { getSession } from "@/lib/auth/session";
@@ -81,8 +83,9 @@ export async function createImageUploadAction(
           path: filePath,
         });
       }
-    } catch {
-      // Fall through to mock storage target if bucket/service fails
+    } catch (err) {
+      // ignore: Fall through to mock storage target if Supabase bucket/service fails in dev
+      logger.warn("upload.storage_bucket_fallback", { message: (err as Error)?.message });
     }
   }
 

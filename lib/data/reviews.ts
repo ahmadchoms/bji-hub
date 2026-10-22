@@ -88,6 +88,7 @@ export async function getReviewsByListing(listingId: string): Promise<Review[]> 
         createdAt: row.created_at,
       }));
     } catch {
+      // ignore: reviews db query fallback to mock store in dev
       // Fall through
     }
   }
@@ -118,6 +119,7 @@ export async function getReviewsByListingIds(listingIds: string[]): Promise<Revi
         createdAt: row.created_at,
       }));
     } catch {
+      // ignore: reviews db query fallback to mock store in dev
       // Fall through
     }
   }

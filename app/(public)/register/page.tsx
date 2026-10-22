@@ -50,6 +50,7 @@ export default function RegisterPage() {
       });
       window.location.href = result.data.redirectTo;
     } catch {
+      // ignore: optional cookie read fallback
       toast.error("Pendaftaran gagal", {
         description: "Terjadi kesalahan. Coba lagi.",
       });

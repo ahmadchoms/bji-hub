@@ -235,6 +235,7 @@ export async function getCoffeeOrigins(options?: {
         createdAt: new Date(r.created_at).toISOString(),
       }));
     } catch {
+      // ignore: coffee origins db query fallback to mock store in dev
       // Fallback to mock
     }
   }
@@ -283,6 +284,7 @@ export async function getCoffeeOriginById(id: string): Promise<CoffeeOrigin | nu
         };
       }
     } catch {
+      // ignore: coffee origins db query fallback to mock store in dev
       // Fallback
     }
   }
@@ -330,6 +332,7 @@ export async function createCoffeeOrigin(data: {
         ]
       );
     } catch {
+      // ignore: coffee origins db query fallback to mock store in dev
       // Fallback
     }
   }
@@ -371,6 +374,7 @@ export async function updateCoffeeOrigin(
         return merged;
       }
     } catch {
+      // ignore: coffee origins db query fallback to mock store in dev
       // Fallback
     }
   }

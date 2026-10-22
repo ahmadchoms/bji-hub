@@ -20,6 +20,7 @@ function getSessionId(): string | null {
     }
     return id;
   } catch {
+    // ignore: localStorage analytics error
     return null;
   }
 }
@@ -36,6 +37,7 @@ export function trackEvent(listingId: string, type: TrackEventType): void {
     if (Date.now() - last < CLIENT_DEDUPE_MS[type]) return;
     sessionStorage.setItem(dedupeKey, String(Date.now()));
   } catch {
+    // ignore: localStorage analytics error
     return;
   }
 

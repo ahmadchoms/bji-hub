@@ -81,6 +81,7 @@ export function PlanSection({ state, listingCount }: PlanSectionProps) {
         router.refresh();
       }
     } catch {
+      // ignore: UI error toast already handled
       toast.error("Gagal memproses", {
         description: "Terjadi kesalahan. Coba lagi.",
       });

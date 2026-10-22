@@ -19,7 +19,8 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
-    "admin:promote": "node scripts/promote-admin.mjs"
+    "admin:promote": "node scripts/promote-admin.mjs",
+    "db:migrate:orders-hardening": "node scripts/migrate-order-hardening.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

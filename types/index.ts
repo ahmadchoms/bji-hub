@@ -286,8 +286,22 @@ export interface Order {
   notes?: string | null;
   disputeReason?: string | null;
   disputeEvidenceUrl?: string | null;
+  accessToken?: string | null;
+  idempotencyKey?: string | null;
+  items?: OrderItem[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface OrderItem {
+  id?: string;
+  orderId?: string;
+  listingId: string;
+  title?: string;
+  quantity: number;
+  unitPrice: number;
+  unit?: string;
+  grindSize?: string | null;
 }
 
 export interface Review {

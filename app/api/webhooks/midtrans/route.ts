@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyMidtransSignature, mapMidtransStatus } from "@/lib/midtrans";
 import { getPrisma } from "@/lib/data/prisma/client";
+import { logger } from "@/lib/logger";
 
 /**
  * Midtrans HTTP Notification Webhook Handler
@@ -44,9 +45,7 @@ export async function POST(req: NextRequest) {
   if (order) {
     const grossAmount = Math.round(Number(body.gross_amount));
     if (isNaN(grossAmount) || grossAmount !== Math.round(order.totalAmount)) {
-      console.error(
-        `Gross amount mismatch for order ${order.id}: expected ${order.totalAmount}, got ${body.gross_amount}`
-      );
+      logger.error("Gross amount mismatch for order", undefined, { orderId: order.id, expected: order.totalAmount, got: body.gross_amount });
       return NextResponse.json({ error: "Amount mismatch" }, { status: 400 });
     }
 
@@ -62,7 +61,7 @@ export async function POST(req: NextRequest) {
       try {
         const { sendOrderPaidEmail, sendNewOrderSellerEmail } = await import("@/lib/email");
         sendOrderPaidEmail(order).catch((e) =>
-          console.error("Failed to send order paid email from webhook:", e)
+          logger.error("Failed to send order paid email from webhook", e, { orderId: order.id })
         );
 
         const { getSellerById } = await import("@/lib/data");
@@ -73,7 +72,7 @@ export async function POST(req: NextRequest) {
               sellerEmail: seller?.user?.email,
               sellerName: seller?.businessName || order.sellerName,
             }).catch((e) =>
-              console.error("Failed to send seller new order email from webhook:", e)
+              logger.error("Failed to send seller new order email from webhook", e, { orderId: order.id })
             );
           })
           .catch(() => {});
@@ -99,9 +98,7 @@ export async function POST(req: NextRequest) {
 
   const grossAmount = Math.round(Number(body.gross_amount));
   if (isNaN(grossAmount) || grossAmount !== Math.round(Number(payment.amount))) {
-    console.error(
-      `Gross amount mismatch for payment ${payment.id}: expected ${payment.amount}, got ${body.gross_amount}`
-    );
+    logger.error("Gross amount mismatch for payment", undefined, { paymentId: payment.id, expected: payment.amount, got: body.gross_amount });
     return NextResponse.json({ error: "Amount mismatch" }, { status: 400 });
   }
 

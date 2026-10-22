@@ -24,6 +24,7 @@ import {
 } from "@/lib/midtrans";
 import { getSession, requireRole } from "@/lib/auth/session";
 import { canAccessOrder } from "@/lib/auth/order-access";
+import { logger } from "@/lib/logger";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/client-ip";
 import { computeTotalWeightGrams } from "@/lib/shipping-weight";
@@ -352,7 +353,7 @@ export async function confirmOrderPaymentAction(
 
   await updateOrderStatus(order.id, "paid");
   sendOrderPaidEmail({ ...order, status: "paid" }).catch((err) =>
-    console.error("Failed to send paid email:", err),
+    logger.error("Failed to send paid email", err, { orderId: order.id }),
   );
 
   getSellerById(order.sellerId)
@@ -362,7 +363,7 @@ export async function confirmOrderPaymentAction(
         sellerEmail: seller?.user?.email,
         sellerName: seller?.businessName || order.sellerName,
       }).catch((err) =>
-        console.error("Failed to send seller new order email:", err),
+        logger.error("Failed to send seller new order email", err, { orderId: order.id }),
       );
     })
     .catch(() => {});
@@ -397,7 +398,7 @@ export async function updateShipmentTrackingAction(
     ...order,
     status: "shipped",
     trackingNumber: cleanResi,
-  }).catch((err) => console.error("Failed to send shipped email:", err));
+  }).catch((err) => logger.error("Failed to send shipped email", err, { orderId: order.id }));
 
   return ok({ success: true });
 }
@@ -521,7 +522,7 @@ export async function sellerResolveDisputeAction(
       ...order,
       status: "shipped",
       trackingNumber: cleanReship,
-    }).catch((err) => console.error("Failed to send reship email:", err));
+    }).catch((err) => logger.error("Failed to send reship email", err, { orderId: order.id }));
   }
 
   revalidatePath("/order/success");

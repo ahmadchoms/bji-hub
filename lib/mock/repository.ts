@@ -609,11 +609,17 @@ function toTasteProfile(
 export async function createListing(
   sellerId: string,
   data: ListingFormValues,
+  maxListings?: number,
 ): Promise<ListingWithRelations | null> {
   await simulateDelay(300);
   const seller = mockSellers.find((s) => s.id === sellerId);
   const category = mockCategories.find((c) => c.id === data.categoryId);
   if (!seller || !category) return null;
+
+  if (typeof maxListings === "number") {
+    const currentCount = mockListings.filter((l) => l.sellerId === sellerId).length;
+    if (currentCount >= maxListings) return null;
+  }
 
   const id = `list-${Date.now()}`;
   const listing: ListingWithRelations = {

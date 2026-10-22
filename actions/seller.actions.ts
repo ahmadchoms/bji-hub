@@ -80,19 +80,19 @@ export async function saveListingAction(
     return ok({ id: updated.id });
   }
 
-  const [state, stats] = await Promise.all([
-    getSellerPlanState(sellerId),
-    getSellerStats(sellerId),
-  ]);
+  const state = await getSellerPlanState(sellerId);
   const plan = getPlan(state.tier);
-  if (stats.totalListings >= plan.maxListings) {
-    return fail(
-      `Batas ${plan.maxListings} listing paket ${plan.name} sudah tercapai`,
-    );
-  }
 
-  const created = await createListing(sellerId, parsed.data);
-  if (!created) return fail("Kategori tidak valid");
+  const created = await createListing(sellerId, parsed.data, plan.maxListings);
+  if (!created) {
+    const stats = await getSellerStats(sellerId);
+    if (stats.totalListings >= plan.maxListings) {
+      return fail(
+        `Batas ${plan.maxListings} listing paket ${plan.name} sudah tercapai`,
+      );
+    }
+    return fail("Kategori tidak valid");
+  }
   revalidatePath("/dashboard/listing");
   revalidatePath("/");
   return ok({ id: created.id });
@@ -176,7 +176,7 @@ export async function quickUpdateStockAction(
   newStock: number,
 ): Promise<ActionResult<{ stock: number }>> {
   const { sellerId } = await requireSeller("/dashboard/listing");
-  if (typeof newStock !== "number" || newStock < 0 || isNaN(newStock)) {
+  if (!Number.isInteger(newStock) || newStock < 0 || newStock > 1_000_000) {
     return fail("Jumlah kuantitas stok tidak valid");
   }
 
@@ -185,12 +185,31 @@ export async function quickUpdateStockAction(
     return fail("Listing tidak ditemukan atau Anda tidak memiliki akses");
   }
 
-  const { mockListings } = await import("@/lib/mock/data");
-  const target = mockListings.find((l) => l.id === listingId);
-  if (target) {
-    target.stock = newStock;
-    if (newStock > 0 && target.status === "archived") {
-      target.status = "active";
+  const shouldActivate = newStock > 0 && existing.status === "archived";
+
+  if (process.env.DATA_SOURCE !== "mock") {
+    try {
+      const { getPrisma } = await import("@/lib/data/prisma/client");
+      const prisma = getPrisma();
+      await prisma.listing.update({
+        where: { id: listingId },
+        data: {
+          stock: newStock,
+          ...(shouldActivate ? { status: "active" } : {}),
+        },
+      });
+    } catch (e) {
+      console.error("Failed to update stock in database:", e);
+      return fail("Gagal memperbarui stok produk");
+    }
+  } else {
+    const { mockListings } = await import("@/lib/mock/data");
+    const target = mockListings.find((l) => l.id === listingId);
+    if (target) {
+      target.stock = newStock;
+      if (shouldActivate) {
+        target.status = "active";
+      }
     }
   }
 
@@ -213,7 +232,7 @@ export async function toggleListingStatusAction(
     return fail("Produk yang ditangguhkan admin tidak dapat diubah statusnya");
   }
 
-  if (process.env.DATABASE_URL) {
+  if (process.env.DATA_SOURCE !== "mock") {
     try {
       const { getPrisma } = await import("@/lib/data/prisma/client");
       const prisma = getPrisma();
@@ -221,15 +240,16 @@ export async function toggleListingStatusAction(
         where: { id: listingId },
         data: { status: newStatus },
       });
-    } catch {
-      // fallback to mock
+    } catch (e) {
+      console.error("Failed to update listing status in database:", e);
+      return fail("Gagal memperbarui status listing");
     }
-  }
-
-  const { mockListings } = await import("@/lib/mock/data");
-  const target = mockListings.find((l) => l.id === listingId);
-  if (target) {
-    target.status = newStatus;
+  } else {
+    const { mockListings } = await import("@/lib/mock/data");
+    const target = mockListings.find((l) => l.id === listingId);
+    if (target) {
+      target.status = newStatus;
+    }
   }
 
   revalidatePath("/dashboard/listing");

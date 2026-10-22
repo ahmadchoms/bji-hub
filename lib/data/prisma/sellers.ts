@@ -123,7 +123,7 @@ export const sellers: SellerMethods = {
     return result.count > 0;
   },
 
-  async createListing(sellerId, data) {
+  async createListing(sellerId, data, maxListings) {
     const prisma = getPrisma();
     const [seller, category] = await Promise.all([
       prisma.sellerProfile.findUnique({ where: { id: sellerId }, select: { id: true } }),
@@ -131,34 +131,41 @@ export const sellers: SellerMethods = {
     ]);
     if (!seller || !category) return null;
 
-    for (let attempt = 0; attempt < 5; attempt++) {
-      const root = slugify(data.title) || "produk";
-      const existing = await prisma.listing.findMany({ where: { slug: { startsWith: root } }, select: { slug: true } });
-      const slug = uniqueSlug(data.title, new Set(existing.map((row) => row.slug)));
-      try {
-        const row = await prisma.listing.create({
-          data: {
-            slug,
-            sellerId,
-            categoryId: category.id,
-            title: data.title,
-            description: data.description,
-            price: data.price,
-            unit: data.unit,
-            minOrderQty: data.minOrderQty,
-            stock: data.stock ?? 100,
-            status: data.status,
-            tasteProfile: hasTasteProfile(data, category.slug) ? { create: tasteData(data) } : undefined,
-            images: { create: imageRows(data) },
-          },
-          include: listingInclude,
-        });
-        return toListing(row);
-      } catch (error) {
-        if (!isUniqueViolation(error)) throw error;
+    return await prisma.$transaction(async (tx) => {
+      if (typeof maxListings === "number") {
+        const count = await tx.listing.count({ where: { sellerId } });
+        if (count >= maxListings) return null;
       }
-    }
-    throw new Error("Could not allocate a unique slug for the listing");
+
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const root = slugify(data.title) || "produk";
+        const existing = await tx.listing.findMany({ where: { slug: { startsWith: root } }, select: { slug: true } });
+        const slug = uniqueSlug(data.title, new Set(existing.map((row) => row.slug)));
+        try {
+          const row = await tx.listing.create({
+            data: {
+              slug,
+              sellerId,
+              categoryId: category.id,
+              title: data.title,
+              description: data.description,
+              price: data.price,
+              unit: data.unit,
+              minOrderQty: data.minOrderQty,
+              stock: data.stock ?? 100,
+              status: data.status,
+              tasteProfile: hasTasteProfile(data, category.slug) ? { create: tasteData(data) } : undefined,
+              images: { create: imageRows(data) },
+            },
+            include: listingInclude,
+          });
+          return toListing(row);
+        } catch (error) {
+          if (!isUniqueViolation(error)) throw error;
+        }
+      }
+      throw new Error("Could not allocate a unique slug for the listing");
+    });
   },
 
   /** Returns null when the listing does not exist or belongs to another seller. */

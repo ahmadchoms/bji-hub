@@ -62,7 +62,11 @@ export interface DataRepository {
   createInquiry(input: InquiryInput): Promise<Inquiry>;
   updateSellerProfile(sellerId: string, data: SellerProfileFormValues): Promise<SellerProfile | null>;
   requestVerification(sellerId: string): Promise<boolean>;
-  createListing(sellerId: string, data: ListingFormValues): Promise<ListingWithRelations | null>;
+  createListing(
+    sellerId: string,
+    data: ListingFormValues,
+    maxListings?: number,
+  ): Promise<ListingWithRelations | null>;
   updateListing(sellerId: string, listingId: string, data: ListingFormValues): Promise<ListingWithRelations | null>;
 
   // money

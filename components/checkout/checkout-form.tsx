@@ -789,9 +789,16 @@ export function CheckoutForm({
                       className="mt-0.5"
                     />
                     <div>
-                      <p className="font-semibold text-sm">
-                        {rate.courierName} — {rate.service}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-sm">
+                          {rate.courierName} — {rate.service}
+                        </p>
+                        {rate.isEstimate && (
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-xs bg-amber-100 text-amber-900 border border-amber-200">
+                            Estimasi
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[11px] text-neutral-600 mt-0.5">
                         Estimasi Tiba: <strong className="text-neutral-900 font-semibold">{rate.etd}</strong> • {rate.description}
                       </p>

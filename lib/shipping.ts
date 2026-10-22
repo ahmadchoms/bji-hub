@@ -12,6 +12,7 @@ export interface ShippingRate {
   cost: number;
   etd: string;
   description: string;
+  isEstimate?: boolean;
 }
 
 interface CalculateShippingParams {
@@ -64,6 +65,7 @@ function getFallbackRates(params: CalculateShippingParams): ShippingRate[] {
       cost: regularRatePerKg * kg,
       etd: regularEtd,
       description: "Layanan pengiriman standar kilat.",
+      isEstimate: true,
     },
     {
       id: "jnt-cargo",
@@ -73,6 +75,7 @@ function getFallbackRates(params: CalculateShippingParams): ShippingRate[] {
       cost: Math.max(25000, cargoRatePerKg * kg),
       etd: cargoEtd,
       description: "Rekomendasi terbaik untuk karung & pesanan grosir (≥ 5 kg).",
+      isEstimate: true,
     },
     {
       id: "pos-kilat",
@@ -82,13 +85,47 @@ function getFallbackRates(params: CalculateShippingParams): ShippingRate[] {
       cost: Math.round(regularRatePerKg * kg * 0.95),
       etd: regularEtd,
       description: "Jangkauan pengiriman pelosok Nusantara.",
+      isEstimate: true,
     },
   ];
 
   return rates;
 }
 
-const cachedDestinationIds = new Map<string, string>();
+interface CachedDestination {
+  id: string;
+  expiresAt: number;
+}
+const cachedDestinationIds = new Map<string, CachedDestination>();
+
+function getCachedDestinationId(city: string): string | null {
+  const item = cachedDestinationIds.get(city);
+  if (!item) return null;
+  if (Date.now() > item.expiresAt) {
+    cachedDestinationIds.delete(city);
+    return null;
+  }
+  return item.id;
+}
+
+function setCachedDestinationId(city: string, id: string): void {
+  const now = Date.now();
+  if (cachedDestinationIds.size >= 500) {
+    for (const [k, v] of cachedDestinationIds.entries()) {
+      if (now > v.expiresAt) {
+        cachedDestinationIds.delete(k);
+      }
+    }
+    if (cachedDestinationIds.size >= 500) {
+      const first = cachedDestinationIds.keys().next().value;
+      if (first) cachedDestinationIds.delete(first);
+    }
+  }
+  cachedDestinationIds.set(city, {
+    id,
+    expiresAt: now + 24 * 60 * 60 * 1000,
+  });
+}
 
 function getRajaOngkirBaseUrl(): string {
   if (process.env.RAJAONGKIR_BASE_URL) return process.env.RAJAONGKIR_BASE_URL.replace(/\/+$/, "");
@@ -106,9 +143,8 @@ async function getRajaOngkirDestinationId(
     .trim();
   if (!clean) return null;
 
-  if (cachedDestinationIds.has(clean)) {
-    return cachedDestinationIds.get(clean)!;
-  }
+  const cached = getCachedDestinationId(clean);
+  if (cached) return cached;
 
   try {
     const res = await fetch(
@@ -123,7 +159,7 @@ async function getRajaOngkirDestinationId(
       const first = json?.data?.[0];
       if (first?.id) {
         const idStr = String(first.id);
-        cachedDestinationIds.set(clean, idStr);
+        setCachedDestinationId(clean, idStr);
         return idStr;
       }
     }
@@ -185,6 +221,7 @@ async function fetchRajaOngkirCost(
           cost: Number(c.cost || 0),
           etd: cleanEtd,
           description: c.description || `Layanan ${c.service}`,
+          isEstimate: false,
         };
       },
     );
@@ -232,6 +269,7 @@ export async function calculateShippingRates(
               etd: "3-5 hari",
               description:
                 "Rekomendasi terbaik untuk karung & pesanan grosir (≥ 5 kg).",
+              isEstimate: true,
             });
           }
           return combined;

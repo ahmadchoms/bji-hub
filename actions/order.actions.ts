@@ -24,6 +24,8 @@ import {
 } from "@/lib/midtrans";
 import { getSession, requireRole } from "@/lib/auth/session";
 import { canAccessOrder } from "@/lib/auth/order-access";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/client-ip";
 import { computeTotalWeightGrams } from "@/lib/shipping-weight";
 import { isOwnedImageUrl } from "@/lib/storage";
 import {
@@ -613,6 +615,12 @@ export async function getShippingRatesAction(params: {
   destinationProvince?: string;
   weightGrams: number;
 }): Promise<ActionResult<ShippingRate[]>> {
+  const ip = await getClientIp();
+  const rl = await checkRateLimit(`shipping_rates:${ip}`, 30, 60_000);
+  if (!rl.success) {
+    return fail("Terlalu banyak permintaan kalkulasi ongkir. Silakan tunggu 1 menit.");
+  }
+
   try {
     const rates = await calculateShippingRates(params);
     return ok(rates);
@@ -627,6 +635,20 @@ export async function trackShipmentAction(
 ): Promise<ActionResult<WaybillTrackingResult>> {
   if (!trackingNumber || trackingNumber.trim().length < 3) {
     return fail("Nomor resi tidak valid");
+  }
+
+  const session = await getSession();
+  if (session.role === "guest") {
+    return fail("Silakan login untuk melacak resi pengiriman.");
+  }
+
+  const rl = await checkRateLimit(
+    `track_shipment:${session.userId || session.email || "auth"}`,
+    20,
+    60_000,
+  );
+  if (!rl.success) {
+    return fail("Terlalu banyak permintaan pelacakan resi. Silakan tunggu 1 menit.");
   }
 
   const result = await trackShipmentWaybill(trackingNumber.trim(), courierCode);

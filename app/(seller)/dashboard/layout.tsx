@@ -1,4 +1,3 @@
-import Script from "next/script";
 import Link from "next/link";
 import { AlertCircle, ArrowRight } from "lucide-react";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
@@ -14,23 +13,10 @@ export default async function SellerDashboardLayout({
   const bankDetails = await getSellerBankDetails(sellerId);
   const isBankMissing = !bankDetails || !bankDetails.bankAccountNumber;
 
-  const snapScriptUrl =
-    process.env.MIDTRANS_IS_PRODUCTION === "true"
-      ? "https://app.midtrans.com/snap/snap.js"
-      : "https://app.sandbox.midtrans.com/snap/snap.js";
-  const clientKey = process.env.MIDTRANS_CLIENT_KEY;
-
   return (
     <div className="min-h-screen bg-surface-alt">
-      {clientKey && (
-        <Script
-          src={snapScriptUrl}
-          data-client-key={clientKey}
-          strategy="lazyOnload"
-        />
-      )}
       <DashboardSidebar>
-        <main className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
+        <main id="main-content" className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
           {isBankMissing && (
             <div className="bg-amber-50 border border-amber-300 rounded-md p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-900 shadow-2xs">
               <div className="flex items-center gap-2.5">

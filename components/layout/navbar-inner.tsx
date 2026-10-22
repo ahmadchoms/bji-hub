@@ -199,6 +199,7 @@ export function NavbarInner({
                     onClick={() => setSearchQuery("")}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 p-0.5"
                     title="Hapus pencarian"
+                    aria-label="Hapus pencarian"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -535,6 +536,7 @@ export function NavbarInner({
                   onClick={() => setProfileOpen((prev) => !prev)}
                   className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded-md transition-colors max-w-[140px]"
                   title={`Akun: ${user.firstName}`}
+                  aria-label={`Akun: ${user.firstName}`}
                 >
                   {user.avatarUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element

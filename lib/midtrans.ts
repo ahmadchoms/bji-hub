@@ -50,6 +50,7 @@ export async function createMidtransSnapToken(params: {
         Accept: "application/json",
         Authorization: authHeader,
       },
+      signal: AbortSignal.timeout(8000),
       body: JSON.stringify({
         transaction_details: {
           order_id: params.orderId,
@@ -127,6 +128,7 @@ export async function checkMidtransStatus(orderId: string): Promise<{
         Accept: "application/json",
         Authorization: authHeader,
       },
+      signal: AbortSignal.timeout(8000),
       cache: "no-store",
     });
 

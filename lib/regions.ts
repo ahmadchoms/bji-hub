@@ -89,7 +89,9 @@ export async function fetchRegencies(provinceId: string): Promise<RegionItem[]> 
   const cached = cache.get(key);
   if (cached) return cached;
 
-  const res = await fetch(`${BASE_URL}/regencies/${provinceId}.json`);
+  const res = await fetch(`${BASE_URL}/regencies/${provinceId}.json`, {
+    signal: AbortSignal.timeout(5000),
+  });
   if (!res.ok) throw new Error("Gagal mengambil data kota/kabupaten");
   const raw: { id: string; name: string }[] = await res.json();
   const data = raw.map((item) => ({

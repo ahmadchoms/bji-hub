@@ -47,3 +47,7 @@ next-env.d.ts
 .claude
 .qwen
 .windsurf
+
+# internal security audit & agent task docs
+docs/ANALYSIS*.md
+BIJI-HUB-AGENT-TASKS.md

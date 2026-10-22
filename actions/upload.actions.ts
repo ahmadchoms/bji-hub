@@ -5,6 +5,7 @@ import { fail, ok, type ActionResult } from "@/lib/action-result";
 import { getSession } from "@/lib/auth/session";
 import { createImageUploadTarget } from "@/lib/data";
 import { IMAGE_RULES, isAllowedImageType } from "@/lib/storage";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 const uploadRequestSchema = z.object({
@@ -30,15 +31,27 @@ export async function createImageUploadAction(
   input: unknown,
 ): Promise<ActionResult<UploadTargetData>> {
   const session = await getSession();
-  const uploaderId =
-    session.role === "seller"
-      ? (session as unknown as { sellerId?: string }).sellerId || "seller"
-      : session.role === "buyer"
-        ? (session as unknown as { userId?: string }).userId || "buyer"
-        : "uploads";
+  if (session.role === "guest" || (!session.sellerId && !session.userId)) {
+    return fail("Silakan login untuk mengunggah gambar");
+  }
+
+  const uploaderId = session.sellerId ?? session.userId ?? "uploads";
+
+  const rate = await checkRateLimit("upload:" + uploaderId, 20, 60_000);
+  if (!rate.success) {
+    return fail("Terlalu banyak unggahan file. Silakan tunggu sebentar.");
+  }
+
   const parsed = uploadRequestSchema.safeParse(input);
   if (!parsed.success)
     return fail(parsed.error.issues[0]?.message ?? "File tidak valid");
+
+  const extMap: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+  };
+  const ext = extMap[parsed.data.contentType] || "webp";
 
   // Supabase Storage Cloud Upload when Service Role Key is configured
   if (
@@ -51,7 +64,6 @@ export async function createImageUploadAction(
         process.env.SUPABASE_SERVICE_ROLE_KEY
       );
 
-      const ext = parsed.data.filename.split(".").pop() || "webp";
       const filePath = `uploads/${uploaderId}/${crypto.randomUUID()}.${ext}`;
 
       const { data: signedData, error } = await supabase.storage

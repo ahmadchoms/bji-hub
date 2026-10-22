@@ -100,9 +100,33 @@ export function detectImageType(bytes: Uint8Array): ImageType | null {
   return null;
 }
 
+export const OWNED_STORAGE_PATH_PREFIXES = [
+  "/storage/v1/object/public/listings/uploads/",
+  "/storage/v1/object/public/listings/",
+  "/storage/v1/object/public/logos/",
+  "/storage/v1/object/public/disputes/",
+  "/storage/v1/object/public/reviews/",
+];
+
 export function isOwnedImageUrl(url: string): boolean {
-  if (process.env.NEXT_PUBLIC_SUPABASE_URL && url.startsWith(process.env.NEXT_PUBLIC_SUPABASE_URL)) {
-    return true;
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (base) {
+    try {
+      const target = new URL(url);
+      const origin = new URL(base).origin;
+      const allowedPrefixes = OWNED_STORAGE_PATH_PREFIXES;
+      if (
+        target.origin === origin &&
+        allowedPrefixes.some((p) => target.pathname.startsWith(p)) &&
+        !target.pathname.includes("..") &&
+        !target.search &&
+        !target.hash
+      ) {
+        return true;
+      }
+    } catch {
+      // bukan URL absolut yang valid; lanjut ke pemeriksaan prefix lokal
+    }
   }
   return (
     url.startsWith(OWNED_IMAGE_URL_PREFIX) &&

@@ -24,6 +24,7 @@ import {
 import { getSession, requireRole } from "@/lib/auth/session";
 import { canAccessOrder } from "@/lib/auth/order-access";
 import { computeTotalWeightGrams } from "@/lib/shipping-weight";
+import { isOwnedImageUrl } from "@/lib/storage";
 import {
   calculateShippingRates,
   trackShipmentWaybill,
@@ -417,7 +418,12 @@ export async function completeOrderAction(
 const disputeSchema = z.object({
   orderId: z.string().min(1),
   reason: z.string().min(5, "Alasan komplain minimal 5 karakter").max(500),
-  evidenceUrl: z.string().optional().nullable(),
+  evidenceUrl: z
+    .string()
+    .max(500)
+    .refine((val) => !val || isOwnedImageUrl(val), "URL gambar tidak valid")
+    .optional()
+    .nullable(),
 });
 
 export async function disputeOrderAction(
@@ -483,7 +489,7 @@ export async function sellerResolveDisputeAction(
   newTrackingNumber?: string,
 ): Promise<ActionResult<{ success: boolean }>> {
   const session = await getSession();
-  const sellerId = (session as unknown as { sellerId?: string }).sellerId;
+  const sellerId = session.sellerId;
   const order = await getOrderById(orderId);
   if (!order) return fail("Pesanan tidak ditemukan");
 
@@ -535,7 +541,12 @@ const reviewSchema = z.object({
   listingId: z.string().min(1),
   rating: z.number().int().min(1).max(5),
   comment: z.string().max(500).optional(),
-  imageUrl: z.string().optional().nullable(),
+  imageUrl: z
+    .string()
+    .max(500)
+    .refine((val) => !val || isOwnedImageUrl(val), "URL gambar tidak valid")
+    .optional()
+    .nullable(),
 });
 
 export async function submitReviewAction(

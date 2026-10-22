@@ -16,16 +16,12 @@ import {
 import { getOrderById } from "@/lib/data/orders";
 
 describe("createCheckoutOrderAction", () => {
-  const savedRajaKey = process.env.RAJAONGKIR_API_KEY;
-
   beforeAll(() => {
-    delete process.env.RAJAONGKIR_API_KEY;
+    vi.stubEnv("RAJAONGKIR_API_KEY", "");
   });
 
   afterAll(() => {
-    if (savedRajaKey) {
-      process.env.RAJAONGKIR_API_KEY = savedRajaKey;
-    }
+    vi.unstubAllEnvs();
   });
 
   it("creates a single-item checkout order successfully and ignores manipulated client shipping cost", async () => {

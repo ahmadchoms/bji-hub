@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   sendOrderPaidEmail,
   sendOrderShippedEmail,
@@ -35,7 +35,11 @@ const mockOrder: Order = {
 
 describe("Transactional Email Handler", () => {
   beforeEach(() => {
-    delete process.env.RESEND_API_KEY;
+    vi.stubEnv("RESEND_API_KEY", "");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("handles mock email when RESEND_API_KEY is not defined", async () => {

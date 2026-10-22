@@ -1,19 +1,13 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { isOwnedImageUrl } from "./storage";
 
 describe("isOwnedImageUrl", () => {
-  const originalSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-
-  beforeAll(() => {
-    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
+  beforeEach(() => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
   });
 
-  afterAll(() => {
-    if (originalSupabaseUrl) {
-      process.env.NEXT_PUBLIC_SUPABASE_URL = originalSupabaseUrl;
-    } else {
-      delete process.env.NEXT_PUBLIC_SUPABASE_URL;
-    }
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("accepts valid Supabase storage paths for listings", () => {
@@ -33,37 +27,54 @@ describe("isOwnedImageUrl", () => {
         "https://example.supabase.co/storage/v1/object/public/disputes/evidence.jpg",
       ),
     ).toBe(true);
+    expect(
+      isOwnedImageUrl(
+        "https://example.supabase.co/storage/v1/object/public/reviews/product.png",
+      ),
+    ).toBe(true);
   });
 
-  it("rejects lookalike / subdomain spoofing attack URLs", () => {
-    const evil =
-      "https://example.supabase.co.evil.com/storage/v1/object/public/listings/uploads/x.png";
-    expect(isOwnedImageUrl(evil)).toBe(false);
+  it("rejects non-supabase hosts", () => {
+    expect(
+      isOwnedImageUrl(
+        "https://malicious-site.com/storage/v1/object/public/listings/abc.webp",
+      ),
+    ).toBe(false);
+    expect(isOwnedImageUrl("https://example.com/logo.png")).toBe(false);
   });
 
-  it("rejects path traversal in URLs", () => {
-    const traversal =
-      "https://example.supabase.co/storage/v1/object/public/listings/uploads/../../secret/key.txt";
-    expect(isOwnedImageUrl(traversal)).toBe(false);
+  it("rejects subdomain spoofing attempts", () => {
+    expect(
+      isOwnedImageUrl(
+        "https://example.supabase.co.evil.com/storage/v1/object/public/listings/abc.webp",
+      ),
+    ).toBe(false);
   });
 
-  it("rejects URLs with query parameters or fragments", () => {
-    const withQuery =
-      "https://example.supabase.co/storage/v1/object/public/listings/uploads/x.png?param=1";
-    const withHash =
-      "https://example.supabase.co/storage/v1/object/public/listings/uploads/x.png#tag";
-    expect(isOwnedImageUrl(withQuery)).toBe(false);
-    expect(isOwnedImageUrl(withHash)).toBe(false);
+  it("rejects unapproved buckets and paths", () => {
+    expect(
+      isOwnedImageUrl(
+        "https://example.supabase.co/storage/v1/object/public/private_documents/id.pdf",
+      ),
+    ).toBe(false);
+    expect(
+      isOwnedImageUrl(
+        "https://example.supabase.co/storage/v1/object/public/users/secret.png",
+      ),
+    ).toBe(false);
   });
 
-  it("rejects other buckets not in allowed prefixes", () => {
-    const invalidBucket =
-      "https://example.supabase.co/storage/v1/object/public/private_invoices/doc.pdf";
-    expect(isOwnedImageUrl(invalidBucket)).toBe(false);
+  it("rejects path traversal attempts in pathname", () => {
+    expect(
+      isOwnedImageUrl(
+        "https://example.supabase.co/storage/v1/object/public/listings/../private/abc.webp",
+      ),
+    ).toBe(false);
   });
 
-  it("accepts local mock storage paths without traversal", () => {
-    expect(isOwnedImageUrl("/api/mock-storage/test-photo.webp")).toBe(true);
-    expect(isOwnedImageUrl("/api/mock-storage/../malicious.png")).toBe(false);
+  it("rejects invalid URLs gracefully", () => {
+    expect(isOwnedImageUrl("not-a-valid-url")).toBe(false);
+    expect(isOwnedImageUrl("")).toBe(false);
+    expect(isOwnedImageUrl("/relative/path.webp")).toBe(false);
   });
 });

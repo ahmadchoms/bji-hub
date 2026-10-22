@@ -6,13 +6,16 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: Typecheck, Lint & Unit Tests
     runs-on: ubuntu-latest
     env:
       DATA_SOURCE: mock
-      ALLOW_MOCK_AUTH: "true"
       NODE_ENV: test
     steps:
       - name: Checkout repository
@@ -35,6 +38,10 @@ jobs:
 
       - name: ESLint
         run: npm run lint
+
+      - name: Audit Production Dependencies
+        run: npm audit --omit=dev --audit-level=high
+        continue-on-error: true
 
       - name: Vitest Suite
         run: npm test

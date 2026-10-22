@@ -4,12 +4,12 @@ const isProd = process.env.NODE_ENV === "production";
 
 const cspDirectives = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://app.midtrans.com https://app.sandbox.midtrans.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://app.midtrans.com https://app.sandbox.midtrans.com https://challenges.cloudflare.com",
   "connect-src 'self' https://app.midtrans.com https://app.sandbox.midtrans.com https://*.supabase.co wss://*.supabase.co https://rajaongkir.komerce.id https://pro.rajaongkir.com",
   "img-src 'self' data: blob: https://images.unsplash.com https://*.supabase.co",
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self' data:",
-  "frame-src 'self' https://app.midtrans.com https://app.sandbox.midtrans.com",
+  "frame-src 'self' https://app.midtrans.com https://app.sandbox.midtrans.com https://challenges.cloudflare.com",
   "object-src 'none'",
   "base-uri 'self'",
 ].join("; ");

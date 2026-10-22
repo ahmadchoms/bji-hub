@@ -18,7 +18,7 @@ export async function submitInquiryAction(
   }
 
   // Rate limit: max 5 inquiries per minute per buyer contact
-  const rl = checkRateLimit(`inquiry:${parsed.data.buyerContact.trim()}`, 5, 60_000);
+  const rl = await checkRateLimit(`inquiry:${parsed.data.buyerContact.trim()}`, 5, 60_000);
   if (!rl.success) {
     return fail("Terlalu banyak permintaan pesan. Mohon tunggu 1 menit.");
   }

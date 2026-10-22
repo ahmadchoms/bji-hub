@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   }
 
   const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown-ip";
-  const rl = checkRateLimit(`ip_track:${clientIp}`, 120, 60_000);
+  const rl = await checkRateLimit(`ip_track:${clientIp}`, 120, 60_000);
   if (!rl.success) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }

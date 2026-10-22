@@ -21,6 +21,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getPrisma } from "@/lib/data/prisma/client";
 import { slugify } from "@/lib/slug";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/client-ip";
 import type { BuyerAddress } from "@/types";
 import { readBuyerProfileCookie, serializeBuyerProfile, BUYER_PROFILE_COOKIE, buyerAddressSchema } from "@/lib/auth/buyer-profile";
 
@@ -52,13 +53,19 @@ export async function loginAction(
     );
   }
 
-  const rl = checkRateLimit(
-    `login:${parsed.data.email.toLowerCase().trim()}`,
+  const ip = await getClientIp();
+  const ipRl = await checkRateLimit(`login:ip:${ip}`, 20, 60_000);
+  if (!ipRl.success) {
+    return fail("Terlalu banyak percobaan login dari IP ini. Silakan tunggu 1 menit.");
+  }
+
+  const emailRl = await checkRateLimit(
+    `login:email:${parsed.data.email.toLowerCase().trim()}`,
     5,
     60_000,
   );
-  if (!rl.success) {
-    return fail("Terlalu banyak percobaan login. Silakan tunggu 1 menit.");
+  if (!emailRl.success) {
+    return fail("Terlalu banyak percobaan login untuk akun ini. Silakan tunggu 1 menit.");
   }
 
   // Real Supabase Auth when credentials exist
@@ -135,13 +142,19 @@ export async function registerAction(
     );
   }
 
-  const rl = checkRateLimit(
-    `register:${parsed.data.email.toLowerCase().trim()}`,
+  const ip = await getClientIp();
+  const ipRl = await checkRateLimit(`register:ip:${ip}`, 10, 60_000);
+  if (!ipRl.success) {
+    return fail("Terlalu banyak pendaftaran dari IP ini. Silakan tunggu 1 menit.");
+  }
+
+  const emailRl = await checkRateLimit(
+    `register:email:${parsed.data.email.toLowerCase().trim()}`,
     3,
     60_000,
   );
-  if (!rl.success) {
-    return fail("Terlalu banyak pendaftaran. Silakan tunggu 1 menit.");
+  if (!emailRl.success) {
+    return fail("Terlalu banyak pendaftaran untuk email ini. Silakan tunggu 1 menit.");
   }
 
   // Real Supabase Auth & Prisma record creation

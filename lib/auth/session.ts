@@ -9,6 +9,7 @@ import {
   type Session,
 } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
+import { sanitizeDisplayName } from "@/lib/auth/display-name";
 import { getPrisma } from "@/lib/data/prisma/client";
 import { isMockAuthAllowed, MOCK_SESSION_COOKIE } from "@/lib/auth/mock-guard";
 
@@ -63,11 +64,14 @@ export const getSession = cache(async (): Promise<Session> => {
             BUYER: "buyer",
           };
           const role = roleMap[dbUser.role] || "buyer";
+          const rawName = user.user_metadata?.full_name ?? user.user_metadata?.name;
+          const cleanName = sanitizeDisplayName(rawName, dbUser.email);
           return {
             role,
             sellerId: dbUser.sellerProfile?.id ?? null,
             userId: dbUser.id,
             email: dbUser.email,
+            name: cleanName,
           };
         }
       }

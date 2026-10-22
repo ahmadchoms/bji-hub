@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Logo } from "@/components/shared/logo";
 import { loginAction } from "@/actions/auth.actions";
+import { safeNextPath } from "@/lib/auth/roles";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -36,7 +38,11 @@ function LoginForm() {
         searchParams.get("next") ?? undefined,
       );
       if (!result.success) {
-        toast.error("Gagal masuk", { description: result.error });
+        let desc = result.error;
+        if (result.error?.toLowerCase().includes("invalid login credentials")) {
+          desc = "Kredensial tidak valid. Jika Anda mendaftar dengan Google, gunakan tombol Lanjutkan dengan Google.";
+        }
+        toast.error("Gagal masuk", { description: desc });
         setIsLoading(false);
         return;
       }
@@ -80,12 +86,23 @@ function LoginForm() {
 
           {searchParams.get("error") === "verification_failed" && (
             <div className="p-3.5 bg-rose-50 border border-rose-300 rounded text-rose-900 text-xs leading-relaxed space-y-1">
-              <p className="font-semibold">Konfirmasi Email Gagal</p>
+              <p className="font-semibold">Verifikasi Gagal</p>
               <p>
-                Tautan konfirmasi tidak valid atau sudah kedaluwarsa. Silakan masuk jika akun sudah terdaftar, atau coba lakukan pendaftaran ulang.
+                Verifikasi gagal atau kedaluwarsa, silakan coba lagi.
               </p>
             </div>
           )}
+
+          <GoogleSignInButton next={safeNextPath(searchParams.get("next"), "/")} />
+
+          <div className="relative flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-neutral-300" />
+            </div>
+            <div className="relative bg-surface-base px-3 text-xs uppercase text-neutral-500 font-medium">
+              atau
+            </div>
+          </div>
 
           <form
             onSubmit={handleSubmit(onSubmit)}

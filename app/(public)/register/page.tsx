@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { safeNextPath } from "@/lib/auth/roles";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import Link from "next/link";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,7 +20,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Logo } from "@/components/shared/logo";
 import { registerAction } from "@/actions/auth.actions";
 
-export default function RegisterPage() {
+function RegisterForm() {
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -75,6 +79,17 @@ export default function RegisterPage() {
             <p className="text-sm text-neutral-600 max-w-sm mx-auto leading-relaxed">
               Daftar untuk mencari, membandingkan profil rasa, dan terhubung langsung dengan petani & roaster kopi lokal.
             </p>
+          </div>
+
+          <GoogleSignInButton next={safeNextPath(searchParams.get("next"), "/")} />
+
+          <div className="relative flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-neutral-300" />
+            </div>
+            <div className="relative bg-surface-base px-3 text-xs uppercase text-neutral-500 font-medium">
+              atau
+            </div>
           </div>
 
           <form
@@ -210,5 +225,19 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
+        </div>
+      }
+    >
+      <RegisterForm />
+    </Suspense>
   );
 }

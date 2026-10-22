@@ -6,6 +6,7 @@ export interface Session {
   sellerId: string | null;
   userId?: string | null;
   email?: string | null;
+  name?: string | null;
 }
 
 export const GUEST_SESSION: Session = {

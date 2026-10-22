@@ -82,26 +82,29 @@ export async function loginAction(
       if (data.user) {
         if (process.env.DATA_SOURCE !== "mock") {
           const prisma = getPrisma();
-          const dbUser = await prisma.user.upsert({
+          let dbUser = await prisma.user.findUnique({
             where: { id: data.user.id },
-            create: {
-              id: data.user.id,
-              email: parsed.data.email,
-              role:
-                data.user.user_metadata?.role === "seller"
-                  ? "SELLER"
-                  : data.user.user_metadata?.role === "admin"
-                    ? "ADMIN"
-                    : "BUYER",
-            },
-            update: {},
             include: { sellerProfile: { select: { id: true } } },
           });
+
+          if (!dbUser) {
+            await prisma.user.create({
+              data: {
+                id: data.user.id,
+                email: parsed.data.email,
+                role: "BUYER",
+              },
+            });
+            dbUser = await prisma.user.findUnique({
+              where: { id: data.user.id },
+              include: { sellerProfile: { select: { id: true } } },
+            });
+          }
+
           const role = (dbUser?.role?.toLowerCase() as Role) || "buyer";
           return ok({ redirectTo: safeNextPath(next, homeFor(role)) });
         }
-        const role = (data.user.user_metadata?.role as Role) || "buyer";
-        return ok({ redirectTo: safeNextPath(next, homeFor(role)) });
+        return ok({ redirectTo: safeNextPath(next, homeFor("buyer")) });
       }
     } catch {
       if (!isMockAuthAllowed()) {

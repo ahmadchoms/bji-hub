@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import {
@@ -17,8 +18,9 @@ const MOCK_SELLER_ID = "seller-1";
 /**
  * Single entry point for session verification.
  * Supports Supabase Auth when cookies exist, with graceful fallback to mock session.
+ * Wrapped in React cache to ensure only one session resolution per request render.
  */
-export async function getSession(): Promise<Session> {
+export const getSession = cache(async (): Promise<Session> => {
   let store: Awaited<ReturnType<typeof cookies>>;
   try {
     store = await cookies();
@@ -34,21 +36,24 @@ export async function getSession(): Promise<Session> {
 
       if (user && process.env.DATA_SOURCE !== "mock") {
         const prisma = getPrisma();
-        const dbUser = await prisma.user.upsert({
+        let dbUser = await prisma.user.findUnique({
           where: { id: user.id },
-          create: {
-            id: user.id,
-            email: user.email ?? "",
-            role:
-              user.email === process.env.ADMIN_EMAIL
-                ? "ADMIN"
-                : user.user_metadata?.role === "seller"
-                  ? "SELLER"
-                  : "BUYER",
-          },
-          update: {},
           include: { sellerProfile: { select: { id: true } } },
         });
+
+        if (!dbUser) {
+          await prisma.user.create({
+            data: {
+              id: user.id,
+              email: user.email ?? "",
+              role: "BUYER",
+            },
+          });
+          dbUser = await prisma.user.findUnique({
+            where: { id: user.id },
+            include: { sellerProfile: { select: { id: true } } },
+          });
+        }
 
         if (dbUser) {
           const roleMap: Record<string, Role> = {
@@ -93,7 +98,7 @@ export async function getSession(): Promise<Session> {
           ? "admin@bijihub.com"
           : "buyer@bijihub.com",
   };
-}
+});
 
 export async function requireRole(
   allowed: readonly Role[],

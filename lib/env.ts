@@ -9,6 +9,7 @@ const productionSchema = z.object({
   MIDTRANS_CLIENT_KEY: z.string().min(1, "MIDTRANS_CLIENT_KEY wajib diisi"),
   NEXT_PUBLIC_APP_URL: z.string().url("NEXT_PUBLIC_APP_URL harus berupa URL valid"),
   PAYMENT_PROVIDER: z.enum(["midtrans", "mock"]).optional().default("midtrans"),
+  NEXT_PUBLIC_GOOGLE_CLIENT_ID: z.string().optional(),
 });
 
 export function validateEnv(): boolean {

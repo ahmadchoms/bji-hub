@@ -183,6 +183,7 @@ export async function registerAction(
         options: {
           data: {
             name: parsed.data.name,
+            termsAcceptedAt: new Date().toISOString(),
           },
           emailRedirectTo: `${appUrl}/auth/callback?next=/`,
         },

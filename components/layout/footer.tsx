@@ -16,6 +16,15 @@ export function Footer() {
         <Link href="/terms" className="hover:text-primary-900">
           Syarat
         </Link>
+        <Link href="/privacy" className="hover:text-primary-900">
+          Privasi
+        </Link>
+        <Link href="/refund-policy" className="hover:text-primary-900">
+          Retur & Refund
+        </Link>
+        <Link href="/shipping-policy" className="hover:text-primary-900">
+          Pengiriman
+        </Link>
         <Link href="/pricing" className="hover:text-primary-900">
           Harga
         </Link>

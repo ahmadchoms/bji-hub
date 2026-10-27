@@ -169,7 +169,15 @@ function RegisterForm() {
                   >
                     Syarat & Ketentuan
                   </Link>{" "}
-                  platform direktori Biji Hub.
+                  dan{" "}
+                  <Link
+                    href="/privacy"
+                    target="_blank"
+                    className="text-primary-600 underline hover:text-primary-700"
+                  >
+                    Kebijakan Privasi
+                  </Link>{" "}
+                  Biji Hub.
                 </span>
               </label>
               {errors.termsAccepted && (

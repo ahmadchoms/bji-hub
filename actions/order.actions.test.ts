@@ -650,5 +650,46 @@ describe("submitReviewAction (B1 verification & uniqueness)", () => {
 
       spy.mockRestore();
     });
+
+    it("rejects buyer cancellation when order payment is older than 6 hours (F17)", async () => {
+      const buyerId = `buyer-window-${Date.now()}`;
+      const order = await createOrder({
+        buyerId,
+        buyerName: "Buyer Window",
+        buyerEmail: "window@example.com",
+        buyerPhone: "08123456789",
+        buyerAddress: "Jl Kopi No 5",
+        buyerCity: "Bandung",
+        sellerId: "seller-1",
+        listingId: "list-1",
+        quantity: 1,
+        itemPrice: 50000,
+        subtotal: 50000,
+        shippingCost: 10000,
+        serviceFee: 1500,
+        totalAmount: 61500,
+        shippingCourier: "jne",
+      });
+
+      await updateOrderStatus(order.id, "paid");
+      // Simulate order paid 7 hours ago
+      order.updatedAt = new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString();
+
+      const authSession = await import("@/lib/auth/session");
+      const spy = vi.spyOn(authSession, "getSession").mockResolvedValue({
+        role: "buyer",
+        userId: buyerId,
+        sellerId: null,
+        email: "window@example.com",
+      });
+
+      const res = await cancelPaidOrderAction(order.id, "Batal lewat waktu");
+      expect(res.success).toBe(false);
+      if (!res.success) {
+        expect(res.error).toContain("Batas waktu pembatalan mandiri oleh pembeli telah berakhir");
+      }
+
+      spy.mockRestore();
+    });
   });
 });

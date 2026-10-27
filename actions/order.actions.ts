@@ -985,6 +985,20 @@ export async function cancelPaidOrderAction(
     return fail("Anda tidak memiliki akses untuk membatalkan pesanan ini");
   }
 
+  // F17: Time window guard for buyer-initiated cancellation of paid order (max 6 hours)
+  if (isBuyer && !isSeller && !isAdmin) {
+    const paidAt = order.updatedAt
+      ? new Date(order.updatedAt).getTime()
+      : new Date(order.createdAt).getTime();
+    const elapsedMs = Date.now() - paidAt;
+    const maxCancelWindowMs = 6 * 60 * 60 * 1000;
+    if (elapsedMs > maxCancelWindowMs) {
+      return fail(
+        "Batas waktu pembatalan mandiri oleh pembeli telah berakhir (maksimal 6 jam setelah pembayaran). Silakan hubungi penjual untuk bantuan pembatalan.",
+      );
+    }
+  }
+
   const cleanReason =
     (reason || "").trim() ||
     (isSeller

@@ -572,10 +572,7 @@ const reviewSchema = z.object({
   orderId: z.string().optional(),
   listingId: z.string().min(1, "ID produk wajib diisi"),
   rating: z
-    .number({
-      required_error: "Rating wajib diisi",
-      invalid_type_error: "Rating harus berupa angka",
-    })
+    .number()
     .int("Rating harus berupa bilangan bulat")
     .min(1, "Rating minimal 1 bintang")
     .max(5, "Rating maksimal 5 bintang"),

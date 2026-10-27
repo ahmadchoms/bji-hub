@@ -279,6 +279,7 @@ describe("submitReviewAction (B1 verification & uniqueness)", () => {
     const spy = vi.spyOn(authSession, "getSession").mockResolvedValueOnce({
       role: "buyer",
       userId: buyerUserId,
+      sellerId: null,
       email: "buyer@example.com",
     });
 
@@ -343,6 +344,7 @@ describe("submitReviewAction (B1 verification & uniqueness)", () => {
     const spy = vi.spyOn(authSession, "getSession").mockResolvedValueOnce({
       role: "buyer",
       userId: buyerUserId,
+      sellerId: null,
       email: "buyer@example.com",
     });
 
@@ -382,6 +384,7 @@ describe("submitReviewAction (B1 verification & uniqueness)", () => {
     const spy = vi.spyOn(authSession, "getSession").mockResolvedValueOnce({
       role: "buyer",
       userId: buyerUserId,
+      sellerId: null,
       email: "buyer@example.com",
     });
 
@@ -424,6 +427,7 @@ describe("submitReviewAction (B1 verification & uniqueness)", () => {
     const spy = vi.spyOn(authSession, "getSession").mockResolvedValueOnce({
       role: "buyer",
       userId: buyerUserId,
+      sellerId: null,
       email: "buyer@example.com",
     });
 
@@ -466,6 +470,7 @@ describe("submitReviewAction (B1 verification & uniqueness)", () => {
     const spy = vi.spyOn(authSession, "getSession").mockResolvedValue({
       role: "buyer",
       userId: buyerUserId,
+      sellerId: null,
       email: "buyer@example.com",
     });
 

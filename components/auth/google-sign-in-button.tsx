@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import Script from "next/script";
 import { createClient } from "@/lib/supabase/client";
 import { safeNextPath } from "@/lib/auth/roles";
+import { createNonce } from "@/lib/auth/nonce";
 
 interface GoogleSignInButtonProps {
   next?: string;
@@ -17,6 +18,7 @@ declare global {
           initialize: (config: {
             client_id: string;
             callback: (response: { credential: string }) => void;
+            nonce?: string;
             auto_select?: boolean;
             cancel_on_tap_outside?: boolean;
           }) => void;
@@ -47,6 +49,7 @@ export function GoogleSignInButton({ next = "/" }: GoogleSignInButtonProps) {
   const [gisFailed, setGisFailed] = useState(false);
   const buttonContainerRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
+  const rawNonceRef = useRef<string | null>(null);
 
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
@@ -59,6 +62,7 @@ export function GoogleSignInButton({ next = "/" }: GoogleSignInButtonProps) {
         const { error: signInError } = await supabase.auth.signInWithIdToken({
           provider: "google",
           token: response.credential,
+          nonce: rawNonceRef.current ?? undefined,
         });
 
         if (signInError) {
@@ -89,7 +93,7 @@ export function GoogleSignInButton({ next = "/" }: GoogleSignInButtonProps) {
     callbackRef.current = handleCredentialResponse;
   }, [handleCredentialResponse]);
 
-  const initGis = useCallback(() => {
+  const initGis = useCallback(async () => {
     if (!clientId || !window.google?.accounts?.id || !buttonContainerRef.current) {
       return;
     }
@@ -97,8 +101,12 @@ export function GoogleSignInButton({ next = "/" }: GoogleSignInButtonProps) {
     initializedRef.current = true;
 
     try {
+      const { raw, hashed } = await createNonce();
+      rawNonceRef.current = raw;
+
       window.google.accounts.id.initialize({
         client_id: clientId,
+        nonce: hashed,
         callback: (res) => callbackRef.current(res),
         cancel_on_tap_outside: true,
       });

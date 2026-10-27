@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getPaymentProvider } from "@/lib/payments";
 import { getPrisma } from "@/lib/data/prisma/client";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -80,6 +81,12 @@ export async function GET(req: Request) {
       synced++;
     }
   }
+
+  logger.info("cron.finished", {
+    cron: "sync-payments",
+    totalPending: pendingPayments.length,
+    synced,
+  });
 
   return NextResponse.json({
     totalPending: pendingPayments.length,

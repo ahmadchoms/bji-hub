@@ -3,6 +3,7 @@ import {
   autoCompleteExpiredShippedOrders,
   autoCancelExpiredPendingOrders,
 } from "@/lib/data/orders";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,11 @@ export async function GET(request: Request) {
       autoCompleteExpiredShippedOrders(2),
       autoCancelExpiredPendingOrders(24),
     ]);
+    logger.info("cron.finished", {
+      cron: "auto-complete-orders",
+      completedCount: completed.completedCount,
+      canceledCount: canceled.canceledCount,
+    });
     return NextResponse.json({
       success: true,
       message: `${completed.completedCount} pesanan selesai otomatis (>48 jam). ${canceled.canceledCount} pesanan belum bayar dibatalkan otomatis (>24 jam).`,

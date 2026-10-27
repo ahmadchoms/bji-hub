@@ -29,7 +29,11 @@ vi.mock("next/headers", () => ({
   })),
 }));
 
-import { deleteAccountAction } from "./account.actions";
+import {
+  deleteAccountAction,
+  changePasswordFromProfileAction,
+  signOutAllDevicesAction,
+} from "./account.actions";
 
 describe("deleteAccountAction (F6)", () => {
   beforeEach(() => {
@@ -88,6 +92,43 @@ describe("deleteAccountAction (F6)", () => {
     expect(res.success).toBe(true);
     if (res.success) {
       expect(res.data.redirectTo).toBe("/login?deleted=1");
+    }
+  });
+});
+
+describe("changePasswordFromProfileAction & signOutAllDevicesAction (S8)", () => {
+  beforeEach(() => {
+    mockSession = {
+      role: "buyer",
+      userId: "user-buyer-1",
+      email: "buyer@test.com",
+    };
+  });
+
+  it("fails if password does not meet security criteria", async () => {
+    const res = await changePasswordFromProfileAction({
+      oldPassword: "oldPassword123!",
+      newPassword: "short",
+    });
+    expect(res.success).toBe(false);
+  });
+
+  it("succeeds with strong password in mock environment", async () => {
+    const res = await changePasswordFromProfileAction({
+      oldPassword: "OldPassword123!",
+      newPassword: "NewStrongPassword2026#",
+    });
+    expect(res.success).toBe(true);
+    if (res.success) {
+      expect(res.data.message).toContain("seluruh perangkat lain telah dikeluarkan");
+    }
+  });
+
+  it("signs out from all devices and redirects to login", async () => {
+    const res = await signOutAllDevicesAction();
+    expect(res.success).toBe(true);
+    if (res.success) {
+      expect(res.data.redirectTo).toBe("/login?message=logged_out_all");
     }
   });
 });

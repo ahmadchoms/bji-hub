@@ -1,6 +1,7 @@
 type LogLevel = "info" | "warn" | "error";
 
-const SENSITIVE_KEY_PATTERN = /password|token|secret|apiKey|authorization|cookie|key/i;
+const SENSITIVE_KEY_PATTERN =
+  /password|token|secret|apiKey|authorization|cookie|key|credential|pin|cvv|phone|telephone|rekening|accountNumber/i;
 
 function sanitize(val: unknown, depth = 0): unknown {
   if (depth > 4) return "[DEPTH_EXCEEDED]";

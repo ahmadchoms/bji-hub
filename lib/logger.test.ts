@@ -14,6 +14,8 @@ describe("Structured Logger", () => {
     logger.error("Test error message", new Error("Boom"), {
       apiKey: "secret-123",
       userPassword: "password456",
+      phoneNumber: "081234567890",
+      accountNumber: "123456789",
       normalField: "public-val",
     });
     expect(consoleSpy).toHaveBeenCalled();
@@ -21,6 +23,8 @@ describe("Structured Logger", () => {
     const loggedContext = args[1] as Record<string, unknown>;
     expect(loggedContext.apiKey).toBe("[REDACTED]");
     expect(loggedContext.userPassword).toBe("[REDACTED]");
+    expect(loggedContext.phoneNumber).toBe("[REDACTED]");
+    expect(loggedContext.accountNumber).toBe("[REDACTED]");
     expect(loggedContext.normalField).toBe("public-val");
     consoleSpy.mockRestore();
   });

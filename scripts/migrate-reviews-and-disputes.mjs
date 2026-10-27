@@ -120,6 +120,41 @@ async function main() {
     ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS seller_replied_at TIMESTAMPTZ;
     ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS is_reported BOOLEAN NOT NULL DEFAULT false;
     ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS report_reason TEXT;
+
+    -- Row Level Security (RLS) enforcement on all new application tables (S11)
+    ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE public.refunds ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE public.webhook_events ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE public.user_addresses ENABLE ROW LEVEL SECURITY;
+
+    -- Database Performance Indexes (Audit Section 5.2)
+    CREATE INDEX IF NOT EXISTS idx_orders_buyer_created ON public.orders(buyer_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_orders_seller_status_created ON public.orders(seller_id, status, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_orders_order_number ON public.orders(order_number);
+    CREATE INDEX IF NOT EXISTS idx_orders_midtrans_order_id ON public.orders(midtrans_order_id);
+    CREATE INDEX IF NOT EXISTS idx_refunds_status ON public.refunds(status);
+    CREATE INDEX IF NOT EXISTS idx_payout_requests_seller_status ON public.payout_requests(seller_id, status);
+
+    -- Integrity Constraints (Audit Section 5.1)
+    DO $$ BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_listings_stock_nonneg') THEN
+        ALTER TABLE public.listings ADD CONSTRAINT chk_listings_stock_nonneg CHECK (stock >= 0);
+      END IF;
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_orders_total_nonneg') THEN
+        ALTER TABLE public.orders ADD CONSTRAINT chk_orders_total_nonneg CHECK (total_amount >= 0);
+      END IF;
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_refunds_amount_pos') THEN
+        ALTER TABLE public.refunds ADD CONSTRAINT chk_refunds_amount_pos CHECK (amount > 0);
+      END IF;
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_reviews_rating_range') THEN
+        ALTER TABLE public.reviews ADD CONSTRAINT chk_reviews_rating_range CHECK (rating >= 1 AND rating <= 5);
+      END IF;
+    EXCEPTION WHEN undefined_table THEN
+      -- In case table is created later
+      NULL;
+    END $$;
   `);
 
   console.log("Reviews table and dispute_reason column verified in PostgreSQL!");

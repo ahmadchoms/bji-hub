@@ -1,11 +1,13 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
 import { useWishlist, listingToWishlistItem } from "@/lib/wishlist";
 import type { ListingWithRelations } from "@/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { checkAuthAction } from "@/actions/auth.actions";
+import { getClientAuth } from "@/lib/auth/client-auth";
 
 interface WishlistButtonProps {
   listing: ListingWithRelations;
@@ -19,7 +21,13 @@ export function WishlistButton({
   className,
 }: WishlistButtonProps) {
   const { isSaved, toggleWishlist, isLoaded } = useWishlist();
-  const saved = isLoaded && isSaved(listing.id);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    getClientAuth().then((authed) => setIsAuthenticated(authed));
+  }, []);
+
+  const saved = Boolean(isAuthenticated && isLoaded && isSaved(listing.id));
 
   const handleToggle = async (e: React.MouseEvent) => {
     e.preventDefault();

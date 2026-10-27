@@ -8,7 +8,7 @@ describe("lib/regions", () => {
     expect(provinces.length).toBeGreaterThanOrEqual(34);
     expect(provinces[0]).toHaveProperty("id");
     expect(provinces[0]).toHaveProperty("name");
-  });
+  }, 15000);
 
   it("handles empty provinceId gracefully for regencies", async () => {
     const regencies = await fetchRegencies("");

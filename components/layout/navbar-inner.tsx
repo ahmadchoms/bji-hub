@@ -233,10 +233,10 @@ export function NavbarInner({
           {/* Sisi Kanan: Keranjang, Favorit, Notifikasi, Riwayat, Pesan | Toko | Profil */}
           <div className="flex items-center gap-1 shrink-0">
             {/* Keranjang */}
-            <CartNavBadge />
+            <CartNavBadge showBadge={role !== "guest"} />
 
             {/* Favorit / Wishlist */}
-            <WishlistNavBadge />
+            <WishlistNavBadge showBadge={role !== "guest"} />
 
             {/* Notifikasi */}
             <div className="relative" ref={notifMenuRef}>
@@ -248,7 +248,9 @@ export function NavbarInner({
                 aria-label="Notifikasi"
               >
                 <Bell className="w-4 h-4" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white" />
+                {role !== "guest" && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white" />
+                )}
               </button>
 
               {notifOpen && (
@@ -614,8 +616,8 @@ export function NavbarInner({
           <Logo size="md" />
 
           <div className="flex items-center gap-1.5">
-            <CartNavBadge />
-            <WishlistNavBadge />
+            <CartNavBadge showBadge={role !== "guest"} />
+            <WishlistNavBadge showBadge={role !== "guest"} />
 
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger

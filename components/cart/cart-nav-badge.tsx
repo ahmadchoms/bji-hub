@@ -4,7 +4,11 @@ import Link from "next/link";
 import { useCart } from "@/lib/cart";
 import { ShoppingCart } from "lucide-react";
 
-export function CartNavBadge() {
+interface CartNavBadgeProps {
+  showBadge?: boolean;
+}
+
+export function CartNavBadge({ showBadge = true }: CartNavBadgeProps) {
   const { totalItems, isLoaded } = useCart();
 
   return (
@@ -15,7 +19,7 @@ export function CartNavBadge() {
       aria-label="Keranjang Belanja"
     >
       <ShoppingCart className="w-4 h-4" />
-      {isLoaded && totalItems > 0 && (
+      {showBadge && isLoaded && totalItems > 0 && (
         <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-primary-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 animate-in zoom-in-50">
           {totalItems > 99 ? "99+" : totalItems}
         </span>

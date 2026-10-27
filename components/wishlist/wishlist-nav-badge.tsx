@@ -4,7 +4,11 @@ import Link from "next/link";
 import { useWishlist } from "@/lib/wishlist";
 import { Heart } from "lucide-react";
 
-export function WishlistNavBadge() {
+interface WishlistNavBadgeProps {
+  showBadge?: boolean;
+}
+
+export function WishlistNavBadge({ showBadge = true }: WishlistNavBadgeProps) {
   const { totalItems, isLoaded } = useWishlist();
 
   return (
@@ -15,7 +19,7 @@ export function WishlistNavBadge() {
       aria-label="Kopi Favorit Saya"
     >
       <Heart className="w-4 h-4" />
-      {isLoaded && totalItems > 0 && (
+      {showBadge && isLoaded && totalItems > 0 && (
         <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 animate-in zoom-in-50">
           {totalItems > 99 ? "99+" : totalItems}
         </span>

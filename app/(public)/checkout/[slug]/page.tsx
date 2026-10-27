@@ -10,6 +10,7 @@ import { getSession } from "@/lib/auth/session";
 import { getOrdersByBuyer } from "@/lib/data/orders";
 import type { BuyerAddress } from "@/types";
 import { readBuyerProfileCookie } from "@/lib/auth/buyer-profile";
+import { getUserAddresses, toBuyerAddress } from "@/lib/data/addresses";
 
 interface CheckoutPageProps {
   params: Promise<{ slug: string }>;
@@ -56,6 +57,25 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
   let userAddress = "";
 
   let userAddresses: BuyerAddress[] = [];
+
+  if (session.userId) {
+    try {
+      const dbAddresses = await getUserAddresses(session.userId);
+      if (dbAddresses.length > 0) {
+        userAddresses = dbAddresses.map(toBuyerAddress);
+        const primary = userAddresses.find((a) => a.isPrimary) || userAddresses[0];
+        if (primary) {
+          userPhone = userPhone || primary.phone || "";
+          userProvince = userProvince || primary.province || "";
+          userCity = userCity || primary.city || "";
+          userPostalCode = userPostalCode || primary.postalCode || "";
+          userAddress = userAddress || primary.address || "";
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
 
   if (
     process.env.NEXT_PUBLIC_SUPABASE_URL &&

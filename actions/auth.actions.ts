@@ -27,7 +27,8 @@ import { logger } from "@/lib/logger";
 import { validatePasswordStrength } from "@/lib/auth/password-rules";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import type { BuyerAddress } from "@/types";
-import { readBuyerProfileCookie, serializeBuyerProfile, BUYER_PROFILE_COOKIE, buyerAddressSchema } from "@/lib/auth/buyer-profile";
+import { buyerAddressSchema, BUYER_PROFILE_COOKIE, readBuyerProfileCookie, serializeBuyerProfile } from "@/lib/auth/buyer-profile";
+import { syncUserAddresses } from "@/lib/data/addresses";
 
 async function setMockSession(role: Role): Promise<void> {
   const store = await cookies();
@@ -458,6 +459,30 @@ export async function updateBuyerAddressesAction(
   }
   const validAddresses = parsedAddresses.data as BuyerAddress[];
   const primary = validAddresses.find((a) => a.isPrimary) || validAddresses[0];
+
+  const session = await getSession();
+  const userId = session.userId;
+
+  if (userId) {
+    try {
+      await syncUserAddresses(
+        userId,
+        validAddresses.map((a) => ({
+          id: a.id,
+          label: a.label,
+          recipientName: a.recipientName,
+          phone: a.phone,
+          streetAddress: a.address,
+          city: a.city,
+          province: a.province,
+          postalCode: a.postalCode,
+          isDefault: a.isPrimary,
+        })),
+      );
+    } catch (err) {
+      logger.error("auth.sync_addresses_failed", err, { userId });
+    }
+  }
 
   if (
     process.env.NEXT_PUBLIC_SUPABASE_URL &&

@@ -13,6 +13,7 @@ import { logoutAction } from "@/actions/auth.actions";
 import { createClient } from "@/lib/supabase/server";
 import { BuyerProfileForm } from "@/components/profile/buyer-profile-form";
 import type { BuyerAddress } from "@/types";
+import { getUserAddresses, toBuyerAddress } from "@/lib/data/addresses";
 
 export const metadata = {
   title: "Profil Akun - Biji Hub",
@@ -44,6 +45,17 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
   let userAddress = "";
 
   let userAddresses: BuyerAddress[] = [];
+
+  if (session.userId) {
+    try {
+      const dbAddresses = await getUserAddresses(session.userId);
+      if (dbAddresses.length > 0) {
+        userAddresses = dbAddresses.map(toBuyerAddress);
+      }
+    } catch {
+      // ignore
+    }
+  }
 
   if (
     process.env.NEXT_PUBLIC_SUPABASE_URL &&

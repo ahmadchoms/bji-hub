@@ -6,7 +6,6 @@ import { getSession } from "@/lib/auth/session";
 import { PageContainer } from "@/components/layout/page-container";
 import { BuyerOrdersCard } from "@/components/profile/buyer-orders-card";
 import { getOrdersByBuyer } from "@/lib/data/orders";
-import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Riwayat Pesanan - Biji Hub",

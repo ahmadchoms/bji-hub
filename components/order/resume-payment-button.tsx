@@ -19,7 +19,6 @@ interface ResumePaymentButtonProps {
 
 export function ResumePaymentButton({
   orderId,
-  orderNumber: _orderNumber,
   accessToken,
   className,
 }: ResumePaymentButtonProps) {

@@ -7,7 +7,6 @@ import { requireSeller, requireRole } from "@/lib/auth/session";
 import {
   getSellerBankDetails,
   updateSellerBankDetails,
-  getSellerBalanceSummary,
   createPayoutRequestAtomic,
   updatePayoutStatus,
   type SellerBankDetails,

@@ -25,7 +25,6 @@ export async function Navbar() {
 
   let userName = "";
   let userAvatarUrl = "";
-  let userEmail = "";
 
   if (
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
@@ -37,7 +36,6 @@ export async function Navbar() {
         data: { user },
       } = await supabase.auth.getUser();
       if (user) {
-        userEmail = user.email || "";
         userName =
           ((user.user_metadata?.name ||
             user.user_metadata?.full_name ||

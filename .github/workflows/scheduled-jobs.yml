@@ -1,0 +1,43 @@
+name: Scheduled Jobs
+
+on:
+  schedule:
+    # Run every 15 minutes
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  run-cron-jobs:
+    name: Execute Periodic Marketplace Cron Jobs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate Target Configuration
+        run: |
+          if [ -z "${{ secrets.APP_URL }}" ]; then
+            echo "Warning: APP_URL secret is not configured. Please add APP_URL and CRON_SECRET to repository secrets."
+            exit 0
+          fi
+
+      - name: Auto-complete Orders & Auto-cancel Expired Reservations
+        run: |
+          if [ -n "${{ secrets.APP_URL }}" ]; then
+            curl -fsS --max-time 60 \
+              -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+              "${{ secrets.APP_URL }}/api/cron/auto-complete-orders"
+          fi
+
+      - name: Reconcile Pending Payments with Gateway
+        run: |
+          if [ -n "${{ secrets.APP_URL }}" ]; then
+            curl -fsS --max-time 60 \
+              -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+              "${{ secrets.APP_URL }}/api/cron/sync-payments"
+          fi
+
+      - name: Retry Pending or Failed Gateway Refunds
+        run: |
+          if [ -n "${{ secrets.APP_URL }}" ]; then
+            curl -fsS --max-time 60 \
+              -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+              "${{ secrets.APP_URL }}/api/cron/retry-refunds"
+          fi

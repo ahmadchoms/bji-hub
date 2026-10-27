@@ -2,7 +2,8 @@
 
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { ok, type ActionResult } from "@/lib/action-result";
+import { fail, ok, type ActionResult } from "@/lib/action-result";
+import { getListingById } from "@/lib/data";
 import { logger } from "@/lib/logger";
 import type { CartItem } from "@/lib/cart";
 
@@ -35,9 +36,10 @@ export async function syncCloudCartAction(
   mode: "merge" | "replace" = "merge",
 ): Promise<ActionResult<{ items: CartItem[] }>> {
   const parsed = cartSyncSchema.safeParse(localItems);
-  const validLocalItems: CartItem[] = (
-    parsed.success ? parsed.data : Array.isArray(localItems) ? localItems : []
-  ) as CartItem[];
+  if (!parsed.success) {
+    return fail("Data keranjang tidak valid");
+  }
+  const validLocalItems: CartItem[] = parsed.data as CartItem[];
 
   if (
     process.env.DATA_SOURCE === "mock" ||
@@ -87,11 +89,41 @@ export async function syncCloudCartAction(
         }
       }
 
+      // Enrich any cloud items that were missing local details
+      for (const [key, item] of itemMap.entries()) {
+        if (!item.title || !item.price) {
+          const listing = await getListingById(item.listingId);
+          if (listing) {
+            itemMap.set(key, {
+              listingId: listing.id,
+              slug: listing.slug,
+              title: listing.title,
+              price: Number(listing.price),
+              unit: listing.unit,
+              minOrderQty: listing.minOrderQty,
+              quantity: item.quantity,
+              imageUrl: listing.images?.[0]?.imageUrl || "",
+              sellerId: listing.sellerId,
+              sellerName: listing.seller?.businessName || "Roastery Biji Hub",
+              sellerCity: listing.seller?.city || "Indonesia",
+              grindSize: item.grindSize || "Biji Utuh",
+            });
+          }
+        }
+      }
+
       finalItems = Array.from(itemMap.values()).slice(0, 50);
     }
 
+    // Store only minimal payload to avoid session/cookie bloat (N6)
+    const minimalCart = finalItems.map((item) => ({
+      listingId: item.listingId,
+      quantity: item.quantity,
+      grindSize: item.grindSize ?? "Biji Utuh",
+    }));
+
     const { error: updateError } = await supabase.auth.updateUser({
-      data: { cart: finalItems },
+      data: { cart: minimalCart },
     });
 
     if (updateError) {

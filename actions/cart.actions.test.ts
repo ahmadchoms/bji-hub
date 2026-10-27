@@ -174,4 +174,45 @@ describe("syncCloudCartAction (B2)", () => {
       expect(result.data.items[0].listingId).toBe("local-1");
     }
   });
+
+  it("rejects invalid cart payloads and does not call updateUser (N6)", async () => {
+    vi.stubEnv("DATA_SOURCE", "prisma");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
+
+    const updateUserMock = vi.fn();
+    const mockSupabase = {
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: "user-123", user_metadata: {} } },
+        }),
+        updateUser: updateUserMock,
+      },
+    };
+
+    vi.spyOn(supabaseServer, "createClient").mockResolvedValue(
+      mockSupabase as unknown as Awaited<ReturnType<typeof supabaseServer.createClient>>,
+    );
+
+    // 1. Non-array payload
+    const res1 = await syncCloudCartAction("invalid-string");
+    expect(res1.success).toBe(false);
+    if (!res1.success) {
+      expect(res1.error).toContain("Data keranjang tidak valid");
+    }
+
+    // 2. Array with more than 50 items
+    const oversized = Array.from({ length: 51 }, (_, i) => ({
+      listingId: `item-${i}`,
+      quantity: 1,
+    }));
+    const res2 = await syncCloudCartAction(oversized);
+    expect(res2.success).toBe(false);
+
+    // 3. Invalid items (missing listingId)
+    const res3 = await syncCloudCartAction([{ quantity: 5 }]);
+    expect(res3.success).toBe(false);
+
+    expect(updateUserMock).not.toHaveBeenCalled();
+  });
 });

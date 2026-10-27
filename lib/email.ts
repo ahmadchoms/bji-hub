@@ -362,3 +362,72 @@ export async function sendNewOrderSellerEmail({
   }
 }
 
+/**
+ * Sends order refund notification email to buyer (B6).
+ */
+export async function sendOrderRefundedEmail(
+  order: Order,
+  refund: { amount: number; reason: string; status: string },
+): Promise<EmailResult> {
+  const resend = getResend();
+  const isAuto = refund.status === "processed";
+
+  if (!resend || !order.buyerEmail) {
+    console.log(`[EMAIL MOCK] Order Refund Notification to ${order.buyerEmail || "no-email"}:`, {
+      orderNumber: order.orderNumber,
+      amount: refund.amount,
+      status: refund.status,
+    });
+    return { success: true, mocked: true };
+  }
+
+  try {
+    const htmlContent = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1F1815; background-color: #FAF6F1; border-radius: 8px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h1 style="color: #2E150C; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">BIJI HUB</h1>
+          <p style="color: #7A4A34; font-size: 13px; margin: 4px 0 0;">Marketplace Biji Kopi Specialty Indonesia</p>
+        </div>
+
+        <div style="background-color: #ffffff; padding: 24px; border-radius: 8px; border: 1px solid #D8CFC5; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          <div style="border-bottom: 2px solid #FAF6F1; padding-bottom: 16px; margin-bottom: 16px;">
+            <span style="background-color: #FEE2E2; color: #991B1B; font-size: 11px; font-weight: bold; padding: 4px 10px; border-radius: 4px; text-transform: uppercase;">Pengembalian Dana (Refund)</span>
+            <h2 style="margin: 12px 0 4px; font-size: 18px; color: #1F1815;">Halo ${order.buyerName},</h2>
+            <p style="color: #4A403A; font-size: 14px; margin: 0; line-height: 1.5;">
+              Pesanan <strong style="font-family: monospace;">#${order.orderNumber}</strong> telah dibatalkan dan pengembalian dana telah diproses.
+            </p>
+          </div>
+
+          <div style="margin-bottom: 16px; padding: 12px; background-color: #F8F9FA; border-radius: 6px; font-size: 13px;">
+            <p style="margin: 0 0 6px;"><strong>Jumlah Refund:</strong> Rp ${Math.round(refund.amount).toLocaleString("id-ID")}</p>
+            <p style="margin: 0 0 6px;"><strong>Alasan:</strong> ${refund.reason}</p>
+            <p style="margin: 0;"><strong>Status:</strong> ${isAuto ? "Diproses otomatis ke metode pembayaran asal" : "Menunggu transfer manual oleh admin"}</p>
+          </div>
+
+          <p style="color: #8C8078; font-size: 12px; margin: 0; line-height: 1.5;">
+            Jika Anda memiliki pertanyaan mengenai pengembalian dana ini, silakan hubungi tim dukungan kami di support@bijihub.id.
+          </p>
+        </div>
+      </div>
+    `;
+
+    const res = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: order.buyerEmail,
+      subject: `[Biji Hub] Pengembalian Dana untuk Pesanan #${order.orderNumber}`,
+      html: htmlContent,
+    });
+
+    return {
+      success: true,
+      messageId: res.data?.id,
+    };
+  } catch (error) {
+    console.error("Failed to send order refunded email:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to send email",
+    };
+  }
+}
+

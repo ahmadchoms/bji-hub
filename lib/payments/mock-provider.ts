@@ -4,6 +4,7 @@ import type {
   CreatePaymentResult,
   PaymentStatusResult,
   ParsedWebhook,
+  RefundResult,
 } from "./types";
 
 export const mockProvider: PaymentProvider = {
@@ -49,5 +50,14 @@ export const mockProvider: PaymentProvider = {
       // ignore: invalid JSON in mock webhook
       return null;
     }
+  },
+
+  async refund(orderRef: string, amount: number, reason: string): Promise<RefundResult> {
+    return {
+      success: true,
+      providerRef: `ref-mock-${Date.now()}`,
+      status: "processed",
+      message: `Pengembalian dana sebesar Rp ${Math.round(amount).toLocaleString("id-ID")} berhasil diproses (${reason})`,
+    };
   },
 };

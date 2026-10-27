@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
 import { randomUUID } from "crypto";
 
 process.env.DATA_SOURCE = "mock";
+process.env.PAYMENT_PROVIDER = "mock";
 
 vi.mock("@/lib/data", async () => {
   const { mockRepository } = await import("@/lib/data/mock");
@@ -13,8 +14,10 @@ import {
   getShippingRatesAction,
   checkOrderPaymentStatusAction,
   submitReviewAction,
+  cancelPaidOrderAction,
 } from "./order.actions";
 import { getOrderById, createOrder, updateOrderStatus } from "@/lib/data/orders";
+import { getRefundByOrderId } from "@/lib/data/refunds";
 
 describe("createCheckoutOrderAction", () => {
   beforeAll(() => {
@@ -494,5 +497,90 @@ describe("submitReviewAction (B1 verification & uniqueness)", () => {
     }
 
     spy.mockRestore();
+  });
+
+  describe("cancelPaidOrderAction (B6)", () => {
+    it("fails when attempting to cancel an order that is not paid", async () => {
+      const order = await createOrder({
+        buyerName: "Buyer Unpaid",
+        buyerEmail: "unpaid@example.com",
+        buyerPhone: "08123456789",
+        buyerAddress: "Jl Kopi No 1",
+        buyerCity: "Jakarta",
+        sellerId: "seller-1",
+        listingId: "list-1",
+        quantity: 1,
+        itemPrice: 100000,
+        subtotal: 100000,
+        shippingCost: 10000,
+        serviceFee: 1500,
+        totalAmount: 111500,
+        shippingCourier: "jne",
+      });
+
+      const res = await cancelPaidOrderAction(order.id, "Batal");
+      expect(res.success).toBe(false);
+      if (!res.success) {
+        expect(res.error).toContain("Hanya pesanan yang sudah dibayar");
+      }
+    });
+
+    it("successfully cancels a paid order and creates a refund record with stock restoration", async () => {
+      const { mockListings } = await import("@/lib/mock/data");
+      const listing = mockListings[0];
+      const initialStock = listing.stock ?? 30;
+
+      const buyerId = `buyer-refund-${Date.now()}`;
+      const order = await createOrder({
+        buyerId,
+        buyerName: "Buyer Refund",
+        buyerEmail: "refund@example.com",
+        buyerPhone: "08123456789",
+        buyerAddress: "Jl Kopi No 2",
+        buyerCity: "Bandung",
+        sellerId: listing.sellerId,
+        listingId: listing.id,
+        quantity: 2,
+        itemPrice: 100000,
+        subtotal: 200000,
+        shippingCost: 10000,
+        serviceFee: 1500,
+        totalAmount: 211500,
+        shippingCourier: "jne",
+      });
+
+      // Advance status to paid
+      await updateOrderStatus(order.id, "paid");
+
+      const authSession = await import("@/lib/auth/session");
+      const spy = vi.spyOn(authSession, "getSession").mockResolvedValue({
+        role: "buyer",
+        userId: buyerId,
+        sellerId: null,
+        email: "refund@example.com",
+      });
+
+      const res = await cancelPaidOrderAction(order.id, "Ingin ganti varian");
+      expect(res.success).toBe(true);
+      if (res.success) {
+        expect(res.data?.refundStatus).toBe("processed");
+      }
+
+      // Check order status changed to canceled
+      const updated = await getOrderById(order.id);
+      expect(updated?.status).toBe("canceled");
+
+      // Check stock restored
+      expect(listing.stock).toBe(initialStock);
+
+      // Check refund record in database
+      const refund = await getRefundByOrderId(order.id);
+      expect(refund).not.toBeNull();
+      expect(refund?.amount).toBe(211500);
+      expect(refund?.reason).toBe("Ingin ganti varian");
+      expect(refund?.status).toBe("processed");
+
+      spy.mockRestore();
+    });
   });
 });

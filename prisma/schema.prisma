@@ -307,6 +307,7 @@ model Order {
 
   items   OrderItem[]
   reviews Review[]
+  refunds Refund[]
 
   @@index([sellerId])
   @@index([buyerEmail])
@@ -370,5 +371,22 @@ model UserAddress {
 
   @@index([userId])
   @@map("user_addresses")
+}
+
+model Refund {
+  id          String   @id @default(uuid())
+  orderId     String   @map("order_id")
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount      Int
+  reason      String
+  status      String
+  providerRef String?  @map("provider_ref")
+  createdBy   String?  @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([orderId])
+  @@map("refunds")
+
 }
 

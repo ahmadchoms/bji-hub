@@ -42,6 +42,20 @@ async function main() {
         ALTER TABLE public.listings ADD CONSTRAINT listings_stock_check CHECK (stock >= 0);
       END IF;
     END $$;
+
+    -- Create refunds table (B6)
+    CREATE TABLE IF NOT EXISTS public.refunds (
+      id TEXT PRIMARY KEY,
+      order_id TEXT NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
+      amount INTEGER NOT NULL CHECK (amount > 0),
+      reason TEXT NOT NULL,
+      status TEXT NOT NULL CHECK (status IN ('pending', 'processed', 'failed', 'manual_required')),
+      provider_ref TEXT,
+      created_by TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_refunds_order_id ON public.refunds(order_id);
   `);
 
   console.log("Reviews table and dispute_reason column verified in PostgreSQL!");

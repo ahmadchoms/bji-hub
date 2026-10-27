@@ -151,3 +151,56 @@ export async function checkMidtransStatus(orderId: string): Promise<{
     return null;
   }
 }
+
+/**
+ * Request refund for an order via Midtrans API (/v2/{id}/refund).
+ */
+export async function requestMidtransRefund(params: {
+  orderId: string;
+  amount: number;
+  reason: string;
+  refundKey?: string;
+}): Promise<{
+  statusCode: string;
+  statusMessage: string;
+  refundChargeId?: string;
+} | null> {
+  const serverKey = process.env.MIDTRANS_SERVER_KEY;
+  if (!serverKey) return null;
+
+  const isProduction = process.env.MIDTRANS_IS_PRODUCTION === "true";
+  const baseUrl = isProduction
+    ? "https://api.midtrans.com/v2"
+    : "https://api.sandbox.midtrans.com/v2";
+
+  const authHeader = `Basic ${Buffer.from(`${serverKey}:`).toString("base64")}`;
+
+  try {
+    const res = await fetch(`${baseUrl}/${encodeURIComponent(params.orderId)}/refund`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: authHeader,
+      },
+      signal: AbortSignal.timeout(8000),
+      body: JSON.stringify({
+        refund_key: params.refundKey || `ref-${params.orderId}-${Date.now()}`,
+        amount: Math.round(params.amount),
+        reason: params.reason,
+      }),
+    });
+
+    const data = await res.json().catch(() => null);
+    if (!data) return null;
+
+    return {
+      statusCode: String(data.status_code || res.status),
+      statusMessage: String(data.status_message || res.statusText),
+      refundChargeId: data.refund_charge_id,
+    };
+  } catch {
+    // ignore: midtrans network error returns null
+    return null;
+  }
+}

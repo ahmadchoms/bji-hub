@@ -31,6 +31,7 @@ import { addToCart } from "@/lib/cart";
 import {
   resumeOrderPaymentAction,
   cancelPendingOrderAction,
+  cancelPaidOrderAction,
 } from "@/actions/order.actions";
 
 interface BuyerOrdersCardProps {
@@ -123,6 +124,18 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
     setCancelingId(null);
     if (res.success) {
       toast.success("Pesanan berhasil dibatalkan");
+      router.refresh();
+    } else {
+      toast.error(res.error || "Gagal membatalkan pesanan");
+    }
+  };
+
+  const handleCancelPaidOrder = async (orderId: string, reason: string) => {
+    setCancelingId(orderId);
+    const res = await cancelPaidOrderAction(orderId, reason);
+    setCancelingId(null);
+    if (res.success) {
+      toast.success(res.data?.message || "Pesanan berhasil dibatalkan dan pengembalian dana telah diproses");
       router.refresh();
     } else {
       toast.error(res.error || "Gagal membatalkan pesanan");
@@ -449,6 +462,7 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
                     onReorder={handleReorder}
                     onResumePayment={handleResumePayment}
                     onCancelOrder={handleCancelOrder}
+                    onCancelPaidOrder={handleCancelPaidOrder}
                     isPaying={payingId === ord.id}
                     isCanceling={cancelingId === ord.id}
                     trigger={

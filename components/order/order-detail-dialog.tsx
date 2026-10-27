@@ -47,6 +47,7 @@ interface OrderDetailDialogProps {
   onReorder?: (order: Order) => void;
   onResumePayment?: (order: Order) => void;
   onCancelOrder?: (orderId: string) => void;
+  onCancelPaidOrder?: (orderId: string, reason: string) => void;
   isPaying?: boolean;
   isCanceling?: boolean;
 }
@@ -60,6 +61,7 @@ export function OrderDetailDialog({
   onReorder,
   onResumePayment,
   onCancelOrder,
+  onCancelPaidOrder,
   isPaying = false,
   isCanceling = false,
 }: OrderDetailDialogProps) {
@@ -188,6 +190,43 @@ export function OrderDetailDialog({
                 </Button>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Paid Alert */}
+        {order.status === "paid" && (
+          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-md text-xs text-emerald-900 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-semibold flex items-center gap-1.5">
+                <Check className="w-4 h-4 text-emerald-600 shrink-0" /> Pembayaran Terverifikasi
+              </span>
+              <span className="text-[11px] font-medium text-emerald-800">
+                Menunggu Pengiriman
+              </span>
+            </div>
+            <p className="text-emerald-800 text-[11px] leading-relaxed">
+              Pesanan Anda sedang dipersiapkan oleh pihak roastery. Anda dapat mengajukan pembatalan dan refund sebelum pesanan diserahkan ke kurir ekspedisi.
+            </p>
+            {onCancelPaidOrder && (
+              <div className="flex items-center justify-end gap-2 pt-1 border-t border-emerald-200/60">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={isCanceling}
+                  onClick={() => {
+                    const reason = window.prompt("Alasan pembatalan dan refund:", "Perubahan rencana pemesanan");
+                    if (reason && reason.trim()) {
+                      onCancelPaidOrder(order.id, reason.trim());
+                    }
+                  }}
+                  className="text-xs h-7 px-2.5 text-rose-700 border-rose-300 hover:bg-rose-50"
+                >
+                  <XCircle className="w-3.5 h-3.5 mr-1" />
+                  {isCanceling ? "Membatalkan..." : "Batalkan & Ajukan Refund"}
+                </Button>
+              </div>
+            )}
           </div>
         )}
 

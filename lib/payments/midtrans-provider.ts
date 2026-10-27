@@ -5,11 +5,13 @@ import type {
   PaymentStatusResult,
   ParsedWebhook,
   PaymentStatus,
+  RefundResult,
 } from "./types";
 import {
   createMidtransSnapToken,
   checkMidtransStatus,
   verifyMidtransSignature,
+  requestMidtransRefund,
 } from "@/lib/midtrans";
 
 export function mapMidtransStatus(
@@ -119,6 +121,45 @@ export const midtransProvider: PaymentProvider = {
       orderRef: order_id,
       status,
       amount: Number.isFinite(parsedAmount) ? parsedAmount : null,
+    };
+  },
+
+  async refund(orderRef: string, amount: number, reason: string): Promise<RefundResult> {
+    const res = await requestMidtransRefund({
+      orderId: orderRef,
+      amount,
+      reason,
+    });
+
+    if (!res) {
+      return {
+        success: false,
+        status: "failed",
+        message: "Gagal menghubungi gateway pembayaran Midtrans untuk proses pengembalian dana.",
+      };
+    }
+
+    if (res.statusCode === "200" || res.statusCode === "201") {
+      return {
+        success: true,
+        providerRef: res.refundChargeId || `ref-${orderRef}`,
+        status: "processed",
+        message: res.statusMessage,
+      };
+    }
+
+    if (res.statusCode === "412" || res.statusCode === "400") {
+      return {
+        success: false,
+        status: "manual_required",
+        message: `${res.statusMessage || "Metode pembayaran tidak mendukung refund otomatis"}. Pengembalian dana perlu ditransfer manual ke rekening pembeli.`,
+      };
+    }
+
+    return {
+      success: false,
+      status: "failed",
+      message: res.statusMessage || "Pengembalian dana ditolak oleh payment gateway.",
     };
   },
 };

@@ -12,6 +12,7 @@ import {
   createOrder,
   getOrderById,
   updateOrderStatus,
+  transitionOrderStatus,
   updateOrderSnapToken,
   generateOrderNumber,
   autoCompleteExpiredShippedOrders,
@@ -35,7 +36,9 @@ import {
   sendOrderPaidEmail,
   sendOrderShippedEmail,
   sendNewOrderSellerEmail,
+  sendOrderRefundedEmail,
 } from "@/lib/email";
+import { createRefundRecord } from "@/lib/data/refunds";
 
 const checkoutItemSchema = z.object({
   listingId: z.string().min(1, "ID produk wajib diisi"),
@@ -504,13 +507,43 @@ export async function resolveDisputeAction(
   const order = await getOrderById(orderId);
   if (!order) return fail("Pesanan tidak ditemukan");
 
-  const newStatus = decision === "complete" ? "completed" : "canceled";
-  await updateOrderStatus(order.id, newStatus);
+  if (decision === "cancel") {
+    const transition = await transitionOrderStatus(order.id, "canceled");
+    if (!transition.applied) return fail("Gagal memperbarui status komplain");
 
-  revalidatePath("/order/success");
-  revalidatePath("/profile");
-  revalidatePath("/dashboard/orders");
-  revalidatePath("/admin/transactions");
+    const provider = getPaymentProvider();
+    const refundRes = await provider.refund(
+      order.midtransOrderId || order.orderNumber,
+      order.totalAmount,
+      "Komplain disetujui admin untuk pengembalian dana",
+    );
+
+    await createRefundRecord({
+      orderId: order.id,
+      amount: order.totalAmount,
+      reason: "Komplain disetujui admin untuk pengembalian dana",
+      status: refundRes.status,
+      providerRef: refundRes.providerRef,
+      createdBy: "admin",
+    });
+
+    sendOrderRefundedEmail(order, {
+      amount: order.totalAmount,
+      reason: "Komplain disetujui admin untuk pengembalian dana",
+      status: refundRes.status,
+    }).catch(() => {});
+  } else {
+    await transitionOrderStatus(order.id, "completed");
+  }
+
+  try {
+    revalidatePath("/order/success");
+    revalidatePath("/profile");
+    revalidatePath("/dashboard/orders");
+    revalidatePath("/admin/transactions");
+  } catch {
+    // ignore: test environment
+  }
 
   return ok({ success: true });
 }
@@ -534,7 +567,30 @@ export async function sellerResolveDisputeAction(
   }
 
   if (resolution === "refund") {
-    await updateOrderStatus(order.id, "canceled");
+    const transition = await transitionOrderStatus(order.id, "canceled");
+    if (!transition.applied) return fail("Gagal memperbarui status komplain");
+
+    const provider = getPaymentProvider();
+    const refundRes = await provider.refund(
+      order.midtransOrderId || order.orderNumber,
+      order.totalAmount,
+      "Komplain disetujui penjual untuk pengembalian dana",
+    );
+
+    await createRefundRecord({
+      orderId: order.id,
+      amount: order.totalAmount,
+      reason: "Komplain disetujui penjual untuk pengembalian dana",
+      status: refundRes.status,
+      providerRef: refundRes.providerRef,
+      createdBy: session.userId || sellerId,
+    });
+
+    sendOrderRefundedEmail(order, {
+      amount: order.totalAmount,
+      reason: "Komplain disetujui penjual untuk pengembalian dana",
+      status: refundRes.status,
+    }).catch(() => {});
   } else if (resolution === "reship") {
     if (!newTrackingNumber || newTrackingNumber.trim().length < 3) {
       return fail("Nomor resi paket pengganti wajib diisi");
@@ -548,10 +604,14 @@ export async function sellerResolveDisputeAction(
     }).catch((err) => logger.error("Failed to send reship email", err, { orderId: order.id }));
   }
 
-  revalidatePath("/order/success");
-  revalidatePath("/profile");
-  revalidatePath("/dashboard/orders");
-  revalidatePath("/admin/transactions");
+  try {
+    revalidatePath("/order/success");
+    revalidatePath("/profile");
+    revalidatePath("/dashboard/orders");
+    revalidatePath("/admin/transactions");
+  } catch {
+    // ignore: test environment
+  }
 
   return ok({ success: true });
 }
@@ -723,10 +783,86 @@ export async function cancelPendingOrderAction(
   }
 
   await updateOrderStatus(order.id, "canceled");
-  revalidatePath("/orders");
-  revalidatePath("/profile");
-  revalidatePath("/dashboard/orders");
+  try {
+    revalidatePath("/orders");
+    revalidatePath("/profile");
+    revalidatePath("/dashboard/orders");
+  } catch {
+    // ignore: test environment
+  }
   return ok({ success: true });
+}
+
+export async function cancelPaidOrderAction(
+  orderId: string,
+  reason?: string,
+  accessToken?: string,
+): Promise<ActionResult<{ success: boolean; refundStatus: string; message?: string }>> {
+  const session = await getSession();
+  const order = await getOrderById(orderId);
+  if (!order) return fail("Pesanan tidak ditemukan");
+
+  if (order.status !== "paid") {
+    return fail("Hanya pesanan yang sudah dibayar dan belum dikirim yang dapat diajukan pembatalan / refund");
+  }
+
+  const isBuyer = canAccessOrder(order, session, accessToken);
+  const isSeller = session.sellerId && session.sellerId === order.sellerId;
+  const isAdmin = session.role === "admin";
+
+  if (!isBuyer && !isSeller && !isAdmin) {
+    return fail("Anda tidak memiliki akses untuk membatalkan pesanan ini");
+  }
+
+  const cleanReason =
+    (reason || "").trim() ||
+    (isSeller
+      ? "Dibatalkan oleh penjual (stok habis / kendala operasional)"
+      : "Dibatalkan oleh pembeli sebelum pengiriman");
+
+  const transition = await transitionOrderStatus(order.id, "canceled");
+  if (!transition.applied) {
+    return fail("Gagal memperbarui status pesanan");
+  }
+
+  const provider = getPaymentProvider();
+  const refundRes = await provider.refund(
+    order.midtransOrderId || order.orderNumber,
+    order.totalAmount,
+    cleanReason,
+  );
+
+  await createRefundRecord({
+    orderId: order.id,
+    amount: order.totalAmount,
+    reason: cleanReason,
+    status: refundRes.status,
+    providerRef: refundRes.providerRef,
+    createdBy: session.userId || (isBuyer ? "buyer" : isSeller ? "seller" : "admin"),
+  });
+
+  sendOrderRefundedEmail(order, {
+    amount: order.totalAmount,
+    reason: cleanReason,
+    status: refundRes.status,
+  }).catch((err) => {
+    logger.warn("order.refund_email_failed", { orderId: order.id, error: String(err) });
+  });
+
+  try {
+    revalidatePath("/orders");
+    revalidatePath("/profile");
+    revalidatePath("/dashboard/orders");
+    revalidatePath("/admin/transactions");
+  } catch {
+    // ignore: test environment
+  }
+
+  return ok({
+    success: true,
+    refundStatus: refundRes.status,
+    message: refundRes.message,
+  });
 }
 
 export async function resumeOrderPaymentAction(

@@ -35,9 +35,19 @@ export interface ParsedWebhook {
   amount: number | null;
 }
 
+export type RefundStatus = "processed" | "pending" | "failed" | "manual_required";
+
+export interface RefundResult {
+  success: boolean;
+  providerRef?: string;
+  status: RefundStatus;
+  message?: string;
+}
+
 export interface PaymentProvider {
   readonly id: "midtrans" | "mock";
   createPayment(input: CreatePaymentInput): Promise<CreatePaymentResult | null>;
   getStatus(orderRef: string): Promise<PaymentStatusResult | null>;
   parseWebhook(rawBody: string): Promise<ParsedWebhook | null>;
+  refund(orderRef: string, amount: number, reason: string): Promise<RefundResult>;
 }

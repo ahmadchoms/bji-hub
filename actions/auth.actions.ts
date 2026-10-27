@@ -156,6 +156,11 @@ export async function registerAction(
   }
 
   const ip = await getClientIp();
+  const pwdCheck = validatePasswordStrength(parsed.data.password);
+  if (!pwdCheck.valid) {
+    return fail(pwdCheck.error || "Kata sandi terlalu lemah");
+  }
+
   const ipRl = await checkRateLimit(`register:ip:${ip}`, 10, 60_000);
   if (!ipRl.success) {
     return fail("Terlalu banyak pendaftaran dari IP ini. Silakan tunggu 1 menit.");
@@ -534,7 +539,8 @@ export async function requestPasswordResetAction(
     return fail("Terlalu banyak permintaan reset kata sandi. Silakan tunggu 1 menit.");
   }
 
-  const emailRl = await checkRateLimit(`pwd_reset_email:${parsed.data.email}`, 3, 300_000);
+  const normalizedEmail = parsed.data.email.trim().toLowerCase();
+  const emailRl = await checkRateLimit(`pwd_reset_email:${normalizedEmail}`, 3, 300_000);
   if (!emailRl.success) {
     return fail("Terlalu banyak permintaan untuk email ini. Silakan tunggu beberapa saat.");
   }
@@ -558,7 +564,7 @@ export async function requestPasswordResetAction(
       const supabase = await createClient();
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-      await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+      await supabase.auth.resetPasswordForEmail(normalizedEmail, {
         redirectTo: `${appUrl}/auth/callback?next=/reset-password`,
       });
     } catch (err) {

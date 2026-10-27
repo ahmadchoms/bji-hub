@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
-import { requestPasswordResetAction, updatePasswordAction } from "./auth.actions";
+import {
+  requestPasswordResetAction,
+  updatePasswordAction,
+  registerAction,
+} from "./auth.actions";
 
 process.env.DATA_SOURCE = "mock";
 process.env.ALLOW_MOCK_AUTH = "true";
@@ -55,6 +59,21 @@ describe("Password Reset Actions (B4)", () => {
       expect(res.success).toBe(true);
       if (res.success) {
         expect(res.data.redirectTo).toBe("/login?reset=success");
+      }
+    });
+  });
+
+  describe("registerAction password strength (N7)", () => {
+    it("rejects registration with easily guessed password", async () => {
+      const res = await registerAction({
+        name: "Test User",
+        email: "test@example.com",
+        password: "password123",
+        termsAccepted: true,
+      });
+      expect(res.success).toBe(false);
+      if (!res.success) {
+        expect(res.error).toContain("terlalu umum");
       }
     });
   });

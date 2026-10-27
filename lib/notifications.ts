@@ -1,5 +1,9 @@
 import { normalizeWhatsAppNumber, formatRupiah } from "@/lib/utils";
 
+function getBaseAppUrl(): string {
+  return (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/+$/, "") || "https://bji-hub.vercel.app";
+}
+
 export function buildOrderPaidNotificationUrl(data: {
   sellerPhone: string;
   sellerName?: string;
@@ -18,7 +22,7 @@ Produk: ${data.listingTitle} (${data.quantity} pcs/kg)
 Pembeli: ${data.buyerName}
 Total Pembayaran: ${formatRupiah(data.totalAmount)}
 
-Pembayaran telah terverifikasi aman oleh Biji Hub. Silakan buka Dashboard Penjual Anda untuk memproses dan menginput nomor resi pengiriman: https://bji-hub.vercel.app/dashboard/orders
+Pembayaran telah terverifikasi aman oleh Biji Hub. Silakan buka Dashboard Penjual Anda untuk memproses dan menginput nomor resi pengiriman: ${getBaseAppUrl()}/dashboard/orders
 
 Terima kasih!`;
 
@@ -42,7 +46,7 @@ Produk: ${data.listingTitle}
 Kurir Pengiriman: ${data.courier}
 Nomor Resi: ${data.trackingNumber}
 
-Anda dapat memantau status pesanan dan konfirmasi penerimaan barang di: https://bji-hub.vercel.app/order/success?orderNumber=${data.orderNumber}
+Anda dapat memantau status pesanan dan konfirmasi penerimaan barang di: ${getBaseAppUrl()}/order/success?orderNumber=${data.orderNumber}
 
 Terima kasih telah berbelanja di Biji Hub!`;
 
@@ -67,7 +71,7 @@ Bank Tujuan: Bank ${data.bankName}
 No. Rekening: ${data.accountNumber}
 Atas Nama: ${data.accountHolder}
 
-Dana telah dikirimkan ke rekening Anda tanpa potongan biaya admin. Pantau riwayat keuangan Anda di: https://bji-hub.vercel.app/dashboard/orders
+Dana telah dikirimkan ke rekening Anda tanpa potongan biaya admin. Pantau riwayat keuangan Anda di: ${getBaseAppUrl()}/dashboard/orders
 
 Salam hangat,
 Tim Finansial Biji Hub`;
@@ -90,7 +94,7 @@ export function buildDisputeResolvedNotificationUrl(data: {
 
   const text = `Halo ${data.buyerName}, komplain untuk pesanan ${data.orderNumber} ${decisionText}
 
-Pantau rincian pesanan Anda di: https://bji-hub.vercel.app/order/success?orderNumber=${data.orderNumber}
+Pantau rincian pesanan Anda di: ${getBaseAppUrl()}/order/success?orderNumber=${data.orderNumber}
 
 Salam,
 Tim Resolusi Sengketa Biji Hub`;

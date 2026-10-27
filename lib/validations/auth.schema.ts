@@ -7,7 +7,7 @@ export const loginSchema = z.object({
     .email("Format email tidak valid"),
   password: z
     .string()
-    .min(6, "Kata sandi minimal 6 karakter"),
+    .min(8, "Kata sandi minimal 8 karakter"),
 });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
@@ -22,7 +22,7 @@ export const registerSchema = z.object({
     .email("Format email tidak valid"),
   password: z
     .string()
-    .min(6, "Kata sandi minimal 6 karakter"),
+    .min(8, "Kata sandi minimal 8 karakter"),
   termsAccepted: z
     .boolean()
     .refine((val) => val === true, "Anda harus menyetujui syarat & ketentuan direktori"),

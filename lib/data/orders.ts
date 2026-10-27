@@ -876,14 +876,20 @@ export async function autoCancelExpiredPendingOrders(
         [cutoffDate],
       );
       for (const r of res.rows) {
-        const transitionRes = await transitionOrderStatus(r.id, "canceled");
-        if (transitionRes.applied) {
-          canceledIds.push(r.id);
+        try {
+          const transitionRes = await transitionOrderStatus(r.id, "canceled");
+          if (transitionRes.applied) {
+            canceledIds.push(r.id);
+          }
+        } catch (err) {
+          logger.error("order.auto_cancel_single_failed", { orderId: r.id, error: String(err) });
         }
       }
       return { canceledCount: canceledIds.length, orderIds: canceledIds };
     } catch (e) {
-      console.error("Failed to auto-cancel expired pending orders in postgres:", e);
+      logger.error("order.auto_cancel_failed", {
+        error: e instanceof Error ? e.message : String(e),
+      });
       throw e;
     }
   }
@@ -892,9 +898,13 @@ export async function autoCancelExpiredPendingOrders(
     if (o.status === "pending_payment") {
       const orderDate = new Date(o.createdAt).getTime();
       if (now.getTime() - orderDate >= thresholdMs) {
-        const transitionRes = await transitionOrderStatus(o.id, "canceled");
-        if (transitionRes.applied) {
-          if (!canceledIds.includes(o.id)) canceledIds.push(o.id);
+        try {
+          const transitionRes = await transitionOrderStatus(o.id, "canceled");
+          if (transitionRes.applied) {
+            if (!canceledIds.includes(o.id)) canceledIds.push(o.id);
+          }
+        } catch (err) {
+          logger.error("order.auto_cancel_single_failed", { orderId: o.id, error: String(err) });
         }
       }
     }

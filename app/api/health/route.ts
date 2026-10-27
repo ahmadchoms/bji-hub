@@ -4,11 +4,18 @@ import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
+let lastDbCheck = 0;
+const DB_CHECK_TTL_MS = 10_000;
+
 export async function GET() {
   try {
+    const now = Date.now();
     if (process.env.DATA_SOURCE !== "mock") {
-      const prisma = getPrisma();
-      await prisma.$queryRaw`SELECT 1`;
+      if (now - lastDbCheck >= DB_CHECK_TTL_MS) {
+        const prisma = getPrisma();
+        await prisma.$queryRaw`SELECT 1`;
+        lastDbCheck = now;
+      }
     }
     return NextResponse.json(
       { status: "ok" },
@@ -20,6 +27,7 @@ export async function GET() {
       },
     );
   } catch (err) {
+    lastDbCheck = 0;
     logger.error("health.check_failed", {
       error: err instanceof Error ? err.message : String(err),
     });

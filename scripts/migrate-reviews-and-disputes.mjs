@@ -32,6 +32,16 @@ async function main() {
     -- Add dispute_reason column to orders
     ALTER TABLE public.orders
     ADD COLUMN IF NOT EXISTS dispute_reason TEXT;
+
+    -- Ensure non-negative stock constraint on listings (B7)
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'listings_stock_check'
+      ) THEN
+        ALTER TABLE public.listings ADD CONSTRAINT listings_stock_check CHECK (stock >= 0);
+      END IF;
+    END $$;
   `);
 
   console.log("Reviews table and dispute_reason column verified in PostgreSQL!");

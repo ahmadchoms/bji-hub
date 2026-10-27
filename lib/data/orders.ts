@@ -58,6 +58,11 @@ export async function createOrder(data: {
   const orderNumber = data.orderNumber || generateOrderNumber();
   const midtransOrderId = data.midtransOrderId || orderNumber;
   const accessToken = data.accessToken || randomBytes(24).toString("base64url");
+  const itemsToReserve = data.items && data.items.length > 0
+    ? data.items.map((it) => ({ listingId: it.listingId, quantity: it.quantity }))
+    : data.listingId
+      ? [{ listingId: data.listingId, quantity: data.quantity || 1 }]
+      : [];
 
   const newOrder: Order = {
     id,
@@ -164,12 +169,30 @@ export async function createOrder(data: {
         }
       }
 
+      // Reserve stock atomically for each ordered listing (B7)
+      for (const item of itemsToReserve) {
+        const stockRes = await client.query(
+          `UPDATE public.listings
+           SET stock = stock - $1,
+               status = CASE WHEN stock - $1 <= 0 THEN 'archived' ELSE status END
+           WHERE id = $2 AND stock >= $1
+           RETURNING stock, title`,
+          [item.quantity, item.listingId],
+        );
+        if (stockRes.rowCount === 0) {
+          throw new Error("Stok produk tidak mencukupi untuk memenuhi pesanan ini");
+        }
+      }
+
       await client.query("COMMIT");
       const saved = await getOrderById(id);
       return saved || newOrder;
-    } catch (e) {
+    } catch (e: unknown) {
       await client.query("ROLLBACK");
       logger.error("order.insert_failed", e);
+      if (e instanceof Error && e.message.includes("Stok produk tidak mencukupi")) {
+        throw e;
+      }
       throw new Error("Gagal menyimpan pesanan");
     } finally {
       client.release();
@@ -179,6 +202,27 @@ export async function createOrder(data: {
   if (data.idempotencyKey) {
     const existingByIdem = mockOrders.find((o) => o.idempotencyKey === data.idempotencyKey);
     if (existingByIdem) return existingByIdem;
+  }
+
+  // Check stock sufficiency first (B7)
+  for (const item of itemsToReserve) {
+    const listing = mockListings.find((l) => l.id === item.listingId);
+    if (listing && typeof listing.stock === "number") {
+      if (listing.stock < item.quantity) {
+        throw new Error("Stok produk tidak mencukupi untuk memenuhi pesanan ini");
+      }
+    }
+  }
+
+  // Atomically decrement / reserve stock (B7)
+  for (const item of itemsToReserve) {
+    const listing = mockListings.find((l) => l.id === item.listingId);
+    if (listing && typeof listing.stock === "number") {
+      listing.stock = Math.max(0, listing.stock - item.quantity);
+      if (listing.stock <= 0) {
+        listing.status = "archived";
+      }
+    }
   }
 
   mockOrders.unshift(newOrder);
@@ -555,7 +599,7 @@ const ALLOWED_FROM: Record<OrderStatus, OrderStatus[]> = {
   disputed: ["paid", "shipped"],
   canceled: ["pending_payment", "paid", "disputed"],
 };
-const RESTOCK_ON_CANCEL_FROM: OrderStatus[] = ["paid", "disputed"];
+const RESTOCK_ON_CANCEL_FROM: OrderStatus[] = ["pending_payment", "paid", "disputed"];
 
 export interface TransitionExtra {
   trackingNumber?: string;
@@ -645,12 +689,8 @@ export async function transitionOrderStatus(
       if (to === "paid") {
         for (const item of itemsToUpdate) {
           const stockRes = await client.query(
-            `UPDATE public.listings
-             SET stock = GREATEST(stock - $1, 0),
-                 status = CASE WHEN stock - $1 <= 0 THEN 'archived' ELSE status END
-             WHERE id = $2 AND stock IS NOT NULL
-             RETURNING stock, title`,
-            [item.quantity, item.listingId],
+            `SELECT stock, title FROM public.listings WHERE id = $1 AND stock IS NOT NULL`,
+            [item.listingId],
           );
           if (stockRes.rows.length > 0) {
             const rem = Number(stockRes.rows[0].stock);
@@ -736,20 +776,16 @@ export async function transitionOrderStatus(
 
   if (to === "paid") {
     const listing = mockListings.find((l) => l.id === existing.listingId);
-    if (listing && typeof listing.stock === "number") {
-      listing.stock = Math.max(0, listing.stock - (existing.quantity || 1));
-      if (listing.stock <= 0) listing.status = "archived";
-      if (listing.stock <= 5) {
-        import("@/lib/email").then(({ sendLowStockAlertEmail }) => {
-          sendLowStockAlertEmail({
-            sellerEmail: "seller@bijihub.id",
-            sellerName: existing.sellerName || "Penjual",
-            listingTitle: existing.listingTitle || listing.title,
-            remainingStock: listing.stock!,
-            unit: listing.unit || "unit",
-          }).catch(() => {});
+    if (listing && typeof listing.stock === "number" && listing.stock <= 5) {
+      import("@/lib/email").then(({ sendLowStockAlertEmail }) => {
+        sendLowStockAlertEmail({
+          sellerEmail: "seller@bijihub.id",
+          sellerName: existing.sellerName || "Penjual",
+          listingTitle: existing.listingTitle || listing.title,
+          remainingStock: listing.stock!,
+          unit: listing.unit || "unit",
         }).catch(() => {});
-      }
+      }).catch(() => {});
     }
   } else if (to === "canceled" && RESTOCK_ON_CANCEL_FROM.includes(prevStatus)) {
     const listing = mockListings.find((l) => l.id === existing.listingId);
@@ -831,13 +867,16 @@ export async function autoCancelExpiredPendingOrders(
   if (pool) {
     try {
       const res = await pool.query(
-        `UPDATE public.orders
-         SET status = 'canceled', updated_at = NOW()
-         WHERE status = 'pending_payment' AND created_at <= $1
-         RETURNING id`,
+        `SELECT id FROM public.orders
+         WHERE status = 'pending_payment' AND created_at <= $1`,
         [cutoffDate],
       );
-      res.rows.forEach((r) => canceledIds.push(r.id));
+      for (const r of res.rows) {
+        const transitionRes = await transitionOrderStatus(r.id, "canceled");
+        if (transitionRes.applied) {
+          canceledIds.push(r.id);
+        }
+      }
       return { canceledCount: canceledIds.length, orderIds: canceledIds };
     } catch (e) {
       console.error("Failed to auto-cancel expired pending orders in postgres:", e);
@@ -845,16 +884,17 @@ export async function autoCancelExpiredPendingOrders(
     }
   }
 
-  mockOrders.forEach((o) => {
+  for (const o of mockOrders) {
     if (o.status === "pending_payment") {
       const orderDate = new Date(o.createdAt).getTime();
       if (now.getTime() - orderDate >= thresholdMs) {
-        o.status = "canceled";
-        o.updatedAt = now.toISOString();
-        if (!canceledIds.includes(o.id)) canceledIds.push(o.id);
+        const transitionRes = await transitionOrderStatus(o.id, "canceled");
+        if (transitionRes.applied) {
+          if (!canceledIds.includes(o.id)) canceledIds.push(o.id);
+        }
       }
     }
-  });
+  }
 
   return { canceledCount: canceledIds.length, orderIds: canceledIds };
 }

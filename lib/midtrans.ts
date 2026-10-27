@@ -60,6 +60,10 @@ export async function createMidtransSnapToken(params: {
           first_name: params.customerName || "Seller",
           email: params.customerEmail || "seller@bijihub.com",
         },
+        expiry: {
+          duration: 60,
+          unit: "minute",
+        },
         ...(process.env.NEXT_PUBLIC_APP_URL?.startsWith("https://")
           ? {
               override_notification_url: `${process.env.NEXT_PUBLIC_APP_URL.replace(/\/+$/, "")}/api/webhooks/midtrans`,

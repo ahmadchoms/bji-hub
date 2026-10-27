@@ -140,7 +140,7 @@ describe("orders data layer & auto-complete", () => {
     expect(r5.applied).toBe(false);
   });
 
-  it("decrements listing stock once on multiple transition calls and restores on cancel", async () => {
+  it("reserves stock on createOrder, keeps stock on paid, and restores on cancel", async () => {
     const { mockListings } = await import("@/lib/mock/data");
     const listing = mockListings[0];
     listing.stock = 30;
@@ -165,7 +165,10 @@ describe("orders data layer & auto-complete", () => {
       midtransOrderId: orderNumber,
     });
 
-    // First paid call: applied and stock decreases
+    // Stock reserved immediately on createOrder (B7)
+    expect(listing.stock).toBe(25);
+
+    // First paid call: applied and stock unchanged (already reserved)
     const call1 = await transitionOrderStatus(order.id, "paid");
     expect(call1.applied).toBe(true);
     expect(listing.stock).toBe(25);
@@ -181,10 +184,11 @@ describe("orders data layer & auto-complete", () => {
     expect(listing.stock).toBe(30);
   });
 
-  it("pending_payment -> canceled does not change stock", async () => {
+  it("reserves stock on createOrder and restores on pending_payment -> canceled", async () => {
     const { mockListings } = await import("@/lib/mock/data");
     const listing = mockListings[0];
-    const initialStock = listing.stock ?? 30;
+    listing.stock = 30;
+    const initialStock = 30;
 
     const orderNumber = `ORD-CANCEL-PENDING-${Date.now()}`;
     const order = await createOrder({
@@ -206,11 +210,44 @@ describe("orders data layer & auto-complete", () => {
       midtransOrderId: orderNumber,
     });
 
-    expect(listing.stock).toBe(initialStock);
+    // Stock is reserved on creation
+    expect(listing.stock).toBe(initialStock - 3);
 
+    // Canceling pending payment restores stock
     const cancelRes = await transitionOrderStatus(order.id, "canceled");
     expect(cancelRes.applied).toBe(true);
     expect(listing.stock).toBe(initialStock);
+  });
+
+  it("rejects createOrder when requested quantity exceeds available stock (B7)", async () => {
+    const { mockListings } = await import("@/lib/mock/data");
+    const listing = mockListings[0];
+    listing.stock = 2;
+
+    const orderNumber = `ORD-OUT-OF-STOCK-${Date.now()}`;
+    await expect(
+      createOrder({
+        orderNumber,
+        buyerName: "Greedy Buyer",
+        buyerEmail: "greedy@example.com",
+        buyerPhone: "08123456784",
+        buyerAddress: "Jl Habis No 2",
+        buyerCity: "Surabaya",
+        sellerId: listing.sellerId,
+        listingId: listing.id,
+        quantity: 5,
+        itemPrice: 50000,
+        subtotal: 250000,
+        shippingCost: 10000,
+        serviceFee: 1500,
+        totalAmount: 261500,
+        shippingCourier: "JNE",
+        midtransOrderId: orderNumber,
+      }),
+    ).rejects.toThrow(/Stok produk tidak mencukupi/);
+
+    // Stock unchanged
+    expect(listing.stock).toBe(2);
   });
 
   it("auto-cancels pending orders older than 24 hours", async () => {

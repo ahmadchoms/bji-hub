@@ -24,7 +24,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: ".nvmrc"
           cache: "npm"
 
       - name: Install dependencies
@@ -45,3 +45,12 @@ jobs:
 
       - name: Vitest Suite
         run: npm test
+
+      - name: Next.js Production Build Test
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+          DATA_SOURCE: mock
+          ALLOW_MOCK_AUTH: "true"
+          NEXT_PUBLIC_SUPABASE_URL: "https://mock-project.supabase.co"
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "mock-anon-key-for-ci-build"

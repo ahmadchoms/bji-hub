@@ -124,11 +124,17 @@ export const midtransProvider: PaymentProvider = {
     };
   },
 
-  async refund(orderRef: string, amount: number, reason: string): Promise<RefundResult> {
+  async refund(
+    orderRef: string,
+    amount: number,
+    reason: string,
+    options?: { refundKey?: string },
+  ): Promise<RefundResult> {
     const res = await requestMidtransRefund({
       orderId: orderRef,
       amount,
       reason,
+      refundKey: options?.refundKey,
     });
 
     if (!res) {

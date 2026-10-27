@@ -49,5 +49,10 @@ export interface PaymentProvider {
   createPayment(input: CreatePaymentInput): Promise<CreatePaymentResult | null>;
   getStatus(orderRef: string): Promise<PaymentStatusResult | null>;
   parseWebhook(rawBody: string): Promise<ParsedWebhook | null>;
-  refund(orderRef: string, amount: number, reason: string): Promise<RefundResult>;
+  refund(
+    orderRef: string,
+    amount: number,
+    reason: string,
+    options?: { refundKey?: string },
+  ): Promise<RefundResult>;
 }

@@ -375,17 +375,19 @@ model UserAddress {
 
 model Refund {
   id          String   @id @default(uuid())
-  orderId     String   @map("order_id")
+  orderId     String   @unique @map("order_id")
   order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   amount      Int
   reason      String
   status      String
   providerRef String?  @map("provider_ref")
-  createdBy   String?  @map("created_by")
+  createdBy     String?  @map("created_by")
+  attempts      Int      @default(0)
+  failureReason String?  @map("failure_reason")
+  resolvedBy    String?  @map("resolved_by")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  @@index([orderId])
   @@map("refunds")
 
 }

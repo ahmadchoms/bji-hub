@@ -43,7 +43,7 @@ async function main() {
       END IF;
     END $$;
 
-    -- Create refunds table (B6)
+    -- Create refunds table (B6 / N1)
     CREATE TABLE IF NOT EXISTS public.refunds (
       id TEXT PRIMARY KEY,
       order_id TEXT NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
@@ -52,10 +52,16 @@ async function main() {
       status TEXT NOT NULL CHECK (status IN ('pending', 'processed', 'failed', 'manual_required')),
       provider_ref TEXT,
       created_by TEXT,
+      attempts INTEGER NOT NULL DEFAULT 0,
+      failure_reason TEXT,
+      resolved_by TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
-    CREATE INDEX IF NOT EXISTS idx_refunds_order_id ON public.refunds(order_id);
+    ALTER TABLE public.refunds ADD COLUMN IF NOT EXISTS attempts integer NOT NULL DEFAULT 0;
+    ALTER TABLE public.refunds ADD COLUMN IF NOT EXISTS failure_reason text;
+    ALTER TABLE public.refunds ADD COLUMN IF NOT EXISTS resolved_by text;
+    CREATE UNIQUE INDEX IF NOT EXISTS refunds_order_uq ON public.refunds (order_id);
   `);
 
   console.log("Reviews table and dispute_reason column verified in PostgreSQL!");

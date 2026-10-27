@@ -39,7 +39,11 @@ import {
   sendNewOrderSellerEmail,
   sendOrderRefundedEmail,
 } from "@/lib/email";
-import { createRefundRecord } from "@/lib/data/refunds";
+import {
+  createRefundRecord,
+  getRefundByOrderId,
+  updateRefundStatus,
+} from "@/lib/data/refunds";
 
 const checkoutItemSchema = z.object({
   listingId: z.string().min(1, "ID produk wajib diisi"),
@@ -550,30 +554,57 @@ export async function resolveDisputeAction(
   if (!order) return fail("Pesanan tidak ditemukan");
 
   if (decision === "cancel") {
+    // 1. Guard against duplicate refund
+    const existingRefund = await getRefundByOrderId(order.id);
+    if (existingRefund && (existingRefund.status === "processed" || existingRefund.status === "pending")) {
+      return fail("Pengembalian dana untuk pesanan ini sedang diproses atau telah selesai.");
+    }
+
+    // 2. Outbox pattern (N1): Create pending refund record first with deterministic ID
+    const refundId = `ref-${order.id}`;
+    let refundRecord;
+    try {
+      refundRecord = await createRefundRecord({
+        id: refundId,
+        orderId: order.id,
+        amount: order.totalAmount,
+        reason: "Komplain disetujui admin untuk pengembalian dana",
+        status: "pending",
+        createdBy: "admin",
+      });
+    } catch (e) {
+      logger.error("order.refund_outbox_failed", e, { orderId: order.id });
+      return fail("Gagal membuat catatan pengembalian dana");
+    }
+
+    // 3. Transition order status to canceled
     const transition = await transitionOrderStatus(order.id, "canceled");
     if (!transition.applied) return fail("Gagal memperbarui status komplain");
 
+    // 4. Request refund with deterministic key
     const provider = getPaymentProvider();
     const refundRes = await provider.refund(
       order.midtransOrderId || order.orderNumber,
       order.totalAmount,
       "Komplain disetujui admin untuk pengembalian dana",
+      { refundKey: `refund-${refundRecord.id}` },
     );
 
-    await createRefundRecord({
-      orderId: order.id,
-      amount: order.totalAmount,
-      reason: "Komplain disetujui admin untuk pengembalian dana",
+    // 5. Update refund status
+    await updateRefundStatus(refundRecord.id, {
       status: refundRes.status,
       providerRef: refundRes.providerRef,
-      createdBy: "admin",
+      failureReason: refundRes.message || null,
+      attempts: 1,
     });
 
     sendOrderRefundedEmail(order, {
       amount: order.totalAmount,
       reason: "Komplain disetujui admin untuk pengembalian dana",
       status: refundRes.status,
-    }).catch(() => {});
+    }).catch((err) => {
+      logger.warn("order.refund_email_failed", { orderId: order.id, error: String(err) });
+    });
   } else {
     await transitionOrderStatus(order.id, "completed");
   }
@@ -609,30 +640,57 @@ export async function sellerResolveDisputeAction(
   }
 
   if (resolution === "refund") {
+    // 1. Guard against duplicate refund
+    const existingRefund = await getRefundByOrderId(order.id);
+    if (existingRefund && (existingRefund.status === "processed" || existingRefund.status === "pending")) {
+      return fail("Pengembalian dana untuk pesanan ini sedang diproses atau telah selesai.");
+    }
+
+    // 2. Outbox pattern (N1): Create pending refund record first
+    const refundId = `ref-${order.id}`;
+    let refundRecord;
+    try {
+      refundRecord = await createRefundRecord({
+        id: refundId,
+        orderId: order.id,
+        amount: order.totalAmount,
+        reason: "Komplain disetujui penjual untuk pengembalian dana",
+        status: "pending",
+        createdBy: session.userId || sellerId,
+      });
+    } catch (e) {
+      logger.error("order.refund_outbox_failed", e, { orderId: order.id });
+      return fail("Gagal membuat catatan pengembalian dana");
+    }
+
+    // 3. Transition order status to canceled
     const transition = await transitionOrderStatus(order.id, "canceled");
     if (!transition.applied) return fail("Gagal memperbarui status komplain");
 
+    // 4. Request refund with deterministic key
     const provider = getPaymentProvider();
     const refundRes = await provider.refund(
       order.midtransOrderId || order.orderNumber,
       order.totalAmount,
       "Komplain disetujui penjual untuk pengembalian dana",
+      { refundKey: `refund-${refundRecord.id}` },
     );
 
-    await createRefundRecord({
-      orderId: order.id,
-      amount: order.totalAmount,
-      reason: "Komplain disetujui penjual untuk pengembalian dana",
+    // 5. Update refund status
+    await updateRefundStatus(refundRecord.id, {
       status: refundRes.status,
       providerRef: refundRes.providerRef,
-      createdBy: session.userId || sellerId,
+      failureReason: refundRes.message || null,
+      attempts: 1,
     });
 
     sendOrderRefundedEmail(order, {
       amount: order.totalAmount,
       reason: "Komplain disetujui penjual untuk pengembalian dana",
       status: refundRes.status,
-    }).catch(() => {});
+    }).catch((err) => {
+      logger.warn("order.refund_email_failed", { orderId: order.id, error: String(err) });
+    });
   } else if (resolution === "reship") {
     if (!newTrackingNumber || newTrackingNumber.trim().length < 3) {
       return fail("Nomor resi paket pengganti wajib diisi");
@@ -862,25 +920,50 @@ export async function cancelPaidOrderAction(
       ? "Dibatalkan oleh penjual (stok habis / kendala operasional)"
       : "Dibatalkan oleh pembeli sebelum pengiriman");
 
+  // 1. Guard against duplicate refund
+  const existingRefund = await getRefundByOrderId(order.id);
+  if (existingRefund && (existingRefund.status === "processed" || existingRefund.status === "pending")) {
+    return fail("Pengembalian dana untuk pesanan ini sedang diproses atau telah selesai.");
+  }
+
+  // 2. Outbox pattern (N1): Create pending refund record first with deterministic ID
+  const refundId = `ref-${order.id}`;
+  let refundRecord;
+  try {
+    refundRecord = await createRefundRecord({
+      id: refundId,
+      orderId: order.id,
+      amount: order.totalAmount,
+      reason: cleanReason,
+      status: "pending",
+      createdBy: session.userId || (isBuyer ? "buyer" : isSeller ? "seller" : "admin"),
+    });
+  } catch (e) {
+    logger.error("order.refund_outbox_failed", e, { orderId: order.id });
+    return fail("Gagal membuat catatan pengembalian dana");
+  }
+
+  // 3. Transition order status to canceled (restores stock)
   const transition = await transitionOrderStatus(order.id, "canceled");
   if (!transition.applied) {
     return fail("Gagal memperbarui status pesanan");
   }
 
+  // 4. Request refund with deterministic key
   const provider = getPaymentProvider();
   const refundRes = await provider.refund(
     order.midtransOrderId || order.orderNumber,
     order.totalAmount,
     cleanReason,
+    { refundKey: `refund-${refundRecord.id}` },
   );
 
-  await createRefundRecord({
-    orderId: order.id,
-    amount: order.totalAmount,
-    reason: cleanReason,
+  // 5. Update refund status
+  await updateRefundStatus(refundRecord.id, {
     status: refundRes.status,
     providerRef: refundRes.providerRef,
-    createdBy: session.userId || (isBuyer ? "buyer" : isSeller ? "seller" : "admin"),
+    failureReason: refundRes.message || null,
+    attempts: 1,
   });
 
   sendOrderRefundedEmail(order, {
@@ -896,6 +979,7 @@ export async function cancelPaidOrderAction(
     revalidatePath("/profile");
     revalidatePath("/dashboard/orders");
     revalidatePath("/admin/transactions");
+    revalidatePath("/admin/refunds");
   } catch {
     // ignore: test environment
   }

@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import { computeReviewStats } from "@/lib/data/reviews";
 import type { Review } from "@/types";
 
+process.env.DATA_SOURCE = "mock";
+
 describe("reviews data and stats", () => {
   it("calculates correct average and count for empty reviews", () => {
     const stats = computeReviewStats([]);
@@ -44,5 +46,28 @@ describe("reviews data and stats", () => {
     const { getReviewsByListingIds } = await import("@/lib/data/reviews");
     const res = await getReviewsByListingIds([]);
     expect(res).toEqual([]);
+  });
+
+  it("stores and retrieves review by orderId and listingId", async () => {
+    const { createReview, getReviewByOrderAndListing, _resetMockReviewsForTest } =
+      await import("@/lib/data/reviews");
+    _resetMockReviewsForTest();
+
+    const created = await createReview({
+      orderId: "ord-test-unique-1",
+      listingId: "list-1",
+      buyerId: "user-1",
+      buyerName: "Test User",
+      rating: 5,
+      comment: "Luar biasa",
+    });
+
+    const found = await getReviewByOrderAndListing("ord-test-unique-1", "list-1");
+    expect(found).not.toBeNull();
+    expect(found?.id).toBe(created.id);
+    expect(found?.rating).toBe(5);
+
+    const notFound = await getReviewByOrderAndListing("ord-test-unique-1", "list-other");
+    expect(notFound).toBeNull();
   });
 });

@@ -12,8 +12,9 @@ import {
   createCheckoutOrderAction,
   getShippingRatesAction,
   checkOrderPaymentStatusAction,
+  submitReviewAction,
 } from "./order.actions";
-import { getOrderById } from "@/lib/data/orders";
+import { getOrderById, createOrder, updateOrderStatus } from "@/lib/data/orders";
 
 describe("createCheckoutOrderAction", () => {
   beforeAll(() => {
@@ -267,5 +268,226 @@ describe("createCheckoutOrderAction", () => {
     if (!res.success) return;
     expect(res.data.status).toBe("pending_payment");
     expect(res.data.isPaid).toBe(false);
+  });
+});
+
+describe("submitReviewAction (B1 verification & uniqueness)", () => {
+  const buyerUserId = "user-buyer-101";
+
+  it("rejects review if orderId is missing", async () => {
+    const authSession = await import("@/lib/auth/session");
+    const spy = vi.spyOn(authSession, "getSession").mockResolvedValueOnce({
+      role: "buyer",
+      userId: buyerUserId,
+      email: "buyer@example.com",
+    });
+
+    const res = await submitReviewAction({
+      listingId: "list-1",
+      rating: 5,
+      comment: "Kopi mantap",
+    });
+
+    expect(res.success).toBe(false);
+    if (!res.success) {
+      expect(res.error).toContain("Ulasan hanya dapat diberikan dari pesanan yang sudah selesai");
+    }
+    spy.mockRestore();
+  });
+
+  it("rejects review if user is guest or not logged in", async () => {
+    const authSession = await import("@/lib/auth/session");
+    const spy = vi.spyOn(authSession, "getSession").mockResolvedValueOnce({
+      role: "guest",
+      userId: null,
+      sellerId: null,
+      email: null,
+    });
+
+    const res = await submitReviewAction({
+      orderId: "ord-test-any",
+      listingId: "list-1",
+      rating: 5,
+    });
+
+    expect(res.success).toBe(false);
+    if (!res.success) {
+      expect(res.error).toContain("Silakan login");
+    }
+    spy.mockRestore();
+  });
+
+  it("rejects review if order belongs to another user or is guest order", async () => {
+    const order = await createOrder({
+      buyerId: "user-buyer-other",
+      buyerName: "User Lain",
+      buyerEmail: "other@example.com",
+      buyerPhone: "08111111111",
+      buyerAddress: "Jl. Lain",
+      buyerCity: "Jakarta",
+      sellerId: "seller-1",
+      listingId: "list-1",
+      quantity: 1,
+      itemPrice: 100000,
+      subtotal: 100000,
+      shippingCost: 10000,
+      serviceFee: 1500,
+      totalAmount: 111500,
+      shippingCourier: "jne",
+    });
+    await updateOrderStatus(order.id, "paid");
+    await updateOrderStatus(order.id, "shipped", "JNE123456");
+    await updateOrderStatus(order.id, "completed");
+
+    const authSession = await import("@/lib/auth/session");
+    const spy = vi.spyOn(authSession, "getSession").mockResolvedValueOnce({
+      role: "buyer",
+      userId: buyerUserId,
+      email: "buyer@example.com",
+    });
+
+    const res = await submitReviewAction({
+      orderId: order.id,
+      listingId: "list-1",
+      rating: 5,
+    });
+
+    expect(res.success).toBe(false);
+    if (!res.success) {
+      expect(res.error).toContain("Anda hanya dapat mengulas produk dari pesanan Anda sendiri");
+    }
+    spy.mockRestore();
+  });
+
+  it("rejects review if order is not completed yet", async () => {
+    const order = await createOrder({
+      buyerId: buyerUserId,
+      buyerName: "Pembeli Sah",
+      buyerEmail: "buyer@example.com",
+      buyerPhone: "08111111111",
+      buyerAddress: "Jl. Sah",
+      buyerCity: "Jakarta",
+      sellerId: "seller-1",
+      listingId: "list-1",
+      quantity: 1,
+      itemPrice: 100000,
+      subtotal: 100000,
+      shippingCost: 10000,
+      serviceFee: 1500,
+      totalAmount: 111500,
+      shippingCourier: "jne",
+    });
+
+    const authSession = await import("@/lib/auth/session");
+    const spy = vi.spyOn(authSession, "getSession").mockResolvedValueOnce({
+      role: "buyer",
+      userId: buyerUserId,
+      email: "buyer@example.com",
+    });
+
+    const res = await submitReviewAction({
+      orderId: order.id,
+      listingId: "list-1",
+      rating: 5,
+    });
+
+    expect(res.success).toBe(false);
+    if (!res.success) {
+      expect(res.error).toContain("Ulasan hanya dapat diberikan setelah pesanan selesai diterima");
+    }
+    spy.mockRestore();
+  });
+
+  it("rejects review if listing is not part of the order", async () => {
+    const order = await createOrder({
+      buyerId: buyerUserId,
+      buyerName: "Pembeli Sah",
+      buyerEmail: "buyer@example.com",
+      buyerPhone: "08111111111",
+      buyerAddress: "Jl. Sah",
+      buyerCity: "Jakarta",
+      sellerId: "seller-1",
+      listingId: "list-1",
+      quantity: 1,
+      itemPrice: 100000,
+      subtotal: 100000,
+      shippingCost: 10000,
+      serviceFee: 1500,
+      totalAmount: 111500,
+      shippingCourier: "jne",
+    });
+    await updateOrderStatus(order.id, "paid");
+    await updateOrderStatus(order.id, "shipped", "JNE123456");
+    await updateOrderStatus(order.id, "completed");
+
+    const authSession = await import("@/lib/auth/session");
+    const spy = vi.spyOn(authSession, "getSession").mockResolvedValueOnce({
+      role: "buyer",
+      userId: buyerUserId,
+      email: "buyer@example.com",
+    });
+
+    const res = await submitReviewAction({
+      orderId: order.id,
+      listingId: "list-999-unrelated",
+      rating: 5,
+    });
+
+    expect(res.success).toBe(false);
+    if (!res.success) {
+      expect(res.error).toContain("Produk ini tidak ada dalam pesanan tersebut");
+    }
+    spy.mockRestore();
+  });
+
+  it("submits review successfully and rejects duplicate review for same order and listing", async () => {
+    const order = await createOrder({
+      buyerId: buyerUserId,
+      buyerName: "Pembeli Sah",
+      buyerEmail: "buyer@example.com",
+      buyerPhone: "08111111111",
+      buyerAddress: "Jl. Sah",
+      buyerCity: "Jakarta",
+      sellerId: "seller-1",
+      listingId: "list-1",
+      quantity: 1,
+      itemPrice: 100000,
+      subtotal: 100000,
+      shippingCost: 10000,
+      serviceFee: 1500,
+      totalAmount: 111500,
+      shippingCourier: "jne",
+    });
+    await updateOrderStatus(order.id, "paid");
+    await updateOrderStatus(order.id, "shipped", "JNE123456");
+    await updateOrderStatus(order.id, "completed");
+
+    const authSession = await import("@/lib/auth/session");
+    const spy = vi.spyOn(authSession, "getSession").mockResolvedValue({
+      role: "buyer",
+      userId: buyerUserId,
+      email: "buyer@example.com",
+    });
+
+    const firstRes = await submitReviewAction({
+      orderId: order.id,
+      listingId: "list-1",
+      rating: 5,
+      comment: "Aroma fruity luar biasa!",
+    });
+    expect(firstRes.success).toBe(true);
+
+    const duplicateRes = await submitReviewAction({
+      orderId: order.id,
+      listingId: "list-1",
+      rating: 4,
+      comment: "Mencoba ulas lagi",
+    });
+    expect(duplicateRes.success).toBe(false);
+    if (!duplicateRes.success) {
+      expect(duplicateRes.error).toContain("sudah memberikan ulasan");
+    }
+
+    spy.mockRestore();
   });
 });

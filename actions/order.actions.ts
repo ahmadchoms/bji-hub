@@ -16,7 +16,7 @@ import {
   generateOrderNumber,
   autoCompleteExpiredShippedOrders,
 } from "@/lib/data/orders";
-import { createReview } from "@/lib/data/reviews";
+import { createReview, getReviewByOrderAndListing } from "@/lib/data/reviews";
 import { getPaymentProvider } from "@/lib/payments";
 import { getSession, requireRole } from "@/lib/auth/session";
 import { canAccessOrder } from "@/lib/auth/order-access";
@@ -570,9 +570,16 @@ export async function autoCompleteOrdersAction(): Promise<
 
 const reviewSchema = z.object({
   orderId: z.string().optional(),
-  listingId: z.string().min(1),
-  rating: z.number().int().min(1).max(5),
-  comment: z.string().max(500).optional(),
+  listingId: z.string().min(1, "ID produk wajib diisi"),
+  rating: z
+    .number({
+      required_error: "Rating wajib diisi",
+      invalid_type_error: "Rating harus berupa angka",
+    })
+    .int("Rating harus berupa bilangan bulat")
+    .min(1, "Rating minimal 1 bintang")
+    .max(5, "Rating maksimal 5 bintang"),
+  comment: z.string().max(500, "Ulasan maksimal 500 karakter").optional(),
   imageUrl: z
     .string()
     .max(500)
@@ -586,7 +593,7 @@ export async function submitReviewAction(
 ): Promise<ActionResult<{ reviewId: string }>> {
   const parsed = reviewSchema.safeParse(input);
   if (!parsed.success) {
-    return fail("Data ulasan tidak valid");
+    return fail(parsed.error.issues[0]?.message || "Data ulasan tidak valid");
   }
 
   const session = await getSession();
@@ -594,20 +601,34 @@ export async function submitReviewAction(
     return fail("Silakan login untuk memberikan ulasan");
   }
 
-  let buyerName = "Pembeli Biji Hub";
-  if (parsed.data.orderId) {
-    const order = await getOrderById(parsed.data.orderId);
-    if (!order) {
-      return fail("Pesanan tidak ditemukan");
-    }
-    if (order.buyerId && order.buyerId !== session.userId) {
-      return fail("Anda hanya dapat mengulas produk dari pesanan Anda sendiri");
-    }
-    if (order.status !== "completed") {
-      return fail("Ulasan hanya dapat diberikan setelah pesanan selesai diterima");
-    }
-    if (order.buyerName) buyerName = order.buyerName;
+  if (!parsed.data.orderId) {
+    return fail("Ulasan hanya dapat diberikan dari pesanan yang sudah selesai");
   }
+
+  const order = await getOrderById(parsed.data.orderId);
+  if (!order || !order.buyerId || order.buyerId !== session.userId) {
+    return fail("Anda hanya dapat mengulas produk dari pesanan Anda sendiri");
+  }
+  if (order.status !== "completed") {
+    return fail("Ulasan hanya dapat diberikan setelah pesanan selesai diterima");
+  }
+
+  const containsListing = order.items?.length
+    ? order.items.some((item) => item.listingId === parsed.data.listingId)
+    : order.listingId === parsed.data.listingId;
+  if (!containsListing) {
+    return fail("Produk ini tidak ada dalam pesanan tersebut");
+  }
+
+  const existingReview = await getReviewByOrderAndListing(
+    parsed.data.orderId,
+    parsed.data.listingId,
+  );
+  if (existingReview) {
+    return fail("Anda sudah memberikan ulasan untuk produk ini pada pesanan tersebut");
+  }
+
+  const buyerName = order.buyerName || "Pembeli Biji Hub";
 
   const review = await createReview({
     orderId: parsed.data.orderId,
@@ -619,15 +640,23 @@ export async function submitReviewAction(
     imageUrl: parsed.data.imageUrl,
   });
 
-  revalidatePath("/orders");
-  revalidatePath("/order/success");
-  getListingById(parsed.data.listingId)
-    .then((listing) => {
-      if (listing?.slug) {
-        revalidatePath(`/product/${listing.slug}`);
-      }
-    })
-    .catch(() => {});
+  try {
+    revalidatePath("/orders");
+    revalidatePath("/order/success");
+    getListingById(parsed.data.listingId)
+      .then((listing) => {
+        if (listing?.slug) {
+          try {
+            revalidatePath(`/product/${listing.slug}`);
+          } catch {
+            // ignore
+          }
+        }
+      })
+      .catch(() => {});
+  } catch {
+    // ignore: revalidatePath might throw outside Next.js request lifecycle (e.g. tests)
+  }
 
   return ok({ reviewId: review.id });
 }

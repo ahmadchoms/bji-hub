@@ -27,6 +27,7 @@ async function main() {
 
     CREATE INDEX IF NOT EXISTS idx_reviews_listing_id ON public.reviews(listing_id);
     CREATE INDEX IF NOT EXISTS idx_reviews_order_id ON public.reviews(order_id);
+    CREATE UNIQUE INDEX IF NOT EXISTS reviews_order_listing_uq ON public.reviews (order_id, listing_id) WHERE order_id IS NOT NULL;
 
     -- Add dispute_reason column to orders
     ALTER TABLE public.orders

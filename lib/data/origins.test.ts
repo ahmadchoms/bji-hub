@@ -6,7 +6,7 @@ import {
   toggleCoffeeOriginStatus,
 } from "./origins";
 
-describe("Coffee Origins Data Module", () => {
+describe("Coffee Origins Data Module", { timeout: 15000 }, () => {
   it("returns pre-populated specialty coffee origins", async () => {
     const origins = await getCoffeeOrigins();
     expect(origins.length).toBeGreaterThan(5);

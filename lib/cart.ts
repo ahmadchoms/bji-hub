@@ -35,12 +35,36 @@ export function getStoredCart(): CartItem[] {
   }
 }
 
+export async function syncCartWithCloud(): Promise<void> {
+  if (typeof window === "undefined") return;
+  try {
+    const { syncCloudCartAction } = await import("@/actions/cart.actions");
+    const local = getStoredCart();
+    const res = await syncCloudCartAction(local);
+    if (res.success && res.data?.items) {
+      const merged = res.data.items;
+      if (JSON.stringify(merged) !== JSON.stringify(local)) {
+        memoryCart = merged;
+        try {
+          localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(merged));
+          window.dispatchEvent(new Event("biji-cart-changed"));
+        } catch {
+          // ignore: localStorage write error
+        }
+      }
+    }
+  } catch {
+    // ignore: cart sync fallback
+  }
+}
+
 function saveCart(items: CartItem[]): void {
   memoryCart = items;
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
     window.dispatchEvent(new Event("biji-cart-changed"));
+    syncCartWithCloud().catch(() => {});
   } catch {
     // ignore: localStorage read/write fallback
     // Ignore storage quota errors
@@ -134,6 +158,7 @@ export function useCart() {
 
   useEffect(() => {
     setIsClient(true);
+    syncCartWithCloud().catch(() => {});
   }, []);
 
   const totalItems = isClient

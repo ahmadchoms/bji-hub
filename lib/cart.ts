@@ -35,12 +35,14 @@ export function getStoredCart(): CartItem[] {
   }
 }
 
-export async function syncCartWithCloud(): Promise<void> {
+export async function syncCartWithCloud(
+  mode: "merge" | "replace" = "merge",
+): Promise<void> {
   if (typeof window === "undefined") return;
   try {
     const { syncCloudCartAction } = await import("@/actions/cart.actions");
     const local = getStoredCart();
-    const res = await syncCloudCartAction(local);
+    const res = await syncCloudCartAction(local, mode);
     if (res.success && res.data?.items) {
       const merged = res.data.items;
       if (JSON.stringify(merged) !== JSON.stringify(local)) {
@@ -64,7 +66,7 @@ function saveCart(items: CartItem[]): void {
   try {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
     window.dispatchEvent(new Event("biji-cart-changed"));
-    syncCartWithCloud().catch(() => {});
+    syncCartWithCloud("replace").catch(() => {});
   } catch {
     // ignore: localStorage read/write fallback
     // Ignore storage quota errors

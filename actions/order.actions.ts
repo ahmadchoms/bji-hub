@@ -45,6 +45,7 @@ import {
   updateRefundStatus,
 } from "@/lib/data/refunds";
 import { recordAuditLog } from "@/lib/data/audit-logs";
+import { createNotification } from "@/lib/data/notifications";
 
 const checkoutItemSchema = z.object({
   listingId: z.string().min(1, "ID produk wajib diisi"),
@@ -473,6 +474,16 @@ export async function updateShipmentTrackingAction(
     trackingNumber: cleanResi,
   }).catch((err) => logger.error("Failed to send shipped email", err, { orderId: order.id }));
 
+  if (order.buyerId) {
+    createNotification({
+      userId: order.buyerId,
+      title: "Pesanan Dikirim",
+      message: `Pesanan ${order.orderNumber} telah dikirim dengan nomor resi ${cleanResi}.`,
+      type: "order_status",
+      link: "/orders",
+    }).catch(() => {});
+  }
+
   return ok({ success: true });
 }
 
@@ -490,6 +501,26 @@ export async function completeOrderAction(
   }
 
   await updateOrderStatus(order.id, "completed");
+
+  if (order.buyerId) {
+    createNotification({
+      userId: order.buyerId,
+      title: "Pesanan Selesai",
+      message: `Pesanan ${order.orderNumber} telah selesai. Berikan ulasan untuk membantu pembeli lain!`,
+      type: "order_status",
+      link: "/orders",
+    }).catch(() => {});
+  }
+  if (order.sellerId) {
+    createNotification({
+      userId: order.sellerId,
+      title: "Pesanan Selesai",
+      message: `Pesanan ${order.orderNumber} telah dikonfirmasi selesai oleh pembeli.`,
+      type: "order_status",
+      link: "/dashboard/orders",
+    }).catch(() => {});
+  }
+
   revalidatePath("/orders");
   revalidatePath("/order/success");
   revalidatePath("/profile");
@@ -537,6 +568,15 @@ export async function disputeOrderAction(
     parsed.data.reason.trim(),
     parsed.data.evidenceUrl || undefined,
   );
+
+  createNotification({
+    userId: order.sellerId,
+    title: "Komplain Diajukan Pembeli",
+    message: `Pembeli mengajukan komplain pada pesanan ${order.orderNumber}: "${parsed.data.reason.trim()}".`,
+    type: "dispute",
+    link: "/dashboard/orders",
+  }).catch(() => {});
+
   revalidatePath("/order/success");
   revalidatePath("/profile");
   revalidatePath("/dashboard/orders");
@@ -620,6 +660,25 @@ export async function resolveDisputeAction(
     details: { decision },
     ipAddress: clientIp,
   });
+
+  if (order.buyerId) {
+    createNotification({
+      userId: order.buyerId,
+      title: "Komplain Pesanan Diputuskan",
+      message: `Komplain pesanan ${order.orderNumber} telah diputuskan admin: ${decision === "cancel" ? "Refund disetujui" : "Pesanan diselesaikan"}.`,
+      type: "dispute",
+      link: "/orders",
+    }).catch(() => {});
+  }
+  if (order.sellerId) {
+    createNotification({
+      userId: order.sellerId,
+      title: "Komplain Pesanan Diputuskan",
+      message: `Komplain pesanan ${order.orderNumber} telah diputuskan admin: ${decision === "cancel" ? "Refund disetujui untuk pembeli" : "Pesanan diselesaikan"}.`,
+      type: "dispute",
+      link: "/dashboard/orders",
+    }).catch(() => {});
+  }
 
   try {
     revalidatePath("/order/success");

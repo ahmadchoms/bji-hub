@@ -67,6 +67,17 @@ export async function retryRefundAction(
       ipAddress: ip,
     });
 
+    if (refundRes.status === "failed" || refundRes.status === "manual_required") {
+      const { createNotification } = await import("@/lib/data/notifications");
+      createNotification({
+        userId: session.userId || "admin",
+        title: "Refund Gateway Gagal",
+        message: `Refund untuk pesanan ${order.orderNumber} gagal diproses otomatis. Diperlukan transfer manual.`,
+        type: "refund",
+        link: "/admin/refunds",
+      }).catch(() => {});
+    }
+
     try {
       revalidatePath("/admin/refunds");
       revalidatePath("/admin/transactions");

@@ -890,6 +890,19 @@ export async function autoCancelExpiredPendingOrders(
           const transitionRes = await transitionOrderStatus(r.id, "canceled");
           if (transitionRes.applied) {
             canceledIds.push(r.id);
+            getOrderById(r.id).then((ord) => {
+              if (ord && ord.buyerId) {
+                import("@/lib/data/notifications").then(({ createNotification }) => {
+                  createNotification({
+                    userId: ord.buyerId!,
+                    title: "Batas Waktu Pembayaran Kedaluwarsa",
+                    message: `Pesanan ${ord.orderNumber} dibatalkan otomatis karena melewati batas waktu pembayaran.`,
+                    type: "order_status",
+                    link: "/orders",
+                  }).catch(() => {});
+                });
+              }
+            }).catch(() => {});
           }
         } catch (err) {
           logger.error("order.auto_cancel_single_failed", { orderId: r.id, error: String(err) });
@@ -912,6 +925,17 @@ export async function autoCancelExpiredPendingOrders(
           const transitionRes = await transitionOrderStatus(o.id, "canceled");
           if (transitionRes.applied) {
             if (!canceledIds.includes(o.id)) canceledIds.push(o.id);
+            if (o.buyerId) {
+              import("@/lib/data/notifications").then(({ createNotification }) => {
+                createNotification({
+                  userId: o.buyerId!,
+                  title: "Batas Waktu Pembayaran Kedaluwarsa",
+                  message: `Pesanan ${o.orderNumber} dibatalkan otomatis karena melewati batas waktu pembayaran.`,
+                  type: "order_status",
+                  link: "/orders",
+                }).catch(() => {});
+              }).catch(() => {});
+            }
           }
         } catch (err) {
           logger.error("order.auto_cancel_single_failed", { orderId: o.id, error: String(err) });

@@ -86,6 +86,26 @@ export async function POST(req: NextRequest) {
             );
           })
           .catch(() => {});
+
+        const { createNotification } = await import("@/lib/data/notifications");
+        if (order.buyerId) {
+          createNotification({
+            userId: order.buyerId,
+            title: "Pembayaran Dikonfirmasi",
+            message: `Pembayaran pesanan ${order.orderNumber} telah diterima dan sedang diproses penjual.`,
+            type: "order_status",
+            link: "/orders",
+          }).catch(() => {});
+        }
+        if (order.sellerId) {
+          createNotification({
+            userId: order.sellerId,
+            title: "Pesanan Baru Masuk",
+            message: `Ada pesanan baru ${order.orderNumber}. Segera proses dan kirimkan pesanan.`,
+            type: "order_status",
+            link: "/dashboard/orders",
+          }).catch(() => {});
+        }
       } catch {
         // ignore: invalid webhook body JSON parsing
         // Non-blocking

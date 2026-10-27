@@ -92,6 +92,20 @@ async function main() {
       processed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
     CREATE INDEX IF NOT EXISTS idx_webhook_events_order_ref ON public.webhook_events(order_ref);
+
+    -- Notifications table (F1)
+    CREATE TABLE IF NOT EXISTS public.notifications (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      message TEXT NOT NULL,
+      type TEXT NOT NULL DEFAULT 'system',
+      link TEXT,
+      is_read BOOLEAN NOT NULL DEFAULT false,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON public.notifications(user_id, is_read);
+    CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON public.notifications(user_id, created_at DESC);
   `);
 
   console.log("Reviews table and dispute_reason column verified in PostgreSQL!");

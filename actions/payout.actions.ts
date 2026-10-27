@@ -132,6 +132,26 @@ export async function updatePayoutStatusAction(
   revalidatePath("/admin/payouts");
   revalidatePath("/dashboard/orders");
 
+  try {
+    const { getAllPayoutRequests } = await import("@/lib/data/payouts");
+    const all = await getAllPayoutRequests();
+    const req = all.find((p) => p.id === parsed.data.payoutId);
+    if (req) {
+      const { createNotification } = await import("@/lib/data/notifications");
+      createNotification({
+        userId: req.sellerId,
+        title: parsed.data.status === "processed" ? "Pencairan Saldo Berhasil" : "Pengajuan Pencairan Ditolak",
+        message: parsed.data.status === "processed"
+          ? `Pencairan dana sebesar Rp ${Number(req.amount).toLocaleString("id-ID")} telah diproses ke rekening ${req.bankName}.`
+          : `Pengajuan pencairan dana Rp ${Number(req.amount).toLocaleString("id-ID")} ditolak. Catatan: ${parsed.data.notes || "Tidak ada"}`,
+        type: "payout",
+        link: "/dashboard/payouts",
+      }).catch(() => {});
+    }
+  } catch {
+    // ignore
+  }
+
   return ok({ success: true });
 }
 

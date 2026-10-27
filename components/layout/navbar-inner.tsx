@@ -7,7 +7,6 @@ import {
   Menu,
   LogOut,
   Search,
-  Bell,
   Receipt,
   MessageSquare,
   Store,
@@ -30,6 +29,7 @@ import { logoutAction } from "@/actions/auth.actions";
 import type { Role } from "@/lib/auth/roles";
 import { CartNavBadge } from "@/components/cart/cart-nav-badge";
 import { WishlistNavBadge } from "@/components/wishlist/wishlist-nav-badge";
+import { NotificationBell } from "@/components/layout/notification-bell";
 import type { Category } from "@/types";
 
 const TRENDING_SEARCHES = [
@@ -64,14 +64,12 @@ export function NavbarInner({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [storeOpen, setStoreOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [notifOpen, setNotifOpen] = useState(false);
   const [messagesOpen, setMessagesOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const storeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const storeMenuRef = useRef<HTMLDivElement>(null);
-  const notifMenuRef = useRef<HTMLDivElement>(null);
   const messagesMenuRef = useRef<HTMLDivElement>(null);
 
   // Close menus on path changes
@@ -79,7 +77,6 @@ export function NavbarInner({
     setMobileOpen(false);
     setStoreOpen(false);
     setProfileOpen(false);
-    setNotifOpen(false);
     setMessagesOpen(false);
   }, [pathname]);
 
@@ -111,12 +108,6 @@ export function NavbarInner({
         !storeMenuRef.current.contains(event.target as Node)
       ) {
         setStoreOpen(false);
-      }
-      if (
-        notifMenuRef.current &&
-        !notifMenuRef.current.contains(event.target as Node)
-      ) {
-        setNotifOpen(false);
       }
       if (
         messagesMenuRef.current &&
@@ -252,120 +243,8 @@ export function NavbarInner({
             {/* Favorit / Wishlist */}
             <WishlistNavBadge showBadge={role !== "guest"} />
 
-            {/* Notifikasi */}
-            <div className="relative" ref={notifMenuRef}>
-              <button
-                type="button"
-                onClick={() => setNotifOpen((prev) => !prev)}
-                className="p-2 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-md transition-colors relative"
-                title="Notifikasi"
-                aria-label="Notifikasi"
-              >
-                <Bell className="w-4 h-4" />
-                {role !== "guest" && (
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white" />
-                )}
-              </button>
-
-              {notifOpen && (
-                <div className="absolute right-0 top-full mt-1.5 w-72 rounded-md border border-neutral-200 bg-white p-3 shadow-lg z-50 animate-in fade-in-50 zoom-in-95 text-xs space-y-2.5">
-                  <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
-                    <span className="font-semibold text-neutral-900">Notifikasi</span>
-                    <span className="text-[10px] text-primary-700 bg-primary-50 px-1.5 py-0.5 rounded font-mono">
-                      Update Baru
-                    </span>
-                  </div>
-
-                  {activeOrdersCount > 0 && (
-                    <div className="p-2 rounded bg-amber-50 border border-amber-200 text-amber-900 flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 font-semibold text-[11px]">
-                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                        <span>{activeOrdersCount} Pesanan Aktif</span>
-                      </div>
-                      <Link
-                        href={ordersHref}
-                        onClick={() => setNotifOpen(false)}
-                        className="text-[10px] font-bold text-amber-800 underline hover:text-amber-950"
-                      >
-                        Pantau →
-                      </Link>
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    {isSeller ? (
-                      <>
-                        <Link
-                          href="/dashboard/orders"
-                          onClick={() => setNotifOpen(false)}
-                          className="block p-2 rounded hover:bg-neutral-50 transition-colors border border-neutral-100"
-                        >
-                          <div className="flex items-center justify-between font-medium text-neutral-900">
-                            <span>Pesanan Baru Masuk</span>
-                            <span className="text-[10px] text-neutral-400 font-mono">Baru saja</span>
-                          </div>
-                          <p className="text-[11px] text-neutral-500 mt-0.5">
-                            Segera proses pesanan kopi dan input nomor resi pengiriman kurir.
-                          </p>
-                        </Link>
-                        <Link
-                          href="/dashboard/payouts"
-                          onClick={() => setNotifOpen(false)}
-                          className="block p-2 rounded hover:bg-neutral-50 transition-colors border border-neutral-100"
-                        >
-                          <div className="flex items-center justify-between font-medium text-neutral-900">
-                            <span>Pencairan Saldo Penjualan</span>
-                            <span className="text-[10px] text-neutral-400 font-mono">Info</span>
-                          </div>
-                          <p className="text-[11px] text-neutral-500 mt-0.5">
-                            Saldo transaksi yang telah selesai siap ditarik ke rekening bank Anda.
-                          </p>
-                        </Link>
-                      </>
-                    ) : (
-                      <>
-                        <Link
-                          href="/orders"
-                          onClick={() => setNotifOpen(false)}
-                          className="block p-2 rounded hover:bg-neutral-50 transition-colors border border-neutral-100"
-                        >
-                          <div className="flex items-center justify-between font-medium text-neutral-900">
-                            <span>Status Pengiriman</span>
-                            <span className="text-[10px] text-neutral-400 font-mono">Terkini</span>
-                          </div>
-                          <p className="text-[11px] text-neutral-500 mt-0.5">
-                            Pantau perjalanan kurir pesanan biji kopi Anda secara langsung.
-                          </p>
-                        </Link>
-                        <Link
-                          href="/profile"
-                          onClick={() => setNotifOpen(false)}
-                          className="block p-2 rounded hover:bg-neutral-50 transition-colors border border-neutral-100"
-                        >
-                          <div className="flex items-center justify-between font-medium text-neutral-900">
-                            <span>Alamat Pengiriman</span>
-                            <span className="text-[10px] text-neutral-400 font-mono">Profil</span>
-                          </div>
-                          <p className="text-[11px] text-neutral-500 mt-0.5">
-                            Kelola alamat pengiriman utama untuk checkout lebih cepat.
-                          </p>
-                        </Link>
-                      </>
-                    )}
-                  </div>
-
-                  <div className="pt-1.5 border-t border-neutral-100 text-center">
-                    <Link
-                      href={ordersHref}
-                      onClick={() => setNotifOpen(false)}
-                      className="text-[11px] font-semibold text-primary-700 hover:text-primary-800"
-                    >
-                      Lihat Semua Aktivitas Transaksi →
-                    </Link>
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* Notifikasi In-App (F1) */}
+            {role !== "guest" && <NotificationBell />}
 
             {/* Riwayat */}
             <Link

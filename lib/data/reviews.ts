@@ -182,3 +182,34 @@ export function computeReviewStats(reviews: Review[]): {
     count: reviews.length,
   };
 }
+
+export async function getReviewsByBuyer(buyerId: string): Promise<Review[]> {
+  const pool = getPool();
+  if (pool) {
+    try {
+      const res = await pool.query(
+        `SELECT id, order_id as "orderId", listing_id as "listingId",
+                buyer_id as "buyerId", buyer_name as "buyerName",
+                rating, comment, image_url as "imageUrl", created_at as "createdAt"
+         FROM public.reviews
+         WHERE buyer_id = $1
+         ORDER BY created_at DESC`,
+        [buyerId],
+      );
+      return res.rows.map((row) => ({
+        id: row.id,
+        orderId: row.orderId,
+        listingId: row.listingId,
+        buyerId: row.buyerId,
+        buyerName: row.buyerName,
+        rating: Number(row.rating),
+        comment: row.comment,
+        imageUrl: row.imageUrl ?? null,
+        createdAt: new Date(row.createdAt).toISOString(),
+      }));
+    } catch {
+      return [];
+    }
+  }
+  return mockReviews.filter((r) => r.buyerId === buyerId);
+}

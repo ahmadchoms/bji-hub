@@ -100,6 +100,15 @@ function LoginForm() {
             </div>
           )}
 
+          {searchParams.get("deleted") === "1" && (
+            <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded text-emerald-900 text-xs leading-relaxed space-y-1">
+              <p className="font-semibold">Akun Berhasil Dihapus</p>
+              <p>
+                Data pribadi Anda telah dianonimkan sesuai UU PDP. Terima kasih telah menggunakan Biji Hub.
+              </p>
+            </div>
+          )}
+
           {searchParams.get("error") === "verification_failed" && (
             <div className="p-3.5 bg-rose-50 border border-rose-300 rounded text-rose-900 text-xs leading-relaxed space-y-1">
               <p className="font-semibold">Verifikasi Gagal</p>

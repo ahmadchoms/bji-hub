@@ -7,6 +7,7 @@ export interface Session {
   userId?: string | null;
   email?: string | null;
   name?: string | null;
+  isSuspended?: boolean;
 }
 
 export const GUEST_SESSION: Session = {

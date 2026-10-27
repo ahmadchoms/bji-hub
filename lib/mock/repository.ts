@@ -99,7 +99,9 @@ async function findListings(
     return [];
   }
 
-  let results = mockListings.filter((item) => item.status === "active");
+  let results = mockListings.filter(
+    (item) => item.status === "active" && !item.seller?.suspendedAt,
+  );
 
   // Category filter
   if (filters.categorySlug && filters.categorySlug !== "all") {

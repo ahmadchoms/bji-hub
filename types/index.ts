@@ -19,6 +19,7 @@ export interface User {
   email: string;
   passwordHash?: string | null;
   role: Role;
+  suspendedAt?: string | null;
   createdAt: string; // ISO string
   sellerProfile?: SellerProfile | null;
 }
@@ -40,6 +41,7 @@ export interface SellerProfile {
   bankName?: string;
   bankAccountNumber?: string;
   bankAccountHolder?: string;
+  suspendedAt?: string | null;
   createdAt: string;
 }
 

@@ -30,7 +30,10 @@ const ALL = "all";
 const PAGE_SIZE = 12;
 
 function buildWhere(filters: ListingFilters): Prisma.ListingWhereInput {
-  const where: Prisma.ListingWhereInput = { status: "active" };
+  const where: Prisma.ListingWhereInput = {
+    status: "active",
+    seller: { is: { suspendedAt: null } },
+  };
 
   if (filters.categorySlug && filters.categorySlug !== ALL)
     where.category = { slug: filters.categorySlug };

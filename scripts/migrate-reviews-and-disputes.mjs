@@ -79,6 +79,10 @@ async function main() {
     CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON public.audit_logs(action);
     CREATE INDEX IF NOT EXISTS idx_audit_logs_target_id ON public.audit_logs(target_id);
     CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON public.audit_logs(created_at DESC);
+
+    -- Suspend columns (F3)
+    ALTER TABLE public.users ADD COLUMN IF NOT EXISTS suspended_at TIMESTAMPTZ;
+    ALTER TABLE public.seller_profiles ADD COLUMN IF NOT EXISTS suspended_at TIMESTAMPTZ;
   `);
 
   console.log("Reviews table and dispute_reason column verified in PostgreSQL!");

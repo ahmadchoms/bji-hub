@@ -109,6 +109,24 @@ function LoginForm() {
             </div>
           )}
 
+          {searchParams.get("error") === "suspended" && (
+            <div className="p-3.5 bg-rose-50 border border-rose-300 rounded text-rose-900 text-xs leading-relaxed space-y-1">
+              <p className="font-semibold">Akun Ditangguhkan</p>
+              <p>
+                Akun atau toko Anda sedang ditangguhkan karena pelanggaran ketentuan layanan. Hubungi bantuan admin jika ini adalah kekeliruan.
+              </p>
+            </div>
+          )}
+
+          {searchParams.get("error") === "auth_code_error" && (
+            <div className="p-3.5 bg-amber-50 border border-amber-300 rounded text-amber-900 text-xs leading-relaxed space-y-1">
+              <p className="font-semibold">Tautan Tidak Valid atau Perangkat Berbeda</p>
+              <p>
+                Tautan konfirmasi atau reset password harus dibuka pada peramban (browser) dan perangkat yang sama saat diminta. Silakan minta tautan baru.
+              </p>
+            </div>
+          )}
+
           <GoogleSignInButton next={safeNextPath(searchParams.get("next"), "/")} />
 
           <div className="relative flex items-center justify-center">

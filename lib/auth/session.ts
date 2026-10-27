@@ -40,7 +40,7 @@ export const getSession = cache(async (): Promise<Session> => {
         const prisma = getPrisma();
         let dbUser = await prisma.user.findUnique({
           where: { id: user.id },
-          include: { sellerProfile: { select: { id: true } } },
+          include: { sellerProfile: { select: { id: true, suspendedAt: true } } },
         });
 
         if (!dbUser) {
@@ -53,7 +53,7 @@ export const getSession = cache(async (): Promise<Session> => {
           });
           dbUser = await prisma.user.findUnique({
             where: { id: user.id },
-            include: { sellerProfile: { select: { id: true } } },
+            include: { sellerProfile: { select: { id: true, suspendedAt: true } } },
           });
         }
 
@@ -66,12 +66,16 @@ export const getSession = cache(async (): Promise<Session> => {
           const role = roleMap[dbUser.role] || "buyer";
           const rawName = user.user_metadata?.full_name ?? user.user_metadata?.name;
           const cleanName = sanitizeDisplayName(rawName, dbUser.email);
+          const isSuspended = Boolean(
+            dbUser.suspendedAt || dbUser.sellerProfile?.suspendedAt,
+          );
           return {
             role,
             sellerId: dbUser.sellerProfile?.id ?? null,
             userId: dbUser.id,
             email: dbUser.email,
             name: cleanName,
+            isSuspended,
           };
         }
       }
@@ -110,6 +114,9 @@ export async function requireRole(
   returnTo: string,
 ): Promise<Session> {
   const session = await getSession();
+  if (session.isSuspended) {
+    redirect(`/login?error=suspended`);
+  }
   if (!allowed.includes(session.role)) {
     redirect(`/login?next=${encodeURIComponent(returnTo)}`);
   }

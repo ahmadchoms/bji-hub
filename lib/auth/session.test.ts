@@ -78,4 +78,26 @@ describe("getSession role safety and database interaction", () => {
     });
     expect(session.role).toBe("buyer");
   });
+
+  it("sets isSuspended to true when user or sellerProfile has suspendedAt timestamp (F3)", async () => {
+    supabaseMock.auth.getUser.mockResolvedValueOnce({
+      data: {
+        user: {
+          id: "u-suspended",
+          email: "suspended@example.com",
+        },
+      },
+    });
+
+    prismaMock.user.findUnique.mockResolvedValueOnce({
+      id: "u-suspended",
+      email: "suspended@example.com",
+      role: "SELLER",
+      suspendedAt: new Date(),
+      sellerProfile: { id: "seller-suspended", suspendedAt: null },
+    });
+
+    const session = await getSession();
+    expect(session.isSuspended).toBe(true);
+  });
 });

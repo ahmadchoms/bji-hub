@@ -300,6 +300,17 @@ export interface WaybillTrackingResult {
   manifests: WaybillManifest[];
 }
 
+interface TrackingCacheEntry {
+  data: WaybillTrackingResult;
+  timestamp: number;
+}
+const trackingCache = new Map<string, TrackingCacheEntry>();
+const TRACKING_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes cache (F8)
+
+export function _clearTrackingCacheForTest() {
+  trackingCache.clear();
+}
+
 export async function trackShipmentWaybill(
   trackingNumber: string,
   courier: string = "jne",
@@ -309,6 +320,12 @@ export async function trackShipmentWaybill(
     : courier.toLowerCase().includes("tiki")
       ? "tiki"
       : "jne";
+
+  const cacheKey = `${cleanCourier}:${trackingNumber.trim().toUpperCase()}`;
+  const cached = trackingCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < TRACKING_CACHE_TTL_MS) {
+    return cached.data;
+  }
 
   const apiKey = process.env.RAJAONGKIR_API_KEY;
   if (apiKey) {
@@ -355,7 +372,7 @@ export async function trackShipmentWaybill(
             summary?.status === "DELIVERED" ||
             result.delivery_status?.status === "DELIVERED";
 
-          return {
+          const trackingRes: WaybillTrackingResult = {
             waybillNumber: summary?.awb || summary?.waybill_number || trackingNumber,
             courierName: summary?.courier || cleanCourier.toUpperCase(),
             service: summary?.service || "REG",
@@ -364,6 +381,12 @@ export async function trackShipmentWaybill(
             date: summary?.date || new Date().toISOString(),
             manifests: manifests.reverse(),
           };
+          if (trackingCache.size > 500) {
+            const first = trackingCache.keys().next().value;
+            if (first) trackingCache.delete(first);
+          }
+          trackingCache.set(cacheKey, { data: trackingRes, timestamp: Date.now() });
+          return trackingRes;
         }
       }
     } catch {
@@ -378,7 +401,7 @@ export async function trackShipmentWaybill(
   const d2 = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const d3 = now.toISOString().slice(0, 10);
 
-  return {
+  const fallbackRes: WaybillTrackingResult = {
     waybillNumber: trackingNumber,
     courierName: cleanCourier.toUpperCase(),
     service: "Reguler Kilat",
@@ -411,4 +434,11 @@ export async function trackShipmentWaybill(
       },
     ],
   };
+
+  if (trackingCache.size > 500) {
+    const first = trackingCache.keys().next().value;
+    if (first) trackingCache.delete(first);
+  }
+  trackingCache.set(cacheKey, { data: fallbackRes, timestamp: Date.now() });
+  return fallbackRes;
 }

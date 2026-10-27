@@ -410,3 +410,13 @@ model AuditLog {
   @@index([createdAt])
   @@map("audit_logs")
 }
+
+model WebhookEvent {
+  eventId     String   @id @map("event_id")
+  provider    String   @default("midtrans")
+  orderRef    String?  @map("order_ref")
+  processedAt DateTime @default(now()) @map("processed_at")
+
+  @@index([orderRef])
+  @@map("webhook_events")
+}

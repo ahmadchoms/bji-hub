@@ -29,6 +29,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true, mode: "test_notification" });
   }
 
+  // 1b. S5: Webhook Replay & Idempotency Guard
+  const { createHash } = await import("crypto");
+  const eventId = createHash("sha256").update(rawBody).digest("hex");
+  const { recordWebhookEventIfNew } = await import("@/lib/data/webhook-events");
+  const isNew = await recordWebhookEventIfNew(eventId, "midtrans", parsed.orderRef);
+  if (!isNew) {
+    logger.info("webhook.duplicate_skipped", { orderRef: parsed.orderRef, eventId });
+    return NextResponse.json({ received: true, ignored: "already_processed" });
+  }
+
   // 2. Check if it is a marketplace product order
   const { transitionOrderStatus, getOrderById } = await import("@/lib/data/orders");
   const orderStatus =

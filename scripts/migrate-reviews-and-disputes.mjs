@@ -83,6 +83,15 @@ async function main() {
     -- Suspend columns (F3)
     ALTER TABLE public.users ADD COLUMN IF NOT EXISTS suspended_at TIMESTAMPTZ;
     ALTER TABLE public.seller_profiles ADD COLUMN IF NOT EXISTS suspended_at TIMESTAMPTZ;
+
+    -- Webhook events for replay protection & idempotency (S5)
+    CREATE TABLE IF NOT EXISTS public.webhook_events (
+      event_id TEXT PRIMARY KEY,
+      provider TEXT NOT NULL DEFAULT 'midtrans',
+      order_ref TEXT,
+      processed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_webhook_events_order_ref ON public.webhook_events(order_ref);
   `);
 
   console.log("Reviews table and dispute_reason column verified in PostgreSQL!");

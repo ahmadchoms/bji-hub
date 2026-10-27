@@ -3,7 +3,9 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
-import { requireSeller, requireRole } from "@/lib/auth/session";
+import { requireSeller, requireRole, getSession } from "@/lib/auth/session";
+import { recordAuditLog } from "@/lib/data/audit-logs";
+import { getClientIp } from "@/lib/client-ip";
 import {
   getSellerBankDetails,
   updateSellerBankDetails,
@@ -114,6 +116,18 @@ export async function updatePayoutStatusAction(
   if (!success) {
     return fail("Pengajuan tidak ditemukan atau sudah diproses");
   }
+
+  const session = await getSession();
+  const clientIp = await getClientIp();
+  await recordAuditLog({
+    actorId: session.userId || "admin",
+    actorRole: session.role,
+    action: parsed.data.status === "processed" ? "approve_payout" : "reject_payout",
+    targetId: parsed.data.payoutId,
+    targetType: "payout",
+    details: { notes: parsed.data.notes },
+    ipAddress: clientIp,
+  });
 
   revalidatePath("/admin/payouts");
   revalidatePath("/dashboard/orders");

@@ -62,6 +62,23 @@ async function main() {
     ALTER TABLE public.refunds ADD COLUMN IF NOT EXISTS failure_reason text;
     ALTER TABLE public.refunds ADD COLUMN IF NOT EXISTS resolved_by text;
     CREATE UNIQUE INDEX IF NOT EXISTS refunds_order_uq ON public.refunds (order_id);
+
+    -- Create audit_logs table (F2)
+    CREATE TABLE IF NOT EXISTS public.audit_logs (
+      id TEXT PRIMARY KEY,
+      actor_id TEXT NOT NULL,
+      actor_role TEXT NOT NULL,
+      action TEXT NOT NULL,
+      target_id TEXT,
+      target_type TEXT,
+      details TEXT,
+      ip_address TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_audit_logs_actor_id ON public.audit_logs(actor_id);
+    CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON public.audit_logs(action);
+    CREATE INDEX IF NOT EXISTS idx_audit_logs_target_id ON public.audit_logs(target_id);
+    CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON public.audit_logs(created_at DESC);
   `);
 
   console.log("Reviews table and dispute_reason column verified in PostgreSQL!");

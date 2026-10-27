@@ -10,6 +10,8 @@ import {
   updateRefundStatus,
   type RefundRecord,
 } from "@/lib/data/refunds";
+import { recordAuditLog } from "@/lib/data/audit-logs";
+import { getClientIp } from "@/lib/client-ip";
 import { logger } from "@/lib/logger";
 
 export async function getAdminRefundsAction(): Promise<ActionResult<RefundRecord[]>> {
@@ -54,6 +56,17 @@ export async function retryRefundAction(
       resolvedBy: refundRes.status === "processed" ? session.userId : undefined,
     });
 
+    const ip = await getClientIp();
+    await recordAuditLog({
+      actorId: session.userId || "admin",
+      actorRole: session.role,
+      action: "retry_refund",
+      targetId: refundId,
+      targetType: "refund",
+      details: { status: refundRes.status, providerRef: refundRes.providerRef },
+      ipAddress: ip,
+    });
+
     try {
       revalidatePath("/admin/refunds");
       revalidatePath("/admin/transactions");
@@ -93,6 +106,17 @@ export async function resolveManualRefundAction(
       status: "processed",
       resolvedBy: session.userId || "admin",
       failureReason: cleanNotes ? `Ditransfer manual: ${cleanNotes}` : "Ditransfer manual oleh admin",
+    });
+
+    const ip = await getClientIp();
+    await recordAuditLog({
+      actorId: session.userId || "admin",
+      actorRole: session.role,
+      action: "manual_refund_resolve",
+      targetId: refundId,
+      targetType: "refund",
+      details: { notes: cleanNotes },
+      ipAddress: ip,
     });
 
     try {

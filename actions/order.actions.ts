@@ -44,6 +44,7 @@ import {
   getRefundByOrderId,
   updateRefundStatus,
 } from "@/lib/data/refunds";
+import { recordAuditLog } from "@/lib/data/audit-logs";
 
 const checkoutItemSchema = z.object({
   listingId: z.string().min(1, "ID produk wajib diisi"),
@@ -548,7 +549,7 @@ export async function resolveDisputeAction(
   orderId: string,
   decision: "complete" | "cancel",
 ): Promise<ActionResult<{ success: boolean }>> {
-  await requireRole(["admin"], "/admin/transactions");
+  const session = await requireRole(["admin"], "/admin/transactions");
 
   const order = await getOrderById(orderId);
   if (!order) return fail("Pesanan tidak ditemukan");
@@ -608,6 +609,17 @@ export async function resolveDisputeAction(
   } else {
     await transitionOrderStatus(order.id, "completed");
   }
+
+  const clientIp = await getClientIp();
+  await recordAuditLog({
+    actorId: session.userId || "admin",
+    actorRole: session.role,
+    action: decision === "cancel" ? "dispute_resolve_refund" : "dispute_resolve_complete",
+    targetId: order.id,
+    targetType: "order",
+    details: { decision },
+    ipAddress: clientIp,
+  });
 
   try {
     revalidatePath("/order/success");

@@ -389,6 +389,22 @@ model Refund {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("refunds")
-
 }
 
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String   @map("actor_id")
+  actorRole  String   @map("actor_role")
+  action     String
+  targetId   String?  @map("target_id")
+  targetType String?  @map("target_type")
+  details    String?
+  ipAddress  String?  @map("ip_address")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([actorId])
+  @@index([action])
+  @@index([targetId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

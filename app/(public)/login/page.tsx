@@ -49,6 +49,13 @@ function LoginForm() {
       toast.success("Berhasil masuk!", {
         description: "Mengalihkan ke akun Anda...",
       });
+      try {
+        localStorage.removeItem("biji_wishlist_items");
+        localStorage.removeItem("biji_cart_items");
+        localStorage.removeItem("biji_compare_items");
+      } catch {
+        // ignore: storage clean on login
+      }
       window.location.href = result.data.redirectTo;
     } catch {
       // ignore: optional cookie read fallback

@@ -110,9 +110,13 @@ export async function loginAction(
             });
           }
 
+          const store = await cookies();
+          store.delete(BUYER_PROFILE_COOKIE);
           const role = (dbUser?.role?.toLowerCase() as Role) || "buyer";
           return ok({ redirectTo: safeNextPath(next, homeFor(role)) });
         }
+        const store = await cookies();
+        store.delete(BUYER_PROFILE_COOKIE);
         return ok({ redirectTo: safeNextPath(next, homeFor("buyer")) });
       }
     } catch {
@@ -130,6 +134,8 @@ export async function loginAction(
 
   const role = mockRoleFromEmail(parsed.data.email);
   await setMockSession(role);
+  const store = await cookies();
+  store.delete(BUYER_PROFILE_COOKIE);
   return ok({ redirectTo: safeNextPath(next, homeFor(role)) });
 }
 
@@ -324,6 +330,7 @@ export async function logoutAction(): Promise<void> {
 
   const store = await cookies();
   store.delete(MOCK_SESSION_COOKIE);
+  store.delete(BUYER_PROFILE_COOKIE);
   redirect("/");
 }
 
@@ -393,27 +400,31 @@ export async function updateBuyerProfileAction(input: {
     }
   }
 
-  try {
-    const payload = {
-      name: input.name.trim(),
-      avatarUrl: input.avatarUrl?.trim() || null,
-      phone: input.phone?.trim() || null,
-      province: resolvedProvince,
-      city: resolvedCity,
-      postalCode: resolvedPostal,
-      address: resolvedAddress,
-      addresses: currentAddresses,
-    };
-    const serialized = serializeBuyerProfile(payload);
-    cookieStore.set(BUYER_PROFILE_COOKIE, serialized, {
-      path: "/",
-      httpOnly: true,
-      maxAge: 60 * 60 * 24 * 7,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-    });
-  } catch (err: unknown) {
-    return fail(err instanceof Error ? err.message : String(err) || "Gagal menyimpan cookie profil.");
+  if (process.env.DATA_SOURCE === "mock") {
+    try {
+      const payload = {
+        name: input.name.trim(),
+        avatarUrl: input.avatarUrl?.trim() || null,
+        phone: input.phone?.trim() || null,
+        province: resolvedProvince,
+        city: resolvedCity,
+        postalCode: resolvedPostal,
+        address: resolvedAddress,
+        addresses: currentAddresses,
+      };
+      const serialized = serializeBuyerProfile(payload);
+      cookieStore.set(BUYER_PROFILE_COOKIE, serialized, {
+        path: "/",
+        httpOnly: true,
+        maxAge: 60 * 60 * 24 * 7,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+      });
+    } catch (err: unknown) {
+      return fail(err instanceof Error ? err.message : String(err) || "Gagal menyimpan cookie profil.");
+    }
+  } else {
+    cookieStore.delete(BUYER_PROFILE_COOKIE);
   }
 
   return ok({ success: true });
@@ -458,27 +469,32 @@ export async function updateBuyerAddressesAction(
     }
   }
 
-  try {
+  if (process.env.DATA_SOURCE === "mock") {
+    try {
+      const store = await cookies();
+      const existing = readBuyerProfileCookie(store);
+      const payload = {
+        ...existing,
+        addresses: validAddresses,
+        province: primary ? primary.province.trim() : existing.province || null,
+        city: primary ? primary.city.trim() : existing.city || null,
+        postalCode: primary ? (primary.postalCode?.trim() || null) : existing.postalCode || null,
+        address: primary ? primary.address.trim() : existing.address || null,
+      };
+      const serialized = serializeBuyerProfile(payload);
+      store.set(BUYER_PROFILE_COOKIE, serialized, {
+        path: "/",
+        httpOnly: true,
+        maxAge: 60 * 60 * 24 * 7,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+      });
+    } catch (err: unknown) {
+      return fail(err instanceof Error ? err.message : String(err) || "Gagal menyimpan cookie profil.");
+    }
+  } else {
     const store = await cookies();
-    const existing = readBuyerProfileCookie(store);
-    const payload = {
-      ...existing,
-      addresses: validAddresses,
-      province: primary ? primary.province.trim() : existing.province || null,
-      city: primary ? primary.city.trim() : existing.city || null,
-      postalCode: primary ? (primary.postalCode?.trim() || null) : existing.postalCode || null,
-      address: primary ? primary.address.trim() : existing.address || null,
-    };
-    const serialized = serializeBuyerProfile(payload);
-    store.set(BUYER_PROFILE_COOKIE, serialized, {
-      path: "/",
-      httpOnly: true,
-      maxAge: 60 * 60 * 24 * 7,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-    });
-  } catch (err: unknown) {
-    return fail(err instanceof Error ? err.message : String(err) || "Gagal menyimpan cookie profil.");
+    store.delete(BUYER_PROFILE_COOKIE);
   }
 
   return ok({ success: true });

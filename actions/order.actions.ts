@@ -327,21 +327,25 @@ export async function createCheckoutOrderAction(
 
   try {
     const cookieStore = await cookies();
-    const existing = readBuyerProfileCookie(cookieStore);
-    const serialized = serializeBuyerProfile({
-      ...existing,
-      name: buyerName.trim(),
-      phone: buyerPhone.trim(),
-      address: buyerAddress.trim(),
-      city: buyerCity.trim(),
-    });
-    cookieStore.set(BUYER_PROFILE_COOKIE, serialized, {
-      path: "/",
-      httpOnly: true,
-      maxAge: 60 * 60 * 24 * 30,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-    });
+    if (process.env.DATA_SOURCE === "mock") {
+      const existing = readBuyerProfileCookie(cookieStore);
+      const serialized = serializeBuyerProfile({
+        ...existing,
+        name: buyerName.trim(),
+        phone: buyerPhone.trim(),
+        address: buyerAddress.trim(),
+        city: buyerCity.trim(),
+      });
+      cookieStore.set(BUYER_PROFILE_COOKIE, serialized, {
+        path: "/",
+        httpOnly: true,
+        maxAge: 60 * 60 * 24 * 30,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+      });
+    } else {
+      cookieStore.delete(BUYER_PROFILE_COOKIE);
+    }
   } catch {
     // ignore: optional buyer profile cookie persistence
   }

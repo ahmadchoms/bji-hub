@@ -67,6 +67,14 @@ export function GoogleSignInButton({ next = "/" }: GoogleSignInButtonProps) {
           return;
         }
 
+        try {
+          localStorage.removeItem("biji_wishlist_items");
+          localStorage.removeItem("biji_cart_items");
+          localStorage.removeItem("biji_compare_items");
+        } catch {
+          // ignore: client storage error
+        }
+
         window.location.href = safeNextPath(next, "/");
       } catch {
         setError("Gagal login dengan Google. Silakan coba lagi.");

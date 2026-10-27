@@ -76,22 +76,23 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
     }
   }
 
-  try {
-    const cookieStore = await cookies();
-    const profile = readBuyerProfileCookie(cookieStore);
-    userName = userName || profile.name || "";
-    userAvatarUrl = userAvatarUrl || profile.avatarUrl || "";
-    userPhone = userPhone || profile.phone || "";
-    userProvince = userProvince || profile.province || "";
-    userCity = userCity || profile.city || "";
-    userPostalCode = userPostalCode || profile.postalCode || "";
-    userAddress = userAddress || profile.address || "";
-    if (!userAddresses.length && profile.addresses && profile.addresses.length > 0) {
-      userAddresses = profile.addresses as unknown as BuyerAddress[];
+  if (process.env.DATA_SOURCE === "mock") {
+    try {
+      const cookieStore = await cookies();
+      const profile = readBuyerProfileCookie(cookieStore);
+      userName = userName || profile.name || "";
+      userAvatarUrl = userAvatarUrl || profile.avatarUrl || "";
+      userPhone = userPhone || profile.phone || "";
+      userProvince = userProvince || profile.province || "";
+      userCity = userCity || profile.city || "";
+      userPostalCode = userPostalCode || profile.postalCode || "";
+      userAddress = userAddress || profile.address || "";
+      if (!userAddresses.length && profile.addresses && profile.addresses.length > 0) {
+        userAddresses = profile.addresses as unknown as BuyerAddress[];
+      }
+    } catch {
+      // ignore: optional profile cookie read fallback
     }
-  } catch {
-    // ignore: optional profile cookie read fallback
-    // ignore
   }
 
   if (!userAddresses.length && userAddress && userCity) {

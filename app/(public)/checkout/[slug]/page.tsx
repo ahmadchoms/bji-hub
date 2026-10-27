@@ -95,8 +95,11 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
     }
   }
 
-  // Cookie fallback if stored locally
-  if (!userPhone || !userCity || !userAddress || userAddresses.length === 0) {
+  // Cookie fallback only in mock mode
+  if (
+    process.env.DATA_SOURCE === "mock" &&
+    (!userPhone || !userCity || !userAddress || userAddresses.length === 0)
+  ) {
     try {
       const cookieStore = await cookies();
       const profile = readBuyerProfileCookie(cookieStore);

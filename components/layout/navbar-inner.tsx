@@ -83,6 +83,20 @@ export function NavbarInner({
     setMessagesOpen(false);
   }, [pathname]);
 
+  const handleClientLogout = () => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem("biji_wishlist_items");
+        localStorage.removeItem("biji_cart_items");
+        localStorage.removeItem("biji_compare_items");
+        window.dispatchEvent(new Event("biji-wishlist-changed"));
+        window.dispatchEvent(new Event("biji-cart-changed"));
+      } catch {
+        // ignore: storage error during logout
+      }
+    }
+  };
+
   // Click outside to close dropdowns
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -584,7 +598,7 @@ export function NavbarInner({
                       </Link>
                     )}
                     <div className="border-t border-neutral-100 my-1" />
-                    <form action={logoutAction} className="w-full">
+                    <form action={logoutAction} onSubmit={handleClientLogout} className="w-full">
                       <button
                         type="submit"
                         className="flex w-full items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
@@ -743,7 +757,7 @@ export function NavbarInner({
                   {/* Tombol Logout Mobile */}
                   {user && (
                     <div className="pt-4 border-t border-neutral-200/80">
-                      <form action={logoutAction}>
+                      <form action={logoutAction} onSubmit={handleClientLogout}>
                         <button
                           type="submit"
                           className="flex w-full items-center gap-2 px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-md"

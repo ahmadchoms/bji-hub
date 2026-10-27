@@ -431,3 +431,81 @@ export async function sendOrderRefundedEmail(
   }
 }
 
+/**
+ * Sends bank details changed alert email to seller (S9).
+ */
+export async function sendBankDetailsChangedEmail({
+  toEmail,
+  sellerName,
+  bankName,
+  accountNumber,
+}: {
+  toEmail: string;
+  sellerName: string;
+  bankName: string;
+  accountNumber: string;
+}): Promise<EmailResult> {
+  const resend = getResend();
+  const maskedAcc = accountNumber.length > 4
+    ? "••••" + accountNumber.slice(-4)
+    : accountNumber;
+
+  if (!resend || !toEmail) {
+    console.log(`[EMAIL MOCK] Bank Details Changed Alert to ${toEmail || "no-email"}:`, {
+      sellerName,
+      bankName,
+      maskedAcc,
+    });
+    return { success: true, mocked: true };
+  }
+
+  try {
+    const htmlContent = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1F1815; background-color: #FAF6F1; border-radius: 8px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h1 style="color: #2E150C; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">BIJI HUB</h1>
+          <p style="color: #7A4A34; font-size: 13px; margin: 4px 0 0;">Marketplace Biji Kopi Specialty Indonesia</p>
+        </div>
+
+        <div style="background-color: #ffffff; padding: 24px; border-radius: 8px; border: 1px solid #D8CFC5; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          <div style="border-bottom: 2px solid #FAF6F1; padding-bottom: 16px; margin-bottom: 16px;">
+            <span style="background-color: #FEF3C7; color: #92400E; font-size: 11px; font-weight: bold; padding: 4px 10px; border-radius: 4px; text-transform: uppercase;">Pemberitahuan Keamanan</span>
+            <h2 style="margin: 12px 0 4px; font-size: 18px; color: #1F1815;">Halo ${sellerName},</h2>
+            <p style="color: #4A403A; font-size: 14px; margin: 0; line-height: 1.5;">
+              Informasi rekening bank untuk pencairan dana toko Anda baru saja diperbarui.
+            </p>
+          </div>
+
+          <div style="margin-bottom: 16px; padding: 12px; background-color: #F8F9FA; border-radius: 6px; font-size: 13px;">
+            <p style="margin: 0 0 6px;"><strong>Bank:</strong> ${bankName}</p>
+            <p style="margin: 0 0 6px;"><strong>Nomor Rekening:</strong> ${maskedAcc}</p>
+            <p style="margin: 0; color: #B45309;"><strong>Periode Jeda Keamanan:</strong> Penarikan dana dijeda selama 24 jam ke depan.</p>
+          </div>
+
+          <p style="color: #6B7280; font-size: 12px; margin: 0; line-height: 1.5;">
+            Jika Anda tidak merasa melakukan perubahan ini, segera hubungi dukungan keamanan Biji Hub dan ganti kata sandi akun Anda segera.
+          </p>
+        </div>
+      </div>
+    `;
+
+    const res = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: toEmail,
+      subject: `[Biji Hub Keamanan] Perubahan Rekening Pencairan Dana`,
+      html: htmlContent,
+    });
+
+    return {
+      success: true,
+      messageId: res.data?.id,
+    };
+  } catch (error) {
+    console.error("Failed to send bank details changed email:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to send email",
+    };
+  }
+}
+

@@ -13,6 +13,8 @@ import {
   updatePayoutStatus,
   type SellerBankDetails,
 } from "@/lib/data/payouts";
+import { createNotification } from "@/lib/data/notifications";
+import { sendBankDetailsChangedEmail } from "@/lib/email";
 
 const bankDetailsSchema = z.object({
   bankName: z.string().trim().min(2, "Nama bank wajib dipilih/diisi"),
@@ -33,6 +35,7 @@ export async function updateSellerBankAction(
   input: unknown,
 ): Promise<ActionResult<SellerBankDetails>> {
   const { sellerId } = await requireSeller();
+  const session = await getSession();
 
   const parsed = bankDetailsSchema.safeParse(input);
   if (!parsed.success) {
@@ -43,6 +46,27 @@ export async function updateSellerBankAction(
   }
 
   await updateSellerBankDetails(sellerId, parsed.data);
+
+  // S9: Send in-app notification & alert email for security cooldown
+  if (session.userId) {
+    createNotification({
+      userId: session.userId,
+      title: "Perubahan Rekening Bank Payout",
+      message: `Rekening bank pencairan dana diperbarui ke ${parsed.data.bankName} (${parsed.data.bankAccountNumber}). Demi keamanan, penarikan dana dijeda selama 24 jam.`,
+      type: "system",
+      link: "/dashboard/orders",
+    }).catch(() => {});
+  }
+
+  if (session.email) {
+    sendBankDetailsChangedEmail({
+      toEmail: session.email,
+      sellerName: session.name || "Mitra Penjual",
+      bankName: parsed.data.bankName,
+      accountNumber: parsed.data.bankAccountNumber,
+    }).catch(() => {});
+  }
+
   revalidatePath("/dashboard/orders");
   revalidatePath("/dashboard/profile");
 
@@ -70,6 +94,19 @@ export async function requestPayoutAction(
   const bankDetails = await getSellerBankDetails(sellerId);
   if (!bankDetails || !bankDetails.bankAccountNumber) {
     return fail("Silakan lengkapi informasi rekening bank tujuan terlebih dahulu");
+  }
+
+  // S9: 24-hour security cooling-off guard after bank detail change
+  if (bankDetails.bankUpdatedAt) {
+    const updatedAt = new Date(bankDetails.bankUpdatedAt).getTime();
+    const cooldownMs = 24 * 60 * 60 * 1000;
+    const elapsed = Date.now() - updatedAt;
+    if (elapsed < cooldownMs) {
+      const remainingHours = Math.ceil((cooldownMs - elapsed) / (1000 * 60 * 60));
+      return fail(
+        `Demi keamanan akun Anda, penarikan dana dijeda selama 24 jam setelah perubahan rekening bank (sisa waktu: ~${remainingHours} jam). Silakan coba lagi nanti.`,
+      );
+    }
   }
 
   const result = await createPayoutRequestAtomic({

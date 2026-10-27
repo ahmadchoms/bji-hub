@@ -18,12 +18,18 @@ function getPool(): Pool | null {
 // In-memory mock storage fallback for vitest & offline development
 const mockBankDetails: Record<
   string,
-  { bankName: string; bankAccountNumber: string; bankAccountHolder: string }
+  {
+    bankName: string;
+    bankAccountNumber: string;
+    bankAccountHolder: string;
+    bankUpdatedAt?: string | null;
+  }
 > = {
   "seller-1": {
     bankName: "BCA",
     bankAccountNumber: "8271039841",
     bankAccountHolder: "Klasik Preanger Roastery",
+    bankUpdatedAt: null,
   },
 };
 const mockPayoutRequests: PayoutRequest[] = [];
@@ -32,6 +38,7 @@ export interface SellerBankDetails {
   bankName: string;
   bankAccountNumber: string;
   bankAccountHolder: string;
+  bankUpdatedAt?: string | null;
 }
 
 export type AtomicPayoutResult =
@@ -45,7 +52,7 @@ export async function getSellerBankDetails(
   if (pool) {
     try {
       const res = await pool.query(
-        `SELECT bank_name, bank_account_number, bank_account_holder
+        `SELECT bank_name, bank_account_number, bank_account_holder, bank_updated_at
          FROM public.seller_profiles
          WHERE id = $1 LIMIT 1`,
         [sellerId],
@@ -55,6 +62,9 @@ export async function getSellerBankDetails(
           bankName: res.rows[0].bank_name,
           bankAccountNumber: res.rows[0].bank_account_number,
           bankAccountHolder: res.rows[0].bank_account_holder,
+          bankUpdatedAt: res.rows[0].bank_updated_at
+            ? new Date(res.rows[0].bank_updated_at).toISOString()
+            : null,
         };
       }
     } catch {
@@ -71,20 +81,28 @@ export async function updateSellerBankDetails(
   details: SellerBankDetails,
 ): Promise<boolean> {
   const pool = getPool();
+  const bankUpdatedAt =
+    details.bankUpdatedAt !== undefined
+      ? details.bankUpdatedAt
+      : new Date().toISOString();
   if (pool) {
     try {
       await pool.query(
         `UPDATE public.seller_profiles
-         SET bank_name = $1, bank_account_number = $2, bank_account_holder = $3
+         SET bank_name = $1, bank_account_number = $2, bank_account_holder = $3, bank_updated_at = $5
          WHERE id = $4`,
         [
           details.bankName.trim(),
           details.bankAccountNumber.trim(),
           details.bankAccountHolder.trim(),
           sellerId,
+          bankUpdatedAt,
         ],
       );
-      mockBankDetails[sellerId] = details;
+      mockBankDetails[sellerId] = {
+        ...details,
+        bankUpdatedAt,
+      };
       return true;
     } catch (e) {
       logger.error("payout.update_bank_details_failed", e, { sellerId });
@@ -92,7 +110,10 @@ export async function updateSellerBankDetails(
     }
   }
 
-  mockBankDetails[sellerId] = details;
+  mockBankDetails[sellerId] = {
+    ...details,
+    bankUpdatedAt,
+  };
   return true;
 }
 

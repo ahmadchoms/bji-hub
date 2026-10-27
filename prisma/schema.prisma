@@ -93,6 +93,7 @@ model SellerProfile {
   /// Cached plan tier. The effective tier is derived from subscriptions at read time.
   tier               Tier               @default(free)
   suspendedAt        DateTime?          @map("suspended_at")
+  bankUpdatedAt      DateTime?          @map("bank_updated_at")
   createdAt          DateTime           @default(now())
 
   listings      Listing[]

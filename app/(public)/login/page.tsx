@@ -91,6 +91,15 @@ function LoginForm() {
             </div>
           )}
 
+          {searchParams.get("reset") === "success" && (
+            <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded text-emerald-900 text-xs leading-relaxed space-y-1">
+              <p className="font-semibold">Kata Sandi Berhasil Diperbarui!</p>
+              <p>
+                Silakan masuk menggunakan kata sandi baru Anda.
+              </p>
+            </div>
+          )}
+
           {searchParams.get("error") === "verification_failed" && (
             <div className="p-3.5 bg-rose-50 border border-rose-300 rounded text-rose-900 text-xs leading-relaxed space-y-1">
               <p className="font-semibold">Verifikasi Gagal</p>
@@ -147,15 +156,12 @@ function LoginForm() {
                 <Checkbox />
                 <span>Ingat saya</span>
               </label>
-              <button
-                type="button"
-                onClick={() =>
-                  toast.info("Silakan hubungi bantuan Biji Hub untuk mereset kata sandi Anda.")
-                }
+              <Link
+                href="/forgot-password"
                 className="text-primary-600 hover:underline font-medium"
               >
                 Lupa sandi?
-              </button>
+              </Link>
             </div>
 
             <Button

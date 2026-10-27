@@ -24,6 +24,8 @@ import { slugify } from "@/lib/slug";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/client-ip";
 import { logger } from "@/lib/logger";
+import { validatePasswordStrength } from "@/lib/auth/password-rules";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 import type { BuyerAddress } from "@/types";
 import { readBuyerProfileCookie, serializeBuyerProfile, BUYER_PROFILE_COOKIE, buyerAddressSchema } from "@/lib/auth/buyer-profile";
 
@@ -506,4 +508,121 @@ export async function updateBuyerAddressesAction(
   }
 
   return ok({ success: true });
+}
+
+
+const forgotPasswordSchema = z.object({
+  email: z.string().min(1, "Email wajib diisi").email("Format email tidak valid"),
+  turnstileToken: z.string().optional(),
+});
+
+const resetPasswordSchema = z.object({
+  password: z.string().min(8, "Kata sandi minimal 8 karakter"),
+});
+
+export async function requestPasswordResetAction(
+  input: unknown,
+): Promise<ActionResult<{ message: string }>> {
+  const parsed = forgotPasswordSchema.safeParse(input);
+  if (!parsed.success) {
+    return fail(parsed.error.issues[0]?.message || "Email tidak valid");
+  }
+
+  const ip = await getClientIp();
+  const rl = await checkRateLimit(`pwd_reset_ip:${ip}`, 5, 60_000);
+  if (!rl.success) {
+    return fail("Terlalu banyak permintaan reset kata sandi. Silakan tunggu 1 menit.");
+  }
+
+  const emailRl = await checkRateLimit(`pwd_reset_email:${parsed.data.email}`, 3, 300_000);
+  if (!emailRl.success) {
+    return fail("Terlalu banyak permintaan untuk email ini. Silakan tunggu beberapa saat.");
+  }
+
+  if (process.env.TURNSTILE_SECRET_KEY) {
+    const isCaptchaValid = await verifyTurnstileToken(parsed.data.turnstileToken, ip);
+    if (!isCaptchaValid) {
+      return fail("Verifikasi keamanan gagal. Silakan coba lagi.");
+    }
+  }
+
+  const UNIFORM_MESSAGE =
+    "Jika email Anda terdaftar, tautan pengaturan ulang kata sandi telah dikirim ke kotak masuk Anda.";
+
+  if (
+    process.env.DATA_SOURCE !== "mock" &&
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
+    try {
+      const supabase = await createClient();
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+      await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+        redirectTo: `${appUrl}/auth/callback?next=/reset-password`,
+      });
+    } catch (err) {
+      logger.error("auth.reset_password_request_failed", {
+        error: err instanceof Error ? err.message : String(err),
+      });
+      // Uniform response prevents account enumeration
+    }
+  }
+
+  return ok({ message: UNIFORM_MESSAGE });
+}
+
+export async function updatePasswordAction(
+  input: unknown,
+): Promise<ActionResult<{ redirectTo: string }>> {
+  const parsed = resetPasswordSchema.safeParse(input);
+  if (!parsed.success) {
+    return fail(parsed.error.issues[0]?.message || "Kata sandi tidak valid");
+  }
+
+  const strength = validatePasswordStrength(parsed.data.password);
+  if (!strength.valid) {
+    return fail(strength.error || "Kata sandi tidak memenuhi kriteria keamanan");
+  }
+
+  if (
+    process.env.DATA_SOURCE !== "mock" &&
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
+    try {
+      const supabase = await createClient();
+      const { error } = await supabase.auth.updateUser({
+        password: parsed.data.password,
+      });
+
+      if (error) {
+        logger.error("auth.update_password_failed", { error: error.message });
+        return fail(
+          error.message ||
+            "Gagal memperbarui kata sandi. Silakan gunakan tautan baru.",
+        );
+      }
+
+      try {
+        await supabase.auth.signOut({ scope: "others" });
+      } catch {
+        // ignore: signing out others is best-effort
+      }
+
+      return ok({ redirectTo: "/login?reset=success" });
+    } catch (err) {
+      logger.error("auth.update_password_failed", {
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return fail("Gagal memperbarui kata sandi. Silakan coba lagi.");
+    }
+  }
+
+  // Fallback mock mode
+  if (isMockAuthAllowed()) {
+    return ok({ redirectTo: "/login?reset=success" });
+  }
+
+  return fail("Layanan pengaturan kata sandi tidak tersedia.");
 }

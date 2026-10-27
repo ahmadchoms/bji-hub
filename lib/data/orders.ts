@@ -141,10 +141,13 @@ export async function createOrder(data: {
         ],
       );
 
-      if (insertRes.rowCount === 0 && data.idempotencyKey) {
+      if (insertRes.rowCount === 0) {
         await client.query("ROLLBACK");
-        const existing = await getOrderById(data.idempotencyKey);
+        const existing = data.idempotencyKey
+          ? await getOrderById(data.idempotencyKey)
+          : null;
         if (existing) return existing;
+        throw new Error("Pesanan duplikat tidak dapat dipulihkan");
       }
 
       if (data.items && data.items.length > 0) {
@@ -564,7 +567,7 @@ export async function incrementListingStock(
       const res = await pool.query(
         `UPDATE public.listings
          SET stock = COALESCE(stock, 0) + $1,
-             status = 'active'
+             status = CASE WHEN status = 'archived' AND stock = 0 THEN 'active' ELSE status END
          WHERE id = $2
          RETURNING stock`,
         [quantity, listingId],
@@ -583,7 +586,7 @@ export async function incrementListingStock(
   if (listing) {
     const current = listing.stock ?? 0;
     listing.stock = current + quantity;
-    if (listing.status === "archived") {
+    if (listing.status === "archived" && current === 0) {
       listing.status = "active";
     }
     return { success: true, newStock: listing.stock };
@@ -708,7 +711,7 @@ export async function transitionOrderStatus(
           await client.query(
             `UPDATE public.listings
              SET stock = stock + $1,
-                 status = CASE WHEN status = 'archived' THEN 'active' ELSE status END
+                 status = CASE WHEN status = 'archived' AND stock = 0 THEN 'active' ELSE status END
              WHERE id = $2 AND stock IS NOT NULL`,
             [item.quantity, item.listingId],
           );
@@ -790,8 +793,9 @@ export async function transitionOrderStatus(
   } else if (to === "canceled" && RESTOCK_ON_CANCEL_FROM.includes(prevStatus)) {
     const listing = mockListings.find((l) => l.id === existing.listingId);
     if (listing && typeof listing.stock === "number") {
+      const wasZero = listing.stock === 0;
       listing.stock = listing.stock + (existing.quantity || 1);
-      if (listing.status === "archived") listing.status = "active";
+      if (listing.status === "archived" && wasZero) listing.status = "active";
     }
   }
 

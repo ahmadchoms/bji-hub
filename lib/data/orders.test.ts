@@ -283,4 +283,41 @@ describe("orders data layer & auto-complete", () => {
     const after = await getOrderById(order.id);
     expect(after?.status).toBe("canceled");
   });
+
+  it("keeps manually archived listing archived upon order cancellation if stock was not zero (N4)", async () => {
+    const { mockListings } = await import("@/lib/mock/data");
+    const listing = mockListings[0];
+    listing.stock = 10;
+    listing.status = "archived";
+
+    const orderNumber = `ORD-MANUAL-ARCHIVE-${Date.now()}`;
+    const order = await createOrder({
+      orderNumber,
+      buyerName: "Buyer Test",
+      buyerEmail: "test@example.com",
+      buyerPhone: "08123456789",
+      buyerAddress: "Jl Test No 1",
+      buyerCity: "Jakarta",
+      sellerId: listing.sellerId,
+      listingId: listing.id,
+      quantity: 1,
+      itemPrice: 50000,
+      subtotal: 50000,
+      shippingCost: 10000,
+      serviceFee: 1500,
+      totalAmount: 61500,
+      shippingCourier: "JNE",
+      midtransOrderId: orderNumber,
+    });
+
+    expect(listing.stock).toBe(9);
+    expect(listing.status).toBe("archived");
+
+    const cancelRes = await transitionOrderStatus(order.id, "canceled");
+    expect(cancelRes.applied).toBe(true);
+    expect(listing.stock).toBe(10);
+    expect(listing.status).toBe("archived");
+
+    listing.status = "active";
+  });
 });

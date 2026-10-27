@@ -102,7 +102,7 @@ export async function syncCloudCartAction(
               unit: listing.unit,
               minOrderQty: listing.minOrderQty,
               quantity: item.quantity,
-              imageUrl: listing.images?.[0]?.imageUrl || "",
+              imageUrl: listing.images?.[0]?.url || "",
               sellerId: listing.sellerId,
               sellerName: listing.seller?.businessName || "Roastery Biji Hub",
               sellerCity: listing.seller?.city || "Indonesia",

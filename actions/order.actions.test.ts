@@ -141,6 +141,74 @@ describe("createCheckoutOrderAction", () => {
     expect(first.data.orderId).toBe(second.data.orderId);
   });
 
+  it("prevents stock-hold DoS by rejecting checkout if buyer already has pending order for same listing (N3)", async () => {
+    const email = "hold_dos@example.com";
+    const res1 = await createCheckoutOrderAction({
+      listingId: "list-2",
+      quantity: 1,
+      buyerName: "Hold Buyer",
+      buyerEmail: email,
+      buyerPhone: "081234567890",
+      buyerAddress: "Jl. Dago No. 1",
+      buyerCity: "Bandung",
+      shippingRateId: "jne-reg",
+      idempotencyKey: randomUUID(),
+    });
+    expect(res1.success).toBe(true);
+
+    const res2 = await createCheckoutOrderAction({
+      listingId: "list-2",
+      quantity: 1,
+      buyerName: "Hold Buyer",
+      buyerEmail: email,
+      buyerPhone: "081234567890",
+      buyerAddress: "Jl. Dago No. 1",
+      buyerCity: "Bandung",
+      shippingRateId: "jne-reg",
+      idempotencyKey: randomUUID(),
+    });
+    expect(res2.success).toBe(false);
+    if (!res2.success) {
+      expect(res2.error).toMatch(/sudah memiliki pesanan yang menunggu pembayaran/);
+    }
+  });
+
+  it("prevents stock-hold DoS by rejecting checkout if buyer has 3 or more pending orders (N3)", async () => {
+    const email = "max_pending@example.com";
+    // Create 3 orders on different listings
+    for (const lid of ["list-3", "list-4", "list-9"]) {
+      const res = await createCheckoutOrderAction({
+        listingId: lid,
+        quantity: 1,
+        buyerName: "Max Pending Buyer",
+        buyerEmail: email,
+        buyerPhone: "081234567890",
+        buyerAddress: "Jl. Dago No. 1",
+        buyerCity: "Bandung",
+        shippingRateId: "jne-reg",
+        idempotencyKey: randomUUID(),
+      });
+      expect(res.success).toBe(true);
+    }
+
+    // 4th checkout should be rejected
+    const res4 = await createCheckoutOrderAction({
+      listingId: "list-10",
+      quantity: 1,
+      buyerName: "Max Pending Buyer",
+      buyerEmail: email,
+      buyerPhone: "081234567890",
+      buyerAddress: "Jl. Dago No. 1",
+      buyerCity: "Bandung",
+      shippingRateId: "jne-reg",
+      idempotencyKey: randomUUID(),
+    });
+    expect(res4.success).toBe(false);
+    if (!res4.success) {
+      expect(res4.error).toMatch(/3 pesanan yang belum diselesaikan pembayarannya/);
+    }
+  });
+
   it("fails if any product minimum order quantity is not met", async () => {
     const res = await createCheckoutOrderAction({
       listingId: "list-1",

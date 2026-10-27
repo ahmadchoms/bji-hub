@@ -11,6 +11,7 @@ import { getListingBySlug, getListingById, getSellerById } from "@/lib/data";
 import {
   createOrder,
   getOrderById,
+  getOrdersByBuyer,
   updateOrderStatus,
   transitionOrderStatus,
   updateOrderSnapToken,
@@ -89,6 +90,13 @@ export async function createCheckoutOrderAction(
     );
   }
 
+  // Rate limit checkout requests per client IP (stock-hold DoS mitigation)
+  const clientIp = await getClientIp();
+  const checkoutRl = await checkRateLimit(`checkout:ip:${clientIp}`, 30, 60_000);
+  if (!checkoutRl.success) {
+    return fail("Terlalu banyak permintaan checkout. Silakan coba beberapa saat lagi.");
+  }
+
   const {
     listingId,
     quantity,
@@ -104,6 +112,35 @@ export async function createCheckoutOrderAction(
     notes,
     items,
   } = parsed.data;
+
+  // 0. Idempotency fast-path: if order with this idempotency key already exists, return it immediately
+  if (idempotencyKey) {
+    const existing = await getOrderById(idempotencyKey);
+    if (existing) {
+      return ok({
+        orderId: existing.id,
+        orderNumber: existing.orderNumber,
+        snapToken: existing.snapToken ?? null,
+        payment: {
+          provider: (existing.paymentProvider as "midtrans" | "mock") ?? "midtrans",
+          token: existing.snapToken ?? null,
+        },
+        totalAmount: existing.totalAmount,
+        accessToken: existing.accessToken || "",
+      });
+    }
+  }
+
+  // Stock-hold protection: check active pending orders for buyer/email
+  const session = await getSession();
+  const normalizedEmail = buyerEmail.trim().toLowerCase();
+  const buyerOrders = await getOrdersByBuyer(session.userId || undefined, normalizedEmail);
+  const pendingOrders = buyerOrders.filter((o) => o.status === "pending_payment");
+  if (pendingOrders.length >= 3) {
+    return fail(
+      "Anda memiliki 3 pesanan yang belum diselesaikan pembayarannya. Silakan selesaikan atau batalkan pesanan sebelumnya untuk membuat pesanan baru.",
+    );
+  }
 
   // 1. Normalize & deduplicate items (same listingId + grindSize)
   const rawItems =
@@ -154,6 +191,12 @@ export async function createCheckoutOrderAction(
         `Minimal pemesanan untuk ${l.title} adalah ${l.minOrderQty} ${l.unit}`,
       );
     }
+    const pendingSameListing = pendingOrders.some((po) => po.listingId === l.id);
+    if (pendingSameListing) {
+      return fail(
+        `Anda sudah memiliki pesanan yang menunggu pembayaran untuk produk "${l.title}". Silakan selesaikan pembayaran atau batalkan pesanan sebelumnya.`,
+      );
+    }
     resolvedItems.push({
       listing: l,
       quantity: it.quantity,
@@ -172,7 +215,6 @@ export async function createCheckoutOrderAction(
   }
 
   // Self-purchase prevention
-  const session = await getSession();
   if (session.sellerId && targetSellerId === session.sellerId) {
     return fail("Anda tidak dapat membeli produk dari toko Anda sendiri.");
   }

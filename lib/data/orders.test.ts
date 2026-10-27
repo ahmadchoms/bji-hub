@@ -250,8 +250,8 @@ describe("orders data layer & auto-complete", () => {
     expect(listing.stock).toBe(2);
   });
 
-  it("auto-cancels pending orders older than 24 hours", async () => {
-    const orderNumber = `ORD-PENDING-OLD-${Date.now()}`;
+  it("auto-cancels pending orders older than 75 minutes by default (N3)", async () => {
+    const orderNumber = `ORD-PENDING-75M-${Date.now()}`;
     const order = await createOrder({
       orderNumber,
       buyerName: "Lazy Buyer",
@@ -273,10 +273,11 @@ describe("orders data layer & auto-complete", () => {
 
     const fetched = await getOrderById(order.id);
     if (fetched) {
-      fetched.createdAt = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString();
+      // 80 minutes ago (> 75 minutes)
+      fetched.createdAt = new Date(Date.now() - 80 * 60 * 1000).toISOString();
     }
 
-    const result = await autoCancelExpiredPendingOrders(24);
+    const result = await autoCancelExpiredPendingOrders();
     expect(result.canceledCount).toBeGreaterThanOrEqual(1);
     expect(result.orderIds).toContain(order.id);
 

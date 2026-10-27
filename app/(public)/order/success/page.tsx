@@ -152,6 +152,12 @@ export default async function OrderSuccessPage({
             <OrderStatusStepper status={order.status} />
           </div>
 
+          {order.status === "pending_payment" && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-900 text-xs text-center font-medium">
+              ⏰ Selesaikan pembayaran dalam 60 menit sebelum pesanan otomatis dibatalkan.
+            </div>
+          )}
+
           <p className="text-xs text-neutral-500 max-w-md mx-auto">
             {order.status === "completed"
               ? "Terima kasih! Pesanan telah Anda terima dengan baik dan dana penjualan telah diteruskan ke pihak roastery/petani."

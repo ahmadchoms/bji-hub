@@ -158,10 +158,10 @@ export function OrderDetailDialog({
           <div className="p-3 bg-amber-50 border border-amber-200 rounded-md text-xs text-amber-900 space-y-2">
             <div className="flex items-center gap-1.5 font-semibold text-amber-950">
               <Clock className="w-4 h-4 text-amber-700 shrink-0" />
-              Menunggu Penyelesaian Pembayaran (Batas 24 Jam)
+              Menunggu Penyelesaian Pembayaran (Batas 60 Menit)
             </div>
             <p className="text-amber-800 text-[11px] leading-relaxed">
-              Silakan segera selesaikan pembayaran Anda melalui metode yang dipilih agar pesanan kopi segera diproses dan dikirimkan oleh pihak roastery.
+              Selesaikan pembayaran dalam 60 menit sebelum pesanan otomatis dibatalkan agar stok kopi yang dipesan tidak dilepaskan kembali.
             </p>
             <div className="flex items-center justify-end gap-2 pt-1 border-t border-amber-200/60">
               {onCancelOrder && (

@@ -22,7 +22,7 @@ export async function GET(request: Request) {
   try {
     const [completed, canceled] = await Promise.all([
       autoCompleteExpiredShippedOrders(2),
-      autoCancelExpiredPendingOrders(24),
+      autoCancelExpiredPendingOrders(1.25),
     ]);
     logger.info("cron.finished", {
       cron: "auto-complete-orders",
@@ -31,7 +31,7 @@ export async function GET(request: Request) {
     });
     return NextResponse.json({
       success: true,
-      message: `${completed.completedCount} pesanan selesai otomatis (>48 jam). ${canceled.canceledCount} pesanan belum bayar dibatalkan otomatis (>24 jam).`,
+      message: `${completed.completedCount} pesanan selesai otomatis (>48 jam). ${canceled.canceledCount} pesanan belum bayar dibatalkan otomatis (>75 menit).`,
       completed,
       canceled,
     });

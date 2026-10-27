@@ -456,9 +456,14 @@ export async function getAllOrders(): Promise<Order[]> {
 }
 
 export async function getOrdersByBuyer(
-  buyerId: string,
+  buyerId?: string,
+  buyerEmail?: string,
 ): Promise<Order[]> {
-  if (!buyerId) return [];
+  if (buyerId && buyerId.includes("@") && !buyerEmail) {
+    buyerEmail = buyerId;
+    buyerId = undefined;
+  }
+  if (!buyerId && !buyerEmail) return [];
   const pool = getPool();
   if (pool) {
     try {
@@ -467,9 +472,10 @@ export async function getOrdersByBuyer(
          FROM public.orders o
          LEFT JOIN public.listings l ON o.listing_id = l.id
          LEFT JOIN public.seller_profiles s ON o.seller_id = s.id
-         WHERE o.buyer_id = $1
+         WHERE ($1::text IS NOT NULL AND o.buyer_id = $1)
+            OR ($2::text IS NOT NULL AND LOWER(o.buyer_email) = LOWER($2))
          ORDER BY o.created_at DESC`,
-        [buyerId],
+        [buyerId || null, buyerEmail || null],
       );
       return res.rows.map((row) => ({
         id: row.id,
@@ -510,7 +516,11 @@ export async function getOrdersByBuyer(
     }
   }
 
-  return mockOrders.filter((o) => o.buyerId === buyerId);
+  return mockOrders.filter((o) => {
+    if (buyerId && o.buyerId === buyerId) return true;
+    if (buyerEmail && o.buyerEmail?.toLowerCase() === buyerEmail.toLowerCase()) return true;
+    return false;
+  });
 }
 
 export async function decrementListingStock(
@@ -859,7 +869,7 @@ export async function autoCompleteExpiredShippedOrders(
 }
 
 export async function autoCancelExpiredPendingOrders(
-  hoursThreshold = 24,
+  hoursThreshold = 1.25,
 ): Promise<{ canceledCount: number; orderIds: string[] }> {
   const pool = getPool();
   const now = new Date();

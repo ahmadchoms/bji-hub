@@ -106,6 +106,11 @@ async function main() {
     );
     CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON public.notifications(user_id, is_read);
     CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON public.notifications(user_id, created_at DESC);
+
+    -- Trigram search indexes (F5)
+    CREATE EXTENSION IF NOT EXISTS pg_trgm;
+    CREATE INDEX IF NOT EXISTS idx_listings_title_trgm ON public.listings USING gin (title gin_trgm_ops);
+    CREATE INDEX IF NOT EXISTS idx_seller_profiles_business_name_trgm ON public.seller_profiles USING gin (business_name gin_trgm_ops);
   `);
 
   console.log("Reviews table and dispute_reason column verified in PostgreSQL!");

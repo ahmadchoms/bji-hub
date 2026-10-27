@@ -68,11 +68,29 @@ export async function CatalogFeed({ params }: { params: CatalogParams }) {
               ☕
             </div>
             <h3 className="font-display text-lg font-semibold text-neutral-900">
-              Tidak Ada Biji Kopi yang Cocok
+              {params.q
+                ? `Tidak Ada Hasil untuk "${params.q}"`
+                : "Tidak Ada Biji Kopi yang Cocok"}
             </h3>
             <p className="mt-1.5 text-xs text-neutral-600 max-w-sm mx-auto leading-relaxed">
-              Kriteria filter atau kata kunci saat ini belum memiliki hasil. Coba longgarkan rentang skor rasa atau reset filter untuk melihat katalog lengkap.
+              {params.q
+                ? "Coba gunakan kata kunci yang lebih umum, periksa ejaan, atau jelajahi rekomendasi pencarian berikut:"
+                : "Kriteria filter saat ini belum memiliki hasil. Coba longgarkan rentang skor rasa atau reset filter untuk melihat katalog lengkap."}
             </p>
+            {params.q && (
+              <div className="mt-3.5 flex flex-wrap items-center justify-center gap-1.5 max-w-md mx-auto">
+                <span className="text-[11px] text-neutral-500 w-full mb-0.5">Saran pencarian:</span>
+                {["Gayo Bourbon", "Kintamani", "Anaerobic", "Natural", "Robusta", "Honey"].map((suggestion) => (
+                  <Link
+                    key={suggestion}
+                    href={`/?q=${encodeURIComponent(suggestion)}`}
+                    className="px-2.5 py-1 text-[11px] rounded-full border border-neutral-300 bg-white hover:bg-neutral-100 text-neutral-700 transition-colors"
+                  >
+                    {suggestion}
+                  </Link>
+                ))}
+              </div>
+            )}
             <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5">
               <Link
                 href="/"

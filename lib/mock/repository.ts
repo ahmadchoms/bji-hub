@@ -522,11 +522,18 @@ export async function getAdminListings(): Promise<ListingWithRelations[]> {
   return [...mockListings];
 }
 
-export async function requestVerification(sellerId: string): Promise<boolean> {
+export async function requestVerification(
+  sellerId: string,
+  kycDocumentUrl?: string,
+): Promise<boolean> {
   await simulateDelay(200);
   const seller = mockSellers.find((s) => s.id === sellerId);
   if (!seller || seller.isVerified) return false;
   seller.verificationStatus = "pending";
+  if (kycDocumentUrl) {
+    seller.kycDocumentUrl = kycDocumentUrl;
+    seller.kycSubmittedAt = new Date().toISOString();
+  }
   rejectedVerificationIds.delete(sellerId);
   return true;
 }

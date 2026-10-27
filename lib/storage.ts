@@ -4,6 +4,29 @@ export const IMAGE_RULES = {
   types: ["image/jpeg", "image/png", "image/webp"],
 } as const;
 
+export const KYC_DOCUMENT_RULES = {
+  maxBytes: 5 * 1024 * 1024, // 5 MB
+  types: ["image/jpeg", "image/png", "image/webp", "application/pdf"],
+} as const;
+
+export type KycDocumentType = (typeof KYC_DOCUMENT_RULES.types)[number];
+
+export function isAllowedKycType(type: string): type is KycDocumentType {
+  return (KYC_DOCUMENT_RULES.types as readonly string[]).includes(type);
+}
+
+export function validateKycFile(file: {
+  type: string;
+  size: number;
+}): string | null {
+  if (!isAllowedKycType(file.type))
+    return "Format dokumen harus JPG, PNG, WebP, atau PDF";
+  if (file.size <= 0) return "File dokumen kosong";
+  if (file.size > KYC_DOCUMENT_RULES.maxBytes)
+    return `Ukuran dokumen maksimal ${KYC_DOCUMENT_RULES.maxBytes / 1024 / 1024} MB`;
+  return null;
+}
+
 export const MAX_RAW_IMAGE_BYTES = 15 * 1024 * 1024;
 
 export type ImageType = (typeof IMAGE_RULES.types)[number];

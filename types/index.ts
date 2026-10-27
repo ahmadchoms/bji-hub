@@ -41,6 +41,9 @@ export interface SellerProfile {
   bankName?: string;
   bankAccountNumber?: string;
   bankAccountHolder?: string;
+  bankUpdatedAt?: string | null;
+  kycDocumentUrl?: string | null;
+  kycSubmittedAt?: string | null;
   suspendedAt?: string | null;
   createdAt: string;
 }

@@ -1,5 +1,28 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { isOwnedImageUrl } from "./storage";
+import { isOwnedImageUrl, validateKycFile, isAllowedKycType } from "./storage";
+
+describe("KYC Document Validation (F10/S6)", () => {
+  it("accepts valid KYC document formats (JPG, PNG, WebP, PDF)", () => {
+    expect(isAllowedKycType("image/jpeg")).toBe(true);
+    expect(isAllowedKycType("image/png")).toBe(true);
+    expect(isAllowedKycType("image/webp")).toBe(true);
+    expect(isAllowedKycType("application/pdf")).toBe(true);
+    expect(isAllowedKycType("application/zip")).toBe(false);
+    expect(isAllowedKycType("text/html")).toBe(false);
+  });
+
+  it("validates file size within 5MB limit", () => {
+    expect(validateKycFile({ type: "image/jpeg", size: 1024 * 1024 })).toBeNull();
+    expect(validateKycFile({ type: "application/pdf", size: 4.5 * 1024 * 1024 })).toBeNull();
+    expect(validateKycFile({ type: "application/pdf", size: 6 * 1024 * 1024 })).toContain(
+      "Ukuran dokumen maksimal 5 MB",
+    );
+    expect(validateKycFile({ type: "application/pdf", size: 0 })).toContain("kosong");
+    expect(validateKycFile({ type: "image/gif", size: 1000 })).toContain(
+      "Format dokumen harus JPG, PNG, WebP, atau PDF",
+    );
+  });
+});
 
 describe("isOwnedImageUrl", () => {
   beforeEach(() => {

@@ -107,6 +107,7 @@ export default async function AdminVerificationPage() {
                       <VerificationActions
                         sellerId={seller.id}
                         name={seller.businessName}
+                        hasKycDocument={Boolean(seller.kycDocumentUrl)}
                       />
                     </div>
                   </TableCell>

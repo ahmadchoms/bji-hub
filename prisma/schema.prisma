@@ -94,6 +94,8 @@ model SellerProfile {
   tier               Tier               @default(free)
   suspendedAt        DateTime?          @map("suspended_at")
   bankUpdatedAt      DateTime?          @map("bank_updated_at")
+  kycDocumentUrl     String?            @map("kyc_document_url")
+  kycSubmittedAt     DateTime?          @map("kyc_submitted_at")
   createdAt          DateTime           @default(now())
 
   listings      Listing[]

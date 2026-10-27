@@ -84,6 +84,8 @@ async function main() {
     ALTER TABLE public.users ADD COLUMN IF NOT EXISTS suspended_at TIMESTAMPTZ;
     ALTER TABLE public.seller_profiles ADD COLUMN IF NOT EXISTS suspended_at TIMESTAMPTZ;
     ALTER TABLE public.seller_profiles ADD COLUMN IF NOT EXISTS bank_updated_at TIMESTAMPTZ;
+    ALTER TABLE public.seller_profiles ADD COLUMN IF NOT EXISTS kyc_document_url TEXT;
+    ALTER TABLE public.seller_profiles ADD COLUMN IF NOT EXISTS kyc_submitted_at TIMESTAMPTZ;
 
     -- Webhook events for replay protection & idempotency (S5)
     CREATE TABLE IF NOT EXISTS public.webhook_events (

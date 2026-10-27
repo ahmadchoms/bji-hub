@@ -6,9 +6,15 @@ import { z } from "zod";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 import { getSession } from "@/lib/auth/session";
 import { createImageUploadTarget } from "@/lib/data";
-import { IMAGE_RULES, isAllowedImageType } from "@/lib/storage";
+import {
+  IMAGE_RULES,
+  isAllowedImageType,
+  KYC_DOCUMENT_RULES,
+  isAllowedKycType,
+} from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { getSellerById } from "@/lib/data";
 
 const uploadRequestSchema = z.object({
   filename: z.string().min(1).max(200),
@@ -97,4 +103,133 @@ export async function createImageUploadAction(
   });
   if (!target) return fail("File tidak dapat diunggah");
   return ok(target);
+}
+
+const kycUploadRequestSchema = z.object({
+  filename: z.string().min(1).max(200),
+  contentType: z
+    .string()
+    .refine(isAllowedKycType, "Format harus JPG, PNG, WebP, atau PDF"),
+  size: z
+    .number()
+    .int()
+    .min(1)
+    .max(KYC_DOCUMENT_RULES.maxBytes, "Ukuran dokumen maksimal 5 MB"),
+});
+
+export interface KycUploadTargetData {
+  uploadUrl: string;
+  path: string;
+}
+
+/** Step 1 of private KYC document upload: returns signed upload URL to private bucket (S6/F10). */
+export async function createKycUploadTargetAction(
+  input: unknown,
+): Promise<ActionResult<KycUploadTargetData>> {
+  const session = await getSession();
+  if (session.role !== "seller" || !session.sellerId) {
+    return fail("Hanya akun penjual yang dapat mengunggah dokumen KYC");
+  }
+
+  const sellerId = session.sellerId;
+  const rate = await checkRateLimit("upload:kyc:" + sellerId, 10, 60_000);
+  if (!rate.success) {
+    return fail("Terlalu banyak permintaan unggah KYC. Silakan tunggu sebentar.");
+  }
+
+  const parsed = kycUploadRequestSchema.safeParse(input);
+  if (!parsed.success) {
+    return fail(parsed.error.issues[0]?.message ?? "Dokumen tidak valid");
+  }
+
+  const extMap: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "application/pdf": "pdf",
+  };
+  const ext = extMap[parsed.data.contentType] || "pdf";
+  const filePath = `uploads/${sellerId}/${crypto.randomUUID()}.${ext}`;
+
+  if (
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  ) {
+    try {
+      const supabase = createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+      );
+
+      const { data: signedData, error } = await supabase.storage
+        .from("seller-kyc")
+        .createSignedUploadUrl(filePath);
+
+      if (!error && signedData) {
+        return ok({
+          uploadUrl: signedData.signedUrl,
+          path: filePath,
+        });
+      }
+    } catch (err) {
+      logger.warn("upload.kyc_storage_fallback", { message: (err as Error)?.message });
+    }
+  }
+
+  return ok({
+    uploadUrl: `/api/mock-storage/kyc-${crypto.randomUUID()}`,
+    path: `seller-kyc/${filePath}`,
+  });
+}
+
+/** Generates a short-lived signed download URL (max 5 minutes) for viewing private KYC document (S6/F10). */
+export async function getKycDocumentSignedUrlAction(
+  sellerId: string,
+): Promise<ActionResult<{ signedUrl: string; expiresAt: number }>> {
+  const session = await getSession();
+  const isAdmin = session.role === "admin";
+  const isOwner = session.role === "seller" && session.sellerId === sellerId;
+
+  if (!isAdmin && !isOwner) {
+    return fail("Akses tidak diizinkan. Hanya pemilik toko dan admin yang dapat melihat dokumen KYC.");
+  }
+
+  const seller = await getSellerById(sellerId);
+  if (!seller || !seller.kycDocumentUrl) {
+    return fail("Dokumen identitas KYC belum diunggah");
+  }
+
+  const expiresInSeconds = 300; // 5 minutes max as mandated by S6
+  const expiresAt = Date.now() + expiresInSeconds * 1000;
+  const cleanPath = seller.kycDocumentUrl.replace(/^seller-kyc\//, "");
+
+  if (
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  ) {
+    try {
+      const supabase = createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+      );
+
+      const { data, error } = await supabase.storage
+        .from("seller-kyc")
+        .createSignedUrl(cleanPath, expiresInSeconds);
+
+      if (!error && data?.signedUrl) {
+        return ok({
+          signedUrl: data.signedUrl,
+          expiresAt,
+        });
+      }
+    } catch (err) {
+      logger.warn("upload.kyc_signed_url_fallback", { message: (err as Error)?.message });
+    }
+  }
+
+  return ok({
+    signedUrl: `/api/mock-storage/${encodeURIComponent(seller.kycDocumentUrl)}?signed=1&expires=${expiresAt}`,
+    expiresAt,
+  });
 }

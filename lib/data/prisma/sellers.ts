@@ -115,10 +115,18 @@ export const sellers: SellerMethods = {
     }
   },
 
-  async requestVerification(sellerId) {
+  async requestVerification(sellerId, kycDocumentUrl) {
     const result = await getPrisma().sellerProfile.updateMany({
       where: { id: sellerId, isVerified: false },
-      data: { verificationStatus: "pending" },
+      data: {
+        verificationStatus: "pending",
+        ...(kycDocumentUrl
+          ? {
+              kycDocumentUrl,
+              kycSubmittedAt: new Date(),
+            }
+          : {}),
+      },
     });
     return result.count > 0;
   },

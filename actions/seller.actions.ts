@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 import { requireSeller } from "@/lib/auth/session";
 import { isActiveBoost } from "@/lib/boost";
@@ -164,9 +165,20 @@ export async function purchaseBoostAction(
   return ok({ paymentId: payment.id, status: payment.status, snapToken });
 }
 
-export async function requestVerificationAction(): Promise<ActionResult> {
+const kycRequestSchema = z
+  .object({
+    kycDocumentPath: z.string().min(1).max(500).optional(),
+  })
+  .optional();
+
+export async function requestVerificationAction(
+  input?: unknown,
+): Promise<ActionResult> {
   const { sellerId } = await requireSeller("/dashboard/verification");
-  const success = await requestVerification(sellerId);
+  const parsed = kycRequestSchema.safeParse(input);
+  const kycDocumentPath = parsed.success ? parsed.data?.kycDocumentPath : undefined;
+
+  const success = await requestVerification(sellerId, kycDocumentPath);
   if (!success) return fail("Gagal mengajukan verifikasi toko");
 
   revalidatePath("/dashboard/verification");

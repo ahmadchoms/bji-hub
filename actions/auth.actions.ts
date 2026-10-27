@@ -23,6 +23,7 @@ import { getPrisma } from "@/lib/data/prisma/client";
 import { slugify } from "@/lib/slug";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/client-ip";
+import { logger } from "@/lib/logger";
 import type { BuyerAddress } from "@/types";
 import { readBuyerProfileCookie, serializeBuyerProfile, BUYER_PROFILE_COOKIE, buyerAddressSchema } from "@/lib/auth/buyer-profile";
 
@@ -119,8 +120,10 @@ export async function loginAction(
         store.delete(BUYER_PROFILE_COOKIE);
         return ok({ redirectTo: safeNextPath(next, homeFor("buyer")) });
       }
-    } catch {
-      // ignore: optional operation fallback
+    } catch (err) {
+      logger.error("auth.login_failed", {
+        error: err instanceof Error ? err.message : String(err),
+      });
       if (!isMockAuthAllowed()) {
         return fail("Layanan autentikasi sedang bermasalah. Silakan coba beberapa saat lagi.");
       }
@@ -212,8 +215,10 @@ export async function registerAction(
         }
         return ok({ redirectTo: "/login?verify=1" });
       }
-    } catch {
-      // ignore: optional operation fallback
+    } catch (err) {
+      logger.error("auth.register_failed", {
+        error: err instanceof Error ? err.message : String(err),
+      });
       if (!isMockAuthAllowed()) {
         return fail(
           "Layanan pendaftaran sedang bermasalah. Silakan coba beberapa saat lagi.",
@@ -303,8 +308,10 @@ export async function becomeSellerAction(
 
         return ok({ redirectTo: "/dashboard" });
       }
-    } catch {
-      // ignore: optional operation fallback
+    } catch (err) {
+      logger.error("auth.seller_onboarding_failed", {
+        error: err instanceof Error ? err.message : String(err),
+      });
       if (!isMockAuthAllowed()) {
         return fail("Gagal mendaftarkan toko. Silakan coba beberapa saat lagi.");
       }

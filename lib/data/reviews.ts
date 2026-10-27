@@ -109,6 +109,26 @@ export function _resetMockReviewsForTest(): void {
   mockReviews.length = 0;
 }
 
+function mapReviewRow(row: Record<string, unknown>): Review {
+  return {
+    id: String(row.id),
+    orderId: (row.order_id || row.orderId || null) as string | null,
+    listingId: String(row.listing_id || row.listingId),
+    buyerId: (row.buyer_id || row.buyerId || null) as string | null,
+    buyerName: String(row.buyer_name || row.buyerName),
+    rating: Number(row.rating),
+    comment: (row.comment || null) as string | null,
+    imageUrl: (row.image_url || row.imageUrl || null) as string | null,
+    sellerReply: (row.seller_reply || row.sellerReply || null) as string | null,
+    sellerRepliedAt: row.seller_replied_at
+      ? new Date(row.seller_replied_at as string).toISOString()
+      : (row.sellerRepliedAt as string | null) ?? null,
+    isReported: Boolean(row.is_reported || row.isReported),
+    reportReason: (row.report_reason || row.reportReason || null) as string | null,
+    createdAt: new Date((row.created_at || row.createdAt) as string).toISOString(),
+  };
+}
+
 export async function getReviewsByListing(listingId: string): Promise<Review[]> {
   const pool = getPool();
   if (pool) {
@@ -119,17 +139,7 @@ export async function getReviewsByListing(listingId: string): Promise<Review[]> 
          ORDER BY created_at DESC`,
         [listingId],
       );
-      return res.rows.map((row) => ({
-        id: row.id,
-        orderId: row.order_id,
-        listingId: row.listing_id,
-        buyerId: row.buyer_id,
-        buyerName: row.buyer_name,
-        rating: Number(row.rating),
-        comment: row.comment,
-        imageUrl: row.image_url ?? null,
-        createdAt: row.created_at,
-      }));
+      return res.rows.map(mapReviewRow);
     } catch {
       // ignore: reviews db query fallback to mock store in dev
       // Fall through
@@ -150,17 +160,7 @@ export async function getReviewsByListingIds(listingIds: string[]): Promise<Revi
          ORDER BY created_at DESC`,
         [listingIds],
       );
-      return res.rows.map((row) => ({
-        id: row.id,
-        orderId: row.order_id,
-        listingId: row.listing_id,
-        buyerId: row.buyer_id,
-        buyerName: row.buyer_name,
-        rating: Number(row.rating),
-        comment: row.comment,
-        imageUrl: row.image_url ?? null,
-        createdAt: row.created_at,
-      }));
+      return res.rows.map(mapReviewRow);
     } catch {
       // ignore: reviews db query fallback to mock store in dev
       // Fall through
@@ -212,4 +212,63 @@ export async function getReviewsByBuyer(buyerId: string): Promise<Review[]> {
     }
   }
   return mockReviews.filter((r) => r.buyerId === buyerId);
+}
+
+export async function replyToReview(
+  reviewId: string,
+  replyText: string,
+): Promise<boolean> {
+  const pool = getPool();
+  const now = new Date().toISOString();
+
+  if (pool) {
+    try {
+      const res = await pool.query(
+        `UPDATE public.reviews
+         SET seller_reply = $1, seller_replied_at = $2
+         WHERE id = $3`,
+        [replyText.trim(), now, reviewId],
+      );
+      return (res.rowCount ?? 0) > 0;
+    } catch {
+      return false;
+    }
+  }
+
+  const r = mockReviews.find((rev) => rev.id === reviewId);
+  if (r) {
+    r.sellerReply = replyText.trim();
+    r.sellerRepliedAt = now;
+    return true;
+  }
+  return false;
+}
+
+export async function reportReview(
+  reviewId: string,
+  reason: string,
+): Promise<boolean> {
+  const pool = getPool();
+
+  if (pool) {
+    try {
+      const res = await pool.query(
+        `UPDATE public.reviews
+         SET is_reported = true, report_reason = $1
+         WHERE id = $2`,
+        [reason.trim(), reviewId],
+      );
+      return (res.rowCount ?? 0) > 0;
+    } catch {
+      return false;
+    }
+  }
+
+  const r = mockReviews.find((rev) => rev.id === reviewId);
+  if (r) {
+    r.isReported = true;
+    r.reportReason = reason.trim();
+    return true;
+  }
+  return false;
 }

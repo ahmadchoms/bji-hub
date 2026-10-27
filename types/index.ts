@@ -316,6 +316,10 @@ export interface Review {
   rating: number; // 1 to 5
   comment?: string | null;
   imageUrl?: string | null;
+  sellerReply?: string | null;
+  sellerRepliedAt?: string | null;
+  isReported?: boolean;
+  reportReason?: string | null;
   createdAt: string;
 }
 

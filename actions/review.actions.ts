@@ -1,0 +1,70 @@
+"use server";
+
+import { z } from "zod";
+import { revalidatePath } from "next/cache";
+import { fail, ok, type ActionResult } from "@/lib/action-result";
+import { getSession, requireSeller } from "@/lib/auth/session";
+import { replyToReview, reportReview } from "@/lib/data/reviews";
+import { recordAuditLog } from "@/lib/data/audit-logs";
+import { getClientIp } from "@/lib/client-ip";
+
+const replySchema = z.object({
+  reviewId: z.string().min(1, "ID ulasan wajib diisi"),
+  reply: z.string().trim().min(2, "Balasan minimal 2 karakter").max(500, "Balasan maksimal 500 karakter"),
+});
+
+export async function replyToReviewAction(
+  input: unknown,
+): Promise<ActionResult<{ success: boolean }>> {
+  await requireSeller();
+
+  const parsed = replySchema.safeParse(input);
+  if (!parsed.success) {
+    return fail(parsed.error.issues[0]?.message || "Data balasan tidak valid");
+  }
+
+  const success = await replyToReview(parsed.data.reviewId, parsed.data.reply);
+  if (!success) {
+    return fail("Ulasan tidak ditemukan atau gagal memperbarui balasan.");
+  }
+
+  revalidatePath("/product");
+  return ok({ success: true });
+}
+
+const reportSchema = z.object({
+  reviewId: z.string().min(1, "ID ulasan wajib diisi"),
+  reason: z.string().trim().min(5, "Alasan pelaporan minimal 5 karakter").max(300, "Alasan pelaporan maksimal 300 karakter"),
+});
+
+export async function reportReviewAction(
+  input: unknown,
+): Promise<ActionResult<{ success: boolean }>> {
+  const session = await getSession();
+  if (session.role === "guest" || !session.userId) {
+    return fail("Silakan masuk terlebih dahulu untuk melaporkan ulasan.");
+  }
+
+  const parsed = reportSchema.safeParse(input);
+  if (!parsed.success) {
+    return fail(parsed.error.issues[0]?.message || "Alasan pelaporan tidak valid");
+  }
+
+  const success = await reportReview(parsed.data.reviewId, parsed.data.reason);
+  if (!success) {
+    return fail("Ulasan tidak ditemukan atau gagal dilaporkan.");
+  }
+
+  const clientIp = await getClientIp();
+  await recordAuditLog({
+    actorId: session.userId,
+    actorRole: session.role,
+    action: "report_review",
+    targetId: parsed.data.reviewId,
+    targetType: "review",
+    details: { reason: parsed.data.reason },
+    ipAddress: clientIp,
+  });
+
+  return ok({ success: true });
+}

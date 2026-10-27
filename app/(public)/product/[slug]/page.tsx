@@ -241,6 +241,30 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                           </a>
                         </div>
                       )}
+
+                      {r.sellerReply && (
+                        <div className="mt-2.5 p-2.5 bg-neutral-100 rounded border-l-2 border-primary-600 text-[11px] space-y-1">
+                          <p className="font-semibold text-neutral-900">Respon Penjual:</p>
+                          <p className="text-neutral-700 leading-relaxed">{r.sellerReply}</p>
+                          {r.sellerRepliedAt && (
+                            <p className="text-[10px] text-neutral-400">
+                              {new Date(r.sellerRepliedAt).toLocaleDateString("id-ID", {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              })}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {r.isReported && (
+                        <div className="pt-1">
+                          <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                            Dalam Peninjauan Moderasi
+                          </span>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

@@ -70,4 +70,29 @@ describe("reviews data and stats", () => {
     const notFound = await getReviewByOrderAndListing("ord-test-unique-1", "list-other");
     expect(notFound).toBeNull();
   });
+
+  it("handles seller reply and review reporting (F9)", async () => {
+    const { createReview, replyToReview, reportReview, getReviewsByListing, _resetMockReviewsForTest } =
+      await import("@/lib/data/reviews");
+    _resetMockReviewsForTest();
+
+    const rev = await createReview({
+      listingId: "list-f9",
+      buyerName: "Buyer 1",
+      rating: 4,
+      comment: "Rasa enak tapi packaging agak penyok",
+    });
+
+    const replySuccess = await replyToReview(rev.id, "Terima kasih atas masukannya, kami perbaiki kemasan.");
+    expect(replySuccess).toBe(true);
+
+    const reportSuccess = await reportReview(rev.id, "Spam ulasan palsu");
+    expect(reportSuccess).toBe(true);
+
+    const list = await getReviewsByListing("list-f9");
+    expect(list.length).toBe(1);
+    expect(list[0].sellerReply).toBe("Terima kasih atas masukannya, kami perbaiki kemasan.");
+    expect(list[0].isReported).toBe(true);
+    expect(list[0].reportReason).toBe("Spam ulasan palsu");
+  });
 });

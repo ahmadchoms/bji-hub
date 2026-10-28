@@ -5,8 +5,12 @@ const productionSchema = z.object({
   DATABASE_URL: z.string().min(1, "DATABASE_URL wajib diisi di production"),
   NEXT_PUBLIC_SUPABASE_URL: z.string().url("NEXT_PUBLIC_SUPABASE_URL harus berupa URL valid"),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1, "NEXT_PUBLIC_SUPABASE_ANON_KEY wajib diisi"),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+  CRON_SECRET: z.string().optional(),
+  RESEND_API_KEY: z.string().optional(),
   MIDTRANS_SERVER_KEY: z.string().min(1, "MIDTRANS_SERVER_KEY wajib diisi"),
   MIDTRANS_CLIENT_KEY: z.string().min(1, "MIDTRANS_CLIENT_KEY wajib diisi"),
+  MIDTRANS_IS_PRODUCTION: z.enum(["true", "false"]).optional(),
   NEXT_PUBLIC_APP_URL: z.string().url("NEXT_PUBLIC_APP_URL harus berupa URL valid"),
   PAYMENT_PROVIDER: z.enum(["midtrans", "mock"]).optional().default("midtrans"),
   NEXT_PUBLIC_GOOGLE_CLIENT_ID: z.string().optional(),
@@ -41,6 +45,24 @@ export function validateEnv(): boolean {
         const issues = result.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ");
         logger.error("Environment validation failed at boot", undefined, { issues });
         throw new Error(`CRITICAL: Server configuration error. Missing required environment variables: ${issues}`);
+      }
+
+      if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        logger.warn("env.missing_service_role_key", {
+          warning: "SUPABASE_SERVICE_ROLE_KEY belum diisi. Operasi hapus akun dan admin auth akan terbatas.",
+        });
+      }
+
+      if (!process.env.CRON_SECRET) {
+        logger.warn("env.missing_cron_secret", {
+          warning: "CRON_SECRET belum diisi. Endpoint maintenance dan deep health check akan terbatas.",
+        });
+      }
+
+      if (!process.env.RESEND_API_KEY) {
+        logger.warn("env.missing_resend_api_key", {
+          warning: "RESEND_API_KEY belum diisi. Pengiriman email transaksi berjalan dalam mode mock.",
+        });
       }
     }
   }

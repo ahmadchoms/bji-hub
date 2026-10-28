@@ -49,7 +49,7 @@ describe("validateEnv", () => {
     expect(() => validateEnv()).toThrow(/CRITICAL: Server configuration error/);
   });
 
-  it("passes in production with prisma when all required env vars are present, including optional NEXT_PUBLIC_GOOGLE_CLIENT_ID", () => {
+  it("passes in production with prisma when all required env vars are present, including optional keys", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("DATA_SOURCE", "prisma");
     vi.stubEnv("DATABASE_URL", "postgresql://user:pass@localhost:5432/db");
@@ -59,6 +59,10 @@ describe("validateEnv", () => {
     vi.stubEnv("MIDTRANS_CLIENT_KEY", "client-key");
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://bji-hub.vercel.app");
     vi.stubEnv("NEXT_PUBLIC_GOOGLE_CLIENT_ID", "test-client-id.apps.googleusercontent.com");
+    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service-role-secret");
+    vi.stubEnv("CRON_SECRET", "cron-secret");
+    vi.stubEnv("RESEND_API_KEY", "re_test_key");
+    vi.stubEnv("MIDTRANS_IS_PRODUCTION", "false");
 
     expect(() => validateEnv()).not.toThrow();
   });

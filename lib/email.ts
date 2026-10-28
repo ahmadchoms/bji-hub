@@ -32,7 +32,9 @@ export async function sendOrderPaidEmail(order: Order): Promise<EmailResult> {
 
   if (!resend || !order.buyerEmail) {
     // Graceful fallback for local development or when API key is missing
-    console.log(`[EMAIL MOCK] Order Paid Notification to ${order.buyerEmail || "no-email"}:`, {
+    logger.info("email.mock_send", {
+      type: "order_paid",
+      to: order.buyerEmail || "no-email",
       orderNumber: order.orderNumber,
       amount: order.totalAmount,
     });
@@ -123,7 +125,9 @@ export async function sendOrderShippedEmail(order: Order): Promise<EmailResult> 
   const orderUrl = `${APP_URL}/order/success?orderNumber=${order.orderNumber}`;
 
   if (!resend || !order.buyerEmail) {
-    console.log(`[EMAIL MOCK] Order Shipped Notification to ${order.buyerEmail || "no-email"}:`, {
+    logger.info("email.mock_send", {
+      type: "order_shipped",
+      to: order.buyerEmail || "no-email",
       orderNumber: order.orderNumber,
       trackingNumber: order.trackingNumber,
       courier: order.shippingCourier,
@@ -214,7 +218,9 @@ export async function sendLowStockAlertEmail({
   const dashboardUrl = `${APP_URL}/dashboard/listing`;
 
   if (!resend || !sellerEmail) {
-    console.log(`[EMAIL MOCK] Low Stock Alert to ${sellerEmail || "no-email"}:`, {
+    logger.info("email.mock_send", {
+      type: "low_stock_alert",
+      to: sellerEmail || "no-email",
       sellerName,
       listingTitle,
       remainingStock,
@@ -268,7 +274,9 @@ export async function sendLowStockAlertEmail({
       messageId: res.data?.id,
     };
   } catch (error) {
-    console.error("Failed to send low stock alert email:", error);
+    logger.error("email.low_stock_alert_failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to send email",
@@ -293,7 +301,9 @@ export async function sendNewOrderSellerEmail({
   const ordersUrl = `${APP_URL}/dashboard/orders`;
 
   if (!resend || !sellerEmail) {
-    console.log(`[EMAIL MOCK] New Order Notification to ${targetEmail}:`, {
+    logger.info("email.mock_send", {
+      type: "new_order_seller",
+      to: targetEmail,
       orderNumber: order.orderNumber,
       product: order.listingTitle,
       quantity: order.quantity,
@@ -354,7 +364,9 @@ export async function sendNewOrderSellerEmail({
       messageId: res.data?.id,
     };
   } catch (error) {
-    console.error("Failed to send seller new order email:", error);
+    logger.error("email.new_order_seller_failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to send email",
@@ -373,7 +385,9 @@ export async function sendOrderRefundedEmail(
   const isAuto = refund.status === "processed";
 
   if (!resend || !order.buyerEmail) {
-    console.log(`[EMAIL MOCK] Order Refund Notification to ${order.buyerEmail || "no-email"}:`, {
+    logger.info("email.mock_send", {
+      type: "order_refunded",
+      to: order.buyerEmail || "no-email",
       orderNumber: order.orderNumber,
       amount: refund.amount,
       status: refund.status,
@@ -423,7 +437,9 @@ export async function sendOrderRefundedEmail(
       messageId: res.data?.id,
     };
   } catch (error) {
-    console.error("Failed to send order refunded email:", error);
+    logger.error("email.order_refunded_failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to send email",
@@ -451,7 +467,9 @@ export async function sendBankDetailsChangedEmail({
     : accountNumber;
 
   if (!resend || !toEmail) {
-    console.log(`[EMAIL MOCK] Bank Details Changed Alert to ${toEmail || "no-email"}:`, {
+    logger.info("email.mock_send", {
+      type: "bank_details_changed",
+      to: toEmail || "no-email",
       sellerName,
       bankName,
       maskedAcc,
@@ -501,7 +519,9 @@ export async function sendBankDetailsChangedEmail({
       messageId: res.data?.id,
     };
   } catch (error) {
-    console.error("Failed to send bank details changed email:", error);
+    logger.error("email.bank_details_changed_failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to send email",

@@ -6,7 +6,7 @@ describe("GET /api/health (B8)", () => {
     const originalDataSource = process.env.DATA_SOURCE;
     process.env.DATA_SOURCE = "mock";
 
-    const res = await GET();
+    const res = await GET(new Request("http://localhost/api/health"));
     expect(res.status).toBe(200);
     expect(res.headers.get("Cache-Control")).toContain("no-store");
 
@@ -25,7 +25,7 @@ describe("GET /api/health (B8)", () => {
       $queryRaw: vi.fn().mockRejectedValue(new Error("Connection refused at secret-db-host:5432")),
     } as unknown as ReturnType<typeof prismaModule.getPrisma>);
 
-    const res = await GET();
+    const res = await GET(new Request("http://localhost/api/health"));
     expect(res.status).toBe(503);
     expect(res.headers.get("Cache-Control")).toContain("no-store");
 
@@ -41,10 +41,8 @@ describe("GET /api/health (B8)", () => {
 
   describe("GET /api/health?deep=1 (M13 Observability)", () => {
     it("returns 401 in production when authorization token is missing or invalid", async () => {
-      const prevEnv = process.env.NODE_ENV;
-      const prevSecret = process.env.CRON_SECRET;
-      process.env.NODE_ENV = "production";
-      process.env.CRON_SECRET = "supersecret";
+      vi.stubEnv("NODE_ENV", "production");
+      vi.stubEnv("CRON_SECRET", "supersecret");
 
       const req = new Request("http://localhost:3000/api/health?deep=1");
       const res = await GET(req);
@@ -53,24 +51,16 @@ describe("GET /api/health (B8)", () => {
       const json = await res.json();
       expect(json).toEqual({ error: "Unauthorized" });
 
-      process.env.NODE_ENV = prevEnv;
-      process.env.CRON_SECRET = prevSecret;
+      vi.unstubAllEnvs();
     });
 
     it("returns 200 with diagnostics when authorized and subsystems healthy", async () => {
-      const prevEnv = process.env.NODE_ENV;
-      const prevSecret = process.env.CRON_SECRET;
-      const prevUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const prevAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-      const prevMidtrans = process.env.MIDTRANS_SERVER_KEY;
-      const prevDataSource = process.env.DATA_SOURCE;
-
-      process.env.NODE_ENV = "production";
-      process.env.CRON_SECRET = "supersecret";
-      process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon-key";
-      process.env.MIDTRANS_SERVER_KEY = "midtrans-key";
-      process.env.DATA_SOURCE = "mock";
+      vi.stubEnv("NODE_ENV", "production");
+      vi.stubEnv("CRON_SECRET", "supersecret");
+      vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
+      vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
+      vi.stubEnv("MIDTRANS_SERVER_KEY", "midtrans-key");
+      vi.stubEnv("DATA_SOURCE", "mock");
 
       const req = new Request("http://localhost:3000/api/health?deep=1", {
         headers: { Authorization: "Bearer supersecret" },
@@ -85,22 +75,13 @@ describe("GET /api/health (B8)", () => {
       expect(json.checks.storage).toBe("ok");
       expect(json.checks.payment.status).toBe("ok");
 
-      process.env.NODE_ENV = prevEnv;
-      process.env.CRON_SECRET = prevSecret;
-      process.env.NEXT_PUBLIC_SUPABASE_URL = prevUrl;
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = prevAnon;
-      process.env.MIDTRANS_SERVER_KEY = prevMidtrans;
-      process.env.DATA_SOURCE = prevDataSource;
+      vi.unstubAllEnvs();
     });
 
     it("returns 503 when a subsystem is missing required configuration", async () => {
-      const prevEnv = process.env.NODE_ENV;
-      const prevSecret = process.env.CRON_SECRET;
-      const prevMidtrans = process.env.MIDTRANS_SERVER_KEY;
-
-      process.env.NODE_ENV = "development";
-      process.env.CRON_SECRET = "supersecret";
-      delete process.env.MIDTRANS_SERVER_KEY;
+      vi.stubEnv("NODE_ENV", "development");
+      vi.stubEnv("CRON_SECRET", "supersecret");
+      vi.stubEnv("MIDTRANS_SERVER_KEY", "");
 
       const req = new Request("http://localhost:3000/api/health?deep=1&token=supersecret");
       const res = await GET(req);
@@ -110,9 +91,7 @@ describe("GET /api/health (B8)", () => {
       expect(json.status).toBe("unhealthy");
       expect(json.checks.payment.status).toBe("missing_server_key");
 
-      process.env.NODE_ENV = prevEnv;
-      process.env.CRON_SECRET = prevSecret;
-      process.env.MIDTRANS_SERVER_KEY = prevMidtrans;
+      vi.unstubAllEnvs();
     });
   });
 });

@@ -7,15 +7,15 @@ export const dynamic = "force-dynamic";
 let lastDbCheck = 0;
 const DB_CHECK_TTL_MS = 10_000;
 
-export async function GET(req?: Request) {
-  const url = req?.url ? new URL(req.url) : null;
-  const isDeep = url?.searchParams.get("deep") === "1";
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  const isDeep = url.searchParams.get("deep") === "1";
 
   // Deep diagnostic check (M13 observability)
   if (isDeep) {
-    const authHeader = req?.headers.get("authorization");
+    const authHeader = req.headers.get("authorization");
     const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-    const queryToken = url?.searchParams.get("token");
+    const queryToken = url.searchParams.get("token");
     const providedToken = bearerToken || queryToken;
     const secret = process.env.CRON_SECRET || process.env.HEALTH_CHECK_TOKEN;
 

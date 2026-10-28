@@ -90,6 +90,13 @@ check(
   "Set RESEND_API_KEY to send real order confirmation & shipping notification emails."
 );
 
+// 7. Error Monitoring & APM
+check(
+  "Sentry DSN configured",
+  Boolean(process.env.NEXT_PUBLIC_SENTRY_DSN || process.env.SENTRY_DSN),
+  "Set NEXT_PUBLIC_SENTRY_DSN in Vercel to capture production errors."
+);
+
 console.log("\n--------------------------------------------------");
 console.log(`  Result: ${passes} passed, ${warnings} warnings`);
 console.log("--------------------------------------------------\n");

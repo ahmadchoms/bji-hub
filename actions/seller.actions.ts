@@ -178,6 +178,16 @@ export async function requestVerificationAction(
   const parsed = kycRequestSchema.safeParse(input);
   const kycDocumentPath = parsed.success ? parsed.data?.kycDocumentPath : undefined;
 
+  // M7: Ensure submitted KYC document path strictly belongs to the authenticated seller
+  if (kycDocumentPath) {
+    const kycPathRegex = new RegExp(
+      `^(?:seller-kyc/)?uploads/${sellerId}/[0-9a-fA-F-]{36}\\.(?:jpg|jpeg|png|webp|pdf)$`,
+    );
+    if (!kycPathRegex.test(kycDocumentPath)) {
+      return fail("Dokumen identitas tidak valid atau bukan milik toko Anda.");
+    }
+  }
+
   const success = await requestVerification(sellerId, kycDocumentPath);
   if (!success) return fail("Gagal mengajukan verifikasi toko");
 

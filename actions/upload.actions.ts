@@ -176,6 +176,11 @@ export async function createKycUploadTargetAction(
     }
   }
 
+  // M7/M9: In production mode, do not fall back to mock storage
+  if (process.env.DATA_SOURCE !== "mock") {
+    return fail("Layanan penyimpanan dokumen KYC sedang mengalami kendala. Silakan coba lagi nanti.");
+  }
+
   return ok({
     uploadUrl: `/api/mock-storage/kyc-${crypto.randomUUID()}`,
     path: `seller-kyc/${filePath}`,
@@ -202,6 +207,22 @@ export async function getKycDocumentSignedUrlAction(
   const expiresInSeconds = 300; // 5 minutes max as mandated by S6
   const expiresAt = Date.now() + expiresInSeconds * 1000;
   const cleanPath = seller.kycDocumentUrl.replace(/^seller-kyc\//, "");
+
+  // M7: Audit trail whenever an admin views a seller's private KYC document
+  if (isAdmin) {
+    const { recordAuditLog } = await import("@/lib/data/audit-logs");
+    const { getClientIp } = await import("@/lib/client-ip");
+    const ip = await getClientIp();
+    await recordAuditLog({
+      actorId: session.userId || "admin",
+      actorRole: session.role,
+      action: "view_kyc_document",
+      targetId: sellerId,
+      targetType: "seller",
+      details: { path: cleanPath },
+      ipAddress: ip,
+    });
+  }
 
   if (
     process.env.NEXT_PUBLIC_SUPABASE_URL &&

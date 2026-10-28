@@ -124,6 +124,27 @@ describe("changePasswordFromProfileAction & signOutAllDevicesAction (S8)", () =>
     }
   });
 
+  it("rate limits password changes to prevent brute forcing oldPassword (M11)", async () => {
+    // 5 attempts should pass the rate limiter
+    for (let i = 0; i < 5; i++) {
+      await changePasswordFromProfileAction({
+        oldPassword: "OldPassword123!",
+        newPassword: "NewStrongPassword2026#",
+      });
+    }
+
+    // 6th attempt should be blocked by rate limiter
+    const blockedRes = await changePasswordFromProfileAction({
+      oldPassword: "OldPassword123!",
+      newPassword: "NewStrongPassword2026#",
+    });
+
+    expect(blockedRes.success).toBe(false);
+    if (!blockedRes.success) {
+      expect(blockedRes.error).toContain("Terlalu banyak percobaan ganti kata sandi");
+    }
+  });
+
   it("signs out from all devices and redirects to login", async () => {
     const res = await signOutAllDevicesAction();
     expect(res.success).toBe(true);

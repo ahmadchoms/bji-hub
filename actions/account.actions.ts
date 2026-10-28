@@ -11,6 +11,7 @@ import { getPrisma } from "@/lib/data/prisma/client";
 import { logger } from "@/lib/logger";
 import { BUYER_PROFILE_COOKIE } from "@/lib/auth/buyer-profile";
 import { validatePasswordStrength } from "@/lib/auth/password-rules";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function deleteAccountAction(
   confirmation: string,
@@ -110,6 +111,12 @@ export async function changePasswordFromProfileAction(
   const session = await getSession();
   if (session.role === "guest" || !session.userId || !session.email) {
     return fail("Sesi tidak valid atau Anda belum masuk.");
+  }
+
+  // M11: Rate limit password verification to prevent brute force on stolen sessions
+  const rate = await checkRateLimit("pwd_change:" + session.userId, 5, 15 * 60_000);
+  if (!rate.success) {
+    return fail("Terlalu banyak percobaan ganti kata sandi. Silakan tunggu 15 menit.");
   }
 
   const parsed = changePasswordSchema.safeParse(input);

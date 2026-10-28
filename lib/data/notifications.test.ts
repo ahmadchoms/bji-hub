@@ -4,6 +4,7 @@ process.env.DATA_SOURCE = "mock";
 
 import {
   createNotification,
+  notifySeller,
   getUserNotifications,
   markNotificationAsRead,
   markAllNotificationsAsRead,
@@ -60,5 +61,20 @@ describe("notifications data module (F1)", () => {
 
     const finalCount = await getUnreadNotificationCount("user-2");
     expect(finalCount).toBe(0);
+  });
+
+  it("resolves seller.userId correctly when using notifySeller (M5)", async () => {
+    const res = await notifySeller("seller-1", {
+      title: "Pesanan Baru Masuk",
+      message: "Ada pesanan baru ORD-SELLER-1.",
+      type: "order_status",
+      link: "/dashboard/orders",
+    });
+
+    expect(res).not.toBeNull();
+    expect(res?.userId).toBe("user-seller-1");
+
+    const sellerNotifs = await getUserNotifications("user-seller-1");
+    expect(sellerNotifs.some((n) => n.title === "Pesanan Baru Masuk")).toBe(true);
   });
 });

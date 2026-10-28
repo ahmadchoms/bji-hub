@@ -50,6 +50,9 @@ export async function getUserNotifications(
       }));
     } catch (err) {
       logger.error("notifications.get_failed", err, { userId });
+      if (process.env.DATA_SOURCE !== "mock") {
+        throw err;
+      }
     }
   }
 
@@ -57,6 +60,25 @@ export async function getUserNotifications(
     .filter((n) => n.userId === userId)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, limit);
+}
+
+export async function notifySeller(
+  sellerProfileId: string,
+  payload: {
+    title: string;
+    message: string;
+    type?: string;
+    link?: string;
+  },
+): Promise<NotificationRecord | null> {
+  const { getSellerById } = await import("@/lib/data");
+  const seller = await getSellerById(sellerProfileId);
+  const userId = seller?.userId;
+  if (!userId) {
+    logger.warn("notification.seller_user_not_found", { sellerProfileId });
+    return null;
+  }
+  return createNotification({ ...payload, userId });
 }
 
 export async function createNotification(data: {

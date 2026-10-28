@@ -45,7 +45,7 @@ import {
   updateRefundStatus,
 } from "@/lib/data/refunds";
 import { recordAuditLog } from "@/lib/data/audit-logs";
-import { createNotification } from "@/lib/data/notifications";
+import { createNotification, notifySeller } from "@/lib/data/notifications";
 
 const checkoutItemSchema = z.object({
   listingId: z.string().min(1, "ID produk wajib diisi"),
@@ -512,8 +512,7 @@ export async function completeOrderAction(
     }).catch(() => {});
   }
   if (order.sellerId) {
-    createNotification({
-      userId: order.sellerId,
+    notifySeller(order.sellerId, {
       title: "Pesanan Selesai",
       message: `Pesanan ${order.orderNumber} telah dikonfirmasi selesai oleh pembeli.`,
       type: "order_status",
@@ -569,8 +568,7 @@ export async function disputeOrderAction(
     parsed.data.evidenceUrl || undefined,
   );
 
-  createNotification({
-    userId: order.sellerId,
+  notifySeller(order.sellerId, {
     title: "Komplain Diajukan Pembeli",
     message: `Pembeli mengajukan komplain pada pesanan ${order.orderNumber}: "${parsed.data.reason.trim()}".`,
     type: "dispute",
@@ -671,8 +669,7 @@ export async function resolveDisputeAction(
     }).catch(() => {});
   }
   if (order.sellerId) {
-    createNotification({
-      userId: order.sellerId,
+    notifySeller(order.sellerId, {
       title: "Komplain Pesanan Diputuskan",
       message: `Komplain pesanan ${order.orderNumber} telah diputuskan admin: ${decision === "cancel" ? "Refund disetujui untuk pembeli" : "Pesanan diselesaikan"}.`,
       type: "dispute",

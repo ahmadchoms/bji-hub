@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
           })
           .catch(() => {});
 
-        const { createNotification } = await import("@/lib/data/notifications");
+        const { createNotification, notifySeller } = await import("@/lib/data/notifications");
         if (order.buyerId) {
           createNotification({
             userId: order.buyerId,
@@ -98,8 +98,7 @@ export async function POST(req: NextRequest) {
           }).catch(() => {});
         }
         if (order.sellerId) {
-          createNotification({
-            userId: order.sellerId,
+          notifySeller(order.sellerId, {
             title: "Pesanan Baru Masuk",
             message: `Ada pesanan baru ${order.orderNumber}. Segera proses dan kirimkan pesanan.`,
             type: "order_status",

@@ -118,7 +118,7 @@ async function main() {
     -- Trigram search indexes (F5)
     CREATE EXTENSION IF NOT EXISTS pg_trgm;
     CREATE INDEX IF NOT EXISTS idx_listings_title_trgm ON public.listings USING gin (title gin_trgm_ops);
-    CREATE INDEX IF NOT EXISTS idx_seller_profiles_business_name_trgm ON public.seller_profiles USING gin (business_name gin_trgm_ops);
+    CREATE INDEX IF NOT EXISTS idx_seller_profiles_business_name_trgm ON public.seller_profiles USING gin ("businessName" gin_trgm_ops);
 
     -- Review replies and reports (F9)
     ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS seller_reply TEXT;

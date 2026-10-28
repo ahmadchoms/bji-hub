@@ -98,7 +98,7 @@ export async function createRefundRecord(data: {
 export async function updateRefundStatus(
   id: string,
   updates: {
-    status: "pending" | "processed" | "failed" | "manual_required";
+    status: "pending" | "processed" | "failed" | "manual_required" | "voided";
     providerRef?: string | null;
     failureReason?: string | null;
     attempts?: number;

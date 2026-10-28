@@ -16,7 +16,6 @@ import {
   transitionOrderStatus,
   cancelOrderWithRefund,
   expireStalePendingForListings,
-  autoCompleteShippedForSeller,
   updateOrderSnapToken,
   generateOrderNumber,
   autoCompleteExpiredShippedOrders,
@@ -43,7 +42,6 @@ import {
   sendOrderRefundedEmail,
 } from "@/lib/email";
 import {
-  createRefundRecord,
   getRefundByOrderId,
   updateRefundStatus,
 } from "@/lib/data/refunds";
@@ -717,7 +715,7 @@ export async function sellerResolveDisputeAction(
     // 2. Atomic cancel order and record refund (M1)
     const cancelRes = await cancelOrderWithRefund(order.id, {
       reason: "Komplain disetujui penjual untuk pengembalian dana",
-      createdBy: session.userId || sellerId,
+      createdBy: (session.userId || sellerId) ?? undefined,
     });
     if (!cancelRes.applied || !cancelRes.refundRecord) {
       return fail(cancelRes.error || "Gagal membatalkan pesanan dan membuat pengembalian dana");

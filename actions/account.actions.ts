@@ -12,6 +12,7 @@ import { logger } from "@/lib/logger";
 import { BUYER_PROFILE_COOKIE } from "@/lib/auth/buyer-profile";
 import { validatePasswordStrength } from "@/lib/auth/password-rules";
 import { checkRateLimit } from "@/lib/rate-limit";
+import type { Order } from "@/types";
 
 export async function deleteAccountAction(
   confirmation: string,
@@ -29,7 +30,7 @@ export async function deleteAccountAction(
   const anonymizedEmail = `deleted+${userId}@invalid.local`;
 
   // 1. Guard: Check for any in-progress orders (fail-closed, M6)
-  let orders: any[] = [];
+  let orders: Order[] = [];
   try {
     orders = await getOrdersByBuyer(userId, session.email ?? undefined);
     const activeOrders = orders.filter((o) =>
@@ -68,11 +69,12 @@ export async function deleteAccountAction(
   // 1c. Guard for seller: check active orders
   if (session.role === "seller") {
     try {
-      const { getSellerById, getOrdersBySeller } = await import("@/lib/data");
+      const { getSellerById } = await import("@/lib/data");
+      const { getOrdersBySeller } = await import("@/lib/data/orders");
       const seller = await getSellerById(userId);
       if (seller) {
         const sellerOrders = await getOrdersBySeller(seller.id);
-        const activeSellerOrders = sellerOrders.filter((o) =>
+        const activeSellerOrders = sellerOrders.filter((o: Order) =>
           ["pending_payment", "paid", "shipped", "disputed"].includes(o.status),
         );
         if (activeSellerOrders.length > 0) {
@@ -96,9 +98,6 @@ export async function deleteAccountAction(
           where: { id: userId },
           data: {
             email: anonymizedEmail,
-            name: "Pengguna Terhapus",
-            phone: null,
-            avatar: null,
             passwordHash: null,
             suspendedAt: new Date(),
             addresses: {

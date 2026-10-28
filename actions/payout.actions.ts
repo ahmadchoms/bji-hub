@@ -15,6 +15,7 @@ import {
 } from "@/lib/data/payouts";
 import { createNotification } from "@/lib/data/notifications";
 import { sendBankDetailsChangedEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
 
 const bankDetailsSchema = z.object({
   bankName: z.string().trim().min(2, "Nama bank wajib dipilih/diisi"),

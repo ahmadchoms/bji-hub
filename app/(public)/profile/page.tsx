@@ -21,6 +21,8 @@ export const metadata = {
   description: "Kelola akun pengguna dan akses direktori kopi specialty Indonesia.",
 };
 
+export const dynamic = "force-dynamic";
+
 interface ProfilePageProps {
   searchParams: Promise<{
     required?: string;

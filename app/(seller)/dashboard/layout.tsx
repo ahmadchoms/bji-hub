@@ -4,6 +4,8 @@ import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { requireSeller } from "@/lib/auth/session";
 import { getSellerBankDetails } from "@/lib/data/payouts";
 
+export const dynamic = "force-dynamic";
+
 export default async function SellerDashboardLayout({
   children,
 }: {

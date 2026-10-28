@@ -12,6 +12,8 @@ export const metadata: Metadata = {
   description: "Pantau status pengiriman, bukti resi, dan riwayat pesanan kopi Anda.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function OrdersPage() {
   const session = await getSession();
 

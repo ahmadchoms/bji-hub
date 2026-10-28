@@ -35,6 +35,8 @@ export const metadata: Metadata = {
   description: "Rincian dan status pembayaran pesanan biji kopi Anda.",
 };
 
+export const dynamic = "force-dynamic";
+
 interface OrderSuccessPageProps {
   searchParams: Promise<{
     orderId?: string;

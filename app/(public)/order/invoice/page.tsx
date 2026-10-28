@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   description: "Cetak invoice resmi dan label pengiriman pesanan kopi di Biji Hub.",
 };
 
+export const dynamic = "force-dynamic";
+
 interface InvoicePageProps {
   searchParams: Promise<{
     orderNumber?: string;

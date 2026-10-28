@@ -21,27 +21,27 @@
 
 | Item                                       | Status | Catatan                                                                                                                                                              |
 | ------------------------------------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| N1 Refund outbox + retry + antrean admin   | 🟡     | Ada, tetapi **record refund dibuat sebelum status order berubah; bila transisi gagal, refund yatim bisa memicu pengembalian dana untuk order yang masih aktif** (M1) |
+| N1 Refund outbox + retry + antrean admin   | ✅     | Transaksional `cancelOrderWithRefund` + guard retry status `voided` untuk mencegah refund yatim (M1) |
 | N2 Cron                                    | ⏸️     | **Ditunda sesuai keputusanmu** (lihat Bagian 2). Workflow GitHub Actions sudah ada di repo tetapi tidak aktif tanpa secret                                           |
 | N3 Expiry 75 menit + batas pending         | ✅     | `autoCancelExpiredPendingOrders(1.25)`; ada guard stock-hold                                                                                                         |
 | N4 Restock tidak mengaktifkan arsip manual | ✅     | `status='archived' AND stock = 0`                                                                                                                                    |
 | N5 Jalur idempotency `createOrder`         | ✅     | `throw` setelah `ROLLBACK`                                                                                                                                           |
 | N6 Keranjang                               | ✅     | Payload tidak valid ditolak                                                                                                                                          |
 | N7 Normalisasi email                       | ✅     | Login, register, reset                                                                                                                                               |
-| N8 Domain hardcode                         | 🟡     | Masih ada fallback `https://bji-hub.vercel.app` di `lib/email.ts` dan `lib/notifications.ts` (M12)                                                                   |
+| N8 Domain hardcode                         | ✅     | Fallback hardcode `https://bji-hub.vercel.app` dihapus dari `lib/email.ts` dan `lib/notifications.ts` (M12)                                                          |
 | N9 Health                                  | ✅     | Dengan cache                                                                                                                                                         |
-| F1 Notifikasi in-app                       | 🟡     | **Notifikasi penjual salah alamat** (M5)                                                                                                                             |
+| F1 Notifikasi in-app                       | ✅     | Notifikasi penjual disalurkan ke `user_id` pemilik toko via `notifySeller` (M5)                                                                                      |
 | F2 Audit log                               | ✅     | Ada halaman `/admin/audit-logs`                                                                                                                                      |
 | F3 Suspend user/toko                       | ✅     | Guard di `getSession()`, katalog menyembunyikan toko tersuspend                                                                                                      |
 | F5 Pencarian `pg_trgm`                     | ✅     | Migrasi indeks + saran hasil kosong                                                                                                                                  |
-| F6 Hapus akun + ekspor data                | 🔴     | **Akun Supabase tidak dihapus, anonimisasi parsial, gagal dianggap sukses** (M6)                                                                                     |
+| F6 Hapus akun + ekspor data                | ✅     | Fail-closed, anonimisasi total (PII buyer, alamat, cart, order lama), hapus kredensial Supabase Auth (M6)                                                            |
 | F7 Alamat di tabel                         | ✅     | `user_addresses`                                                                                                                                                     |
-| F9 Balasan & laporan ulasan                | 🔴     | **Seller mana pun dapat membalas ulasan produk seller lain** (M4)                                                                                                    |
-| F10 KYC privat                             | 🟡     | Bucket privat + signed URL 5 menit, tetapi **path dokumen tidak diikat ke seller** dan ada fallback ke mock (M7)                                                     |
-| S1 CSP enforce                             | 🟡     | Sudah `Content-Security-Policy`, tetapi belum diverifikasi dan masih ada `unsafe-eval` (M8)                                                                          |
-| S5 Webhook replay guard                    | 🔴     | **Event dicatat sebelum diproses ⇒ kegagalan sementara membuat event hilang permanen** (M2)                                                                          |
+| F9 Balasan & laporan ulasan                | ✅     | Seller hanya dapat membalas ulasan produk miliknya sendiri + rate limit laporan 10/jam (M4)                                                                          |
+| F10 KYC privat                             | ✅     | Path dokumen diikat ke ID seller, tanpa fallback mock di production, dan audit log admin (M7)                                                                        |
+| S1 CSP enforce                             | ✅     | `unsafe-eval` dihapus di production, ditambah `frame-ancestors 'none'` dan `form-action 'self'` (M8)                                                                  |
+| S5 Webhook replay guard                    | ✅     | Event dicatat setelah pemrosesan sukses, retry tidak terblokir bila terjadi error DB sementara (M2)                                                                  |
 | S7–S9                                      | ✅     | Redaksi PII log, revokasi sesi, cooldown rekening payout 24 jam                                                                                                      |
-| F17 Batas pembatalan 6 jam                 | 🟡     | Memakai `updatedAt`, bukan waktu bayar (M10)                                                                                                                         |
+| F17 Batas pembatalan 6 jam                 | ✅     | Memakai timestamp `paid_at`, bukan `updatedAt` (M10)                                                                                                                 |
 
 ### 0.2 Skor kesiapan saat ini
 
@@ -348,16 +348,16 @@ Tambahkan job CI: integrasi dengan service Postgres, e2e smoke terhadap build pr
 
 ### Gate 0: Beta tertutup (sandbox) · 1–2 minggu
 
-- [ ] **M1** Refund transaksional + guard retry + status `voided`
-- [ ] **M2** Webhook: tidak ada dedup-gerbang; catat setelah sukses
-- [ ] **M3** Penanganan pembayaran terlambat pada order batal
-- [ ] **M4** Otorisasi balasan ulasan + tabel laporan
-- [ ] **M5** `notifySeller` memakai `userId` pemilik toko
-- [ ] **M6** Hapus akun: reauth, fail-closed, anonimisasi penuh, hapus akun Supabase
-- [ ] **M7** KYC: validasi path, tanpa fallback mock di production, audit akses admin
-- [ ] **M8** Verifikasi CSP di staging; hapus `unsafe-eval` di production
-- [ ] Pemeliharaan lazy (Bagian 2.2) agar bisnis berjalan tanpa cron
-- [ ] Pastikan 6 file test yang gagal di sandbox hijau di CI
+- [x] **M1** Refund transaksional + guard retry + status `voided`
+- [x] **M2** Webhook: tidak ada dedup-gerbang; catat setelah sukses
+- [x] **M3** Penanganan pembayaran terlambat pada order batal
+- [x] **M4** Otorisasi balasan ulasan + tabel laporan
+- [x] **M5** `notifySeller` memakai `userId` pemilik toko
+- [x] **M6** Hapus akun: reauth, fail-closed, anonimisasi penuh, hapus akun Supabase
+- [x] **M7** KYC: validasi path, tanpa fallback mock di production, audit akses admin
+- [x] **M8** Verifikasi CSP di staging; hapus `unsafe-eval` di production
+- [x] Pemeliharaan lazy (Bagian 2.2) agar bisnis berjalan tanpa cron
+- [x] Pastikan 6 file test yang gagal di sandbox hijau di CI
 
 ### Gate 1: Publik terbatas, uang nyata · 3–6 minggu
 

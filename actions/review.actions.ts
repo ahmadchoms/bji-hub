@@ -7,6 +7,7 @@ import { getSession, requireSeller } from "@/lib/auth/session";
 import { replyToReview, reportReview } from "@/lib/data/reviews";
 import { recordAuditLog } from "@/lib/data/audit-logs";
 import { getClientIp } from "@/lib/client-ip";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const replySchema = z.object({
   reviewId: z.string().min(1, "ID ulasan wajib diisi"),
@@ -16,16 +17,22 @@ const replySchema = z.object({
 export async function replyToReviewAction(
   input: unknown,
 ): Promise<ActionResult<{ success: boolean }>> {
-  await requireSeller();
+  const { sellerId } = await requireSeller();
 
   const parsed = replySchema.safeParse(input);
   if (!parsed.success) {
     return fail(parsed.error.issues[0]?.message || "Data balasan tidak valid");
   }
 
-  const success = await replyToReview(parsed.data.reviewId, parsed.data.reply);
+  const success = await replyToReview(
+    parsed.data.reviewId,
+    sellerId,
+    parsed.data.reply,
+  );
   if (!success) {
-    return fail("Ulasan tidak ditemukan atau gagal memperbarui balasan.");
+    return fail(
+      "Ulasan tidak ditemukan, sudah dibalas sebelumnya, atau Anda tidak memiliki akses ke ulasan produk ini.",
+    );
   }
 
   revalidatePath("/product");
@@ -43,6 +50,11 @@ export async function reportReviewAction(
   const session = await getSession();
   if (session.role === "guest" || !session.userId) {
     return fail("Silakan masuk terlebih dahulu untuk melaporkan ulasan.");
+  }
+
+  const rate = await checkRateLimit("report_review:" + session.userId, 10, 60 * 60_000);
+  if (!rate.success) {
+    return fail("Terlalu banyak pelaporan ulasan dalam waktu singkat. Silakan tunggu sebentar.");
   }
 
   const parsed = reportSchema.safeParse(input);

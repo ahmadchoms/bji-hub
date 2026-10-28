@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { logger } from "@/lib/logger";
 import type { Review } from "@/types";
 
 let poolInstance: Pool | null = null;
@@ -216,6 +217,7 @@ export async function getReviewsByBuyer(buyerId: string): Promise<Review[]> {
 
 export async function replyToReview(
   reviewId: string,
+  sellerId: string,
   replyText: string,
 ): Promise<boolean> {
   const pool = getPool();
@@ -224,22 +226,31 @@ export async function replyToReview(
   if (pool) {
     try {
       const res = await pool.query(
-        `UPDATE public.reviews
+        `UPDATE public.reviews r
          SET seller_reply = $1, seller_replied_at = $2
-         WHERE id = $3`,
-        [replyText.trim(), now, reviewId],
+         FROM public.listings l
+         WHERE r.id = $3
+           AND r.listing_id = l.id
+           AND l.seller_id = $4
+           AND r.seller_reply IS NULL`,
+        [replyText.trim(), now, reviewId, sellerId],
       );
       return (res.rowCount ?? 0) > 0;
-    } catch {
+    } catch (err) {
+      logger.error("reviews.reply_failed", err, { reviewId, sellerId });
       return false;
     }
   }
 
+  const { mockListings } = await import("@/lib/mock/data");
   const r = mockReviews.find((rev) => rev.id === reviewId);
-  if (r) {
-    r.sellerReply = replyText.trim();
-    r.sellerRepliedAt = now;
-    return true;
+  if (r && !r.sellerReply) {
+    const listing = mockListings.find((l) => l.id === r.listingId);
+    if (listing && listing.sellerId === sellerId) {
+      r.sellerReply = replyText.trim();
+      r.sellerRepliedAt = now;
+      return true;
+    }
   }
   return false;
 }

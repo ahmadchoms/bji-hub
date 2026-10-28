@@ -71,25 +71,46 @@ describe("reviews data and stats", () => {
     expect(notFound).toBeNull();
   });
 
-  it("handles seller reply and review reporting (F9)", async () => {
+  it("handles seller reply with IDOR ownership check and review reporting (F9 / M4)", async () => {
     const { createReview, replyToReview, reportReview, getReviewsByListing, _resetMockReviewsForTest } =
       await import("@/lib/data/reviews");
     _resetMockReviewsForTest();
 
     const rev = await createReview({
-      listingId: "list-f9",
+      listingId: "list-1", // list-1 belongs to seller-1
       buyerName: "Buyer 1",
       rating: 4,
       comment: "Rasa enak tapi packaging agak penyok",
     });
 
-    const replySuccess = await replyToReview(rev.id, "Terima kasih atas masukannya, kami perbaiki kemasan.");
+    // 1. Non-owner seller (seller-2) attempts to reply -> rejected (M4 IDOR protection)
+    const unauthorizedReply = await replyToReview(
+      rev.id,
+      "seller-2",
+      "Saya bukan pemilik tapi mau balas",
+    );
+    expect(unauthorizedReply).toBe(false);
+
+    // 2. Owner seller (seller-1) replies -> succeeded
+    const replySuccess = await replyToReview(
+      rev.id,
+      "seller-1",
+      "Terima kasih atas masukannya, kami perbaiki kemasan.",
+    );
     expect(replySuccess).toBe(true);
+
+    // 3. Second reply attempt -> rejected (single reply limit)
+    const duplicateReply = await replyToReview(
+      rev.id,
+      "seller-1",
+      "Balasan kedua tidak boleh",
+    );
+    expect(duplicateReply).toBe(false);
 
     const reportSuccess = await reportReview(rev.id, "Spam ulasan palsu");
     expect(reportSuccess).toBe(true);
 
-    const list = await getReviewsByListing("list-f9");
+    const list = await getReviewsByListing("list-1");
     expect(list.length).toBe(1);
     expect(list[0].sellerReply).toBe("Terima kasih atas masukannya, kami perbaiki kemasan.");
     expect(list[0].isReported).toBe(true);

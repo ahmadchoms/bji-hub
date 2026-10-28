@@ -74,6 +74,15 @@ describe("deleteAccountAction (F6)", () => {
     }
   });
 
+  it("blocks deletion if user has disputed orders (M6)", async () => {
+    mockOrdersList = [{ id: "ord-disp", status: "disputed" }];
+    const res = await deleteAccountAction("HAPUS AKUN");
+    expect(res.success).toBe(false);
+    if (!res.success) {
+      expect(res.error).toContain("pesanan yang sedang berjalan");
+    }
+  });
+
   it("allows deletion if user only has completed or cancelled orders", async () => {
     mockOrdersList = [
       { id: "ord-1", status: "delivered" },

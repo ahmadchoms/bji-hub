@@ -26,12 +26,14 @@ export async function deleteAccountAction(
   }
 
   const userId = session.userId;
+  const anonymizedEmail = `deleted+${userId}@invalid.local`;
 
-  // 1. Guard: Check for any in-progress orders (UU PDP allows retention of financial records, but open transactions must be closed first)
+  // 1. Guard: Check for any in-progress orders (fail-closed, M6)
+  let orders: any[] = [];
   try {
-    const orders = await getOrdersByBuyer(userId, session.email ?? undefined);
+    orders = await getOrdersByBuyer(userId, session.email ?? undefined);
     const activeOrders = orders.filter((o) =>
-      ["pending_payment", "paid", "processing", "shipped"].includes(o.status),
+      ["pending_payment", "paid", "shipped", "disputed"].includes(o.status),
     );
     if (activeOrders.length > 0) {
       return fail(
@@ -40,31 +42,130 @@ export async function deleteAccountAction(
     }
   } catch (err) {
     logger.error("account.check_orders_failed", err, { userId });
+    return fail("Gagal memverifikasi status pesanan akun. Silakan coba beberapa saat lagi.");
   }
 
-  // 2. Anonymize user personal data in database
-  if (process.env.DATA_SOURCE !== "mock") {
+  // 1b. Guard: Check for open refunds (pending / manual_required)
+  try {
+    const { getAllRefunds } = await import("@/lib/data/refunds");
+    const allRefunds = await getAllRefunds();
+    const buyerOrderIds = new Set(orders.map((o) => o.id));
+    const openRefund = allRefunds.find(
+      (r) =>
+        buyerOrderIds.has(r.orderId) &&
+        (r.status === "pending" || r.status === "manual_required"),
+    );
+    if (openRefund) {
+      return fail(
+        "Tidak dapat menghapus akun karena masih terdapat pengembalian dana yang sedang diproses.",
+      );
+    }
+  } catch (err) {
+    logger.error("account.check_refunds_failed", err, { userId });
+    return fail("Gagal memverifikasi status pengembalian dana akun.");
+  }
+
+  // 1c. Guard for seller: check active orders
+  if (session.role === "seller") {
     try {
-      const prisma = getPrisma();
-      const anonymizedEmail = `anonymized_${userId.slice(0, 8)}@deleted.bijihub.com`;
-      await prisma.user.update({
-        where: { id: userId },
-        data: {
-          email: anonymizedEmail,
-          passwordHash: null,
-          suspendedAt: new Date(),
-          addresses: {
-            deleteMany: {},
-          },
-        },
-      });
+      const { getSellerById, getOrdersBySeller } = await import("@/lib/data");
+      const seller = await getSellerById(userId);
+      if (seller) {
+        const sellerOrders = await getOrdersBySeller(seller.id);
+        const activeSellerOrders = sellerOrders.filter((o) =>
+          ["pending_payment", "paid", "shipped", "disputed"].includes(o.status),
+        );
+        if (activeSellerOrders.length > 0) {
+          return fail(
+            `Tidak dapat menghapus akun karena toko Anda masih memiliki ${activeSellerOrders.length} pesanan aktif.`,
+          );
+        }
+      }
     } catch (err) {
-      logger.error("account.anonymize_db_failed", err, { userId });
-      // Non-fatal if table doesn't have the user row yet (e.g. Supabase-only user)
+      logger.error("account.check_seller_orders_failed", err, { userId });
+      return fail("Gagal memverifikasi status toko Anda.");
     }
   }
 
-  // 3. Log compliance audit event
+  // 2. Anonymize user personal data in database (fail-closed, M6)
+  if (process.env.DATA_SOURCE !== "mock") {
+    try {
+      const prisma = getPrisma();
+      await prisma.$transaction(async (tx) => {
+        await tx.user.update({
+          where: { id: userId },
+          data: {
+            email: anonymizedEmail,
+            name: "Pengguna Terhapus",
+            phone: null,
+            avatar: null,
+            passwordHash: null,
+            suspendedAt: new Date(),
+            addresses: {
+              deleteMany: {},
+            },
+          },
+        });
+
+        // Anonymize historical buyer PII on completed/canceled orders
+        await tx.order.updateMany({
+          where: { buyerId: userId },
+          data: {
+            buyerName: "Pengguna Terhapus",
+            buyerEmail: anonymizedEmail,
+            buyerPhone: "080000000000",
+            buyerAddress: "Dianonimkan",
+            buyerCity: "Dianonimkan",
+          },
+        });
+
+        // If seller profile exists, archive listings and clear KYC
+        const seller = await tx.sellerProfile.findUnique({
+          where: { userId },
+        });
+        if (seller) {
+          await tx.listing.updateMany({
+            where: { sellerId: seller.id },
+            data: { status: "archived" },
+          });
+          await tx.sellerProfile.update({
+            where: { id: seller.id },
+            data: {
+              kycDocumentUrl: null,
+              suspendedAt: new Date(),
+            },
+          });
+        }
+      });
+    } catch (err) {
+      logger.error("account.anonymize_db_failed", err, { userId });
+      return fail("Gagal memproses penghapusan data akun di database.");
+    }
+  }
+
+  // 3. Supabase Auth user deletion with service role (fail-closed, M6)
+  if (
+    process.env.DATA_SOURCE !== "mock" &&
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  ) {
+    try {
+      const { createAdminClient } = await import("@/lib/supabase/admin");
+      const supabaseAdmin = createAdminClient();
+      if (supabaseAdmin) {
+        const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+        if (error) {
+          logger.error("account.supabase_delete_user_failed", error, { userId });
+          return fail("Gagal menghapus kredensial autentikasi. Silakan hubungi dukungan.");
+        }
+      }
+    } catch (err) {
+      logger.error("account.supabase_admin_failed", err, { userId });
+      return fail("Gagal menghubungi server autentikasi untuk menghapus akun.");
+    }
+  }
+
+  // 4. Log compliance audit event (without PII)
   try {
     await recordAuditLog({
       actorId: userId,
@@ -76,20 +177,6 @@ export async function deleteAccountAction(
     });
   } catch (err) {
     logger.warn("account.audit_log_failed", { userId, error: String(err) });
-  }
-
-  // 4. Supabase Auth cleanup / global session revocation
-  if (
-    process.env.DATA_SOURCE !== "mock" &&
-    process.env.NEXT_PUBLIC_SUPABASE_URL &&
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  ) {
-    try {
-      const supabase = await createClient();
-      await supabase.auth.signOut({ scope: "global" });
-    } catch {
-      // ignore: best-effort session signout
-    }
   }
 
   // 5. Clear all session cookies

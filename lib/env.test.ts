@@ -49,7 +49,57 @@ describe("validateEnv", () => {
     expect(() => validateEnv()).toThrow(/CRITICAL: Server configuration error/);
   });
 
-  it("passes in production with prisma when all required env vars are present, including optional keys", () => {
+  it("throws in production with prisma when SUPABASE_SERVICE_ROLE_KEY or CRON_SECRET is missing (S7)", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("DATA_SOURCE", "prisma");
+    vi.stubEnv("DATABASE_URL", "postgresql://user:pass@localhost:5432/db");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
+    vi.stubEnv("MIDTRANS_SERVER_KEY", "server-key");
+    vi.stubEnv("MIDTRANS_CLIENT_KEY", "client-key");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://bji-hub.vercel.app");
+    vi.stubEnv("RESEND_API_KEY", "re_123");
+    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", ""); // Missing
+    vi.stubEnv("CRON_SECRET", ""); // Missing
+
+    expect(() => validateEnv()).toThrow(/SUPABASE_SERVICE_ROLE_KEY wajib diisi/);
+  });
+
+  it("throws in production with prisma when RESEND_API_KEY is missing and EMAIL_MODE is not disabled (S7)", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("DATA_SOURCE", "prisma");
+    vi.stubEnv("DATABASE_URL", "postgresql://user:pass@localhost:5432/db");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
+    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service-key");
+    vi.stubEnv("CRON_SECRET", "cron-secret");
+    vi.stubEnv("MIDTRANS_SERVER_KEY", "server-key");
+    vi.stubEnv("MIDTRANS_CLIENT_KEY", "client-key");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://bji-hub.vercel.app");
+    vi.stubEnv("RESEND_API_KEY", ""); // Missing
+    vi.stubEnv("EMAIL_MODE", "enabled");
+
+    expect(() => validateEnv()).toThrow(/RESEND_API_KEY wajib diisi di production/);
+  });
+
+  it("passes in production when EMAIL_MODE=disabled even if RESEND_API_KEY is omitted (S7)", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("DATA_SOURCE", "prisma");
+    vi.stubEnv("DATABASE_URL", "postgresql://user:pass@localhost:5432/db");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
+    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service-key");
+    vi.stubEnv("CRON_SECRET", "cron-secret");
+    vi.stubEnv("MIDTRANS_SERVER_KEY", "server-key");
+    vi.stubEnv("MIDTRANS_CLIENT_KEY", "client-key");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://bji-hub.vercel.app");
+    vi.stubEnv("EMAIL_MODE", "disabled");
+    vi.stubEnv("RESEND_API_KEY", "");
+
+    expect(() => validateEnv()).not.toThrow();
+  });
+
+  it("passes in production with prisma when all required env vars are present", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("DATA_SOURCE", "prisma");
     vi.stubEnv("DATABASE_URL", "postgresql://user:pass@localhost:5432/db");

@@ -104,6 +104,45 @@ export async function notifySeller(
   return createNotification({ ...payload, userId });
 }
 
+export async function notifyAdmins(payload: {
+  title: string;
+  message: string;
+  type?: string;
+  link?: string;
+}): Promise<NotificationRecord[]> {
+  const adminIds: string[] = [];
+
+  if (process.env.DATA_SOURCE === "mock") {
+    adminIds.push("user-admin-1");
+  } else {
+    const pool = getPool();
+    if (pool) {
+      try {
+        const res = await pool.query<{ id: string }>(
+          `SELECT id FROM public.users WHERE role = 'ADMIN'`,
+        );
+        adminIds.push(...res.rows.map((r) => r.id));
+      } catch (err) {
+        logger.error("notifications.find_admins_failed", err);
+      }
+    }
+  }
+
+  if (adminIds.length === 0) {
+    adminIds.push("user-admin-1");
+  }
+
+  const results: NotificationRecord[] = [];
+  for (const adminId of adminIds) {
+    const notif = await createNotification({
+      ...payload,
+      userId: adminId,
+    });
+    results.push(notif);
+  }
+  return results;
+}
+
 export async function createNotification(data: {
   userId: string;
   title: string;

@@ -22,27 +22,52 @@ interface InvoicePrintViewProps {
   autoPrint?: boolean;
 }
 
+const CODE39_PATTERNS: Record<string, string> = {
+  "0": "000110100", "1": "100100001", "2": "001100001", "3": "101100000",
+  "4": "000110001", "5": "100110000", "6": "001110000", "7": "000100101",
+  "8": "100100100", "9": "001100100", "A": "100001001", "B": "001001001",
+  "C": "101001000", "D": "000011001", "E": "100011000", "F": "001011000",
+  "G": "000001101", "H": "100001100", "I": "001001100", "J": "000011100",
+  "K": "100000011", "L": "001000011", "M": "101000010", "N": "000010011",
+  "O": "100010010", "P": "001010010", "Q": "000000111", "R": "100000110",
+  "S": "001000110", "T": "000010110", "U": "110000001", "V": "011000001",
+  "W": "111000000", "X": "010010001", "Y": "110010000", "Z": "011010000",
+  "-": "010000101", ".": "110000100", " ": "011000100", "$": "010101000",
+  "/": "010100010", "+": "010001010", "%": "000101010", "*": "010010100",
+};
+
+// S9: Authentic standard ISO/IEC 16388 Code 39 barcode (scannable by couriers and phone cameras)
 function BarcodeSvg({ value }: { value: string }) {
-  const widths = [2, 1, 3, 1, 2, 4, 1, 3, 2, 1, 2, 3, 1, 4, 2, 1, 3, 2, 1, 2];
-  let x = 10;
+  const cleanVal = (value || "").toUpperCase().replace(/[^0-9A-Z\-. $/+%]/g, "-");
+  const fullText = `*${cleanVal}*`;
+
+  const narrowWidth = 1.2;
+  const wideWidth = 3.2;
+  let currentX = 10;
   const bars: { x: number; w: number }[] = [];
 
-  for (let i = 0; i < 35; i++) {
-    const charCode = value.charCodeAt(i % value.length) || 65;
-    const w = widths[(charCode + i) % widths.length];
-    if (i % 2 === 0) {
-      bars.push({ x, w });
+  for (let c = 0; c < fullText.length; c++) {
+    const char = fullText[c];
+    const pattern = CODE39_PATTERNS[char] || CODE39_PATTERNS["-"];
+
+    for (let i = 0; i < 9; i++) {
+      const isBar = i % 2 === 0;
+      const width = pattern[i] === "1" ? wideWidth : narrowWidth;
+      if (isBar) {
+        bars.push({ x: currentX, w: width });
+      }
+      currentX += width;
     }
-    x += w + 1.5;
+    currentX += narrowWidth;
   }
 
-  const totalWidth = x + 10;
+  const totalWidth = currentX + 10;
 
   return (
     <div className="flex flex-col items-center">
       <svg
         viewBox={`0 0 ${totalWidth} 45`}
-        className="w-56 h-12 max-w-full"
+        className="w-64 h-12 max-w-full"
         xmlns="http://www.w3.org/2000/svg"
       >
         {bars.map((bar, idx) => (
@@ -50,7 +75,7 @@ function BarcodeSvg({ value }: { value: string }) {
         ))}
       </svg>
       <span className="font-mono text-xs tracking-widest text-neutral-900 font-bold mt-1">
-        {value}
+        {cleanVal}
       </span>
     </div>
   );

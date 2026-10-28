@@ -1,22 +1,19 @@
 // This file configures the initialization of Sentry on the server.
-// The config you add here will be used whenever the server handles a request.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from "@sentry/nextjs";
 
-const SENTRY_DSN =
-  process.env.SENTRY_DSN ||
-  process.env.NEXT_PUBLIC_SENTRY_DSN ||
-  "https://17a575a438af2dc2dbf31d7303f32ad3@o4512332057214976.ingest.us.sentry.io/4512332124520448";
+const dsn = process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN;
 
 Sentry.init({
-  dsn: SENTRY_DSN,
+  dsn,
+  enabled: Boolean(dsn) && process.env.NODE_ENV === "production",
+  environment: process.env.VERCEL_ENV || process.env.NODE_ENV,
 
-  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-  tracesSampleRate: 1,
+  // Sample 10% of transactions in production to conserve quota
+  tracesSampleRate: 0.1,
 
-  // Turns off collection of data that could identify users. Adjust per category:
-  // https://docs.sentry.io/platforms/javascript/configuration/options/#dataCollection
+  // Turns off collection of data that could identify users
   dataCollection: {
     userInfo: false,
     graphQL: { document: false, variables: false },
@@ -24,8 +21,28 @@ Sentry.init({
     databaseQueryData: false,
     queues: false,
     httpBodies: [],
-    httpHeaders: { deny: ["forwarded", "-ip", "remote-", "via", "-user"] },
-    cookies: { deny: ["forwarded", "-ip", "remote-", "via", "-user"] },
-    urlQueryParams: { deny: ["forwarded", "-ip", "remote-", "via", "-user"] },
+    httpHeaders: { deny: ["forwarded", "-ip", "remote-", "via", "-user", "authorization", "cookie"] },
+    cookies: { deny: ["*"] },
+    urlQueryParams: { deny: ["*"] },
+  },
+
+  // Scrub any remaining PII from error messages and breadcrumbs (S3)
+  beforeSend(event) {
+    const scrub = (text?: string) =>
+      text
+        ?.replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, "[email]")
+        .replace(/\b(?:\+62|0)8\d{8,12}\b/g, "[telepon]");
+
+    if (event.message) event.message = scrub(event.message);
+    event.exception?.values?.forEach((v) => {
+      if (v.value) v.value = scrub(v.value);
+    });
+
+    if (event.request) {
+      delete event.request.cookies;
+      delete event.request.headers;
+    }
+
+    return event;
   },
 });

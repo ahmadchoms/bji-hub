@@ -46,7 +46,8 @@ import {
   updateRefundStatus,
 } from "@/lib/data/refunds";
 import { recordAuditLog } from "@/lib/data/audit-logs";
-import { createNotification, notifySeller } from "@/lib/data/notifications";
+import { createNotification, notifySeller, notifyAdmins } from "@/lib/data/notifications";
+import { runAfterResponse } from "@/lib/after";
 
 const checkoutItemSchema = z.object({
   listingId: z.string().min(1, "ID produk wajib diisi"),
@@ -434,21 +435,26 @@ export async function confirmOrderPaymentAction(
   if (!order) return fail("Pesanan tidak ditemukan");
 
   await updateOrderStatus(order.id, "paid");
-  sendOrderPaidEmail({ ...order, status: "paid" }).catch((err) =>
-    logger.error("Failed to send paid email", err, { orderId: order.id }),
-  );
+  runAfterResponse(async () => {
+    await sendOrderPaidEmail({ ...order, status: "paid" }).catch((err) =>
+      logger.error("Failed to send paid email", err, { orderId: order.id }),
+    );
 
-  getSellerById(order.sellerId)
-    .then((seller) => {
-      sendNewOrderSellerEmail({
-        order: { ...order, status: "paid" },
-        sellerEmail: seller?.user?.email,
-        sellerName: seller?.businessName || order.sellerName,
-      }).catch((err) =>
-        logger.error("Failed to send seller new order email", err, { orderId: order.id }),
-      );
-    })
-    .catch(() => {});
+    try {
+      const seller = await getSellerById(order.sellerId);
+      if (seller) {
+        await sendNewOrderSellerEmail({
+          order: { ...order, status: "paid" },
+          sellerEmail: seller?.user?.email,
+          sellerName: seller?.businessName || order.sellerName,
+        }).catch((err) =>
+          logger.error("Failed to send seller new order email", err, { orderId: order.id }),
+        );
+      }
+    } catch {
+      // ignore
+    }
+  });
 
   revalidatePath("/orders");
   revalidatePath("/order/success");
@@ -476,21 +482,23 @@ export async function updateShipmentTrackingAction(
 
   const cleanResi = trackingNumber.trim();
   await updateOrderStatus(order.id, "shipped", cleanResi);
-  sendOrderShippedEmail({
-    ...order,
-    status: "shipped",
-    trackingNumber: cleanResi,
-  }).catch((err) => logger.error("Failed to send shipped email", err, { orderId: order.id }));
+  runAfterResponse(async () => {
+    await sendOrderShippedEmail({
+      ...order,
+      status: "shipped",
+      trackingNumber: cleanResi,
+    }).catch((err) => logger.error("Failed to send shipped email", err, { orderId: order.id }));
 
-  if (order.buyerId) {
-    createNotification({
-      userId: order.buyerId,
-      title: "Pesanan Dikirim",
-      message: `Pesanan ${order.orderNumber} telah dikirim dengan nomor resi ${cleanResi}.`,
-      type: "order_status",
-      link: "/orders",
-    }).catch(() => {});
-  }
+    if (order.buyerId) {
+      await createNotification({
+        userId: order.buyerId,
+        title: "Pesanan Dikirim",
+        message: `Pesanan ${order.orderNumber} telah dikirim dengan nomor resi ${cleanResi}.`,
+        type: "order_status",
+        link: "/orders",
+      }).catch(() => {});
+    }
+  });
 
   return ok({ success: true });
 }
@@ -510,23 +518,25 @@ export async function completeOrderAction(
 
   await updateOrderStatus(order.id, "completed");
 
-  if (order.buyerId) {
-    createNotification({
-      userId: order.buyerId,
-      title: "Pesanan Selesai",
-      message: `Pesanan ${order.orderNumber} telah selesai. Berikan ulasan untuk membantu pembeli lain!`,
-      type: "order_status",
-      link: "/orders",
-    }).catch(() => {});
-  }
-  if (order.sellerId) {
-    notifySeller(order.sellerId, {
-      title: "Pesanan Selesai",
-      message: `Pesanan ${order.orderNumber} telah dikonfirmasi selesai oleh pembeli.`,
-      type: "order_status",
-      link: "/dashboard/orders",
-    }).catch(() => {});
-  }
+  runAfterResponse(async () => {
+    if (order.buyerId) {
+      await createNotification({
+        userId: order.buyerId,
+        title: "Pesanan Selesai",
+        message: `Pesanan ${order.orderNumber} telah selesai. Berikan ulasan untuk membantu pembeli lain!`,
+        type: "order_status",
+        link: "/orders",
+      }).catch(() => {});
+    }
+    if (order.sellerId) {
+      await notifySeller(order.sellerId, {
+        title: "Pesanan Selesai",
+        message: `Pesanan ${order.orderNumber} telah dikonfirmasi selesai oleh pembeli.`,
+        type: "order_status",
+        link: "/dashboard/orders",
+      }).catch(() => {});
+    }
+  });
 
   revalidatePath("/orders");
   revalidatePath("/order/success");
@@ -576,12 +586,22 @@ export async function disputeOrderAction(
     parsed.data.evidenceUrl || undefined,
   );
 
-  notifySeller(order.sellerId, {
-    title: "Komplain Diajukan Pembeli",
-    message: `Pembeli mengajukan komplain pada pesanan ${order.orderNumber}: "${parsed.data.reason.trim()}".`,
-    type: "dispute",
-    link: "/dashboard/orders",
-  }).catch(() => {});
+  runAfterResponse(async () => {
+    await notifySeller(order.sellerId, {
+      title: "Komplain Diajukan Pembeli",
+      message: `Pembeli mengajukan komplain pada pesanan ${order.orderNumber}: "${parsed.data.reason.trim()}".`,
+      type: "dispute",
+      link: "/dashboard/orders",
+    }).catch(() => {});
+
+    // A2: Alert admins for dispute resolution
+    await notifyAdmins({
+      title: "Komplain Baru Diajukan",
+      message: `Komplain diajukan untuk pesanan ${order.orderNumber}. Perlu pemantauan admin.`,
+      type: "dispute",
+      link: "/admin/transactions",
+    }).catch(() => {});
+  });
 
   revalidatePath("/order/success");
   revalidatePath("/profile");
@@ -635,12 +655,14 @@ export async function resolveDisputeAction(
       attempts: 1,
     });
 
-    sendOrderRefundedEmail(order, {
-      amount: order.totalAmount,
-      reason: "Komplain disetujui admin untuk pengembalian dana",
-      status: refundRes.status,
-    }).catch((err) => {
-      logger.warn("order.refund_email_failed", { orderId: order.id, error: String(err) });
+    runAfterResponse(async () => {
+      await sendOrderRefundedEmail(order, {
+        amount: order.totalAmount,
+        reason: "Komplain disetujui admin untuk pengembalian dana",
+        status: refundRes.status,
+      }).catch((err) => {
+        logger.warn("order.refund_email_failed", { orderId: order.id, error: String(err) });
+      });
     });
   } else {
     await transitionOrderStatus(order.id, "completed");
@@ -657,23 +679,25 @@ export async function resolveDisputeAction(
     ipAddress: clientIp,
   });
 
-  if (order.buyerId) {
-    createNotification({
-      userId: order.buyerId,
-      title: "Komplain Pesanan Diputuskan",
-      message: `Komplain pesanan ${order.orderNumber} telah diputuskan admin: ${decision === "cancel" ? "Refund disetujui" : "Pesanan diselesaikan"}.`,
-      type: "dispute",
-      link: "/orders",
-    }).catch(() => {});
-  }
-  if (order.sellerId) {
-    notifySeller(order.sellerId, {
-      title: "Komplain Pesanan Diputuskan",
-      message: `Komplain pesanan ${order.orderNumber} telah diputuskan admin: ${decision === "cancel" ? "Refund disetujui untuk pembeli" : "Pesanan diselesaikan"}.`,
-      type: "dispute",
-      link: "/dashboard/orders",
-    }).catch(() => {});
-  }
+  runAfterResponse(async () => {
+    if (order.buyerId) {
+      await createNotification({
+        userId: order.buyerId,
+        title: "Komplain Pesanan Diputuskan",
+        message: `Komplain pesanan ${order.orderNumber} telah diputuskan admin: ${decision === "cancel" ? "Refund disetujui" : "Pesanan diselesaikan"}.`,
+        type: "dispute",
+        link: "/orders",
+      }).catch(() => {});
+    }
+    if (order.sellerId) {
+      await notifySeller(order.sellerId, {
+        title: "Komplain Pesanan Diputuskan",
+        message: `Komplain pesanan ${order.orderNumber} telah diputuskan admin: ${decision === "cancel" ? "Refund disetujui untuk pembeli" : "Pesanan diselesaikan"}.`,
+        type: "dispute",
+        link: "/dashboard/orders",
+      }).catch(() => {});
+    }
+  });
 
   try {
     revalidatePath("/order/success");
@@ -740,12 +764,14 @@ export async function sellerResolveDisputeAction(
       attempts: 1,
     });
 
-    sendOrderRefundedEmail(order, {
-      amount: order.totalAmount,
-      reason: "Komplain disetujui penjual untuk pengembalian dana",
-      status: refundRes.status,
-    }).catch((err) => {
-      logger.warn("order.refund_email_failed", { orderId: order.id, error: String(err) });
+    runAfterResponse(async () => {
+      await sendOrderRefundedEmail(order, {
+        amount: order.totalAmount,
+        reason: "Komplain disetujui penjual untuk pengembalian dana",
+        status: refundRes.status,
+      }).catch((err) => {
+        logger.warn("order.refund_email_failed", { orderId: order.id, error: String(err) });
+      });
     });
   } else if (resolution === "reship") {
     if (!newTrackingNumber || newTrackingNumber.trim().length < 3) {
@@ -753,11 +779,13 @@ export async function sellerResolveDisputeAction(
     }
     const cleanReship = newTrackingNumber.trim();
     await updateOrderStatus(order.id, "shipped", cleanReship);
-    sendOrderShippedEmail({
-      ...order,
-      status: "shipped",
-      trackingNumber: cleanReship,
-    }).catch((err) => logger.error("Failed to send reship email", err, { orderId: order.id }));
+    runAfterResponse(async () => {
+      await sendOrderShippedEmail({
+        ...order,
+        status: "shipped",
+        trackingNumber: cleanReship,
+      }).catch((err) => logger.error("Failed to send reship email", err, { orderId: order.id }));
+    });
   }
 
   try {
@@ -1026,12 +1054,14 @@ export async function cancelPaidOrderAction(
     attempts: 1,
   });
 
-  sendOrderRefundedEmail(order, {
-    amount: order.totalAmount,
-    reason: cleanReason,
-    status: refundRes.status,
-  }).catch((err) => {
-    logger.warn("order.refund_email_failed", { orderId: order.id, error: String(err) });
+  runAfterResponse(async () => {
+    await sendOrderRefundedEmail(order, {
+      amount: order.totalAmount,
+      reason: cleanReason,
+      status: refundRes.status,
+    }).catch((err) => {
+      logger.warn("order.refund_email_failed", { orderId: order.id, error: String(err) });
+    });
   });
 
   try {

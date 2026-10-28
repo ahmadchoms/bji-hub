@@ -48,25 +48,28 @@ export async function updateSellerBankAction(
 
   await updateSellerBankDetails(sellerId, parsed.data);
 
-  // S9: Send in-app notification & alert email for security cooldown
-  if (session.userId) {
-    createNotification({
-      userId: session.userId,
-      title: "Perubahan Rekening Bank Payout",
-      message: `Rekening bank pencairan dana diperbarui ke ${parsed.data.bankName} (${parsed.data.bankAccountNumber}). Demi keamanan, penarikan dana dijeda selama 24 jam.`,
-      type: "system",
-      link: "/dashboard/orders",
-    }).catch(() => {});
-  }
+  // S9 / A1: Send in-app notification & alert email reliably via runAfterResponse
+  const { runAfterResponse } = await import("@/lib/after");
+  runAfterResponse(async () => {
+    if (session.userId) {
+      await createNotification({
+        userId: session.userId,
+        title: "Perubahan Rekening Bank Payout",
+        message: `Rekening bank pencairan dana diperbarui ke ${parsed.data.bankName} (${parsed.data.bankAccountNumber}). Demi keamanan, penarikan dana dijeda selama 24 jam.`,
+        type: "system",
+        link: "/dashboard/orders",
+      }).catch(() => {});
+    }
 
-  if (session.email) {
-    sendBankDetailsChangedEmail({
-      toEmail: session.email,
-      sellerName: session.name || "Mitra Penjual",
-      bankName: parsed.data.bankName,
-      accountNumber: parsed.data.bankAccountNumber,
-    }).catch(() => {});
-  }
+    if (session.email) {
+      await sendBankDetailsChangedEmail({
+        toEmail: session.email,
+        sellerName: session.name || "Mitra Penjual",
+        bankName: parsed.data.bankName,
+        accountNumber: parsed.data.bankAccountNumber,
+      }).catch(() => {});
+    }
+  });
 
   revalidatePath("/dashboard/orders");
   revalidatePath("/dashboard/profile");
@@ -128,6 +131,18 @@ export async function requestPayoutAction(
   if (!result.ok) {
     return fail(result.reason);
   }
+
+  // A2: Alert admins about new payout requests
+  const { runAfterResponse } = await import("@/lib/after");
+  runAfterResponse(async () => {
+    const { notifyAdmins } = await import("@/lib/data/notifications");
+    await notifyAdmins({
+      title: "Pengajuan Pencairan Dana Baru",
+      message: `Seller mengajukan pencairan saldo sebesar Rp ${Number(result.payout.amount).toLocaleString("id-ID")}.`,
+      type: "payout_request",
+      link: "/admin/payouts",
+    }).catch(() => {});
+  });
 
   revalidatePath("/dashboard/orders");
 

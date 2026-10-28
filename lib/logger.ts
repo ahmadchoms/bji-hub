@@ -1,7 +1,13 @@
+import * as Sentry from "@sentry/nextjs";
+
 type LogLevel = "info" | "warn" | "error";
 
 const SENSITIVE_KEY_PATTERN =
   /password|token|secret|apiKey|authorization|cookie|key|credential|pin|cvv|phone|telephone|rekening|accountNumber/i;
+
+function isPlainObject(val: unknown): val is Record<string, unknown> {
+  return typeof val === "object" && val !== null && !Array.isArray(val) && !(val instanceof Error);
+}
 
 function sanitize(val: unknown, depth = 0): unknown {
   if (depth > 4) return "[DEPTH_EXCEEDED]";
@@ -50,7 +56,6 @@ function writeLog(level: LogLevel, message: string, context?: Record<string, unk
       ...(sanitizedContext ? { context: sanitizedContext } : {}),
       ...(sanitizedError ? { error: sanitizedError } : {}),
     };
-    // In production, output single-line structured JSON
     const output = JSON.stringify(entry);
     if (level === "error") {
       process.stderr.write(output + "\n");
@@ -58,7 +63,6 @@ function writeLog(level: LogLevel, message: string, context?: Record<string, unk
       process.stdout.write(output + "\n");
     }
   } else {
-    // In development / test, print clean format
     const prefix = `[${level.toUpperCase()}] ${message}`;
     if (level === "error") {
       console.error(prefix, sanitizedContext || "", sanitizedError || "");
@@ -66,6 +70,19 @@ function writeLog(level: LogLevel, message: string, context?: Record<string, unk
       console.warn(prefix, sanitizedContext || "");
     } else {
       console.log(prefix, sanitizedContext || "");
+    }
+  }
+
+  // S4: Bridge error level to Sentry in production
+  if (level === "error") {
+    try {
+      const errorToCapture = err instanceof Error ? err : new Error(message);
+      Sentry.captureException(errorToCapture, {
+        tags: { event: message },
+        extra: sanitizedContext || {},
+      });
+    } catch {
+      // Sentry capture failure should never break runtime logging
     }
   }
 }
@@ -77,7 +94,11 @@ export const logger = {
   warn(message: string, context?: Record<string, unknown>) {
     writeLog("warn", message, context);
   },
-  error(message: string, err?: unknown, context?: Record<string, unknown>) {
+  // A6: Flexible argument order: supports (msg, err, ctx) and (msg, ctx)
+  error(message: string, errOrContext?: unknown, maybeContext?: Record<string, unknown>) {
+    const ctxOnly = maybeContext === undefined && isPlainObject(errOrContext);
+    const context = ctxOnly ? (errOrContext as Record<string, unknown>) : maybeContext;
+    const err = ctxOnly ? undefined : errOrContext;
     writeLog("error", message, context, err);
   },
 };

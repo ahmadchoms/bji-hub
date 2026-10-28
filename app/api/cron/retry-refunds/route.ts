@@ -64,6 +64,15 @@ export async function GET(req: Request) {
             orderId: ref.orderId,
             attempts: nextAttempts,
           });
+
+          // A2: Alert admins about permanent failure requiring manual transfer
+          const { notifyAdmins } = await import("@/lib/data/notifications");
+          await notifyAdmins({
+            title: "Refund Memerlukan Transfer Manual",
+            message: `Refund ${ref.id} untuk order ${ref.orderId} telah melebihi batas percobaan otomatis (${nextAttempts}x). Harap lakukan transfer manual.`,
+            type: "refund_action_required",
+            link: "/admin/refunds",
+          }).catch(() => {});
         }
 
         await updateRefundStatus(ref.id, {

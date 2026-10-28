@@ -1,32 +1,35 @@
 // This file configures the initialization of Sentry on the client.
-// The added config here will be used whenever a users loads a page in their browser.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from "@sentry/nextjs";
 
-const SENTRY_DSN =
-  process.env.NEXT_PUBLIC_SENTRY_DSN ||
-  "https://17a575a438af2dc2dbf31d7303f32ad3@o4512332057214976.ingest.us.sentry.io/4512332124520448";
+const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
 
 Sentry.init({
-  dsn: SENTRY_DSN,
+  dsn,
+  enabled: Boolean(dsn) && process.env.NODE_ENV === "production",
+  environment: process.env.VERCEL_ENV || process.env.NODE_ENV,
 
-  // Add optional integrations for additional features
-  integrations: [Sentry.replayIntegration()],
+  // Add Session Replay with strict privacy protections (S3)
+  integrations: [
+    Sentry.replayIntegration({
+      maskAllText: true,
+      maskAllInputs: true,
+      blockAllMedia: true,
+      block: [".sentry-block"],
+    }),
+  ],
 
-  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-  tracesSampleRate: 1,
+  // Sample 10% of client traces
+  tracesSampleRate: 0.1,
 
-  // Define how likely Replay events are sampled.
-  // This sets the sample rate to be 10%. You may want this to be 100% while
-  // in development and sample at a lower rate in production
-  replaysSessionSampleRate: 0.1,
+  // 0% normal session replay to preserve quota
+  replaysSessionSampleRate: 0,
 
-  // Define how likely Replay events are sampled when an error occurs.
-  replaysOnErrorSampleRate: 1.0,
+  // 50% replay when an unhandled error occurs
+  replaysOnErrorSampleRate: 0.5,
 
-  // Turns off collection of data that could identify users. Adjust per category:
-  // https://docs.sentry.io/platforms/javascript/configuration/options/#dataCollection
+  // Turns off collection of identifying info
   dataCollection: {
     userInfo: false,
     graphQL: { document: false, variables: false },
@@ -34,9 +37,28 @@ Sentry.init({
     databaseQueryData: false,
     queues: false,
     httpBodies: [],
-    httpHeaders: { deny: ["forwarded", "-ip", "remote-", "via", "-user"] },
-    cookies: { deny: ["forwarded", "-ip", "remote-", "via", "-user"] },
-    urlQueryParams: { deny: ["forwarded", "-ip", "remote-", "via", "-user"] },
+    httpHeaders: { deny: ["forwarded", "-ip", "remote-", "via", "-user", "authorization", "cookie"] },
+    cookies: { deny: ["*"] },
+    urlQueryParams: { deny: ["*"] },
+  },
+
+  beforeSend(event) {
+    const scrub = (text?: string) =>
+      text
+        ?.replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, "[email]")
+        .replace(/\b(?:\+62|0)8\d{8,12}\b/g, "[telepon]");
+
+    if (event.message) event.message = scrub(event.message);
+    event.exception?.values?.forEach((v) => {
+      if (v.value) v.value = scrub(v.value);
+    });
+
+    if (event.request) {
+      delete event.request.cookies;
+      delete event.request.headers;
+    }
+
+    return event;
   },
 });
 

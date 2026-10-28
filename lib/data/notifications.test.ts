@@ -5,6 +5,7 @@ process.env.DATA_SOURCE = "mock";
 import {
   createNotification,
   notifySeller,
+  notifyAdmins,
   getUserNotifications,
   markNotificationAsRead,
   markAllNotificationsAsRead,
@@ -76,5 +77,20 @@ describe("notifications data module (F1)", () => {
 
     const sellerNotifs = await getUserNotifications("user-seller-1");
     expect(sellerNotifs.some((n) => n.title === "Pesanan Baru Masuk")).toBe(true);
+  });
+
+  it("notifies all admins via notifyAdmins (A2)", async () => {
+    const res = await notifyAdmins({
+      title: "Pembayaran Terlambat",
+      message: "Order ORD-LATE-1 perlu tindakan admin.",
+      type: "late_payment",
+      link: "/admin/refunds",
+    });
+
+    expect(res.length).toBeGreaterThan(0);
+    expect(res[0].userId).toBe("user-admin-1");
+
+    const adminNotifs = await getUserNotifications("user-admin-1");
+    expect(adminNotifs.some((n) => n.title === "Pembayaran Terlambat")).toBe(true);
   });
 });

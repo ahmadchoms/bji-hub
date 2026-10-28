@@ -191,6 +191,18 @@ export async function requestVerificationAction(
   const success = await requestVerification(sellerId, kycDocumentPath);
   if (!success) return fail("Gagal mengajukan verifikasi toko");
 
+  // A2: Notify admins about new KYC verification request
+  const { runAfterResponse } = await import("@/lib/after");
+  runAfterResponse(async () => {
+    const { notifyAdmins } = await import("@/lib/data/notifications");
+    await notifyAdmins({
+      title: "Pengajuan Verifikasi KYC Baru",
+      message: `Toko (ID: ${sellerId}) telah mengajukan verifikasi dokumen KYC.`,
+      type: "kyc_verification",
+      link: "/admin/verification",
+    }).catch(() => {});
+  });
+
   revalidatePath("/dashboard/verification");
   revalidatePath("/dashboard");
   revalidatePath("/admin/verification");

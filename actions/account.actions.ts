@@ -66,14 +66,26 @@ export async function deleteAccountAction(
     return fail("Gagal memverifikasi status pengembalian dana akun.");
   }
 
-  // 1c. Guard for seller: check active orders
-  if (session.role === "seller") {
+  // 1c. Guard for seller: check active orders, balance, and pending payouts (A4)
+  if (session.role === "seller" || session.sellerId) {
     try {
-      const { getSellerById } = await import("@/lib/data");
       const { getOrdersBySeller } = await import("@/lib/data/orders");
-      const seller = await getSellerById(userId);
-      if (seller) {
-        const sellerOrders = await getOrdersBySeller(seller.id);
+      const { getSellerBalanceSummary, getPayoutRequestsBySeller } = await import(
+        "@/lib/data/payouts"
+      );
+
+      let sellerId = session.sellerId;
+      if (!sellerId && process.env.DATA_SOURCE !== "mock") {
+        const prisma = getPrisma();
+        const profile = await prisma.sellerProfile.findUnique({
+          where: { userId },
+          select: { id: true },
+        });
+        sellerId = profile?.id ?? null;
+      }
+
+      if (sellerId) {
+        const sellerOrders = await getOrdersBySeller(sellerId);
         const activeSellerOrders = sellerOrders.filter((o: Order) =>
           ["pending_payment", "paid", "shipped", "disputed"].includes(o.status),
         );
@@ -82,9 +94,27 @@ export async function deleteAccountAction(
             `Tidak dapat menghapus akun karena toko Anda masih memiliki ${activeSellerOrders.length} pesanan aktif.`,
           );
         }
+
+        const summary = await getSellerBalanceSummary(sellerId);
+        const totalBalance = summary.availableBalance + summary.pendingBalance;
+        if (totalBalance > 0) {
+          return fail(
+            `Tidak dapat menghapus akun karena masih terdapat saldo toko sebesar Rp ${totalBalance.toLocaleString("id-ID")}. Silakan lakukan penarikan dana terlebih dahulu.`,
+          );
+        }
+
+        const payouts = await getPayoutRequestsBySeller(sellerId);
+        const pendingPayouts = payouts.filter(
+          (p: { status: string }) => p.status === "pending",
+        );
+        if (pendingPayouts.length > 0) {
+          return fail(
+            "Tidak dapat menghapus akun karena masih terdapat pengajuan pencairan dana yang sedang diproses.",
+          );
+        }
       }
     } catch (err) {
-      logger.error("account.check_seller_orders_failed", err, { userId });
+      logger.error("account.check_seller_status_failed", err, { userId });
       return fail("Gagal memverifikasi status toko Anda.");
     }
   }

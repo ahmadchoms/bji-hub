@@ -34,6 +34,17 @@ export async function retryRefundAction(
   const refund = all.find((r) => r.id === refundId);
   if (!refund) return fail("Catatan pengembalian dana tidak ditemukan");
 
+  // A5: Guard against retrying refunds that are already processed or voided
+  if (
+    refund.status !== "pending" &&
+    refund.status !== "failed" &&
+    refund.status !== "manual_required"
+  ) {
+    return fail(
+      `Pengembalian dana tidak dapat diproses ulang karena sudah berstatus '${refund.status}'.`,
+    );
+  }
+
   const order = await getOrderById(refund.orderId);
   if (!order) return fail("Pesanan terkait tidak ditemukan");
 
@@ -82,14 +93,16 @@ export async function retryRefundAction(
     });
 
     if (refundRes.status === "failed" || refundRes.status === "manual_required") {
-      const { createNotification } = await import("@/lib/data/notifications");
-      createNotification({
-        userId: session.userId || "admin",
-        title: "Refund Gateway Gagal",
-        message: `Refund untuk pesanan ${order.orderNumber} gagal diproses otomatis. Diperlukan transfer manual.`,
-        type: "refund",
-        link: "/admin/refunds",
-      }).catch(() => {});
+      const { runAfterResponse } = await import("@/lib/after");
+      runAfterResponse(async () => {
+        const { notifyAdmins } = await import("@/lib/data/notifications");
+        await notifyAdmins({
+          title: "Refund Gateway Memerlukan Tindakan Manual",
+          message: `Refund untuk pesanan ${order.orderNumber} berstatus '${refundRes.status}'. Diperlukan transfer manual oleh admin.`,
+          type: "refund_action_required",
+          link: "/admin/refunds",
+        }).catch(() => {});
+      });
     }
 
     try {

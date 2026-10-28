@@ -86,6 +86,18 @@ export async function POST(req: NextRequest) {
         }).catch((e) => logger.error("notification.buyer_late_payment_failed", e, { orderId: order.id }));
       }
 
+      // A2: Notify admins about critical late payment requiring manual refund
+      const { runAfterResponse } = await import("@/lib/after");
+      runAfterResponse(async () => {
+        const { notifyAdmins } = await import("@/lib/data/notifications");
+        await notifyAdmins({
+          title: "Pembayaran Terlambat",
+          message: `Order ${order.orderNumber} dibayar setelah dibatalkan. Perlu pengembalian dana manual.`,
+          type: "late_payment",
+          link: "/admin/refunds",
+        });
+      });
+
       await recordWebhookEvent(eventId, "midtrans", parsed.orderRef);
       return NextResponse.json({ received: true, action: "late_payment_refund_queued" });
     }
@@ -100,42 +112,48 @@ export async function POST(req: NextRequest) {
     }
 
     if (orderStatus === "paid") {
-      const { sendOrderPaidEmail, sendNewOrderSellerEmail } = await import("@/lib/email");
-      sendOrderPaidEmail(order).catch((e) =>
-        logger.error("email.order_paid_failed", e, { orderId: order.id })
-      );
+      const { runAfterResponse } = await import("@/lib/after");
+      runAfterResponse(async () => {
+        const { sendOrderPaidEmail, sendNewOrderSellerEmail } = await import("@/lib/email");
+        await sendOrderPaidEmail(order).catch((e) =>
+          logger.error("email.order_paid_failed", e, { orderId: order.id })
+        );
 
-      const { getSellerById } = await import("@/lib/data");
-      getSellerById(order.sellerId)
-        .then((seller) => {
-          sendNewOrderSellerEmail({
-            order,
-            sellerEmail: seller?.user?.email,
-            sellerName: seller?.businessName || order.sellerName,
-          }).catch((e) =>
-            logger.error("email.seller_new_order_failed", e, { orderId: order.id })
-          );
-        })
-        .catch((e) => logger.error("seller.lookup_failed_for_email", e, { sellerId: order.sellerId }));
+        try {
+          const { getSellerById } = await import("@/lib/data");
+          const seller = await getSellerById(order.sellerId);
+          if (seller) {
+            await sendNewOrderSellerEmail({
+              order,
+              sellerEmail: seller?.user?.email,
+              sellerName: seller?.businessName || order.sellerName,
+            }).catch((e) =>
+              logger.error("email.seller_new_order_failed", e, { orderId: order.id })
+            );
+          }
+        } catch (e) {
+          logger.error("seller.lookup_failed_for_email", e, { sellerId: order.sellerId });
+        }
 
-      const { createNotification, notifySeller } = await import("@/lib/data/notifications");
-      if (order.buyerId) {
-        createNotification({
-          userId: order.buyerId,
-          title: "Pembayaran Dikonfirmasi",
-          message: `Pembayaran pesanan ${order.orderNumber} telah diterima dan sedang diproses penjual.`,
-          type: "order_status",
-          link: "/orders",
-        }).catch((e) => logger.error("notification.buyer_confirm_failed", e, { orderId: order.id }));
-      }
-      if (order.sellerId) {
-        notifySeller(order.sellerId, {
-          title: "Pesanan Baru Masuk",
-          message: `Ada pesanan baru ${order.orderNumber}. Segera proses dan kirimkan pesanan.`,
-          type: "order_status",
-          link: "/dashboard/orders",
-        }).catch((e) => logger.error("notification.seller_new_order_failed", e, { orderId: order.id }));
-      }
+        const { createNotification, notifySeller } = await import("@/lib/data/notifications");
+        if (order.buyerId) {
+          await createNotification({
+            userId: order.buyerId,
+            title: "Pembayaran Dikonfirmasi",
+            message: `Pembayaran pesanan ${order.orderNumber} telah diterima dan sedang diproses penjual.`,
+            type: "order_status",
+            link: "/orders",
+          }).catch((e) => logger.error("notification.buyer_confirm_failed", e, { orderId: order.id }));
+        }
+        if (order.sellerId) {
+          await notifySeller(order.sellerId, {
+            title: "Pesanan Baru Masuk",
+            message: `Ada pesanan baru ${order.orderNumber}. Segera proses dan kirimkan pesanan.`,
+            type: "order_status",
+            link: "/dashboard/orders",
+          }).catch((e) => logger.error("notification.seller_new_order_failed", e, { orderId: order.id }));
+        }
+      });
     }
 
     // Record event as successfully completed

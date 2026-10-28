@@ -39,31 +39,34 @@ describe("GET /api/health (B8)", () => {
     process.env.DATA_SOURCE = originalDataSource;
   });
 
-  describe("GET /api/health?deep=1 (M13 Observability)", () => {
-    it("returns 401 in production when authorization token is missing or invalid", async () => {
+  describe("GET /api/health?deep=1 (M13 Observability & S6)", () => {
+    it("returns 401 in production when authorization token is missing or sent via query param (S6)", async () => {
       vi.stubEnv("NODE_ENV", "production");
       vi.stubEnv("CRON_SECRET", "supersecret");
 
-      const req = new Request("http://localhost:3000/api/health?deep=1");
-      const res = await GET(req);
-      expect(res.status).toBe(401);
+      // Missing header
+      const req1 = new Request("http://localhost:3000/api/health?deep=1");
+      const res1 = await GET(req1);
+      expect(res1.status).toBe(401);
 
-      const json = await res.json();
-      expect(json).toEqual({ error: "Unauthorized" });
+      // Query param token is forbidden in production
+      const req2 = new Request("http://localhost:3000/api/health?deep=1&token=supersecret");
+      const res2 = await GET(req2);
+      expect(res2.status).toBe(401);
 
       vi.unstubAllEnvs();
     });
 
-    it("returns 200 with diagnostics when authorized and subsystems healthy", async () => {
+    it("returns 200 with diagnostics when authorized via Bearer token (HEALTH_CHECK_TOKEN)", async () => {
       vi.stubEnv("NODE_ENV", "production");
-      vi.stubEnv("CRON_SECRET", "supersecret");
+      vi.stubEnv("HEALTH_CHECK_TOKEN", "dedicated-health-token");
       vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
       vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
       vi.stubEnv("MIDTRANS_SERVER_KEY", "midtrans-key");
       vi.stubEnv("DATA_SOURCE", "mock");
 
       const req = new Request("http://localhost:3000/api/health?deep=1", {
-        headers: { Authorization: "Bearer supersecret" },
+        headers: { Authorization: "Bearer dedicated-health-token" },
       });
       const res = await GET(req);
       expect(res.status).toBe(200);
@@ -83,7 +86,9 @@ describe("GET /api/health (B8)", () => {
       vi.stubEnv("CRON_SECRET", "supersecret");
       vi.stubEnv("MIDTRANS_SERVER_KEY", "");
 
-      const req = new Request("http://localhost:3000/api/health?deep=1&token=supersecret");
+      const req = new Request("http://localhost:3000/api/health?deep=1", {
+        headers: { Authorization: "Bearer supersecret" },
+      });
       const res = await GET(req);
       expect(res.status).toBe(503);
 

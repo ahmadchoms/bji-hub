@@ -1,5 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import { logger } from "./logger";
+import * as Sentry from "@sentry/nextjs";
+
+vi.mock("@sentry/nextjs", () => ({
+  captureException: vi.fn(),
+}));
 
 describe("Structured Logger", () => {
   it("logs info without throwing", () => {
@@ -26,6 +31,23 @@ describe("Structured Logger", () => {
     expect(loggedContext.phoneNumber).toBe("[REDACTED]");
     expect(loggedContext.accountNumber).toBe("[REDACTED]");
     expect(loggedContext.normalField).toBe("public-val");
+    consoleSpy.mockRestore();
+  });
+
+  it("supports (message, context) 2-argument signature for error (A6)", () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    logger.error("health.check_failed", { reason: "database timeout" });
+    expect(consoleSpy).toHaveBeenCalled();
+    const args = consoleSpy.mock.calls[0];
+    const loggedContext = args[1] as Record<string, unknown>;
+    expect(loggedContext.reason).toBe("database timeout");
+    expect(Sentry.captureException).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        tags: { event: "health.check_failed" },
+        extra: { reason: "database timeout" },
+      }),
+    );
     consoleSpy.mockRestore();
   });
 });

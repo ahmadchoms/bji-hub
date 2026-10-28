@@ -3,9 +3,15 @@ import { NextResponse, type NextRequest } from "next/server";
 import { MOCK_SESSION_COOKIE, isMockAuthAllowed } from "@/lib/auth/mock-guard";
 
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // S5: Exempt Sentry tunnel endpoint from any Supabase auth checks or cookies processing
+  if (pathname.startsWith("/monitoring")) {
+    return NextResponse.next();
+  }
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const { pathname } = request.nextUrl;
   const isProtected =
     pathname.startsWith("/admin") || pathname.startsWith("/dashboard");
 
@@ -50,6 +56,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|api/webhooks|api/cron|.*\\.(?:svg|png|jpg|jpeg|webp|gif|ico)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|monitoring|api/webhooks|api/cron|.*\\.(?:svg|png|jpg|jpeg|webp|gif|ico)$).*)",
   ],
 };

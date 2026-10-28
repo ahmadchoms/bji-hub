@@ -20,10 +20,11 @@ describe("validateEnv", () => {
     expect(() => validateEnv()).not.toThrow();
   });
 
-  it("throws in production when DATA_SOURCE is missing", () => {
+  it("throws in production when DATA_SOURCE and DATABASE_URL are missing", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("DATA_SOURCE", "");
-    expect(() => validateEnv()).toThrow(/DATA_SOURCE wajib diisi di production/);
+    vi.stubEnv("DATABASE_URL", "");
+    expect(() => validateEnv()).toThrow(/DATA_SOURCE atau DATABASE_URL wajib diisi/);
   });
 
   it("throws in production when DATA_SOURCE is mock but ALLOW_MOCK_AUTH is not true", () => {
@@ -49,7 +50,7 @@ describe("validateEnv", () => {
     expect(() => validateEnv()).toThrow(/CRITICAL: Server configuration error/);
   });
 
-  it("throws in production with prisma when SUPABASE_SERVICE_ROLE_KEY or CRON_SECRET is missing (S7)", () => {
+  it("passes in production with prisma even when SUPABASE_SERVICE_ROLE_KEY or CRON_SECRET is missing (non-fatal warning)", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("DATA_SOURCE", "prisma");
     vi.stubEnv("DATABASE_URL", "postgresql://user:pass@localhost:5432/db");
@@ -62,10 +63,10 @@ describe("validateEnv", () => {
     vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", ""); // Missing
     vi.stubEnv("CRON_SECRET", ""); // Missing
 
-    expect(() => validateEnv()).toThrow(/SUPABASE_SERVICE_ROLE_KEY wajib diisi/);
+    expect(() => validateEnv()).not.toThrow();
   });
 
-  it("throws in production with prisma when RESEND_API_KEY is missing and EMAIL_MODE is not disabled (S7)", () => {
+  it("passes in production with prisma when RESEND_API_KEY is missing (warns instead of crashing storefront)", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("DATA_SOURCE", "prisma");
     vi.stubEnv("DATABASE_URL", "postgresql://user:pass@localhost:5432/db");
@@ -79,7 +80,7 @@ describe("validateEnv", () => {
     vi.stubEnv("RESEND_API_KEY", ""); // Missing
     vi.stubEnv("EMAIL_MODE", "enabled");
 
-    expect(() => validateEnv()).toThrow(/RESEND_API_KEY wajib diisi di production/);
+    expect(() => validateEnv()).not.toThrow();
   });
 
   it("passes in production when EMAIL_MODE=disabled even if RESEND_API_KEY is omitted (S7)", () => {

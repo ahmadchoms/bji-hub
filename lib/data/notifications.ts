@@ -71,9 +71,32 @@ export async function notifySeller(
     link?: string;
   },
 ): Promise<NotificationRecord | null> {
-  const { getSellerById } = await import("@/lib/data");
-  const seller = await getSellerById(sellerProfileId);
-  const userId = seller?.userId;
+  let userId: string | undefined;
+
+  if (process.env.DATA_SOURCE === "mock") {
+    const { mockSellers } = await import("@/lib/mock/data");
+    const seller = mockSellers.find((s) => s.id === sellerProfileId);
+    userId = seller?.userId;
+  } else {
+    const pool = getPool();
+    if (pool) {
+      try {
+        const res = await pool.query(
+          `SELECT user_id as "userId" FROM public.seller_profiles WHERE id = $1 LIMIT 1`,
+          [sellerProfileId],
+        );
+        userId = res.rows[0]?.userId;
+      } catch (err) {
+        logger.error("notification.resolve_seller_user_failed", err, { sellerProfileId });
+      }
+    }
+    if (!userId) {
+      const { getSellerById } = await import("@/lib/data");
+      const seller = await getSellerById(sellerProfileId);
+      userId = seller?.userId;
+    }
+  }
+
   if (!userId) {
     logger.warn("notification.seller_user_not_found", { sellerProfileId });
     return null;

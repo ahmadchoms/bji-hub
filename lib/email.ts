@@ -13,7 +13,7 @@ function getResend(): Resend | null {
 }
 
 const FROM_EMAIL = process.env.EMAIL_FROM || "Biji Hub <onboarding@resend.dev>";
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://bji-hub.vercel.app";
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/+$/, "");
 
 export interface EmailResult {
   success: boolean;

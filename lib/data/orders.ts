@@ -327,6 +327,9 @@ export async function getOrderById(idOrNumber: string): Promise<Order | null> {
           items,
           disputeReason: row.dispute_reason ?? null,
           disputeEvidenceUrl: row.dispute_evidence_url ?? null,
+          paidAt: row.paid_at ? new Date(row.paid_at).toISOString() : null,
+          shippedAt: row.shipped_at ? new Date(row.shipped_at).toISOString() : null,
+          completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
           createdAt: row.created_at,
           updatedAt: row.updated_at,
         };
@@ -389,6 +392,9 @@ export async function getOrdersBySeller(sellerId: string): Promise<Order[]> {
         notes: row.notes,
         disputeReason: row.dispute_reason ?? null,
         disputeEvidenceUrl: row.dispute_evidence_url ?? null,
+        paidAt: row.paid_at ? new Date(row.paid_at).toISOString() : null,
+        shippedAt: row.shipped_at ? new Date(row.shipped_at).toISOString() : null,
+        completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       }));
@@ -442,6 +448,9 @@ export async function getAllOrders(): Promise<Order[]> {
         notes: row.notes,
         disputeReason: row.dispute_reason ?? null,
         disputeEvidenceUrl: row.dispute_evidence_url ?? null,
+        paidAt: row.paid_at ? new Date(row.paid_at).toISOString() : null,
+        shippedAt: row.shipped_at ? new Date(row.shipped_at).toISOString() : null,
+        completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       }));
@@ -506,6 +515,9 @@ export async function getOrdersByBuyer(
         notes: row.notes,
         disputeReason: row.dispute_reason ?? null,
         disputeEvidenceUrl: row.dispute_evidence_url ?? null,
+        paidAt: row.paid_at ? new Date(row.paid_at).toISOString() : null,
+        shippedAt: row.shipped_at ? new Date(row.shipped_at).toISOString() : null,
+        completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       }));
@@ -673,7 +685,10 @@ export async function transitionOrderStatus(
              updated_at = $2,
              tracking_number = COALESCE($3, tracking_number),
              dispute_reason = COALESCE($4, dispute_reason),
-             dispute_evidence_url = COALESCE($5, dispute_evidence_url)
+             dispute_evidence_url = COALESCE($5, dispute_evidence_url),
+             paid_at = CASE WHEN $1 = 'paid' AND paid_at IS NULL THEN $2::timestamptz ELSE paid_at END,
+             shipped_at = CASE WHEN $1 = 'shipped' AND shipped_at IS NULL THEN $2::timestamptz ELSE shipped_at END,
+             completed_at = CASE WHEN $1 = 'completed' AND completed_at IS NULL THEN $2::timestamptz ELSE completed_at END
          WHERE id = $6`,
         [
           to,
@@ -786,6 +801,13 @@ export async function transitionOrderStatus(
   if (extra.disputeReason) existing.disputeReason = extra.disputeReason;
   if (extra.disputeEvidenceUrl) existing.disputeEvidenceUrl = extra.disputeEvidenceUrl;
   existing.updatedAt = now;
+  if (to === "paid" && !existing.paidAt) {
+    existing.paidAt = now;
+  } else if (to === "shipped" && !existing.shippedAt) {
+    existing.shippedAt = now;
+  } else if (to === "completed" && !existing.completedAt) {
+    existing.completedAt = now;
+  }
 
   if (to === "paid") {
     const listing = mockListings.find((l) => l.id === existing.listingId);

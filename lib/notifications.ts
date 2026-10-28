@@ -1,7 +1,7 @@
 import { normalizeWhatsAppNumber, formatRupiah } from "@/lib/utils";
 
 function getBaseAppUrl(): string {
-  return (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/+$/, "") || "https://bji-hub.vercel.app";
+  return (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/+$/, "");
 }
 
 export function buildOrderPaidNotificationUrl(data: {

@@ -673,7 +673,8 @@ describe("submitReviewAction (B1 verification & uniqueness)", () => {
 
       await updateOrderStatus(order.id, "paid");
       // Simulate order paid 7 hours ago
-      order.updatedAt = new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString();
+      order.paidAt = new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString();
+      order.updatedAt = order.paidAt;
 
       const authSession = await import("@/lib/auth/session");
       const spy = vi.spyOn(authSession, "getSession").mockResolvedValue({

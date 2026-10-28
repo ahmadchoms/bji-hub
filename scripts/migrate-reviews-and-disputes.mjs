@@ -87,6 +87,11 @@ async function main() {
     ALTER TABLE public.seller_profiles ADD COLUMN IF NOT EXISTS kyc_document_url TEXT;
     ALTER TABLE public.seller_profiles ADD COLUMN IF NOT EXISTS kyc_submitted_at TIMESTAMPTZ;
 
+    -- Order lifecycle timestamps (M10)
+    ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS paid_at TIMESTAMPTZ;
+    ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS shipped_at TIMESTAMPTZ;
+    ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS completed_at TIMESTAMPTZ;
+
     -- Webhook events for replay protection & idempotency (S5)
     CREATE TABLE IF NOT EXISTS public.webhook_events (
       event_id TEXT PRIMARY KEY,

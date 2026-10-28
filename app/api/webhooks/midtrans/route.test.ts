@@ -119,4 +119,63 @@ describe("POST /api/webhooks/midtrans", () => {
     const body2 = await res2.json();
     expect(body2.ignored).toBe("already_processed");
   });
+
+  it("handles late payment on a canceled order by queueing manual refund (M3)", async () => {
+    const { mockOrders } = await import("@/lib/data/orders");
+    const { mockRefunds } = await import("@/lib/data/refunds");
+
+    const orderId = "ORD-CANCELED-LATE-1";
+    mockOrders.push({
+      id: orderId,
+      orderNumber: orderId,
+      buyerId: "user-buyer-late",
+      sellerId: "seller-1",
+      listingId: "listing-1",
+      listingTitle: "Kopi Arabika",
+      listingSlug: "kopi-arabika",
+      sellerName: "Toko Kopi",
+      quantity: 1,
+      totalAmount: 120000,
+      itemPrice: 100000,
+      shippingCost: 20000,
+      buyerName: "Buyer Late",
+      buyerEmail: "late@example.com",
+      buyerPhone: "0812345678",
+      buyerAddress: "Jl. Late",
+      buyerCity: "Jakarta",
+      buyerPostalCode: "12345",
+      status: "canceled",
+      midtransOrderId: orderId,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+
+    const statusCode = "200";
+    const grossAmount = "120000.00";
+    const signatureKey = makeSignature(orderId, statusCode, grossAmount);
+
+    const payload = JSON.stringify({
+      order_id: orderId,
+      status_code: statusCode,
+      gross_amount: grossAmount,
+      signature_key: signatureKey,
+      transaction_status: "settlement",
+      fraud_status: "accept",
+    });
+
+    const req = new NextRequest("http://localhost:3000/api/webhooks/midtrans", {
+      method: "POST",
+      body: payload,
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.action).toBe("late_payment_refund_queued");
+
+    const refund = mockRefunds.find((r) => r.orderId === orderId);
+    expect(refund).toBeDefined();
+    expect(refund?.status).toBe("manual_required");
+    expect(refund?.reason).toContain("late payment");
+  });
 });

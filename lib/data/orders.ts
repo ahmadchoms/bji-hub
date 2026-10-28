@@ -16,7 +16,7 @@ function getPool(): Pool | null {
 }
 
 // In-memory mock storage fallback for vitest & offline local development
-const mockOrders: Order[] = [];
+export const mockOrders: Order[] = [];
 
 export function generateOrderNumber(): string {
   const d = new Date();

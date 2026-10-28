@@ -29,12 +29,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true, mode: "test_notification" });
   }
 
-  // 1b. S5: Webhook Replay & Idempotency Guard
+  // 1b. S5 & M2: Webhook Replay & Idempotency Check
   const { createHash } = await import("crypto");
   const eventId = createHash("sha256").update(rawBody).digest("hex");
-  const { recordWebhookEventIfNew } = await import("@/lib/data/webhook-events");
-  const isNew = await recordWebhookEventIfNew(eventId, "midtrans", parsed.orderRef);
-  if (!isNew) {
+  const { isWebhookEventProcessed, recordWebhookEvent } = await import("@/lib/data/webhook-events");
+  if (await isWebhookEventProcessed(eventId)) {
     logger.info("webhook.duplicate_skipped", { orderRef: parsed.orderRef, eventId });
     return NextResponse.json({ received: true, ignored: "already_processed" });
   }
@@ -59,61 +58,93 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Amount mismatch" }, { status: 400 });
     }
 
+    // M3: Late payment on canceled order
+    if (order.status === "canceled" && orderStatus === "paid") {
+      logger.error("payment.late_on_canceled", undefined, {
+        orderId: order.id,
+        orderRef: parsed.orderRef,
+      });
+
+      const { createRefundRecord } = await import("@/lib/data/refunds");
+      await createRefundRecord({
+        id: `ref-late-${order.id}`,
+        orderId: order.id,
+        amount: order.totalAmount,
+        reason: "Pembayaran diterima setelah pesanan dibatalkan (late payment)",
+        status: "manual_required",
+        createdBy: "system_midtrans_webhook",
+      });
+
+      if (order.buyerId) {
+        const { createNotification } = await import("@/lib/data/notifications");
+        createNotification({
+          userId: order.buyerId,
+          title: "Pembayaran Diterima untuk Pesanan Dibatalkan",
+          message: `Pembayaran pesanan ${order.orderNumber} diterima setelah pesanan dibatalkan. Pengembalian dana akan diproses secara manual oleh admin.`,
+          type: "refund",
+          link: "/orders",
+        }).catch((e) => logger.error("notification.buyer_late_payment_failed", e, { orderId: order.id }));
+      }
+
+      await recordWebhookEvent(eventId, "midtrans", parsed.orderRef);
+      return NextResponse.json({ received: true, action: "late_payment_refund_queued" });
+    }
+
     const transitionRes = await transitionOrderStatus(order.id, orderStatus);
     if (!transitionRes.applied) {
       if (order.status === orderStatus) {
+        await recordWebhookEvent(eventId, "midtrans", parsed.orderRef);
         return NextResponse.json({ received: true, ignored: "duplicate" });
       }
       return NextResponse.json({ received: true, ignored: "invalid_transition" });
     }
 
     if (orderStatus === "paid") {
-      try {
-        const { sendOrderPaidEmail, sendNewOrderSellerEmail } = await import("@/lib/email");
-        sendOrderPaidEmail(order).catch((e) =>
-          logger.error("Failed to send order paid email from webhook", e, { orderId: order.id })
-        );
+      const { sendOrderPaidEmail, sendNewOrderSellerEmail } = await import("@/lib/email");
+      sendOrderPaidEmail(order).catch((e) =>
+        logger.error("email.order_paid_failed", e, { orderId: order.id })
+      );
 
-        const { getSellerById } = await import("@/lib/data");
-        getSellerById(order.sellerId)
-          .then((seller) => {
-            sendNewOrderSellerEmail({
-              order,
-              sellerEmail: seller?.user?.email,
-              sellerName: seller?.businessName || order.sellerName,
-            }).catch((e) =>
-              logger.error("Failed to send seller new order email from webhook", e, { orderId: order.id })
-            );
-          })
-          .catch(() => {});
+      const { getSellerById } = await import("@/lib/data");
+      getSellerById(order.sellerId)
+        .then((seller) => {
+          sendNewOrderSellerEmail({
+            order,
+            sellerEmail: seller?.user?.email,
+            sellerName: seller?.businessName || order.sellerName,
+          }).catch((e) =>
+            logger.error("email.seller_new_order_failed", e, { orderId: order.id })
+          );
+        })
+        .catch((e) => logger.error("seller.lookup_failed_for_email", e, { sellerId: order.sellerId }));
 
-        const { createNotification, notifySeller } = await import("@/lib/data/notifications");
-        if (order.buyerId) {
-          createNotification({
-            userId: order.buyerId,
-            title: "Pembayaran Dikonfirmasi",
-            message: `Pembayaran pesanan ${order.orderNumber} telah diterima dan sedang diproses penjual.`,
-            type: "order_status",
-            link: "/orders",
-          }).catch(() => {});
-        }
-        if (order.sellerId) {
-          notifySeller(order.sellerId, {
-            title: "Pesanan Baru Masuk",
-            message: `Ada pesanan baru ${order.orderNumber}. Segera proses dan kirimkan pesanan.`,
-            type: "order_status",
-            link: "/dashboard/orders",
-          }).catch(() => {});
-        }
-      } catch {
-        // ignore: invalid webhook body JSON parsing
-        // Non-blocking
+      const { createNotification, notifySeller } = await import("@/lib/data/notifications");
+      if (order.buyerId) {
+        createNotification({
+          userId: order.buyerId,
+          title: "Pembayaran Dikonfirmasi",
+          message: `Pembayaran pesanan ${order.orderNumber} telah diterima dan sedang diproses penjual.`,
+          type: "order_status",
+          link: "/orders",
+        }).catch((e) => logger.error("notification.buyer_confirm_failed", e, { orderId: order.id }));
+      }
+      if (order.sellerId) {
+        notifySeller(order.sellerId, {
+          title: "Pesanan Baru Masuk",
+          message: `Ada pesanan baru ${order.orderNumber}. Segera proses dan kirimkan pesanan.`,
+          type: "order_status",
+          link: "/dashboard/orders",
+        }).catch((e) => logger.error("notification.seller_new_order_failed", e, { orderId: order.id }));
       }
     }
+
+    // Record event as successfully completed
+    await recordWebhookEvent(eventId, "midtrans", parsed.orderRef);
     return NextResponse.json({ received: true, type: "order" });
   }
 
   if (process.env.DATA_SOURCE !== "prisma") {
+    await recordWebhookEvent(eventId, "midtrans", parsed.orderRef);
     return NextResponse.json({ received: true, mode: "mock" });
   }
 
@@ -174,5 +205,6 @@ export async function POST(req: NextRequest) {
     }
   });
 
+  await recordWebhookEvent(eventId, "midtrans", parsed.orderRef);
   return NextResponse.json({ received: true });
 }

@@ -14,6 +14,7 @@ import {
   getOrdersByBuyer,
   updateOrderStatus,
   transitionOrderStatus,
+  cancelOrderWithRefund,
   updateOrderSnapToken,
   generateOrderNumber,
   autoCompleteExpiredShippedOrders,
@@ -599,28 +600,18 @@ export async function resolveDisputeAction(
       return fail("Pengembalian dana untuk pesanan ini sedang diproses atau telah selesai.");
     }
 
-    // 2. Outbox pattern (N1): Create pending refund record first with deterministic ID
-    const refundId = `ref-${order.id}`;
-    let refundRecord;
-    try {
-      refundRecord = await createRefundRecord({
-        id: refundId,
-        orderId: order.id,
-        amount: order.totalAmount,
-        reason: "Komplain disetujui admin untuk pengembalian dana",
-        status: "pending",
-        createdBy: "admin",
-      });
-    } catch (e) {
-      logger.error("order.refund_outbox_failed", e, { orderId: order.id });
-      return fail("Gagal membuat catatan pengembalian dana");
+    // 2. Atomic cancel order and record refund (M1)
+    const cancelRes = await cancelOrderWithRefund(order.id, {
+      reason: "Komplain disetujui admin untuk pengembalian dana",
+      createdBy: "admin",
+    });
+    if (!cancelRes.applied || !cancelRes.refundRecord) {
+      return fail(cancelRes.error || "Gagal membatalkan pesanan dan membuat pengembalian dana");
     }
 
-    // 3. Transition order status to canceled
-    const transition = await transitionOrderStatus(order.id, "canceled");
-    if (!transition.applied) return fail("Gagal memperbarui status komplain");
+    const refundRecord = cancelRes.refundRecord;
 
-    // 4. Request refund with deterministic key
+    // 3. Request refund with deterministic key
     const provider = getPaymentProvider();
     const refundRes = await provider.refund(
       order.midtransOrderId || order.orderNumber,
@@ -629,7 +620,7 @@ export async function resolveDisputeAction(
       { refundKey: `refund-${refundRecord.id}` },
     );
 
-    // 5. Update refund status
+    // 4. Update refund status
     await updateRefundStatus(refundRecord.id, {
       status: refundRes.status,
       providerRef: refundRes.providerRef,
@@ -714,28 +705,18 @@ export async function sellerResolveDisputeAction(
       return fail("Pengembalian dana untuk pesanan ini sedang diproses atau telah selesai.");
     }
 
-    // 2. Outbox pattern (N1): Create pending refund record first
-    const refundId = `ref-${order.id}`;
-    let refundRecord;
-    try {
-      refundRecord = await createRefundRecord({
-        id: refundId,
-        orderId: order.id,
-        amount: order.totalAmount,
-        reason: "Komplain disetujui penjual untuk pengembalian dana",
-        status: "pending",
-        createdBy: session.userId || sellerId,
-      });
-    } catch (e) {
-      logger.error("order.refund_outbox_failed", e, { orderId: order.id });
-      return fail("Gagal membuat catatan pengembalian dana");
+    // 2. Atomic cancel order and record refund (M1)
+    const cancelRes = await cancelOrderWithRefund(order.id, {
+      reason: "Komplain disetujui penjual untuk pengembalian dana",
+      createdBy: session.userId || sellerId,
+    });
+    if (!cancelRes.applied || !cancelRes.refundRecord) {
+      return fail(cancelRes.error || "Gagal membatalkan pesanan dan membuat pengembalian dana");
     }
 
-    // 3. Transition order status to canceled
-    const transition = await transitionOrderStatus(order.id, "canceled");
-    if (!transition.applied) return fail("Gagal memperbarui status komplain");
+    const refundRecord = cancelRes.refundRecord;
 
-    // 4. Request refund with deterministic key
+    // 3. Request refund with deterministic key
     const provider = getPaymentProvider();
     const refundRes = await provider.refund(
       order.midtransOrderId || order.orderNumber,
@@ -744,7 +725,7 @@ export async function sellerResolveDisputeAction(
       { refundKey: `refund-${refundRecord.id}` },
     );
 
-    // 5. Update refund status
+    // 4. Update refund status
     await updateRefundStatus(refundRecord.id, {
       status: refundRes.status,
       providerRef: refundRes.providerRef,
@@ -1010,30 +991,18 @@ export async function cancelPaidOrderAction(
     return fail("Pengembalian dana untuk pesanan ini sedang diproses atau telah selesai.");
   }
 
-  // 2. Outbox pattern (N1): Create pending refund record first with deterministic ID
-  const refundId = `ref-${order.id}`;
-  let refundRecord;
-  try {
-    refundRecord = await createRefundRecord({
-      id: refundId,
-      orderId: order.id,
-      amount: order.totalAmount,
-      reason: cleanReason,
-      status: "pending",
-      createdBy: session.userId || (isBuyer ? "buyer" : isSeller ? "seller" : "admin"),
-    });
-  } catch (e) {
-    logger.error("order.refund_outbox_failed", e, { orderId: order.id });
-    return fail("Gagal membuat catatan pengembalian dana");
+  // 2. Atomic cancel order and record refund (M1)
+  const cancelRes = await cancelOrderWithRefund(order.id, {
+    reason: cleanReason,
+    createdBy: session.userId || (isBuyer ? "buyer" : isSeller ? "seller" : "admin"),
+  });
+  if (!cancelRes.applied || !cancelRes.refundRecord) {
+    return fail(cancelRes.error || "Gagal membatalkan pesanan dan membuat pengembalian dana");
   }
 
-  // 3. Transition order status to canceled (restores stock)
-  const transition = await transitionOrderStatus(order.id, "canceled");
-  if (!transition.applied) {
-    return fail("Gagal memperbarui status pesanan");
-  }
+  const refundRecord = cancelRes.refundRecord;
 
-  // 4. Request refund with deterministic key
+  // 3. Request refund with deterministic key
   const provider = getPaymentProvider();
   const refundRes = await provider.refund(
     order.midtransOrderId || order.orderNumber,
@@ -1042,7 +1011,7 @@ export async function cancelPaidOrderAction(
     { refundKey: `refund-${refundRecord.id}` },
   );
 
-  // 5. Update refund status
+  // 4. Update refund status
   await updateRefundStatus(refundRecord.id, {
     status: refundRes.status,
     providerRef: refundRes.providerRef,

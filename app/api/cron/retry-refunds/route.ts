@@ -32,8 +32,17 @@ export async function GET(req: Request) {
 
     for (const ref of pendingRefunds) {
       const order = await getOrderById(ref.orderId);
-      if (!order) {
-        logger.warn("refund.retry_order_not_found", { refundId: ref.id, orderId: ref.orderId });
+      // M1: Guard against orphan refunds on non-canceled orders
+      if (!order || order.status !== "canceled") {
+        logger.error("refund.orphan_detected", undefined, {
+          refundId: ref.id,
+          orderId: ref.orderId,
+          orderStatus: order?.status ?? "not_found",
+        });
+        await updateRefundStatus(ref.id, {
+          status: "voided",
+          failureReason: `Orphan refund detected: order status is '${order?.status ?? "not_found"}' (not canceled)`,
+        });
         continue;
       }
 

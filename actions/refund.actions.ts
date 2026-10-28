@@ -37,6 +37,20 @@ export async function retryRefundAction(
   const order = await getOrderById(refund.orderId);
   if (!order) return fail("Pesanan terkait tidak ditemukan");
 
+  // M1: Guard against orphan refunds on non-canceled orders
+  if (order.status !== "canceled") {
+    logger.error("refund.orphan_detected", undefined, {
+      refundId: refund.id,
+      orderId: refund.orderId,
+      orderStatus: order.status,
+    });
+    await updateRefundStatus(refund.id, {
+      status: "voided",
+      failureReason: `Orphan refund detected: order status is '${order.status}' (not canceled)`,
+    });
+    return fail("Pengembalian dana dibatalkan (voided): status pesanan bukan dibatalkan.");
+  }
+
   const nextAttempts = (refund.attempts || 0) + 1;
   const provider = getPaymentProvider();
 

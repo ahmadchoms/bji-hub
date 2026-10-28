@@ -849,6 +849,176 @@ export async function updateOrderStatus(
   return res.applied;
 }
 
+/**
+ * Atomically transitions an order to 'canceled', restores stock,
+ * and inserts a pending refund record within a single database transaction (M1).
+ * If either fails, the entire transaction is rolled back.
+ */
+export async function cancelOrderWithRefund(
+  orderId: string,
+  options: {
+    reason: string;
+    createdBy?: string;
+  },
+): Promise<{
+  applied: boolean;
+  order: Order | null;
+  refundRecord: import("@/lib/data/refunds").RefundRecord | null;
+  error?: string;
+}> {
+  const pool = getPool();
+  const now = new Date().toISOString();
+
+  if (pool) {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      // 1. Lock the order row
+      const selectRes = await client.query(
+        `SELECT id, status, total_amount, listing_id, quantity, seller_id
+         FROM public.orders
+         WHERE id = $1 OR order_number = $1 OR midtrans_order_id = $1
+         FOR UPDATE`,
+        [orderId],
+      );
+
+      if (selectRes.rowCount === 0) {
+        await client.query("ROLLBACK");
+        return { applied: false, order: null, refundRecord: null, error: "Pesanan tidak ditemukan" };
+      }
+
+      const row = selectRes.rows[0];
+      const currentStatus = row.status as OrderStatus;
+      const internalOrderId = row.id;
+
+      // Only orders in 'paid' or 'disputed' can be canceled with refund
+      if (currentStatus !== "paid" && currentStatus !== "disputed") {
+        await client.query("ROLLBACK");
+        const existingOrder = await getOrderById(internalOrderId);
+        return {
+          applied: false,
+          order: existingOrder,
+          refundRecord: null,
+          error: `Pesanan berstatus '${currentStatus}' tidak dapat dibatalkan dengan pengembalian dana`,
+        };
+      }
+
+      // 2. Transition order to canceled
+      await client.query(
+        `UPDATE public.orders
+         SET status = 'canceled',
+             updated_at = $1
+         WHERE id = $2`,
+        [now, internalOrderId],
+      );
+
+      // 3. Restock inventory
+      const itemsRes = await client.query(
+        `SELECT listing_id, quantity FROM public.order_items WHERE order_id = $1`,
+        [internalOrderId],
+      );
+      const itemsToUpdate =
+        itemsRes.rows.length > 0
+          ? itemsRes.rows.map((r) => ({ listingId: r.listing_id, quantity: Number(r.quantity) }))
+          : row.listing_id
+            ? [{ listingId: row.listing_id, quantity: Number(row.quantity || 1) }]
+            : [];
+
+      for (const item of itemsToUpdate) {
+        await client.query(
+          `UPDATE public.listings
+           SET stock = stock + $1,
+               status = CASE WHEN status = 'archived' AND stock = 0 THEN 'active' ELSE status END
+           WHERE id = $2 AND stock IS NOT NULL`,
+          [item.quantity, item.listingId],
+        );
+      }
+
+      // 4. Create refund record atomically
+      const refundId = `ref-${internalOrderId}`;
+      const refundAmount = Number(row.total_amount);
+      const refundRes = await client.query(
+        `INSERT INTO public.refunds (id, order_id, amount, reason, status, created_by, attempts, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, 'pending', $5, 0, $6, $6)
+         ON CONFLICT (order_id) DO UPDATE SET updated_at = $6
+         RETURNING id, order_id as "orderId", amount, reason, status, provider_ref as "providerRef",
+                   created_by as "createdBy", attempts, failure_reason as "failureReason",
+                   resolved_by as "resolvedBy", created_at as "createdAt", updated_at as "updatedAt"`,
+        [refundId, internalOrderId, refundAmount, options.reason, options.createdBy ?? null, now],
+      );
+
+      await client.query("COMMIT");
+
+      const updated = await getOrderById(internalOrderId);
+      const refundRecord = refundRes.rows[0]
+        ? {
+            ...refundRes.rows[0],
+            amount: Number(refundRes.rows[0].amount),
+            createdAt: new Date(refundRes.rows[0].createdAt).toISOString(),
+            updatedAt: new Date(refundRes.rows[0].updatedAt).toISOString(),
+          }
+        : null;
+
+      return { applied: true, order: updated, refundRecord };
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+
+  // Mock Mode
+  const existing = mockOrders.find(
+    (o) => o.id === orderId || o.orderNumber === orderId || o.midtransOrderId === orderId,
+  );
+  if (!existing) {
+    return { applied: false, order: null, refundRecord: null, error: "Pesanan tidak ditemukan" };
+  }
+  if (existing.status !== "paid" && existing.status !== "disputed") {
+    return {
+      applied: false,
+      order: existing,
+      refundRecord: null,
+      error: `Pesanan berstatus '${existing.status}' tidak dapat dibatalkan dengan pengembalian dana`,
+    };
+  }
+
+  existing.status = "canceled";
+  existing.updatedAt = now;
+
+  const { mockListings } = await import("@/lib/mock/data");
+  const listing = mockListings.find((l) => l.id === existing.listingId);
+  if (listing && typeof listing.stock === "number") {
+    const wasZero = listing.stock === 0;
+    listing.stock += existing.quantity || 1;
+    if (listing.status === "archived" && wasZero) listing.status = "active";
+  }
+
+  const { mockRefunds } = await import("@/lib/data/refunds");
+  let refundRecord = mockRefunds.find((r) => r.orderId === existing.id);
+  if (!refundRecord) {
+    refundRecord = {
+      id: `ref-${existing.id}`,
+      orderId: existing.id,
+      amount: existing.totalAmount,
+      reason: options.reason,
+      status: "pending",
+      providerRef: null,
+      createdBy: options.createdBy ?? null,
+      attempts: 0,
+      failureReason: null,
+      resolvedBy: null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    mockRefunds.unshift(refundRecord);
+  }
+
+  return { applied: true, order: existing, refundRecord };
+}
+
 export async function autoCompleteExpiredShippedOrders(
   daysThreshold = 2,
 ): Promise<{ completedCount: number; orderIds: string[] }> {

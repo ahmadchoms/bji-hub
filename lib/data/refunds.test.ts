@@ -180,4 +180,86 @@ describe("Refund System (B6)", () => {
       );
     });
   });
+
+  describe("cancelOrderWithRefund and orphan void guard (M1)", () => {
+    it("atomically cancels order and creates refund record in mock mode", async () => {
+      const { cancelOrderWithRefund, mockOrders } = await import("@/lib/data/orders");
+      const orderId = "ORD-ATOMIC-REFUND-1";
+      mockOrders.push({
+        id: orderId,
+        orderNumber: orderId,
+        buyerId: "user-buyer-1",
+        sellerId: "seller-1",
+        listingId: "listing-1",
+        listingTitle: "Kopi Gayo",
+        listingSlug: "kopi-gayo",
+        sellerName: "Toko Gayo",
+        quantity: 2,
+        totalAmount: 180000,
+        itemPrice: 80000,
+        shippingCost: 20000,
+        buyerName: "Buyer Test",
+        buyerEmail: "test@example.com",
+        buyerPhone: "081234",
+        buyerAddress: "Jl. Test",
+        buyerCity: "Jakarta",
+        buyerPostalCode: "12345",
+        status: "paid",
+        midtransOrderId: orderId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
+      const res = await cancelOrderWithRefund(orderId, {
+        reason: "Batal sebelum kirim",
+        createdBy: "user-buyer-1",
+      });
+
+      expect(res.applied).toBe(true);
+      expect(res.order?.status).toBe("canceled");
+      expect(res.refundRecord).toBeDefined();
+      expect(res.refundRecord?.orderId).toBe(orderId);
+      expect(res.refundRecord?.status).toBe("pending");
+      expect(res.refundRecord?.amount).toBe(180000);
+    });
+
+    it("rejects cancelOrderWithRefund when order is in shipped or completed status", async () => {
+      const { cancelOrderWithRefund, mockOrders } = await import("@/lib/data/orders");
+      const orderId = "ORD-SHIPPED-NO-CANCEL";
+      mockOrders.push({
+        id: orderId,
+        orderNumber: orderId,
+        buyerId: "user-buyer-1",
+        sellerId: "seller-1",
+        listingId: "listing-1",
+        listingTitle: "Kopi Gayo",
+        listingSlug: "kopi-gayo",
+        sellerName: "Toko Gayo",
+        quantity: 1,
+        totalAmount: 100000,
+        itemPrice: 80000,
+        shippingCost: 20000,
+        buyerName: "Buyer Test",
+        buyerEmail: "test@example.com",
+        buyerPhone: "081234",
+        buyerAddress: "Jl. Test",
+        buyerCity: "Jakarta",
+        buyerPostalCode: "12345",
+        status: "shipped",
+        midtransOrderId: orderId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
+      const res = await cancelOrderWithRefund(orderId, {
+        reason: "Batal tapi barang sudah jalan",
+        createdBy: "user-buyer-1",
+      });
+
+      expect(res.applied).toBe(false);
+      expect(res.order?.status).toBe("shipped");
+      expect(res.refundRecord).toBeNull();
+      expect(res.error).toContain("tidak dapat dibatalkan");
+    });
+  });
 });

@@ -49,7 +49,7 @@ async function main() {
       order_id TEXT NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
       amount INTEGER NOT NULL CHECK (amount > 0),
       reason TEXT NOT NULL,
-      status TEXT NOT NULL CHECK (status IN ('pending', 'processed', 'failed', 'manual_required')),
+      status TEXT NOT NULL CHECK (status IN ('pending', 'processed', 'failed', 'manual_required', 'voided')),
       provider_ref TEXT,
       created_by TEXT,
       attempts INTEGER NOT NULL DEFAULT 0,

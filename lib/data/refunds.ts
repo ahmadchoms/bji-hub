@@ -19,7 +19,7 @@ export interface RefundRecord {
   orderId: string;
   amount: number;
   reason: string;
-  status: "pending" | "processed" | "failed" | "manual_required";
+  status: "pending" | "processed" | "failed" | "manual_required" | "voided";
   providerRef: string | null;
   createdBy: string | null;
   attempts: number;
@@ -36,7 +36,7 @@ export async function createRefundRecord(data: {
   orderId: string;
   amount: number;
   reason: string;
-  status: "pending" | "processed" | "failed" | "manual_required";
+  status: "pending" | "processed" | "failed" | "manual_required" | "voided";
   providerRef?: string | null;
   createdBy?: string | null;
   attempts?: number;

@@ -4,12 +4,14 @@ const isProd = process.env.NODE_ENV === "production";
 
 const cspDirectives = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://app.midtrans.com https://app.sandbox.midtrans.com https://challenges.cloudflare.com https://accounts.google.com/gsi/client",
-  "connect-src 'self' https://app.midtrans.com https://app.sandbox.midtrans.com https://*.supabase.co wss://*.supabase.co https://rajaongkir.komerce.id https://pro.rajaongkir.com https://accounts.google.com/gsi/",
+  `script-src 'self' 'unsafe-inline' ${isProd ? "" : "'unsafe-eval'"} https://app.midtrans.com https://app.sandbox.midtrans.com https://challenges.cloudflare.com https://accounts.google.com/gsi/client`,
+  "connect-src 'self' https://app.midtrans.com https://app.sandbox.midtrans.com https://api.midtrans.com https://api.sandbox.midtrans.com https://*.supabase.co wss://*.supabase.co https://rajaongkir.komerce.id https://pro.rajaongkir.com https://accounts.google.com/gsi/",
   "img-src 'self' data: blob: https://images.unsplash.com https://*.supabase.co https://lh3.googleusercontent.com",
   "style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style",
   "font-src 'self' data:",
   "frame-src 'self' https://app.midtrans.com https://app.sandbox.midtrans.com https://challenges.cloudflare.com https://accounts.google.com/gsi/",
+  "frame-ancestors 'none'",
+  "form-action 'self'",
   "object-src 'none'",
   "base-uri 'self'",
 ].join("; ");

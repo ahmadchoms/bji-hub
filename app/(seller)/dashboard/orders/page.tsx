@@ -1,5 +1,5 @@
 import { requireSeller } from "@/lib/auth/session";
-import { getOrdersBySeller } from "@/lib/data/orders";
+import { getOrdersBySeller, autoCompleteShippedForSeller } from "@/lib/data/orders";
 import {
   getSellerBalanceSummary,
   getSellerBankDetails,
@@ -19,6 +19,9 @@ export const metadata = {
 
 export default async function DashboardOrdersPage() {
   const { sellerId } = await requireSeller();
+
+  // Lazy auto-complete (2.2-B): sweep orders older than 48h to update balance & status
+  await autoCompleteShippedForSeller(sellerId, 48).catch(() => {});
 
   const [orders, balanceSummary, bankDetails, payoutHistory] = await Promise.all([
     getOrdersBySeller(sellerId),

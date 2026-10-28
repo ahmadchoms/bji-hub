@@ -12,6 +12,7 @@ const ADMIN_NAV: readonly DashboardNavItem[] = [
   { href: "/admin/payouts", label: "Pencairan Dana" },
   { href: "/admin/origins", label: "Master Asal Kopi" },
   { href: "/admin/audit-logs", label: "Audit Log" },
+  { href: "/admin/maintenance", label: "Pemeliharaan" },
 ];
 
 export function AdminSidebar({ children }: { children: React.ReactNode }) {

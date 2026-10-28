@@ -109,6 +109,14 @@ export async function requestPayoutAction(
     }
   }
 
+  // 2.2-B: Lazy auto-complete shipped orders older than 48h to update available balance
+  try {
+    const { autoCompleteShippedForSeller } = await import("@/lib/data/orders");
+    await autoCompleteShippedForSeller(sellerId, 48);
+  } catch (err) {
+    logger.warn("payout.lazy_complete_failed", { sellerId, error: String(err) });
+  }
+
   const result = await createPayoutRequestAtomic({
     sellerId,
     amount: parsed.data.amount,

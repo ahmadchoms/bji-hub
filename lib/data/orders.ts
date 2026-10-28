@@ -1041,7 +1041,7 @@ export async function autoCompleteExpiredShippedOrders(
       res.rows.forEach((r) => completedIds.push(r.id));
       return { completedCount: completedIds.length, orderIds: completedIds };
     } catch (e) {
-      console.error("Failed to auto-complete orders in postgres:", e);
+      logger.error("order.auto_complete_failed", e);
       throw e;
     }
   }
@@ -1053,6 +1053,116 @@ export async function autoCompleteExpiredShippedOrders(
         o.status = "completed";
         o.updatedAt = now.toISOString();
         if (!completedIds.includes(o.id)) completedIds.push(o.id);
+      }
+    }
+  });
+
+  return { completedCount: completedIds.length, orderIds: completedIds };
+}
+
+/**
+ * Lazy sweep (2.2-A): expires orders that have been pending >75 mins for specific listing IDs
+ * during checkout to release held stock.
+ */
+export async function expireStalePendingForListings(
+  listingIds: string[],
+  hoursThreshold = 1.25,
+): Promise<{ canceledCount: number; orderIds: string[] }> {
+  if (!listingIds || listingIds.length === 0) return { canceledCount: 0, orderIds: [] };
+  const pool = getPool();
+  const now = new Date();
+  const thresholdMs = hoursThreshold * 60 * 60 * 1000;
+  const cutoffDate = new Date(now.getTime() - thresholdMs).toISOString();
+  const canceledIds: string[] = [];
+
+  if (pool) {
+    try {
+      const res = await pool.query(
+        `SELECT DISTINCT o.id
+         FROM public.orders o
+         LEFT JOIN public.order_items oi ON o.id = oi.order_id
+         WHERE o.status = 'pending_payment'
+           AND o.created_at <= $1
+           AND (o.listing_id = ANY($2::text[]) OR oi.listing_id = ANY($2::text[]))`,
+        [cutoffDate, listingIds],
+      );
+      for (const r of res.rows) {
+        try {
+          const transitionRes = await transitionOrderStatus(r.id, "canceled");
+          if (transitionRes.applied) {
+            canceledIds.push(r.id);
+          }
+        } catch (err) {
+          logger.error("order.lazy_cancel_single_failed", err, { orderId: r.id });
+        }
+      }
+      return { canceledCount: canceledIds.length, orderIds: canceledIds };
+    } catch (err) {
+      logger.error("order.lazy_expire_listings_failed", err, { listingIds });
+      return { canceledCount: 0, orderIds: [] };
+    }
+  }
+
+  // Mock
+  mockOrders.forEach((o) => {
+    if (
+      o.status === "pending_payment" &&
+      listingIds.includes(o.listingId) &&
+      now.getTime() - new Date(o.createdAt).getTime() >= thresholdMs
+    ) {
+      o.status = "canceled";
+      o.updatedAt = now.toISOString();
+      canceledIds.push(o.id);
+    }
+  });
+
+  return { canceledCount: canceledIds.length, orderIds: canceledIds };
+}
+
+/**
+ * Lazy sweep (2.2-B): auto-completes shipped orders older than 48 hours for a given seller.
+ */
+export async function autoCompleteShippedForSeller(
+  sellerId: string,
+  hoursThreshold = 48,
+): Promise<{ completedCount: number; orderIds: string[] }> {
+  if (!sellerId) return { completedCount: 0, orderIds: [] };
+  const pool = getPool();
+  const now = new Date();
+  const thresholdMs = hoursThreshold * 60 * 60 * 1000;
+  const cutoffDate = new Date(now.getTime() - thresholdMs).toISOString();
+  const completedIds: string[] = [];
+
+  if (pool) {
+    try {
+      const res = await pool.query(
+        `UPDATE public.orders
+         SET status = 'completed',
+             completed_at = COALESCE(completed_at, NOW()),
+             updated_at = NOW()
+         WHERE seller_id = $1
+           AND status = 'shipped'
+           AND (shipped_at <= $2 OR (shipped_at IS NULL AND updated_at <= $2))
+         RETURNING id`,
+        [sellerId, cutoffDate],
+      );
+      res.rows.forEach((r) => completedIds.push(r.id));
+      return { completedCount: completedIds.length, orderIds: completedIds };
+    } catch (err) {
+      logger.error("order.lazy_auto_complete_seller_failed", err, { sellerId });
+      return { completedCount: 0, orderIds: [] };
+    }
+  }
+
+  // Mock
+  mockOrders.forEach((o) => {
+    if (o.sellerId === sellerId && o.status === "shipped") {
+      const shipTime = new Date(o.shippedAt || o.updatedAt || o.createdAt).getTime();
+      if (now.getTime() - shipTime >= thresholdMs) {
+        o.status = "completed";
+        o.completedAt = now.toISOString();
+        o.updatedAt = now.toISOString();
+        completedIds.push(o.id);
       }
     }
   });

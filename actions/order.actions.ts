@@ -15,6 +15,8 @@ import {
   updateOrderStatus,
   transitionOrderStatus,
   cancelOrderWithRefund,
+  expireStalePendingForListings,
+  autoCompleteShippedForSeller,
   updateOrderSnapToken,
   generateOrderNumber,
   autoCompleteExpiredShippedOrders,
@@ -170,6 +172,13 @@ export async function createCheckoutOrderAction(
     }
   }
   const normalizedItems = Array.from(deduplicatedMap.values());
+
+  // 1b. Lazy sweep (2.2-A): release held stock by expiring stale pending orders (>75 mins)
+  try {
+    await expireStalePendingForListings(normalizedItems.map((i) => i.listingId));
+  } catch (err) {
+    logger.warn("order.lazy_expire_checkout_failed", { error: String(err) });
+  }
 
   // 2. Fetch and validate all listings
   const resolvedItems = [];

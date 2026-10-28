@@ -59,7 +59,7 @@ export async function createReview(data: {
         ],
       );
     } catch (e) {
-      console.error("Failed to insert review in postgres:", e);
+      logger.error("reviews.insert_failed", e, { orderId: data.orderId, listingId: data.listingId });
     }
   }
 

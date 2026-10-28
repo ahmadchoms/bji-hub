@@ -223,7 +223,7 @@ export async function createPayoutRequestAtomic(data: {
       return { ok: true, payout: newPayout };
     } catch (e) {
       await client.query("ROLLBACK");
-      console.error("Failed to execute atomic payout in postgres:", e);
+      logger.error("payout.atomic_create_failed", e);
       throw e;
     } finally {
       client.release();
@@ -285,7 +285,7 @@ export async function getSellerBalanceSummary(sellerId: string): Promise<{
         totalEarned,
       };
     } catch (e) {
-      console.error("Failed to query seller balance summary in postgres:", e);
+      logger.error("payout.query_balance_failed", e);
       throw e;
     }
   }

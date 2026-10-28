@@ -17,6 +17,7 @@ import { id as idLocale } from "date-fns/locale";
 import {
   Printer,
   FileText,
+  Download,
   ExternalLink,
   ShieldCheck,
   Building2,
@@ -241,12 +242,28 @@ export function OrderPrintModal({
                     Isi Paket:
                   </span>
                   <span className="font-mono font-bold text-neutral-900 text-xs">
-                    Qty: {order.quantity} pcs / kg
+                    Total: {order.items && order.items.length > 0 ? order.items.reduce((acc, it) => acc + it.quantity, 0) : order.quantity} item
                   </span>
                 </div>
-                <p className="font-medium text-neutral-900 text-xs bg-neutral-50 p-2 rounded border border-neutral-200">
-                  {order.listingTitle || `Produk ID #${order.listingId}`}
-                </p>
+                <div className="space-y-1 bg-neutral-50 p-2 rounded border border-neutral-200">
+                  {order.items && order.items.length > 0 ? (
+                    order.items.map((item, idx) => (
+                      <div key={item.id || idx} className="flex justify-between items-center text-xs">
+                        <span className="font-medium text-neutral-900">
+                          {item.title || order.listingTitle || `Produk #${item.listingId}`}
+                          {item.grindSize ? ` (${item.grindSize})` : ""}
+                        </span>
+                        <span className="font-mono font-bold text-neutral-700">
+                          {item.quantity} {item.unit || "pcs"}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="font-medium text-neutral-900 text-xs">
+                      {order.listingTitle || `Produk ID #${order.listingId}`}
+                    </p>
+                  )}
+                </div>
 
                 {order.notes && (
                   <p className="text-[11px] text-neutral-700 italic bg-amber-50/60 p-1.5 rounded border border-amber-200">
@@ -280,7 +297,7 @@ export function OrderPrintModal({
                     Platform Marketplace Biji Kopi Indonesia
                   </p>
                   <p className="text-[10px] text-neutral-400">
-                    https://bji-hub.vercel.app
+                    Biji Hub &bull; Marketplace Kopi Spesialti
                   </p>
                 </div>
                 <div className="text-right">
@@ -349,27 +366,58 @@ export function OrderPrintModal({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-neutral-100 text-neutral-800">
-                    <tr>
-                      <td className="p-2.5">
-                        <span className="font-medium text-neutral-900 block">
-                          {order.listingTitle || `Produk #${order.listingId}`}
-                        </span>
-                        {order.notes && (
-                          <span className="text-[10px] text-neutral-500 italic block mt-0.5">
-                            Catatan: {order.notes}
+                    {order.items && order.items.length > 0 ? (
+                      order.items.map((item, idx) => (
+                        <tr key={item.id || idx}>
+                          <td className="p-2.5">
+                            <span className="font-medium text-neutral-900 block">
+                              {item.title || order.listingTitle || `Produk #${item.listingId}`}
+                            </span>
+                            {item.grindSize && (
+                              <span className="text-[10px] text-neutral-500 block">
+                                Gilingan: {item.grindSize}
+                              </span>
+                            )}
+                            {idx === 0 && order.notes && (
+                              <span className="text-[10px] text-neutral-500 italic block mt-0.5">
+                                Catatan: {order.notes}
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-2.5 text-center font-mono">
+                            {item.quantity} {item.unit || "pcs"}
+                          </td>
+                          <td className="p-2.5 text-right font-mono">
+                            {formatRupiah(item.unitPrice)}
+                          </td>
+                          <td className="p-2.5 text-right font-mono font-medium">
+                            {formatRupiah(item.quantity * item.unitPrice)}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td className="p-2.5">
+                          <span className="font-medium text-neutral-900 block">
+                            {order.listingTitle || `Produk #${order.listingId}`}
                           </span>
-                        )}
-                      </td>
-                      <td className="p-2.5 text-center font-mono">
-                        {order.quantity}
-                      </td>
-                      <td className="p-2.5 text-right font-mono">
-                        {formatRupiah(order.itemPrice)}
-                      </td>
-                      <td className="p-2.5 text-right font-mono font-medium">
-                        {formatRupiah(order.subtotal)}
-                      </td>
-                    </tr>
+                          {order.notes && (
+                            <span className="text-[10px] text-neutral-500 italic block mt-0.5">
+                              Catatan: {order.notes}
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-2.5 text-center font-mono">
+                          {order.quantity}
+                        </td>
+                        <td className="p-2.5 text-right font-mono">
+                          {formatRupiah(order.itemPrice)}
+                        </td>
+                        <td className="p-2.5 text-right font-mono font-medium">
+                          {formatRupiah(order.subtotal)}
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -442,8 +490,8 @@ export function OrderPrintModal({
               onClick={handlePrint}
               className="text-xs bg-primary-600 hover:bg-primary-700 text-white gap-1.5"
             >
-              <Printer className="w-3.5 h-3.5" />
-              Cetak / Simpan PDF
+              <Download className="w-3.5 h-3.5" />
+              Unduh PDF / Cetak
             </Button>
           </div>
         </div>

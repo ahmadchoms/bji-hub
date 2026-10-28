@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import {
   Printer,
+  Download,
   ShieldCheck,
   Building2,
   User,
@@ -77,6 +78,29 @@ export function InvoicePrintView({
 
   return (
     <div className="min-h-screen bg-neutral-100 print:bg-white text-neutral-900 font-sans pb-12 print:pb-0">
+      {/* Dynamic Print Stylesheet for exact PDF generation */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            @media print {
+              @page {
+                size: ${mode === "shipping_label" ? "100mm 150mm" : "A4 portrait"};
+                margin: ${mode === "shipping_label" ? "5mm" : "12mm"};
+              }
+              html, body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+              .print\\:hidden {
+                display: none !important;
+              }
+            }
+          `,
+        }}
+      />
+
       {/* Floating Action Top Bar - Hidden on Print */}
       <div className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-neutral-300 py-3 px-4 shadow-xs print:hidden">
         <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-3">
@@ -133,9 +157,19 @@ export function InvoicePrintView({
               type="button"
               size="sm"
               onClick={() => window.print()}
-              className="bg-primary-600 hover:bg-primary-700 text-white text-xs gap-1.5 h-8 font-medium"
+              className="bg-primary-600 hover:bg-primary-700 text-white text-xs gap-1.5 h-8 font-medium shadow-xs"
             >
-              <Printer className="w-3.5 h-3.5" /> Cetak / Simpan PDF
+              <Download className="w-3.5 h-3.5" /> Unduh PDF
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => window.print()}
+              className="text-xs gap-1.5 h-8 font-medium"
+            >
+              <Printer className="w-3.5 h-3.5" /> Cetak
             </Button>
           </div>
         </div>
@@ -222,12 +256,28 @@ export function InvoicePrintView({
                   Rincian Isi Paket Kopi:
                 </span>
                 <span className="font-mono font-bold text-neutral-900 text-sm">
-                  Kuantitas: {order.quantity} pcs / kg
+                  Total: {order.items && order.items.length > 0 ? order.items.reduce((acc, it) => acc + it.quantity, 0) : order.quantity} item
                 </span>
               </div>
-              <p className="font-semibold text-neutral-900 text-sm bg-neutral-50 p-2.5 rounded border border-neutral-200">
-                {order.listingTitle || `Produk ID #${order.listingId}`}
-              </p>
+              <div className="space-y-1.5 bg-neutral-50 p-2.5 rounded border border-neutral-200">
+                {order.items && order.items.length > 0 ? (
+                  order.items.map((item, idx) => (
+                    <div key={item.id || idx} className="flex justify-between items-center text-xs">
+                      <span className="font-semibold text-neutral-900">
+                        {item.title || order.listingTitle || `Produk #${item.listingId}`}
+                        {item.grindSize ? ` (${item.grindSize})` : ""}
+                      </span>
+                      <span className="font-mono font-bold text-neutral-700">
+                        {item.quantity} {item.unit || "pcs"}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="font-semibold text-neutral-900 text-sm">
+                    {order.listingTitle || `Produk ID #${order.listingId}`}
+                  </p>
+                )}
+              </div>
 
               {order.notes && (
                 <p className="text-xs text-neutral-800 italic bg-amber-50 p-2 rounded border border-amber-200">
@@ -260,7 +310,7 @@ export function InvoicePrintView({
                   Marketplace Biji Kopi Sangrai & Green Beans Spesialti Indonesia
                 </p>
                 <p className="text-[11px] text-neutral-400 mt-0.5">
-                  https://bji-hub.vercel.app &bull; Marketplace Kopi Spesialti Indonesia
+                  Biji Hub &bull; Marketplace Kopi Spesialti Indonesia
                 </p>
               </div>
               <div className="text-right">
@@ -322,23 +372,54 @@ export function InvoicePrintView({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-200 text-neutral-800">
-                  <tr>
-                    <td className="p-3">
-                      <span className="font-bold text-neutral-900 text-sm block">
-                        {order.listingTitle || `Produk ID #${order.listingId}`}
-                      </span>
-                      {order.notes && (
-                        <span className="text-[11px] text-neutral-600 italic block mt-1">
-                          Catatan: {order.notes}
+                  {order.items && order.items.length > 0 ? (
+                    order.items.map((item, idx) => (
+                      <tr key={item.id || idx}>
+                        <td className="p-3">
+                          <span className="font-bold text-neutral-900 text-sm block">
+                            {item.title || order.listingTitle || `Produk ID #${item.listingId}`}
+                          </span>
+                          {item.grindSize && (
+                            <span className="text-[11px] text-neutral-600 block mt-0.5">
+                              Profil Gilingan: <strong>{item.grindSize}</strong>
+                            </span>
+                          )}
+                          {idx === 0 && order.notes && (
+                            <span className="text-[11px] text-neutral-600 italic block mt-1">
+                              Catatan: {order.notes}
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-3 text-center font-mono text-sm font-semibold">
+                          {item.quantity} {item.unit || "pcs"}
+                        </td>
+                        <td className="p-3 text-right font-mono text-sm">
+                          {formatRupiah(item.unitPrice)}
+                        </td>
+                        <td className="p-3 text-right font-mono font-bold text-sm text-neutral-900">
+                          {formatRupiah(item.quantity * item.unitPrice)}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td className="p-3">
+                        <span className="font-bold text-neutral-900 text-sm block">
+                          {order.listingTitle || `Produk ID #${order.listingId}`}
                         </span>
-                      )}
-                    </td>
-                    <td className="p-3 text-center font-mono text-sm font-semibold">{order.quantity} pcs/kg</td>
-                    <td className="p-3 text-right font-mono text-sm">{formatRupiah(order.itemPrice)}</td>
-                    <td className="p-3 text-right font-mono font-bold text-sm text-neutral-900">
-                      {formatRupiah(order.subtotal)}
-                    </td>
-                  </tr>
+                        {order.notes && (
+                          <span className="text-[11px] text-neutral-600 italic block mt-1">
+                            Catatan: {order.notes}
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-3 text-center font-mono text-sm font-semibold">{order.quantity} pcs/kg</td>
+                      <td className="p-3 text-right font-mono text-sm">{formatRupiah(order.itemPrice)}</td>
+                      <td className="p-3 text-right font-mono font-bold text-sm text-neutral-900">
+                        {formatRupiah(order.subtotal)}
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

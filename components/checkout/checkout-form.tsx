@@ -449,9 +449,10 @@ export function CheckoutForm({
                     type="button"
                     onClick={() => setQuantity((q) => Math.max(listing.minOrderQty, q - 1))}
                     disabled={quantity <= listing.minOrderQty}
-                    className="w-7 h-7 rounded border border-neutral-300 flex items-center justify-center text-neutral-700 hover:bg-neutral-100 disabled:opacity-40"
+                    className="min-w-11 min-h-11 sm:w-8 sm:h-8 sm:min-w-8 sm:min-h-8 rounded border border-neutral-300 flex items-center justify-center text-neutral-700 hover:bg-neutral-100 disabled:opacity-40 transition-colors"
+                    aria-label="Kurangi jumlah pesanan"
                   >
-                    <Minus className="w-3 h-3" />
+                    <Minus className="w-3.5 h-3.5" />
                   </button>
                   <span className="font-mono tabular-nums font-bold text-neutral-900 px-2 min-w-8 text-center">
                     {quantity}
@@ -464,9 +465,10 @@ export function CheckoutForm({
                       )
                     }
                     disabled={listing.stock !== undefined && quantity >= listing.stock}
-                    className="w-7 h-7 rounded border border-neutral-300 flex items-center justify-center text-neutral-700 hover:bg-neutral-100 disabled:opacity-40"
+                    className="min-w-11 min-h-11 sm:w-8 sm:h-8 sm:min-w-8 sm:min-h-8 rounded border border-neutral-300 flex items-center justify-center text-neutral-700 hover:bg-neutral-100 disabled:opacity-40 transition-colors"
+                    aria-label="Tambah jumlah pesanan"
                   >
-                    <Plus className="w-3 h-3" />
+                    <Plus className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -530,11 +532,15 @@ export function CheckoutForm({
                     value={buyerName}
                     onChange={(e) => setBuyerName(e.target.value)}
                     placeholder="Nama lengkap penerima"
+                    autoComplete="name"
                     className="text-xs h-9 bg-white"
                   />
                 </FormField>
                 <FormField label="No. WhatsApp / HP">
                   <Input
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
                     value={buyerPhone}
                     onChange={(e) => setBuyerPhone(e.target.value)}
                     placeholder="08xxxxxxxxxx"
@@ -549,6 +555,7 @@ export function CheckoutForm({
                     value={buyerCity}
                     onChange={(e) => setBuyerCity(e.target.value)}
                     placeholder="Contoh: Bandung, Surabaya, Jakarta Selatan"
+                    autoComplete="address-level2"
                     className="text-xs h-9 bg-white"
                   />
                 </FormField>
@@ -558,12 +565,15 @@ export function CheckoutForm({
                       value={buyerProvince}
                       onChange={(e) => setBuyerProvince(e.target.value)}
                       placeholder="Provinsi"
+                      autoComplete="address-level1"
                       className="text-xs h-9 bg-white flex-1"
                     />
                     <Input
                       value={buyerPostalCode}
                       onChange={(e) => setBuyerPostalCode(e.target.value)}
                       placeholder="Kodepos"
+                      autoComplete="postal-code"
+                      inputMode="numeric"
                       className="text-xs h-9 bg-white w-24"
                     />
                   </div>
@@ -575,6 +585,7 @@ export function CheckoutForm({
                   value={buyerAddress}
                   onChange={(e) => setBuyerAddress(e.target.value)}
                   placeholder="Nama jalan, nomor rumah, RT/RW, kelurahan, kecamatan"
+                  autoComplete="street-address"
                   className="text-xs h-9 bg-white"
                 />
               </FormField>

@@ -161,6 +161,7 @@ function LoginForm() {
                 type="email"
                 {...register("email")}
                 placeholder="nama@roastery.com"
+                autoComplete="email"
                 aria-invalid={!!errors.email}
               />
             </FormField>
@@ -174,6 +175,7 @@ function LoginForm() {
                 type="password"
                 {...register("password")}
                 placeholder="••••••••"
+                autoComplete="current-password"
                 aria-invalid={!!errors.password}
               />
             </FormField>

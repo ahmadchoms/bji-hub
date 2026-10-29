@@ -106,6 +106,7 @@ function RegisterForm() {
                 type="text"
                 {...register("name")}
                 placeholder="Budi Santoso"
+                autoComplete="name"
                 aria-invalid={!!errors.name}
               />
             </FormField>
@@ -115,6 +116,7 @@ function RegisterForm() {
                 type="email"
                 {...register("email")}
                 placeholder="budi@email.com"
+                autoComplete="email"
                 aria-invalid={!!errors.email}
               />
             </FormField>
@@ -129,6 +131,7 @@ function RegisterForm() {
                   type={showPassword ? "text" : "password"}
                   {...register("password")}
                   placeholder="Minimal 6 karakter"
+                  autoComplete="new-password"
                   className="pr-10"
                   aria-invalid={!!errors.password}
                 />

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ShieldCheck, Minus, Plus, Sparkles, X } from "lucide-react";
+import { ShieldCheck, Minus, Plus, Sparkles } from "lucide-react";
 import { ListingWithRelations } from "@/types";
 import { PriceText, formatRupiah } from "@/components/shared/price-text";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";

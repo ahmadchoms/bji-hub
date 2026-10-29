@@ -42,14 +42,14 @@ export function useSnap() {
         process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY ||
         process.env.MIDTRANS_CLIENT_KEY;
 
+      script = document.createElement("script");
+      script.id = scriptId;
+      script.src = snapScriptUrl;
       if (clientKey) {
-        script = document.createElement("script");
-        script.id = scriptId;
-        script.src = snapScriptUrl;
         script.setAttribute("data-client-key", clientKey);
-        script.async = true;
-        document.body.appendChild(script);
       }
+      script.async = true;
+      document.body.appendChild(script);
     }
 
     const start = Date.now();

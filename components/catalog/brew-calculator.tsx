@@ -23,7 +23,6 @@ export function BrewCalculator({
   const [selectedMethod, setSelectedMethod] = useState<BrewMethodId>(initialMethod);
   const [coffeeGrams, setCoffeeGrams] = useState<number>(15);
   const [ratio, setRatio] = useState<number>(BREW_METHODS[initialMethod].defaultRatio);
-  const [activeTab, setActiveTab] = useState<"grams" | "water">("grams");
   const [waterMl, setWaterMl] = useState<number>(
     calculateBrewRatio({ coffeeGrams: 15, ratio: BREW_METHODS[initialMethod].defaultRatio }).waterMl
   );

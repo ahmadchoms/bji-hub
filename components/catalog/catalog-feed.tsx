@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getCatalogFeed } from "@/lib/data";
+import { getCatalogFeedCached, normalizeFilters } from "@/lib/data/cached-catalog";
 import {
   parseCatalogParams,
   type CatalogParams,
@@ -10,20 +10,21 @@ import { LoadMore } from "@/components/catalog/load-more";
 
 export async function CatalogFeed({ params }: { params: CatalogParams }) {
   try {
-    const feed = await getCatalogFeed(
-      {
-        categorySlug: params.category || params.kategori,
-        originRegion: params.origin || params.asal,
-        processMethod: params.process || params.proses,
-        roastLevel: params.roast || params.sangrai,
-        minPrice: params.min_price ?? params.harga_min,
-        maxPrice: params.max_price ?? params.harga_max,
-        isVerified: params.verified,
-        readyStock: params.ready_stock,
-        search: params.q,
-        sort: params.sort,
-        minCuppingScore: params.cupping_score ?? params.min_cupping,
-      },
+    const filterParams = normalizeFilters({
+      categorySlug: params.category || params.kategori,
+      originRegion: params.origin || params.asal,
+      processMethod: params.process || params.proses,
+      roastLevel: params.roast || params.sangrai,
+      minPrice: params.min_price ?? params.harga_min,
+      maxPrice: params.max_price ?? params.harga_max,
+      isVerified: params.verified,
+      readyStock: params.ready_stock,
+      search: params.q,
+      sort: params.sort,
+      minCuppingScore: params.cupping_score ?? params.min_cupping,
+    });
+    const feed = await getCatalogFeedCached(
+      JSON.stringify(filterParams),
       params.page,
     );
     const currentPage = params.page;

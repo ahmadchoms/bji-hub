@@ -8,6 +8,7 @@ import { replyToReview, reportReview } from "@/lib/data/reviews";
 import { recordAuditLog } from "@/lib/data/audit-logs";
 import { getClientIp } from "@/lib/client-ip";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { runAfterResponse } from "@/lib/after";
 
 const replySchema = z.object({
   reviewId: z.string().min(1, "ID ulasan wajib diisi"),
@@ -41,7 +42,11 @@ export async function replyToReviewAction(
 
 const reportSchema = z.object({
   reviewId: z.string().min(1, "ID ulasan wajib diisi"),
-  reason: z.string().trim().min(5, "Alasan pelaporan minimal 5 karakter").max(300, "Alasan pelaporan maksimal 300 karakter"),
+  reason: z
+    .string()
+    .trim()
+    .min(5, "Alasan pelaporan minimal 5 karakter")
+    .max(500, "Alasan pelaporan maksimal 500 karakter"),
 });
 
 export async function reportReviewAction(
@@ -62,20 +67,36 @@ export async function reportReviewAction(
     return fail(parsed.error.issues[0]?.message || "Alasan pelaporan tidak valid");
   }
 
-  const success = await reportReview(parsed.data.reviewId, parsed.data.reason);
-  if (!success) {
-    return fail("Ulasan tidak ditemukan atau gagal dilaporkan.");
+  try {
+    const success = await reportReview(
+      parsed.data.reviewId,
+      session.userId,
+      parsed.data.reason,
+    );
+    if (!success) {
+      return fail("Ulasan tidak ditemukan atau gagal dilaporkan.");
+    }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Gagal melaporkan ulasan.";
+    return fail(msg);
   }
 
-  const clientIp = await getClientIp();
-  await recordAuditLog({
-    actorId: session.userId,
-    actorRole: session.role,
-    action: "report_review",
-    targetId: parsed.data.reviewId,
-    targetType: "review",
-    details: { reason: parsed.data.reason },
-    ipAddress: clientIp,
+  const actorId = session.userId;
+  const actorRole = session.role;
+  const reviewId = parsed.data.reviewId;
+  const reason = parsed.data.reason;
+
+  runAfterResponse(async () => {
+    const clientIp = await getClientIp();
+    await recordAuditLog({
+      actorId,
+      actorRole,
+      action: "report_review",
+      targetId: reviewId,
+      targetType: "review",
+      details: { reason },
+      ipAddress: clientIp,
+    });
   });
 
   return ok({ success: true });

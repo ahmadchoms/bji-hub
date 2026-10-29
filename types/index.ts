@@ -326,6 +326,16 @@ export interface Review {
   sellerRepliedAt?: string | null;
   isReported?: boolean;
   reportReason?: string | null;
+  moderationStatus?: "approved" | "hidden_pending_review" | "rejected";
+  createdAt: string;
+}
+
+export interface ReviewReport {
+  id: string;
+  reviewId: string;
+  reporterId: string;
+  reason: string;
+  status: "open" | "dismissed" | "actioned";
   createdAt: string;
 }
 

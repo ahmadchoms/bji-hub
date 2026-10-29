@@ -107,7 +107,8 @@ describe("reviews data and stats", () => {
     );
     expect(duplicateReply).toBe(false);
 
-    const reportSuccess = await reportReview(rev.id, "Spam ulasan palsu");
+    // 4. Reporting review (SEC-2)
+    const reportSuccess = await reportReview(rev.id, "reporter-1", "Spam ulasan palsu");
     expect(reportSuccess).toBe(true);
 
     const list = await getReviewsByListing("list-1");
@@ -115,5 +116,52 @@ describe("reviews data and stats", () => {
     expect(list[0].sellerReply).toBe("Terima kasih atas masukannya, kami perbaiki kemasan.");
     expect(list[0].isReported).toBe(true);
     expect(list[0].reportReason).toBe("Spam ulasan palsu");
+  });
+
+  it("prevents reviewer from reporting their own review (SEC-2)", async () => {
+    const { createReview, reportReview, _resetMockReviewsForTest } =
+      await import("@/lib/data/reviews");
+    _resetMockReviewsForTest();
+
+    const rev = await createReview({
+      listingId: "list-1",
+      buyerId: "buyer-author-123",
+      buyerName: "Author",
+      rating: 5,
+      comment: "Kopi terbaik!",
+    });
+
+    await expect(
+      reportReview(rev.id, "buyer-author-123", "Alasan palsu pelaporan")
+    ).rejects.toThrow("Pelapor tidak boleh melaporkan ulasannya sendiri.");
+  });
+
+  it("hides review when 3 or more distinct reporters flag it (SEC-2)", async () => {
+    const { createReview, reportReview, getReviewsByListing, _resetMockReviewsForTest } =
+      await import("@/lib/data/reviews");
+    _resetMockReviewsForTest();
+
+    const rev = await createReview({
+      listingId: "list-1",
+      buyerId: "buyer-1",
+      buyerName: "Buyer",
+      rating: 1,
+      comment: "Ulasan negatif mencurigakan",
+    });
+
+    // 1st reporter
+    await reportReview(rev.id, "reporter-1", "Indikasi bot / spam");
+    let visible = await getReviewsByListing("list-1");
+    expect(visible.length).toBe(1);
+
+    // 2nd reporter
+    await reportReview(rev.id, "reporter-2", "Ulasan melanggar aturan");
+    visible = await getReviewsByListing("list-1");
+    expect(visible.length).toBe(1);
+
+    // 3rd distinct reporter -> hits threshold >= 3 -> hidden_pending_review
+    await reportReview(rev.id, "reporter-3", "Konten promosi produk lain");
+    visible = await getReviewsByListing("list-1");
+    expect(visible.length).toBe(0);
   });
 });

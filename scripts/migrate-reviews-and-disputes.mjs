@@ -120,11 +120,24 @@ async function main() {
     CREATE INDEX IF NOT EXISTS idx_listings_title_trgm ON public.listings USING gin (title gin_trgm_ops);
     CREATE INDEX IF NOT EXISTS idx_seller_profiles_business_name_trgm ON public.seller_profiles USING gin ("businessName" gin_trgm_ops);
 
-    -- Review replies and reports (F9)
+    -- Review replies and reports (F9 & SEC-2)
     ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS seller_reply TEXT;
     ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS seller_replied_at TIMESTAMPTZ;
     ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS is_reported BOOLEAN NOT NULL DEFAULT false;
     ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS report_reason TEXT;
+    ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS moderation_status TEXT NOT NULL DEFAULT 'approved';
+
+    CREATE TABLE IF NOT EXISTS public.review_reports (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      review_id TEXT NOT NULL REFERENCES public.reviews(id) ON DELETE CASCADE,
+      reporter_id TEXT NOT NULL,
+      reason TEXT NOT NULL CHECK (char_length(reason) BETWEEN 5 AND 500),
+      status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'dismissed', 'actioned')),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (review_id, reporter_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_review_reports_status_created ON public.review_reports(status, created_at DESC);
+    ALTER TABLE public.review_reports ENABLE ROW LEVEL SECURITY;
 
     -- Row Level Security (RLS) enforcement on all new application tables (S11)
     ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;

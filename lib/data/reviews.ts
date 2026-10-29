@@ -15,6 +15,16 @@ function getPool(): Pool | null {
 
 const mockReviews: Review[] = [];
 
+interface MockReviewReport {
+  reviewId: string;
+  reporterId: string;
+  reason: string;
+  status: "open" | "dismissed" | "actioned";
+  createdAt: string;
+}
+
+const mockReviewReports: MockReviewReport[] = [];
+
 export async function createReview(data: {
   orderId?: string | null;
   listingId: string;
@@ -108,6 +118,7 @@ export async function getReviewByOrderAndListing(
 
 export function _resetMockReviewsForTest(): void {
   mockReviews.length = 0;
+  mockReviewReports.length = 0;
 }
 
 function mapReviewRow(row: Record<string, unknown>): Review {
@@ -126,6 +137,7 @@ function mapReviewRow(row: Record<string, unknown>): Review {
       : (row.sellerRepliedAt as string | null) ?? null,
     isReported: Boolean(row.is_reported || row.isReported),
     reportReason: (row.report_reason || row.reportReason || null) as string | null,
+    moderationStatus: (row.moderation_status || row.moderationStatus || "approved") as Review["moderationStatus"],
     createdAt: new Date((row.created_at || row.createdAt) as string).toISOString(),
   };
 }
@@ -137,6 +149,7 @@ export async function getReviewsByListing(listingId: string): Promise<Review[]> 
       const res = await pool.query(
         `SELECT * FROM public.reviews
          WHERE listing_id = $1
+           AND (moderation_status IS NULL OR moderation_status != 'hidden_pending_review')
          ORDER BY created_at DESC`,
         [listingId],
       );
@@ -147,7 +160,9 @@ export async function getReviewsByListing(listingId: string): Promise<Review[]> 
     }
   }
 
-  return mockReviews.filter((r) => r.listingId === listingId);
+  return mockReviews.filter(
+    (r) => r.listingId === listingId && r.moderationStatus !== "hidden_pending_review"
+  );
 }
 
 export async function getReviewsByListingIds(listingIds: string[]): Promise<Review[]> {
@@ -257,29 +272,100 @@ export async function replyToReview(
 
 export async function reportReview(
   reviewId: string,
+  reporterId: string,
   reason: string,
 ): Promise<boolean> {
+  const cleanReason = reason.trim();
+  if (cleanReason.length < 5 || cleanReason.length > 500) {
+    throw new Error("Alasan pelaporan harus antara 5 hingga 500 karakter.");
+  }
+
   const pool = getPool();
 
   if (pool) {
-    try {
-      const res = await pool.query(
+    // 1. Fetch review to verify existence and check self-reporting
+    const reviewRes = await pool.query(
+      `SELECT id, buyer_id FROM public.reviews WHERE id = $1 LIMIT 1`,
+      [reviewId],
+    );
+    if (reviewRes.rows.length === 0) {
+      return false;
+    }
+    if (reviewRes.rows[0].buyer_id && reviewRes.rows[0].buyer_id === reporterId) {
+      throw new Error("Pelapor tidak boleh melaporkan ulasannya sendiri.");
+    }
+
+    // 2. Structured report insert with idempotency (upsert)
+    await pool.query(
+      `INSERT INTO public.review_reports (review_id, reporter_id, reason, status)
+       VALUES ($1, $2, $3, 'open')
+       ON CONFLICT (review_id, reporter_id)
+       DO UPDATE SET reason = EXCLUDED.reason, status = 'open'`,
+      [reviewId, reporterId, cleanReason],
+    );
+
+    // 3. Count distinct open reports
+    const countRes = await pool.query(
+      `SELECT COUNT(DISTINCT reporter_id) as count
+       FROM public.review_reports
+       WHERE review_id = $1 AND status = 'open'`,
+      [reviewId],
+    );
+    const reportCount = Number(countRes.rows[0]?.count || 0);
+
+    // Threshold: >= 3 distinct reporters -> hidden_pending_review
+    if (reportCount >= 3) {
+      await pool.query(
+        `UPDATE public.reviews
+         SET is_reported = true, report_reason = $1, moderation_status = 'hidden_pending_review'
+         WHERE id = $2`,
+        [cleanReason, reviewId],
+      );
+    } else {
+      await pool.query(
         `UPDATE public.reviews
          SET is_reported = true, report_reason = $1
          WHERE id = $2`,
-        [reason.trim(), reviewId],
+        [cleanReason, reviewId],
       );
-      return (res.rowCount ?? 0) > 0;
-    } catch {
-      return false;
     }
-  }
-
-  const r = mockReviews.find((rev) => rev.id === reviewId);
-  if (r) {
-    r.isReported = true;
-    r.reportReason = reason.trim();
     return true;
   }
-  return false;
+
+  // Mock implementation
+  const r = mockReviews.find((rev) => rev.id === reviewId);
+  if (!r) return false;
+  if (r.buyerId && r.buyerId === reporterId) {
+    throw new Error("Pelapor tidak boleh melaporkan ulasannya sendiri.");
+  }
+
+  const existing = mockReviewReports.find(
+    (rep) => rep.reviewId === reviewId && rep.reporterId === reporterId,
+  );
+  if (existing) {
+    existing.reason = cleanReason;
+    existing.status = "open";
+  } else {
+    mockReviewReports.push({
+      reviewId,
+      reporterId,
+      reason: cleanReason,
+      status: "open",
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  const distinctReporters = new Set(
+    mockReviewReports
+      .filter((rep) => rep.reviewId === reviewId && rep.status === "open")
+      .map((rep) => rep.reporterId),
+  ).size;
+
+  r.isReported = true;
+  r.reportReason = cleanReason;
+  if (distinctReporters >= 3) {
+    r.moderationStatus = "hidden_pending_review";
+  }
+
+  return true;
 }

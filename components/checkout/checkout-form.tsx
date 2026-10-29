@@ -142,6 +142,12 @@ export function CheckoutForm({
   const serviceFee = 1500;
   const totalAmount = subtotal + shippingCost + serviceFee;
 
+  const midtransClientKey =
+    process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY ||
+    process.env.MIDTRANS_CLIENT_KEY;
+  const isPaymentConfigured =
+    Boolean(midtransClientKey) || process.env.DATA_SOURCE === "mock";
+
   useEffect(() => {
     let canceled = false;
     const cleanCity = buyerCity.trim();
@@ -198,6 +204,10 @@ export function CheckoutForm({
   }, [totalWeightGrams, buyerCity, buyerProvince, listing.seller.city, listing.seller.province, shippingRetryCount]);
 
   const handlePay = () => {
+    if (!isPaymentConfigured) {
+      toast.error("Pembayaran belum dikonfigurasi");
+      return;
+    }
     if (!buyerName.trim()) {
       toast.error("Nama penerima wajib diisi");
       return;
@@ -917,11 +927,18 @@ export function CheckoutForm({
             </div>
           )}
 
+          {!isPaymentConfigured && (
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded text-rose-800 text-xs font-medium">
+              ⚠️ Pembayaran belum dikonfigurasi. Silakan hubungi admin marketplace.
+            </div>
+          )}
+
           <Button
             type="button"
             variant="primary"
             size="lg"
             disabled={
+              !isPaymentConfigured ||
               isPending ||
               !selectedCourier ||
               listing.stock === 0 ||

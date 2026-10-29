@@ -13,7 +13,14 @@ export function SnapLoader() {
     process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY ||
     process.env.MIDTRANS_CLIENT_KEY;
 
-  if (!clientKey) return null;
+  if (!clientKey) {
+    if (typeof window !== "undefined") {
+      console.warn(
+        "[SEC-4 Admin Warning] NEXT_PUBLIC_MIDTRANS_CLIENT_KEY is missing. Payment gateway is unconfigured."
+      );
+    }
+    return null;
+  }
 
   return (
     <Script

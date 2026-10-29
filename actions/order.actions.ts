@@ -884,17 +884,16 @@ export async function submitReviewAction(
   try {
     revalidatePath("/orders");
     revalidatePath("/order/success");
-    getListingById(parsed.data.listingId)
-      .then((listing) => {
+    runAfterResponse(async () => {
+      try {
+        const listing = await getListingById(parsed.data.listingId);
         if (listing?.slug) {
-          try {
-            revalidatePath(`/product/${listing.slug}`);
-          } catch {
-            // ignore
-          }
+          revalidatePath(`/product/${listing.slug}`);
         }
-      })
-      .catch(() => {});
+      } catch {
+        // ignore
+      }
+    });
   } catch {
     // ignore: revalidatePath might throw outside Next.js request lifecycle (e.g. tests)
   }
@@ -1175,16 +1174,25 @@ export async function checkOrderPaymentStatusAction(
     if (statusResult && statusResult.status === "paid") {
       const applied = await updateOrderStatus(order.id, "paid");
       if (applied) {
-        sendOrderPaidEmail({ ...order, status: "paid" }).catch(() => {});
-        getSellerById(order.sellerId)
-          .then((seller) => {
-            sendNewOrderSellerEmail({
-              order: { ...order, status: "paid" },
-              sellerEmail: seller?.user?.email,
-              sellerName: seller?.businessName || order.sellerName,
-            }).catch(() => {});
-          })
-          .catch(() => {});
+        runAfterResponse(async () => {
+          await sendOrderPaidEmail({ ...order, status: "paid" }).catch((e) =>
+            logger.error("email.order_paid_failed", e, { orderId: order.id }),
+          );
+          try {
+            const seller = await getSellerById(order.sellerId);
+            if (seller) {
+              await sendNewOrderSellerEmail({
+                order: { ...order, status: "paid" },
+                sellerEmail: seller?.user?.email,
+                sellerName: seller?.businessName || order.sellerName,
+              }).catch((e) =>
+                logger.error("email.seller_new_order_failed", e, { orderId: order.id }),
+              );
+            }
+          } catch (e) {
+            logger.error("seller.lookup_failed_for_email", e, { sellerId: order.sellerId });
+          }
+        });
       }
 
       revalidatePath("/order/success");

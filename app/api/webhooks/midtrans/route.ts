@@ -75,27 +75,35 @@ export async function POST(req: NextRequest) {
         createdBy: "system_midtrans_webhook",
       });
 
-      if (order.buyerId) {
-        const { createNotification } = await import("@/lib/data/notifications");
-        createNotification({
-          userId: order.buyerId,
-          title: "Pembayaran Diterima untuk Pesanan Dibatalkan",
-          message: `Pembayaran pesanan ${order.orderNumber} diterima setelah pesanan dibatalkan. Pengembalian dana akan diproses secara manual oleh admin.`,
-          type: "refund",
-          link: "/orders",
-        }).catch((e) => logger.error("notification.buyer_late_payment_failed", e, { orderId: order.id }));
-      }
-
-      // A2: Notify admins about critical late payment requiring manual refund
+      // A1/A2: Run background notifications after response
       const { runAfterResponse } = await import("@/lib/after");
       runAfterResponse(async () => {
-        const { notifyAdmins } = await import("@/lib/data/notifications");
-        await notifyAdmins({
-          title: "Pembayaran Terlambat",
-          message: `Order ${order.orderNumber} dibayar setelah dibatalkan. Perlu pengembalian dana manual.`,
-          type: "late_payment",
-          link: "/admin/refunds",
-        });
+        if (order.buyerId) {
+          try {
+            const { createNotification } = await import("@/lib/data/notifications");
+            await createNotification({
+              userId: order.buyerId,
+              title: "Pembayaran Diterima untuk Pesanan Dibatalkan",
+              message: `Pembayaran pesanan ${order.orderNumber} diterima setelah pesanan dibatalkan. Pengembalian dana akan diproses secara manual oleh admin.`,
+              type: "refund",
+              link: "/orders",
+            });
+          } catch (e) {
+            logger.error("notification.buyer_late_payment_failed", e, { orderId: order.id });
+          }
+        }
+
+        try {
+          const { notifyAdmins } = await import("@/lib/data/notifications");
+          await notifyAdmins({
+            title: "Pembayaran Terlambat",
+            message: `Order ${order.orderNumber} dibayar setelah dibatalkan. Perlu pengembalian dana manual.`,
+            type: "late_payment",
+            link: "/admin/refunds",
+          });
+        } catch (e) {
+          logger.error("notification.admin_late_payment_failed", e, { orderId: order.id });
+        }
       });
 
       await recordWebhookEvent(eventId, "midtrans", parsed.orderRef);

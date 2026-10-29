@@ -12,6 +12,7 @@ import { logger } from "@/lib/logger";
 import { BUYER_PROFILE_COOKIE } from "@/lib/auth/buyer-profile";
 import { validatePasswordStrength } from "@/lib/auth/password-rules";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { runAfterResponse } from "@/lib/after";
 import type { Order } from "@/types";
 
 export async function deleteAccountAction(
@@ -275,14 +276,20 @@ export async function changePasswordFromProfileAction(
     }
   }
 
-  recordAuditLog({
-    actorId: session.userId,
-    actorRole: session.role,
-    action: "change_password",
-    targetId: session.userId,
-    targetType: "user",
-    details: "Perubahan kata sandi dari profil; sesi di perangkat lain dicabut otomatis (S8).",
-  }).catch(() => {});
+  const actorId = session.userId;
+  const actorRole = session.role || "buyer";
+  runAfterResponse(async () => {
+    if (actorId) {
+      await recordAuditLog({
+        actorId,
+        actorRole,
+        action: "change_password",
+        targetId: actorId,
+        targetType: "user",
+        details: "Perubahan kata sandi dari profil; sesi di perangkat lain dicabut otomatis (S8).",
+      }).catch(() => {});
+    }
+  });
 
   return ok({
     message: "Kata sandi berhasil diperbarui dan seluruh perangkat lain telah dikeluarkan demi keamanan.",

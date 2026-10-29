@@ -745,24 +745,24 @@ export async function transitionOrderStatus(
 
       await client.query("COMMIT");
 
-      // Send low-stock alert email to the actual seller email if applicable
+      // Send low-stock alert email to the actual seller email if applicable (A1)
       if (lowStockAlert) {
-        import("@/lib/data")
-          .then(({ getSellerById }) => getSellerById(lowStockAlert!.sellerId))
-          .then((seller) => {
+        import("@/lib/after").then(({ runAfterResponse }) => {
+          runAfterResponse(async () => {
+            const { getSellerById } = await import("@/lib/data");
+            const seller = await getSellerById(lowStockAlert!.sellerId);
             if (seller?.user?.email) {
-              import("@/lib/email").then(({ sendLowStockAlertEmail }) => {
-                sendLowStockAlertEmail({
-                  sellerEmail: seller.user!.email,
-                  sellerName: seller.businessName || "Penjual",
-                  listingTitle: lowStockAlert!.listingTitle,
-                  remainingStock: lowStockAlert!.remainingStock,
-                  unit: "unit",
-                }).catch((e) => { logger.warn("order.low_stock_email_failed", e); });
-              });
+              const { sendLowStockAlertEmail } = await import("@/lib/email");
+              await sendLowStockAlertEmail({
+                sellerEmail: seller.user.email,
+                sellerName: seller.businessName || "Penjual",
+                listingTitle: lowStockAlert!.listingTitle,
+                remainingStock: lowStockAlert!.remainingStock,
+                unit: "unit",
+              }).catch((e) => logger.warn("order.low_stock_email_failed", e));
             }
-          })
-          .catch(() => {});
+          });
+        }).catch(() => {});
       }
 
       const updated = await getOrderById(internalOrderId);
@@ -812,14 +812,17 @@ export async function transitionOrderStatus(
   if (to === "paid") {
     const listing = mockListings.find((l) => l.id === existing.listingId);
     if (listing && typeof listing.stock === "number" && listing.stock <= 5) {
-      import("@/lib/email").then(({ sendLowStockAlertEmail }) => {
-        sendLowStockAlertEmail({
-          sellerEmail: "seller@bijihub.id",
-          sellerName: existing.sellerName || "Penjual",
-          listingTitle: existing.listingTitle || listing.title,
-          remainingStock: listing.stock!,
-          unit: listing.unit || "unit",
-        }).catch(() => {});
+      import("@/lib/after").then(({ runAfterResponse }) => {
+        runAfterResponse(async () => {
+          const { sendLowStockAlertEmail } = await import("@/lib/email");
+          await sendLowStockAlertEmail({
+            sellerEmail: "seller@bijihub.id",
+            sellerName: existing.sellerName || "Penjual",
+            listingTitle: existing.listingTitle || listing.title,
+            remainingStock: listing.stock!,
+            unit: listing.unit || "unit",
+          }).catch((e) => logger.warn("order.low_stock_email_failed", e));
+        });
       }).catch(() => {});
     }
   } else if (to === "canceled" && RESTOCK_ON_CANCEL_FROM.includes(prevStatus)) {
@@ -1192,18 +1195,20 @@ export async function autoCancelExpiredPendingOrders(
           const transitionRes = await transitionOrderStatus(r.id, "canceled");
           if (transitionRes.applied) {
             canceledIds.push(r.id);
-            getOrderById(r.id).then((ord) => {
-              if (ord && ord.buyerId) {
-                import("@/lib/data/notifications").then(({ createNotification }) => {
-                  createNotification({
-                    userId: ord.buyerId!,
+            import("@/lib/after").then(({ runAfterResponse }) => {
+              runAfterResponse(async () => {
+                const ord = await getOrderById(r.id);
+                if (ord && ord.buyerId) {
+                  const { createNotification } = await import("@/lib/data/notifications");
+                  await createNotification({
+                    userId: ord.buyerId,
                     title: "Batas Waktu Pembayaran Kedaluwarsa",
                     message: `Pesanan ${ord.orderNumber} dibatalkan otomatis karena melewati batas waktu pembayaran.`,
                     type: "order_status",
                     link: "/orders",
-                  }).catch(() => {});
-                });
-              }
+                  });
+                }
+              });
             }).catch(() => {});
           }
         } catch (err) {
@@ -1228,14 +1233,17 @@ export async function autoCancelExpiredPendingOrders(
           if (transitionRes.applied) {
             if (!canceledIds.includes(o.id)) canceledIds.push(o.id);
             if (o.buyerId) {
-              import("@/lib/data/notifications").then(({ createNotification }) => {
-                createNotification({
-                  userId: o.buyerId!,
-                  title: "Batas Waktu Pembayaran Kedaluwarsa",
-                  message: `Pesanan ${o.orderNumber} dibatalkan otomatis karena melewati batas waktu pembayaran.`,
-                  type: "order_status",
-                  link: "/orders",
-                }).catch(() => {});
+              import("@/lib/after").then(({ runAfterResponse }) => {
+                runAfterResponse(async () => {
+                  const { createNotification } = await import("@/lib/data/notifications");
+                  await createNotification({
+                    userId: o.buyerId!,
+                    title: "Batas Waktu Pembayaran Kedaluwarsa",
+                    message: `Pesanan ${o.orderNumber} dibatalkan otomatis karena melewati batas waktu pembayaran.`,
+                    type: "order_status",
+                    link: "/orders",
+                  });
+                });
               }).catch(() => {});
             }
           }

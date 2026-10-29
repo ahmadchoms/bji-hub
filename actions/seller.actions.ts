@@ -238,6 +238,7 @@ export async function requestVerificationAction(
       message: `Toko (ID: ${sellerId}) telah mengajukan verifikasi dokumen KYC.`,
       type: "kyc_verification",
       link: "/admin/verification",
+      // ignore: non-blocking admin notification failure
     }).catch(() => {});
   });
 

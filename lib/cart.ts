@@ -66,6 +66,7 @@ function saveCart(items: CartItem[]): void {
   try {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
     window.dispatchEvent(new Event("biji-cart-changed"));
+    // ignore: non-blocking cloud cart sync
     syncCartWithCloud("replace").catch(() => {});
   } catch {
     // ignore: localStorage read/write fallback
@@ -160,6 +161,7 @@ export function useCart() {
 
   useEffect(() => {
     setIsClient(true);
+    // ignore: non-blocking client mount cloud cart sync
     syncCartWithCloud().catch(() => {});
   }, []);
 

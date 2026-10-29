@@ -64,6 +64,7 @@ function saveWishlist(items: WishlistItem[]): void {
   try {
     localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(items));
     window.dispatchEvent(new Event("biji-wishlist-changed"));
+    // ignore: non-blocking cloud wishlist sync
     syncWishlistWithCloud().catch(() => {});
   } catch {
     // ignore: wishlist storage fallback
@@ -167,6 +168,7 @@ export function useWishlist() {
 
   useEffect(() => {
     setIsClient(true);
+    // ignore: non-blocking cloud wishlist sync
     syncWishlistWithCloud().catch(() => {});
   }, []);
 

@@ -1,6 +1,20 @@
 // Core Role Enum
 export type Role = "BUYER" | "SELLER" | "ADMIN";
 
+// Branded ID types to prevent accidental ID swapping (IDOR / Bug prevention)
+declare const __brand: unique symbol;
+export type Brand<T, B> = T & { readonly [__brand]: B };
+
+export type UserId = Brand<string, "UserId">;
+export type SellerProfileId = Brand<string, "SellerProfileId">;
+export type ListingId = Brand<string, "ListingId">;
+export type OrderId = Brand<string, "OrderId">;
+
+export const asUserId = (id: string): UserId => id as UserId;
+export const asSellerProfileId = (id: string): SellerProfileId => id as SellerProfileId;
+export const asListingId = (id: string): ListingId => id as ListingId;
+export const asOrderId = (id: string): OrderId => id as OrderId;
+
 export interface BuyerAddress {
   id: string;
   label: string;

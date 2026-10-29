@@ -496,6 +496,7 @@ export async function updateShipmentTrackingAction(
         message: `Pesanan ${order.orderNumber} telah dikirim dengan nomor resi ${cleanResi}.`,
         type: "order_status",
         link: "/orders",
+        // ignore: non-blocking in-app notification failure
       }).catch(() => {});
     }
   });
@@ -526,6 +527,7 @@ export async function completeOrderAction(
         message: `Pesanan ${order.orderNumber} telah selesai. Berikan ulasan untuk membantu pembeli lain!`,
         type: "order_status",
         link: "/orders",
+        // ignore: non-blocking in-app notification failure
       }).catch(() => {});
     }
     if (order.sellerId) {
@@ -592,6 +594,7 @@ export async function disputeOrderAction(
       message: `Pembeli mengajukan komplain pada pesanan ${order.orderNumber}: "${parsed.data.reason.trim()}".`,
       type: "dispute",
       link: "/dashboard/orders",
+      // ignore: non-blocking dispute notification failure
     }).catch(() => {});
 
     // A2: Alert admins for dispute resolution
@@ -600,6 +603,7 @@ export async function disputeOrderAction(
       message: `Komplain diajukan untuk pesanan ${order.orderNumber}. Perlu pemantauan admin.`,
       type: "dispute",
       link: "/admin/transactions",
+      // ignore: non-blocking admin dispute alert failure
     }).catch(() => {});
   });
 
@@ -687,6 +691,7 @@ export async function resolveDisputeAction(
         message: `Komplain pesanan ${order.orderNumber} telah diputuskan admin: ${decision === "cancel" ? "Refund disetujui" : "Pesanan diselesaikan"}.`,
         type: "dispute",
         link: "/orders",
+        // ignore: non-blocking in-app notification failure
       }).catch(() => {});
     }
     if (order.sellerId) {
@@ -695,6 +700,7 @@ export async function resolveDisputeAction(
         message: `Komplain pesanan ${order.orderNumber} telah diputuskan admin: ${decision === "cancel" ? "Refund disetujui untuk pembeli" : "Pesanan diselesaikan"}.`,
         type: "dispute",
         link: "/dashboard/orders",
+        // ignore: non-blocking seller dispute notification failure
       }).catch(() => {});
     }
   });

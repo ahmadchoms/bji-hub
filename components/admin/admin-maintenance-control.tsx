@@ -49,7 +49,7 @@ export function AdminMaintenanceControl() {
         )}
 
         {result && (
-          <div className="flex flex-col gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-800 dark:text-emerald-300">
+          <div className="flex flex-col gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-800">
             <div className="flex items-center gap-2 font-semibold">
               <CheckCircle2 className="h-4 w-4" />
               <span>Pemeliharaan Berhasil Dijalankan</span>

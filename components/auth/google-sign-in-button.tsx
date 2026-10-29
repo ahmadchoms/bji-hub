@@ -205,7 +205,7 @@ export function GoogleSignInButton({ next = "/" }: GoogleSignInButtonProps) {
       ) : null}
 
       {pending ? (
-        <div className="min-h-11 w-full rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-4 text-sm font-medium text-neutral-800 dark:text-neutral-200 flex items-center justify-center gap-2 shadow-sm">
+        <div className="min-h-11 w-full rounded-md border border-neutral-300 bg-white px-4 text-sm font-medium text-neutral-800 flex items-center justify-center gap-2 shadow-sm">
           <svg className="animate-spin h-4 w-4 text-neutral-600" viewBox="0 0 24 24" fill="none">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
@@ -224,8 +224,8 @@ export function GoogleSignInButton({ next = "/" }: GoogleSignInButtonProps) {
             <button
               type="button"
               onClick={gisFailed ? handleOAuthClick : undefined}
-              className={`min-h-11 w-full rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-4 text-sm font-medium text-neutral-800 dark:text-neutral-200 flex items-center justify-center gap-2 shadow-sm ${
-                gisFailed ? "cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800" : "pointer-events-none"
+              className={`min-h-11 w-full rounded-md border border-neutral-300 bg-white px-4 text-sm font-medium text-neutral-800 flex items-center justify-center gap-2 shadow-sm ${
+                gisFailed ? "cursor-pointer hover:bg-neutral-50" : "pointer-events-none"
               }`}
             >
               {googleIcon}
@@ -239,7 +239,7 @@ export function GoogleSignInButton({ next = "/" }: GoogleSignInButtonProps) {
           onClick={handleOAuthClick}
           disabled={pending}
           aria-busy={pending}
-          className="min-h-11 w-full rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-4 text-sm font-medium text-neutral-800 dark:text-neutral-200 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+          className="min-h-11 w-full rounded-md border border-neutral-300 bg-white px-4 text-sm font-medium text-neutral-800 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer shadow-sm"
         >
           {googleIcon}
           <span>Lanjutkan dengan Google</span>
@@ -247,7 +247,7 @@ export function GoogleSignInButton({ next = "/" }: GoogleSignInButtonProps) {
       )}
 
       {error ? (
-        <p role="alert" className="text-xs text-red-600 dark:text-red-400">
+        <p role="alert" className="text-xs text-red-600">
           {error}
         </p>
       ) : null}

@@ -59,7 +59,7 @@ export async function GET(req: Request) {
         let finalStatus = refundRes.status;
         if (finalStatus === "failed" && nextAttempts >= 5) {
           finalStatus = "manual_required";
-          logger.error("refund.max_attempts_exceeded", {
+          logger.error("refund.max_attempts_exceeded", undefined, {
             refundId: ref.id,
             orderId: ref.orderId,
             attempts: nextAttempts,
@@ -72,6 +72,7 @@ export async function GET(req: Request) {
             message: `Refund ${ref.id} untuk order ${ref.orderId} telah melebihi batas percobaan otomatis (${nextAttempts}x). Harap lakukan transfer manual.`,
             type: "refund_action_required",
             link: "/admin/refunds",
+            // ignore: non-blocking admin alert failure
           }).catch(() => {});
         }
 

@@ -101,6 +101,7 @@ export async function retryRefundAction(
           message: `Refund untuk pesanan ${order.orderNumber} berstatus '${refundRes.status}'. Diperlukan transfer manual oleh admin.`,
           type: "refund_action_required",
           link: "/admin/refunds",
+          // ignore: non-blocking admin notification failure
         }).catch(() => {});
       });
     }

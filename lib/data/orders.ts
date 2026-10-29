@@ -786,6 +786,7 @@ export async function transitionOrderStatus(
               }).catch((e) => logger.warn("order.low_stock_email_failed", e));
             }
           });
+          // ignore: non-blocking low stock notification failure
         }).catch(() => {});
       }
 
@@ -847,6 +848,7 @@ export async function transitionOrderStatus(
             unit: listing.unit || "unit",
           }).catch((e) => logger.warn("order.low_stock_email_failed", e));
         });
+        // ignore: non-blocking low stock notification failure
       }).catch(() => {});
     }
   } else if (to === "canceled" && RESTOCK_ON_CANCEL_FROM.includes(prevStatus)) {
@@ -1233,17 +1235,16 @@ export async function autoCancelExpiredPendingOrders(
                   });
                 }
               });
+              // ignore: non-blocking auto-cancel notification failure
             }).catch(() => {});
           }
         } catch (err) {
-          logger.error("order.auto_cancel_single_failed", { orderId: r.id, error: String(err) });
+          logger.error("order.auto_cancel_single_failed", err, { orderId: r.id });
         }
       }
       return { canceledCount: canceledIds.length, orderIds: canceledIds };
     } catch (e) {
-      logger.error("order.auto_cancel_failed", {
-        error: e instanceof Error ? e.message : String(e),
-      });
+      logger.error("order.auto_cancel_failed", e);
       throw e;
     }
   }
@@ -1268,11 +1269,12 @@ export async function autoCancelExpiredPendingOrders(
                     link: "/orders",
                   });
                 });
+                // ignore: non-blocking auto-cancel notification failure
               }).catch(() => {});
             }
           }
         } catch (err) {
-          logger.error("order.auto_cancel_single_failed", { orderId: o.id, error: String(err) });
+          logger.error("order.auto_cancel_single_failed", err, { orderId: o.id });
         }
       }
     }

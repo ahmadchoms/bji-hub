@@ -58,6 +58,7 @@ export async function updateSellerBankAction(
         message: `Rekening bank pencairan dana diperbarui ke ${parsed.data.bankName} (${parsed.data.bankAccountNumber}). Demi keamanan, penarikan dana dijeda selama 24 jam.`,
         type: "system",
         link: "/dashboard/orders",
+        // ignore: non-blocking payout bank update notification failure
       }).catch(() => {});
     }
 
@@ -67,6 +68,7 @@ export async function updateSellerBankAction(
         sellerName: session.name || "Mitra Penjual",
         bankName: parsed.data.bankName,
         accountNumber: parsed.data.bankAccountNumber,
+        // ignore: non-blocking payout bank update email failure
       }).catch(() => {});
     }
   });
@@ -141,6 +143,7 @@ export async function requestPayoutAction(
       message: `Seller mengajukan pencairan saldo sebesar Rp ${Number(result.payout.amount).toLocaleString("id-ID")}.`,
       type: "payout_request",
       link: "/admin/payouts",
+      // ignore: non-blocking admin notification failure
     }).catch(() => {});
   });
 
@@ -206,6 +209,7 @@ export async function updatePayoutStatusAction(
           : `Pengajuan pencairan dana Rp ${Number(req.amount).toLocaleString("id-ID")} ditolak. Catatan: ${parsed.data.notes || "Tidak ada"}`,
         type: "payout",
         link: "/dashboard/payouts",
+        // ignore: non-blocking seller notification failure
       }).catch(() => {});
     }
   } catch {

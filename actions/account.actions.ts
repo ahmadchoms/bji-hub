@@ -271,7 +271,7 @@ export async function changePasswordFromProfileAction(
       // S8: Revoke all other active sessions across other devices
       await supabase.auth.signOut({ scope: "others" });
     } catch (err) {
-      logger.error("account.change_password_failed", { error: String(err) });
+      logger.error("account.change_password_failed", err);
       return fail("Gagal memperbarui kata sandi. Silakan coba lagi.");
     }
   }
@@ -287,6 +287,7 @@ export async function changePasswordFromProfileAction(
         targetId: actorId,
         targetType: "user",
         details: "Perubahan kata sandi dari profil; sesi di perangkat lain dicabut otomatis (S8).",
+        // ignore: non-blocking audit log recording failure
       }).catch(() => {});
     }
   });

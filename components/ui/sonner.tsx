@@ -21,10 +21,10 @@ const Toaster = ({ ...props }: ToasterProps) => {
       toastOptions={{
         classNames: {
           toast:
-            "group font-sans text-xs sm:text-sm shadow-lg rounded-sm border border-neutral-300 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 p-4 gap-3",
-          title: "!font-semibold !text-neutral-900 dark:!text-neutral-100 text-sm",
+            "group font-sans text-xs sm:text-sm shadow-lg rounded-sm border border-neutral-300 bg-white text-neutral-900 p-4 gap-3",
+          title: "!font-semibold !text-neutral-900 text-sm",
           description:
-            "!text-neutral-700 dark:!text-neutral-300 !opacity-100 !block text-xs mt-1 leading-normal font-normal",
+            "!text-neutral-700 !opacity-100 !block text-xs mt-1 leading-normal font-normal",
           actionButton:
             "!bg-primary-700 !text-white hover:!bg-primary-800 text-xs px-3 py-1.5 rounded-sm font-medium transition-colors",
           cancelButton:
@@ -32,13 +32,13 @@ const Toaster = ({ ...props }: ToasterProps) => {
           closeButton:
             "!border-neutral-300 !text-neutral-600 hover:!text-neutral-900 !bg-white",
           success:
-            "!bg-white dark:!bg-neutral-900 !border-emerald-600/40 !text-neutral-900 dark:!text-neutral-100",
+            "!bg-white !border-emerald-600/40 !text-neutral-900",
           error:
-            "!bg-white dark:!bg-neutral-900 !border-red-600/40 !text-neutral-900 dark:!text-neutral-100",
+            "!bg-white !border-red-600/40 !text-neutral-900",
           warning:
-            "!bg-white dark:!bg-neutral-900 !border-amber-600/40 !text-neutral-900 dark:!text-neutral-100",
+            "!bg-white !border-amber-600/40 !text-neutral-900",
           info:
-            "!bg-white dark:!bg-neutral-900 !border-primary-600/40 !text-neutral-900 dark:!text-neutral-100",
+            "!bg-white !border-primary-600/40 !text-neutral-900",
         },
       }}
       {...props}

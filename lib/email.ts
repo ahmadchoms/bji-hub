@@ -274,9 +274,7 @@ export async function sendLowStockAlertEmail({
       messageId: res.data?.id,
     };
   } catch (error) {
-    logger.error("email.low_stock_alert_failed", {
-      error: error instanceof Error ? error.message : String(error),
-    });
+    logger.error("email.low_stock_alert_failed", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to send email",
@@ -364,9 +362,7 @@ export async function sendNewOrderSellerEmail({
       messageId: res.data?.id,
     };
   } catch (error) {
-    logger.error("email.new_order_seller_failed", {
-      error: error instanceof Error ? error.message : String(error),
-    });
+    logger.error("email.new_order_seller_failed", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to send email",
@@ -437,9 +433,7 @@ export async function sendOrderRefundedEmail(
       messageId: res.data?.id,
     };
   } catch (error) {
-    logger.error("email.order_refunded_failed", {
-      error: error instanceof Error ? error.message : String(error),
-    });
+    logger.error("email.order_refunded_failed", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to send email",
@@ -519,9 +513,7 @@ export async function sendBankDetailsChangedEmail({
       messageId: res.data?.id,
     };
   } catch (error) {
-    logger.error("email.bank_details_changed_failed", {
-      error: error instanceof Error ? error.message : String(error),
-    });
+    logger.error("email.bank_details_changed_failed", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to send email",

@@ -124,9 +124,7 @@ export async function loginAction(
         return ok({ redirectTo: safeNextPath(next, homeFor("buyer")) });
       }
     } catch (err) {
-      logger.error("auth.login_failed", {
-        error: err instanceof Error ? err.message : String(err),
-      });
+      logger.error("auth.login_failed", err);
       if (!isMockAuthAllowed()) {
         return fail("Layanan autentikasi sedang bermasalah. Silakan coba beberapa saat lagi.");
       }
@@ -225,9 +223,7 @@ export async function registerAction(
         return ok({ redirectTo: "/login?verify=1" });
       }
     } catch (err) {
-      logger.error("auth.register_failed", {
-        error: err instanceof Error ? err.message : String(err),
-      });
+      logger.error("auth.register_failed", err);
       if (!isMockAuthAllowed()) {
         return fail(
           "Layanan pendaftaran sedang bermasalah. Silakan coba beberapa saat lagi.",
@@ -318,9 +314,7 @@ export async function becomeSellerAction(
         return ok({ redirectTo: "/dashboard" });
       }
     } catch (err) {
-      logger.error("auth.seller_onboarding_failed", {
-        error: err instanceof Error ? err.message : String(err),
-      });
+      logger.error("auth.seller_onboarding_failed", err);
       if (!isMockAuthAllowed()) {
         return fail("Gagal mendaftarkan toko. Silakan coba beberapa saat lagi.");
       }
@@ -593,9 +587,7 @@ export async function requestPasswordResetAction(
         redirectTo: `${appUrl}/auth/callback?next=/reset-password`,
       });
     } catch (err) {
-      logger.error("auth.reset_password_request_failed", {
-        error: err instanceof Error ? err.message : String(err),
-      });
+      logger.error("auth.reset_password_request_failed", err);
       // Uniform response prevents account enumeration
     }
   }
@@ -628,7 +620,7 @@ export async function updatePasswordAction(
       });
 
       if (error) {
-        logger.error("auth.update_password_failed", { error: error.message });
+        logger.error("auth.update_password_failed", error);
         return fail(
           error.message ||
             "Gagal memperbarui kata sandi. Silakan gunakan tautan baru.",
@@ -643,9 +635,7 @@ export async function updatePasswordAction(
 
       return ok({ redirectTo: "/login?reset=success" });
     } catch (err) {
-      logger.error("auth.update_password_failed", {
-        error: err instanceof Error ? err.message : String(err),
-      });
+      logger.error("auth.update_password_failed", err);
       return fail("Gagal memperbarui kata sandi. Silakan coba lagi.");
     }
   }

@@ -8,6 +8,7 @@ import { moderateListing, reviewVerification } from "@/lib/data";
 import { getPrisma } from "@/lib/data/prisma/client";
 import { recordAuditLog } from "@/lib/data/audit-logs";
 import { getClientIp } from "@/lib/client-ip";
+import { revalidateListing, revalidateStore } from "@/lib/cache/revalidate";
 
 const idSchema = z.string().min(1).max(100);
 
@@ -37,6 +38,8 @@ export async function reviewVerificationAction(
 
   revalidatePath("/admin/verification");
   revalidatePath("/admin");
+  revalidateStore(null);
+  revalidateListing(null);
   return ok(undefined);
 }
 
@@ -66,6 +69,7 @@ export async function moderateListingAction(
 
   revalidatePath("/admin/moderation");
   revalidatePath("/");
+  revalidateListing(null);
   return ok(undefined);
 }
 
@@ -104,6 +108,8 @@ export async function suspendSellerAction(
   revalidatePath("/admin/verification");
   revalidatePath("/admin/moderation");
   revalidatePath("/catalog");
+  revalidateStore(null);
+  revalidateListing(null);
   return ok(undefined);
 }
 
@@ -140,5 +146,7 @@ export async function unsuspendSellerAction(
   revalidatePath("/admin/verification");
   revalidatePath("/admin/moderation");
   revalidatePath("/catalog");
+  revalidateStore(null);
+  revalidateListing(null);
   return ok(undefined);
 }

@@ -25,6 +25,7 @@ import { findInvalidImageUrl } from "@/lib/storage";
 import { decideBoostPayment, getBoostCredits } from "@/lib/boost-credits";
 import { runAfterResponse } from "@/lib/after";
 import { recordAuditLog } from "@/lib/data/audit-logs";
+import { revalidateListing, revalidateStore } from "@/lib/cache/revalidate";
 
 type FieldErrors = Record<string, string[]>;
 
@@ -44,6 +45,7 @@ export async function updateProfileAction(
 
   revalidatePath("/dashboard/profile");
   revalidatePath(`/store/${seller.slug}`);
+  revalidateStore(seller.slug);
   return ok({ id: seller.id });
 }
 
@@ -108,8 +110,12 @@ export async function saveListingAction(
     const updated = await updateListing(sellerId, listingId, parsed.data);
     if (!updated) return fail("Listing tidak ditemukan");
     revalidatePath("/dashboard/listing");
-    revalidatePath(`/product/${updated.slug}`);
-    revalidatePath("/");
+    if (existing) {
+      revalidateListing(existing.slug);
+      if (updated.slug !== existing.slug) {
+        revalidateListing(updated.slug);
+      }
+    }
     return ok({ id: updated.id });
   }
 
@@ -127,7 +133,7 @@ export async function saveListingAction(
     return fail("Kategori tidak valid");
   }
   revalidatePath("/dashboard/listing");
-  revalidatePath("/");
+  revalidateListing(created.slug);
   return ok({ id: created.id });
 }
 
@@ -284,8 +290,7 @@ export async function quickUpdateStockAction(
   }
 
   revalidatePath("/dashboard/listing");
-  revalidatePath(`/product/${existing.slug}`);
-  revalidatePath("/");
+  revalidateListing(existing.slug);
   return ok({ stock: newStock });
 }
 
@@ -323,7 +328,6 @@ export async function toggleListingStatusAction(
   }
 
   revalidatePath("/dashboard/listing");
-  revalidatePath(`/product/${existing.slug}`);
-  revalidatePath("/");
+  revalidateListing(existing.slug);
   return ok({ status: newStatus });
 }

@@ -119,6 +119,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true, ignored: "invalid_transition" });
     }
 
+    try {
+      const { revalidateListing } = await import("@/lib/cache/revalidate");
+      revalidateListing(null);
+    } catch {
+      // ignore outside request lifecycle
+    }
+
     if (orderStatus === "paid") {
       const { runAfterResponse } = await import("@/lib/after");
       runAfterResponse(async () => {

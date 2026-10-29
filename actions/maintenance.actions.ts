@@ -32,6 +32,15 @@ export async function runManualMaintenanceAction(): Promise<
       timestamp: new Date().toISOString(),
     };
 
+    if (cancelRes.canceledCount > 0) {
+      try {
+        const { revalidateListing } = await import("@/lib/cache/revalidate");
+        revalidateListing(null);
+      } catch {
+        // ignore
+      }
+    }
+
     await recordAuditLog({
       actorId: session.userId || "admin",
       actorRole: session.role,

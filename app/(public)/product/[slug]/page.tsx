@@ -43,7 +43,11 @@ export async function generateMetadata({
   const { slug } = await params;
   const listing = await getListingBySlug(slug);
 
-  if (!listing) {
+  if (
+    !listing ||
+    listing.status !== "active" ||
+    Boolean(listing.seller.suspendedAt)
+  ) {
     return { title: "Produk Tidak Ditemukan - Biji Hub" };
   }
 
@@ -90,7 +94,11 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   const { slug } = await params;
   const listing = await getListingBySlug(slug);
 
-  if (!listing) {
+  if (
+    !listing ||
+    listing.status !== "active" ||
+    Boolean(listing.seller.suspendedAt)
+  ) {
     notFound();
   }
 

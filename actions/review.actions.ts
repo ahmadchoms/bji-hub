@@ -9,6 +9,7 @@ import { recordAuditLog } from "@/lib/data/audit-logs";
 import { getClientIp } from "@/lib/client-ip";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { runAfterResponse } from "@/lib/after";
+import { revalidateListing } from "@/lib/cache/revalidate";
 
 const replySchema = z.object({
   reviewId: z.string().min(1, "ID ulasan wajib diisi"),
@@ -37,6 +38,8 @@ export async function replyToReviewAction(
   }
 
   revalidatePath("/product");
+  revalidateListing(null);
+  revalidateListing(null);
   return ok({ success: true });
 }
 
@@ -99,5 +102,6 @@ export async function reportReviewAction(
     });
   });
 
+  revalidateListing(null);
   return ok({ success: true });
 }

@@ -10,7 +10,18 @@ export const catalogParamsSchema = z.object({
   max_price: z.coerce.number().int().nonnegative().optional(),
   verified: z.preprocess((value) => value === true || value === "true", z.boolean()).default(false),
   ready_stock: z.preprocess((value) => value === true || value === "true", z.boolean()).default(false),
-  sort: z.enum(["newest", "price_asc", "price_desc"]).default("newest"),
+  sort: z
+    .enum([
+      "newest",
+      "freshest",
+      "cupping_desc",
+      "rating_desc",
+      "popular",
+      "relevance",
+      "price_asc",
+      "price_desc",
+    ])
+    .default("newest"),
   page: z.coerce.number().int().min(1).default(1),
   cupping_score: z.coerce.number().min(0).max(100).optional(),
   // Backward compatibility aliases
@@ -37,10 +48,32 @@ export function parseCatalogParams(params: Record<string, string | string[] | un
 
   const rawSort = value("sort") || value("urut") || "newest";
   const normalizedSort =
-    rawSort === "harga_terendah" ? "price_asc" :
-    rawSort === "harga_tertinggi" ? "price_desc" :
-    rawSort === "terbaru" ? "newest" :
-    (rawSort === "price_asc" || rawSort === "price_desc" ? rawSort : "newest");
+    rawSort === "paling_segar" || rawSort === "segar"
+      ? "freshest"
+      : rawSort === "skor_cupping" || rawSort === "cupping"
+        ? "cupping_desc"
+        : rawSort === "rating" || rawSort === "rating_tertinggi"
+          ? "rating_desc"
+          : rawSort === "terlaris"
+            ? "popular"
+            : rawSort === "harga_terendah"
+              ? "price_asc"
+              : rawSort === "harga_tertinggi"
+                ? "price_desc"
+                : rawSort === "terbaru"
+                  ? "newest"
+                  : [
+                        "newest",
+                        "freshest",
+                        "cupping_desc",
+                        "rating_desc",
+                        "popular",
+                        "relevance",
+                        "price_asc",
+                        "price_desc",
+                      ].includes(rawSort)
+                    ? (rawSort as CatalogParams["sort"])
+                    : "newest";
 
   const page = Math.max(1, Number(value("page") || value("halaman")) || 1);
   const category = value("category") || value("kategori") || "";

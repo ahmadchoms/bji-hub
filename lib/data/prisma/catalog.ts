@@ -78,6 +78,9 @@ function buildOrderBy(
 ): Prisma.ListingOrderByWithRelationInput[] {
   if (sort === "price_asc") return [{ price: "asc" }, { id: "asc" }];
   if (sort === "price_desc") return [{ price: "desc" }, { id: "asc" }];
+  if (sort === "freshest") return [{ tasteProfile: { roastDate: "desc" } }, { createdAt: "desc" }];
+  if (sort === "cupping_desc") return [{ tasteProfile: { cuppingScore: "desc" } }, { createdAt: "desc" }];
+  if (sort === "rating_desc") return [{ seller: { isVerified: "desc" } }, { createdAt: "desc" }];
   if (sort === "popular") return [{ minOrderQty: "asc" }, { id: "asc" }];
   return [{ createdAt: "desc" }, { id: "asc" }];
 }

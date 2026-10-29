@@ -59,4 +59,13 @@ describe("catalog-params.schema", () => {
     expect(params.sort).toBe("price_desc");
     expect(params.page).toBe(3);
   });
+
+  it("normalizes new sort options (freshest, cupping, rating, popular) (UX-2)", () => {
+    expect(parseCatalogParams({ sort: "freshest" }).sort).toBe("freshest");
+    expect(parseCatalogParams({ urut: "paling_segar" }).sort).toBe("freshest");
+    expect(parseCatalogParams({ sort: "cupping_desc" }).sort).toBe("cupping_desc");
+    expect(parseCatalogParams({ urut: "skor_cupping" }).sort).toBe("cupping_desc");
+    expect(parseCatalogParams({ sort: "rating_desc" }).sort).toBe("rating_desc");
+    expect(parseCatalogParams({ urut: "terlaris" }).sort).toBe("popular");
+  });
 });

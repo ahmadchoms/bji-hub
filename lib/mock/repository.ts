@@ -191,6 +191,19 @@ async function findListings(
   results.sort((a, b) => {
     if (filters.sort === "price_asc") return a.price - b.price;
     if (filters.sort === "price_desc") return b.price - a.price;
+    if (filters.sort === "freshest") {
+      const dateA = a.tasteProfile?.roastDate ? new Date(a.tasteProfile.roastDate).getTime() : 0;
+      const dateB = b.tasteProfile?.roastDate ? new Date(b.tasteProfile.roastDate).getTime() : 0;
+      return dateB - dateA;
+    }
+    if (filters.sort === "cupping_desc") {
+      return (b.tasteProfile?.cuppingScore || 0) - (a.tasteProfile?.cuppingScore || 0);
+    }
+    if (filters.sort === "rating_desc") {
+      const rateA = Number((a.seller as { rating?: number }).rating || (a.seller.isVerified ? 5 : 4));
+      const rateB = Number((b.seller as { rating?: number }).rating || (b.seller.isVerified ? 5 : 4));
+      return rateB - rateA;
+    }
     if (filters.sort === "popular") return a.minOrderQty - b.minOrderQty;
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });

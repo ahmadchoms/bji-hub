@@ -193,7 +193,7 @@ export interface ListingFilters {
   isBoosted?: boolean;
   readyStock?: boolean;
   search?: string;
-  sort?: "newest" | "price_asc" | "price_desc" | "popular";
+  sort?: "newest" | "freshest" | "cupping_desc" | "rating_desc" | "popular" | "relevance" | "price_asc" | "price_desc";
   minCuppingScore?: number;
 }
 

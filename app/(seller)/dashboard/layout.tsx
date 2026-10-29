@@ -30,7 +30,7 @@ export default async function SellerDashboardLayout({
               </div>
               <Link
                 href="/dashboard/orders"
-                className="inline-flex items-center gap-1 font-semibold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 px-3 py-1.5 rounded text-[11px] shrink-0 transition-colors"
+                className="inline-flex items-center gap-1 font-semibold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 px-3 py-1.5 rounded text-xs shrink-0 transition-colors"
               >
                 Atur Rekening Bank <ArrowRight className="w-3 h-3" />
               </Link>

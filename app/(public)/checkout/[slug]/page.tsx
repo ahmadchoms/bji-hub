@@ -199,7 +199,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
       <PageContainer className="space-y-6">
         {/* Breadcrumb */}
         <nav
-          className="flex items-center gap-2 text-xs text-neutral-500 font-mono overflow-x-auto whitespace-nowrap"
+          className="flex items-center gap-2 text-xs text-neutral-600 font-mono overflow-x-auto whitespace-nowrap"
           aria-label="Breadcrumb"
         >
           <Link href="/" className="hover:text-primary-700">

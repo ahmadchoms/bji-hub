@@ -112,7 +112,7 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
       />
       <PageContainer className="space-y-8">
         <nav
-          className="flex items-center gap-1.5 text-xs text-neutral-500 font-mono"
+          className="flex items-center gap-1.5 text-xs text-neutral-600 font-mono"
           aria-label="Breadcrumb"
         >
           <Link href="/" className="hover:text-neutral-900 transition-colors">
@@ -159,7 +159,7 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
                       {seller.city}, {seller.province}
                     </span>
                     <span className="text-neutral-300">•</span>
-                    <span className="inline-flex items-center gap-1 font-mono text-neutral-500">
+                    <span className="inline-flex items-center gap-1 font-mono text-neutral-600">
                       <Calendar className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
                       Sejak{" "}
                       {format(new Date(seller.createdAt), "MMMM yyyy", {
@@ -171,7 +171,7 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
                       <span className="inline-flex items-center gap-1 font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
                         <Star className="w-3 h-3 fill-amber-400 text-amber-500" />
                         {reviewStats.average}{" "}
-                        <span className="text-neutral-500 font-normal">
+                        <span className="text-neutral-600 font-normal">
                           ({reviewStats.count} ulasan)
                         </span>
                       </span>
@@ -198,7 +198,7 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
             </div>
 
             {seller.address && (
-              <p className="text-xs text-neutral-500">{seller.address}</p>
+              <p className="text-xs text-neutral-600">{seller.address}</p>
             )}
 
             {seller.bio && (
@@ -209,7 +209,7 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-neutral-100">
               <div className="space-y-1">
-                <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
+                <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-600 uppercase tracking-wider">
                   <Package className="w-3.5 h-3.5 text-neutral-400" />
                   Total Listing
                 </div>
@@ -219,7 +219,7 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
               </div>
 
               <div className="space-y-1">
-                <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
+                <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-600 uppercase tracking-wider">
                   <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
                   Rating Toko
                 </div>
@@ -227,7 +227,7 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
                   {reviewStats.count > 0 ? (
                     <>
                       {reviewStats.average}{" "}
-                      <span className="text-xs font-normal text-neutral-500">
+                      <span className="text-xs font-normal text-neutral-600">
                         / 5 ({reviewStats.count})
                       </span>
                     </>
@@ -238,7 +238,7 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
               </div>
 
               <div className="space-y-1">
-                <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
+                <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-600 uppercase tracking-wider">
                   <ShieldCheck className="w-3.5 h-3.5 text-neutral-400" />
                   Status
                 </div>
@@ -248,7 +248,7 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
               </div>
 
               <div className="space-y-1">
-                <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
+                <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-600 uppercase tracking-wider">
                   <Handshake className="w-3.5 h-3.5 text-neutral-400" />
                   Tier
                 </div>
@@ -265,7 +265,7 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
             <h2 className="text-lg font-bold tracking-tight text-neutral-900">
               Katalog Produk
             </h2>
-            <span className="text-xs font-mono text-neutral-500">
+            <span className="text-xs font-mono text-neutral-600">
               {seller.listings.length} produk tersedia
             </span>
           </div>
@@ -291,14 +291,14 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
                 ★ {reviewStats.average} / 5.0 dari {reviewStats.count} ulasan terverifikasi
               </span>
             ) : (
-              <span className="text-xs text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded">
+              <span className="text-xs text-neutral-600 bg-neutral-100 px-2 py-0.5 rounded">
                 Belum ada ulasan
               </span>
             )}
           </div>
 
           {reviews.length === 0 ? (
-            <div className="p-6 bg-neutral-50 border border-neutral-200 rounded-lg text-center space-y-1 text-xs text-neutral-500">
+            <div className="p-6 bg-neutral-50 border border-neutral-200 rounded-lg text-center space-y-1 text-xs text-neutral-600">
               <p className="font-medium text-neutral-700">Belum ada ulasan untuk toko ini.</p>
               <p>Setiap transaksi terverifikasi. Ulasan akan muncul setelah pembeli menyelesaikan pesanan!</p>
             </div>
@@ -329,7 +329,7 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
                       &ldquo;{rev.comment}&rdquo;
                     </p>
                   )}
-                  <p className="text-[10px] text-neutral-400 font-mono">
+                  <p className="text-xs text-neutral-400 font-mono">
                     {format(new Date(rev.createdAt), "d MMMM yyyy", { locale: id })}
                   </p>
                 </div>

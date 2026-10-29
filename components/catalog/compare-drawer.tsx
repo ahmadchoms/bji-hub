@@ -81,7 +81,7 @@ export function CompareDrawer() {
         <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="border-b border-neutral-200 pb-3">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-400">
+              <span className="text-xs font-mono uppercase tracking-widest text-neutral-400">
                 Side-by-Side Comparison
               </span>
               <button
@@ -95,7 +95,7 @@ export function CompareDrawer() {
             <DialogTitle className="font-display text-xl font-bold text-neutral-900 mt-1">
               Komparasi Spesifikasi Lot Kopi
             </DialogTitle>
-            <DialogDescription className="text-xs text-neutral-500">
+            <DialogDescription className="text-xs text-neutral-600">
               Bandingkan profil ketinggian, proses pascapanen, varietas, dan harga per kilogram.
             </DialogDescription>
           </DialogHeader>
@@ -105,7 +105,7 @@ export function CompareDrawer() {
             <table className="w-full text-xs text-left border-collapse">
               <thead>
                 <tr className="border-b border-neutral-200">
-                  <th className="py-2.5 px-3 font-mono text-[10px] uppercase text-neutral-400 w-36">
+                  <th className="py-2.5 px-3 font-mono text-xs uppercase text-neutral-400 w-36">
                     Parameter
                   </th>
                   {compareList.map((item) => (
@@ -128,7 +128,7 @@ export function CompareDrawer() {
                             <X className="size-3.5" />
                           </button>
                         </div>
-                        <p className="text-[11px] text-neutral-500">{item.seller.businessName}</p>
+                        <p className="text-xs text-neutral-600">{item.seller.businessName}</p>
                       </div>
                     </th>
                   ))}
@@ -136,15 +136,15 @@ export function CompareDrawer() {
               </thead>
               <tbody className="divide-y divide-neutral-100">
                 <tr>
-                  <td className="py-2.5 px-3 font-mono text-[10px] uppercase text-neutral-400">Harga / Unit</td>
+                  <td className="py-2.5 px-3 font-mono text-xs uppercase text-neutral-400">Harga / Unit</td>
                   {compareList.map((item) => (
                     <td key={item.id} className="py-2.5 px-3 font-mono font-bold text-neutral-900 text-sm">
-                      Rp {item.price.toLocaleString("id-ID")} <span className="text-xs font-normal text-neutral-500">/ {item.unit}</span>
+                      Rp {item.price.toLocaleString("id-ID")} <span className="text-xs font-normal text-neutral-600">/ {item.unit}</span>
                     </td>
                   ))}
                 </tr>
                 <tr>
-                  <td className="py-2.5 px-3 font-mono text-[10px] uppercase text-neutral-400">Min. Order</td>
+                  <td className="py-2.5 px-3 font-mono text-xs uppercase text-neutral-400">Min. Order</td>
                   {compareList.map((item) => (
                     <td key={item.id} className="py-2.5 px-3 font-mono text-neutral-700">
                       {item.minOrderQty} {item.unit}
@@ -152,7 +152,7 @@ export function CompareDrawer() {
                   ))}
                 </tr>
                 <tr>
-                  <td className="py-2.5 px-3 font-mono text-[10px] uppercase text-neutral-400">Origin / Asal</td>
+                  <td className="py-2.5 px-3 font-mono text-xs uppercase text-neutral-400">Origin / Asal</td>
                   {compareList.map((item) => (
                     <td key={item.id} className="py-2.5 px-3 font-medium text-neutral-800">
                       {item.tasteProfile?.originRegion || item.seller.city}
@@ -160,7 +160,7 @@ export function CompareDrawer() {
                   ))}
                 </tr>
                 <tr>
-                  <td className="py-2.5 px-3 font-mono text-[10px] uppercase text-neutral-400">Metode Proses</td>
+                  <td className="py-2.5 px-3 font-mono text-xs uppercase text-neutral-400">Metode Proses</td>
                   {compareList.map((item) => (
                     <td key={item.id} className="py-2.5 px-3 text-neutral-700">
                       {item.tasteProfile?.processMethod || "—"}
@@ -168,7 +168,7 @@ export function CompareDrawer() {
                   ))}
                 </tr>
                 <tr>
-                  <td className="py-2.5 px-3 font-mono text-[10px] uppercase text-neutral-400">Tingkat Sangrai</td>
+                  <td className="py-2.5 px-3 font-mono text-xs uppercase text-neutral-400">Tingkat Sangrai</td>
                   {compareList.map((item) => (
                     <td key={item.id} className="py-2.5 px-3 text-neutral-700">
                       {item.tasteProfile?.roastLevel || "—"}
@@ -176,7 +176,7 @@ export function CompareDrawer() {
                   ))}
                 </tr>
                 <tr>
-                  <td className="py-2.5 px-3 font-mono text-[10px] uppercase text-neutral-400">Notes Rasa</td>
+                  <td className="py-2.5 px-3 font-mono text-xs uppercase text-neutral-400">Notes Rasa</td>
                   {compareList.map((item) => (
                     <td key={item.id} className="py-2.5 px-3 text-neutral-700">
                       {item.tasteProfile?.flavorNotes || "—"}
@@ -184,7 +184,7 @@ export function CompareDrawer() {
                   ))}
                 </tr>
                 <tr>
-                  <td className="py-2.5 px-3 font-mono text-[10px] uppercase text-neutral-400">Skor Sensory</td>
+                  <td className="py-2.5 px-3 font-mono text-xs uppercase text-neutral-400">Skor Sensory</td>
                   {compareList.map((item) => (
                     <td key={item.id} className="py-2.5 px-3 font-mono text-neutral-600">
                       Acid: <span className="font-bold text-neutral-900">{item.tasteProfile?.acidityScore ?? "-"}/5</span> · Body: <span className="font-bold text-neutral-900">{item.tasteProfile?.bodyScore ?? "-"}/5</span>
@@ -192,7 +192,7 @@ export function CompareDrawer() {
                   ))}
                 </tr>
                 <tr>
-                  <td className="py-2.5 px-3 font-mono text-[10px] uppercase text-neutral-400">Aksi</td>
+                  <td className="py-2.5 px-3 font-mono text-xs uppercase text-neutral-400">Aksi</td>
                   {compareList.map((item) => (
                     <td key={item.id} className="py-2.5 px-3">
                       <Link

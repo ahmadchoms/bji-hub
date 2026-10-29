@@ -43,7 +43,7 @@ export function TokopediaSortBar({ total }: { total: number }) {
       </div>
 
       <div className="flex items-center gap-2 text-xs">
-        <span className="text-neutral-500 font-medium shrink-0 flex items-center gap-1">
+        <span className="text-neutral-600 font-medium shrink-0 flex items-center gap-1">
           <ArrowUpDown className="w-3.5 h-3.5 text-neutral-400" />
           Urutkan:
         </span>

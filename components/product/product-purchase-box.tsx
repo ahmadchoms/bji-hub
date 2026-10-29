@@ -38,13 +38,13 @@ export function ProductPurchaseBox({ listing }: ProductPurchaseBoxProps) {
       <div className="p-4 bg-neutral-50 border border-neutral-300 rounded-sm">
         <div className="flex items-baseline justify-between">
           <div>
-            <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest mb-1">
+            <p className="text-xs font-mono text-neutral-600 uppercase tracking-widest mb-1">
               Harga
             </p>
             <PriceText price={listing.price} unit={listing.unit} size="lg" />
           </div>
           <div className="text-right">
-            <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest mb-1">
+            <p className="text-xs font-mono text-neutral-600 uppercase tracking-widest mb-1">
               Min. Order
             </p>
             <span className="font-mono text-sm font-bold text-neutral-900">
@@ -87,7 +87,7 @@ export function ProductPurchaseBox({ listing }: ProductPurchaseBoxProps) {
               <h4 className="font-bold text-amber-950">
                 Perlindungan Pembelian: Biji Mentah (Green Bean)
               </h4>
-              <p className="text-[11px] text-amber-900 leading-relaxed">
+              <p className="text-xs text-amber-900 leading-relaxed">
                 Produk ini adalah <strong>Biji Kopi Mentah yang belum disangrai</strong>. Jangan dimasukkan langsung ke dalam mesin grinder seduh biasa karena biji masih sangat keras dan belum siap seduh. Khusus untuk kebutuhan sangrai roastery atau home-roaster.
               </p>
             </div>
@@ -100,7 +100,7 @@ export function ProductPurchaseBox({ listing }: ProductPurchaseBoxProps) {
               onChange={(e) => setConfirmedGreenBean(e.target.checked)}
               className="mt-0.5 h-4 w-4 rounded border-amber-400 text-primary-600 focus:ring-primary-500 cursor-pointer"
             />
-            <span className="text-[11px] font-medium text-amber-950">
+            <span className="text-xs font-medium text-amber-950">
               Saya mengonfirmasi bahwa saya memahami produk ini adalah biji kopi mentah belum disangrai.
             </span>
           </label>
@@ -135,11 +135,11 @@ export function ProductPurchaseBox({ listing }: ProductPurchaseBoxProps) {
                 <Plus className="w-3.5 h-3.5" />
               </button>
             </div>
-            <span className="text-neutral-500">{listing.unit}</span>
+            <span className="text-neutral-600">{listing.unit}</span>
           </div>
 
           <div className="text-right">
-            <span className="text-neutral-500 text-[10px] block">Subtotal</span>
+            <span className="text-neutral-600 text-xs block">Subtotal</span>
             <span className="font-mono font-bold text-sm text-primary-900">
               {formatRupiah(subtotal)}
             </span>
@@ -152,7 +152,7 @@ export function ProductPurchaseBox({ listing }: ProductPurchaseBoxProps) {
         {isOutOfStock ? (
           <button
             disabled
-            className="w-full bg-neutral-200 text-neutral-500 font-medium py-3 px-4 rounded-sm text-base cursor-not-allowed flex items-center justify-center border border-neutral-300"
+            className="w-full bg-neutral-200 text-neutral-600 font-medium py-3 px-4 rounded-sm text-base cursor-not-allowed flex items-center justify-center border border-neutral-300"
           >
             Stok Habis Terjual
           </button>
@@ -197,7 +197,7 @@ export function ProductPurchaseBox({ listing }: ProductPurchaseBoxProps) {
             />
 
             {isGreenBean && !confirmedGreenBean && (
-              <p className="text-[11px] text-amber-800 text-center font-medium italic">
+              <p className="text-xs text-amber-800 text-center font-medium italic">
                 Harap centang konfirmasi Green Bean di atas untuk melanjutkan pemesanan.
               </p>
             )}

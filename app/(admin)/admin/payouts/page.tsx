@@ -39,7 +39,7 @@ export default async function AdminPayoutsPage() {
               <p className="text-xl font-bold font-mono text-amber-950 mt-0.5">
                 {formatRupiah(totalPendingAmount)}
               </p>
-              <p className="text-[11px] text-amber-700 mt-0.5">
+              <p className="text-xs text-amber-700 mt-0.5">
                 {pendingPayouts.length} pengajuan menunggu
               </p>
             </div>
@@ -56,7 +56,7 @@ export default async function AdminPayoutsPage() {
               <p className="text-xl font-bold font-mono text-emerald-950 mt-0.5">
                 {formatRupiah(totalProcessedAmount)}
               </p>
-              <p className="text-[11px] text-emerald-700 mt-0.5">
+              <p className="text-xs text-emerald-700 mt-0.5">
                 {processedPayouts.length} pengajuan selesai
               </p>
             </div>
@@ -73,7 +73,7 @@ export default async function AdminPayoutsPage() {
               <p className="text-xl font-bold font-mono text-neutral-900 mt-0.5">
                 {rejectedPayouts.length}
               </p>
-              <p className="text-[11px] text-neutral-500 mt-0.5">
+              <p className="text-xs text-neutral-600 mt-0.5">
                 Rekening tidak valid / tidak sesuai
               </p>
             </div>

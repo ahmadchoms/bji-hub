@@ -72,8 +72,8 @@ export function Logo({
           {showTagline && (
             <span
               className={cn(
-                "text-[10px] tracking-wide uppercase font-medium mt-0.5",
-                isLight ? "text-primary-100" : "text-neutral-500"
+                "text-xs tracking-wide uppercase font-medium mt-0.5",
+                isLight ? "text-primary-100" : "text-neutral-600"
               )}
             >
               Direktori Kopi Indonesia

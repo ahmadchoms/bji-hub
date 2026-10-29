@@ -50,7 +50,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 </p>
               </div>
 
-              <div className="pt-3 flex flex-wrap items-center gap-2 text-[11px] text-neutral-300">
+              <div className="pt-3 flex flex-wrap items-center gap-2 text-xs text-neutral-300">
                 <span className="bg-white/10 px-2 py-0.5 rounded font-mono">100% Kopi Nusantara</span>
                 <span className="bg-white/10 px-2 py-0.5 rounded font-mono">Beli Grosir & Sampel</span>
                 <span className="bg-white/10 px-2 py-0.5 rounded font-mono">Garansi Pengiriman</span>

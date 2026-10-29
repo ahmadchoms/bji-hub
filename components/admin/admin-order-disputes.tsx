@@ -305,7 +305,7 @@ export function AdminOrderDisputes({ orders: initialOrders }: AdminOrderDisputes
       {/* Orders List */}
       <div className="space-y-3">
         {filteredOrders.length === 0 ? (
-          <p className="text-xs text-neutral-500 py-8 text-center bg-white rounded border border-neutral-200">
+          <p className="text-xs text-neutral-600 py-8 text-center bg-white rounded border border-neutral-200">
             Tidak ada pesanan dalam kategori ini.
           </p>
         ) : (
@@ -325,7 +325,7 @@ export function AdminOrderDisputes({ orders: initialOrders }: AdminOrderDisputes
                     <span className="font-mono font-bold text-neutral-900 text-sm">
                       {order.orderNumber}
                     </span>
-                    <span className="text-neutral-400 font-mono text-[11px]">
+                    <span className="text-neutral-400 font-mono text-xs">
                       {format(new Date(order.createdAt), "d MMM yyyy, HH:mm", {
                         locale: idLocale,
                       })}
@@ -410,7 +410,7 @@ export function AdminOrderDisputes({ orders: initialOrders }: AdminOrderDisputes
                     <p className="font-semibold text-neutral-800">
                       {order.listingTitle || `Produk #${order.listingId}`}
                     </p>
-                    <p className="text-neutral-500 text-[11px] mt-0.5">
+                    <p className="text-neutral-600 text-xs mt-0.5">
                       {order.quantity} pcs &bull; Total:{" "}
                       <strong className="text-primary-900 font-mono">
                         {formatRupiah(order.totalAmount)}
@@ -424,7 +424,7 @@ export function AdminOrderDisputes({ orders: initialOrders }: AdminOrderDisputes
                       <User className="w-3 h-3 text-neutral-400" />
                       {order.buyerName} ({order.buyerCity})
                     </p>
-                    <p className="text-neutral-500 font-mono text-[11px] mt-0.5">
+                    <p className="text-neutral-600 font-mono text-xs mt-0.5">
                       {order.buyerPhone}
                     </p>
                   </div>
@@ -435,7 +435,7 @@ export function AdminOrderDisputes({ orders: initialOrders }: AdminOrderDisputes
                       <Store className="w-3 h-3 text-neutral-400" />
                       {order.sellerName || "Mitra Roastery"}
                     </p>
-                    <div className="text-neutral-500 text-[11px] mt-0.5 flex flex-wrap items-center gap-1.5">
+                    <div className="text-neutral-600 text-xs mt-0.5 flex flex-wrap items-center gap-1.5">
                       <span>Kurir: {order.shippingCourier}</span>
                       {order.trackingNumber && (
                         <>

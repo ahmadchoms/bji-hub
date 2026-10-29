@@ -62,7 +62,7 @@ export default async function OrderSuccessPage({
     return (
       <div className="py-16 text-center">
         <PageContainer className="max-w-md mx-auto space-y-4">
-          <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center mx-auto text-neutral-500">
+          <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center mx-auto text-neutral-600">
             <Package className="w-6 h-6" />
           </div>
           <h1 className="text-xl font-bold text-neutral-900">
@@ -84,7 +84,7 @@ export default async function OrderSuccessPage({
     return (
       <div className="py-16 text-center">
         <PageContainer className="max-w-md mx-auto space-y-4">
-          <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center mx-auto text-neutral-500">
+          <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center mx-auto text-neutral-600">
             <Package className="w-6 h-6" />
           </div>
           <h1 className="text-xl font-bold text-neutral-900">
@@ -162,7 +162,7 @@ export default async function OrderSuccessPage({
             </div>
           )}
 
-          <p className="text-xs text-neutral-500 max-w-md mx-auto">
+          <p className="text-xs text-neutral-600 max-w-md mx-auto">
             {order.status === "completed"
               ? "Terima kasih! Pesanan telah Anda terima dengan baik dan dana penjualan telah diteruskan ke pihak roastery/petani."
               : order.status === "disputed"
@@ -233,7 +233,7 @@ export default async function OrderSuccessPage({
                 </div>
               </div>
 
-              <div className="p-2.5 bg-white/80 rounded border border-emerald-200/80 text-[11px] text-emerald-900 flex items-center gap-2">
+              <div className="p-2.5 bg-white/80 rounded border border-emerald-200/80 text-xs text-emerald-900 flex items-center gap-2">
                 <Clock className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
                 <span>
                   <strong>Garansi Pelepasan Dana Otomatis:</strong>{" "}
@@ -256,7 +256,7 @@ export default async function OrderSuccessPage({
 
             <div className="space-y-3">
               <div>
-                <p className="text-xs text-neutral-500">Produk</p>
+                <p className="text-xs text-neutral-600">Produk</p>
                 <p className="text-sm font-semibold text-neutral-900">
                   {order.listingTitle || `Produk ID #${order.listingId}`}
                 </p>
@@ -267,25 +267,25 @@ export default async function OrderSuccessPage({
 
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
-                  <span className="text-neutral-500">Jumlah:</span>{" "}
+                  <span className="text-neutral-600">Jumlah:</span>{" "}
                   <span className="font-medium text-neutral-900">{order.quantity} pcs/kg</span>
                 </div>
                 <div>
-                  <span className="text-neutral-500">Harga Satuan:</span>{" "}
+                  <span className="text-neutral-600">Harga Satuan:</span>{" "}
                   <span className="font-medium text-neutral-900">{formatRupiah(order.itemPrice)}</span>
                 </div>
               </div>
 
               <div className="pt-2 border-t border-neutral-100">
-                <p className="text-xs text-neutral-500">Kurir Pengiriman</p>
+                <p className="text-xs text-neutral-600">Kurir Pengiriman</p>
                 <div className="flex items-center gap-2 mt-1">
-                  <Truck className="w-4 h-4 text-neutral-500" />
+                  <Truck className="w-4 h-4 text-neutral-600" />
                   <span className="text-sm font-medium text-neutral-900">{order.shippingCourier}</span>
                 </div>
                 {order.trackingNumber ? (
                   <div className="mt-2 p-2.5 bg-neutral-50 rounded border border-neutral-200 text-xs flex items-center justify-between gap-2">
                     <div>
-                      <span className="text-neutral-500">Nomor Resi:</span>{" "}
+                      <span className="text-neutral-600">Nomor Resi:</span>{" "}
                       <span className="font-mono font-bold text-primary-700">{order.trackingNumber}</span>
                     </div>
                     <ShipmentTrackingModal
@@ -295,7 +295,7 @@ export default async function OrderSuccessPage({
                     />
                   </div>
                 ) : (
-                  <p className="text-[11px] text-neutral-400 mt-1 italic">
+                  <p className="text-xs text-neutral-400 mt-1 italic">
                     Nomor resi akan muncul setelah penjual mengirimkan paket.
                   </p>
                 )}
@@ -311,7 +311,7 @@ export default async function OrderSuccessPage({
 
             <div className="space-y-3">
               <div>
-                <p className="text-xs text-neutral-500">Penerima</p>
+                <p className="text-xs text-neutral-600">Penerima</p>
                 <p className="text-sm font-semibold text-neutral-900">{order.buyerName}</p>
                 <p className="text-xs text-neutral-600">{order.buyerPhone}</p>
                 <p className="text-xs text-neutral-600 mt-1">{order.buyerAddress}, {order.buyerCity}</p>
@@ -319,15 +319,15 @@ export default async function OrderSuccessPage({
 
               <div className="pt-2 border-t border-neutral-100 space-y-1.5 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-neutral-500">Subtotal Produk</span>
+                  <span className="text-neutral-600">Subtotal Produk</span>
                   <span className="font-mono text-neutral-900">{formatRupiah(order.subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-neutral-500">Ongkos Kirim</span>
+                  <span className="text-neutral-600">Ongkos Kirim</span>
                   <span className="font-mono text-neutral-900">{formatRupiah(order.shippingCost)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-neutral-500">Biaya Layanan Platform</span>
+                  <span className="text-neutral-600">Biaya Layanan Platform</span>
                   <span className="font-mono text-neutral-900">{formatRupiah(order.serviceFee)}</span>
                 </div>
                 <div className="flex justify-between pt-2 border-t border-neutral-200 font-semibold text-sm">

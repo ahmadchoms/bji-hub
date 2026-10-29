@@ -119,7 +119,7 @@ export function ImageUploader({
         >
           Pilih foto
         </label>
-        <p className="font-mono text-xs text-neutral-500">
+        <p className="font-mono text-xs text-neutral-600">
           {value.length} / {IMAGE_RULES.maxCount} foto · JPG, PNG, WebP · maks.{" "}
           {MAX_RAW_IMAGE_BYTES / 1024 / 1024} MB, dikompres otomatis
         </p>

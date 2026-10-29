@@ -21,7 +21,7 @@ export function VerifiedBadge({
         showLabel
           ? cn(
               "gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50 text-emerald-800 shadow-2xs font-medium",
-              isSm ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-0.5 text-xs",
+              isSm ? "px-2 py-0.5 text-xs" : "px-2.5 py-0.5 text-xs",
             )
           : "p-0 bg-transparent border-0 shadow-none leading-none",
         className,
@@ -36,7 +36,7 @@ export function VerifiedBadge({
       />
 
       {showLabel && (
-        <span className="font-semibold tracking-wide uppercase text-[10px]">
+        <span className="font-semibold tracking-wide uppercase text-xs">
           Verified
         </span>
       )}

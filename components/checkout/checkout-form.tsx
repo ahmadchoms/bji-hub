@@ -358,12 +358,12 @@ export function CheckoutForm({
         <div className="border border-neutral-300 bg-surface-base rounded-sm p-5 space-y-4">
           <div className="border-b border-neutral-200 pb-2 flex items-center justify-between">
             <div>
-              <p className="text-xs text-neutral-500">Dikirim dari:</p>
+              <p className="text-xs text-neutral-600">Dikirim dari:</p>
               <h2 className="text-sm font-bold text-neutral-900">
                 {listing.seller.businessName} ({listing.seller.city})
               </h2>
             </div>
-            <span className="text-[11px] font-mono text-neutral-500">
+            <span className="text-xs font-mono text-neutral-600">
               Est. Bobot: {Math.round(totalWeightGrams / 1000)} kg
             </span>
           </div>
@@ -394,11 +394,11 @@ export function CheckoutForm({
                         {item.title}
                       </p>
                       {item.grindSize && (
-                        <span className="inline-block text-[10px] font-medium bg-neutral-100 text-neutral-700 px-1.5 py-0.5 rounded border border-neutral-200 mt-0.5">
+                        <span className="inline-block text-xs font-medium bg-neutral-100 text-neutral-700 px-1.5 py-0.5 rounded border border-neutral-200 mt-0.5">
                           Gilingan: {item.grindSize}
                         </span>
                       )}
-                      <p className="text-neutral-500 text-[11px] mt-0.5">
+                      <p className="text-neutral-600 text-xs mt-0.5">
                         {formatRupiah(item.price)} × {item.quantity} {item.unit}
                       </p>
                     </div>
@@ -425,14 +425,14 @@ export function CheckoutForm({
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider">
+                  <span className="text-xs font-mono text-neutral-600 uppercase tracking-wider">
                     {listing.category.name}
                   </span>
                   <h2 className="font-medium text-sm text-neutral-900 truncate">
                     {listing.title}
                   </h2>
                   {grindParam && (
-                    <span className="inline-block text-[10px] font-medium bg-neutral-100 text-neutral-700 px-1.5 py-0.5 rounded border border-neutral-200 mt-0.5">
+                    <span className="inline-block text-xs font-medium bg-neutral-100 text-neutral-700 px-1.5 py-0.5 rounded border border-neutral-200 mt-0.5">
                       Gilingan: {grindParam}
                     </span>
                   )}
@@ -505,7 +505,7 @@ export function CheckoutForm({
                     ? `/checkout/${listing.slug}?cart=1&sellerId=${listing.sellerId}`
                     : `/checkout/${listing.slug}`,
                 )}`}
-                className="text-xs text-neutral-500 hover:text-neutral-700 flex items-center gap-1"
+                className="text-xs text-neutral-600 hover:text-neutral-700 flex items-center gap-1"
                 title="Kelola profil akun"
               >
                 <ExternalLink className="w-3 h-3" />
@@ -515,7 +515,7 @@ export function CheckoutForm({
 
           {isEditingAddress ? (
             <div className="bg-neutral-50/70 border border-neutral-200 rounded p-4 space-y-3 text-xs">
-              <div className="flex items-center justify-between text-[11px] text-neutral-600 pb-1 border-b border-neutral-200">
+              <div className="flex items-center justify-between text-xs text-neutral-600 pb-1 border-b border-neutral-200">
                 <span className="font-semibold text-neutral-800">
                   Edit Alamat untuk Pesanan Ini
                 </span>
@@ -613,7 +613,7 @@ export function CheckoutForm({
                 <span className="font-semibold text-sm text-neutral-900">
                   {buyerName}
                 </span>
-                <span className="font-mono text-neutral-500 font-normal">
+                <span className="font-mono text-neutral-600 font-normal">
                   • {buyerPhone}
                 </span>
               </div>
@@ -625,7 +625,7 @@ export function CheckoutForm({
                 {buyerProvince ? `, ${buyerProvince}` : ""}
                 {buyerPostalCode ? ` (${buyerPostalCode})` : ""}
               </p>
-              <p className="text-neutral-500 text-[11px] font-mono pt-1">
+              <p className="text-neutral-600 text-xs font-mono pt-1">
                 Konfirmasi transaksi dikirim ke: {buyerEmail}
               </p>
             </div>
@@ -649,7 +649,7 @@ export function CheckoutForm({
                 <DialogTitle className="text-base font-semibold text-neutral-900 flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-primary-600" /> Pilih Alamat Pengiriman
                 </DialogTitle>
-                <DialogDescription className="text-xs text-neutral-500">
+                <DialogDescription className="text-xs text-neutral-600">
                   Pilih alamat tujuan tersimpan untuk menghitung estimasi ongkir otomatis.
                 </DialogDescription>
               </DialogHeader>
@@ -681,17 +681,17 @@ export function CheckoutForm({
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5">
-                          <span className="font-semibold text-neutral-900 font-mono uppercase text-[11px]">
+                          <span className="font-semibold text-neutral-900 font-mono uppercase text-xs">
                             {addr.label || "Alamat"}
                           </span>
                           {addr.isPrimary && (
-                            <Badge variant="outline" className="text-[10px] py-0 px-1.5 text-primary-700 bg-primary-50 border-primary-300">
+                            <Badge variant="outline" className="text-xs py-0 px-1.5 text-primary-700 bg-primary-50 border-primary-300">
                               Utama
                             </Badge>
                           )}
                         </div>
                         {isSelected && (
-                          <span className="text-[11px] font-semibold text-primary-700 flex items-center gap-1">
+                          <span className="text-xs font-semibold text-primary-700 flex items-center gap-1">
                             <Check className="w-3.5 h-3.5" /> Digunakan
                           </span>
                         )}
@@ -702,7 +702,7 @@ export function CheckoutForm({
                       <p className="text-neutral-600 leading-snug">
                         {addr.address}
                       </p>
-                      <p className="text-neutral-500 text-[11px]">
+                      <p className="text-neutral-600 text-xs">
                         {addr.city}, {addr.province} {addr.postalCode ? `(${addr.postalCode})` : ""}
                       </p>
                     </div>
@@ -746,7 +746,7 @@ export function CheckoutForm({
                 Estimasi dari gudang {listing.seller.businessName} ({listing.seller.city}).
               </p>
             </div>
-            <span className="text-[11px] font-mono font-medium text-neutral-700 bg-neutral-100 border border-neutral-300 px-2 py-0.5 rounded">
+            <span className="text-xs font-mono font-medium text-neutral-700 bg-neutral-100 border border-neutral-300 px-2 py-0.5 rounded">
               Bobot Paket: {(totalWeightGrams / 1000).toFixed(1)} kg
             </span>
           </div>
@@ -770,17 +770,17 @@ export function CheckoutForm({
               </Button>
             </div>
           ) : !buyerCity.trim() || buyerCity.trim().length < 3 ? (
-            <div className="p-6 border border-dashed border-neutral-300 rounded-sm text-center text-xs text-neutral-500 space-y-1.5 bg-neutral-50/60">
+            <div className="p-6 border border-dashed border-neutral-300 rounded-sm text-center text-xs text-neutral-600 space-y-1.5 bg-neutral-50/60">
               <MapPin className="w-5 h-5 mx-auto text-neutral-400" />
               <p className="font-semibold text-neutral-800">Tujuan Belum Diisi</p>
-              <p className="text-[11px] text-neutral-500 max-w-sm mx-auto">
+              <p className="text-xs text-neutral-600 max-w-sm mx-auto">
                 Silakan isi Kota / Kabupaten tujuan pada formulir di atas untuk menampilkan daftar ekspedisi dan tarif ongkir.
               </p>
             </div>
           ) : shippingRates.length === 0 ? (
             <div className="p-6 border border-dashed border-amber-300 bg-amber-50/40 rounded-sm text-center text-xs text-amber-900 space-y-1">
               <p className="font-semibold">Opsi Pengiriman Tidak Ditemukan</p>
-              <p className="text-[11px] text-amber-700">
+              <p className="text-xs text-amber-700">
                 Pastikan nama kota sudah benar (contoh: &quot;Bandung&quot;, &quot;Surabaya&quot;, &quot;Jakarta Selatan&quot;).
               </p>
             </div>
@@ -813,12 +813,12 @@ export function CheckoutForm({
                           {rate.courierName} — {rate.service}
                         </p>
                         {rate.isEstimate && (
-                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-xs bg-amber-100 text-amber-900 border border-amber-200">
+                          <span className="text-xs font-medium px-1.5 py-0.5 rounded-xs bg-amber-100 text-amber-900 border border-amber-200">
                             Estimasi
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-neutral-600 mt-0.5">
+                      <p className="text-xs text-neutral-600 mt-0.5">
                         Estimasi Tiba: <strong className="text-neutral-900 font-semibold">{rate.etd}</strong> • {rate.description}
                       </p>
                     </div>
@@ -887,11 +887,11 @@ export function CheckoutForm({
                   <Truck className="w-3.5 h-3.5 text-primary-700" />
                   {selectedCourier.courierName} ({selectedCourier.service})
                 </span>
-                <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
+                <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
                   Tiba: {selectedCourier.etd}
                 </span>
               </div>
-              <div className="flex items-center justify-between text-[11px] text-neutral-500 pt-1 border-t border-neutral-200/60">
+              <div className="flex items-center justify-between text-xs text-neutral-600 pt-1 border-t border-neutral-200/60">
                 <span>Total Berat Paket:</span>
                 <span className="font-mono font-semibold text-neutral-800">
                   {(totalWeightGrams / 1000).toFixed(1)} kg

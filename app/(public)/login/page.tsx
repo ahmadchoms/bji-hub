@@ -142,7 +142,7 @@ function LoginForm() {
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-neutral-300" />
             </div>
-            <div className="relative bg-surface-base px-3 text-xs uppercase text-neutral-500 font-medium">
+            <div className="relative bg-surface-base px-3 text-xs uppercase text-neutral-600 font-medium">
               atau
             </div>
           </div>

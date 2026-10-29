@@ -79,7 +79,7 @@ export function AddToCartButton({
         added ? (
           <Check className="w-4 h-4 mr-1.5 text-emerald-600" />
         ) : (
-          <ShoppingCart className="w-4 h-4 mr-1.5 text-neutral-500" />
+          <ShoppingCart className="w-4 h-4 mr-1.5 text-neutral-600" />
         )
       )}
       {added ? "Tersimpan di Keranjang" : label}

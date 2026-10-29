@@ -198,7 +198,7 @@ export function PlanSection({ state, listingCount }: PlanSectionProps) {
       );
     }
     return (
-      <span className="text-xs text-neutral-500">
+      <span className="text-xs text-neutral-600">
         Setelah masa aktif berakhir
       </span>
     );
@@ -273,14 +273,14 @@ export function PlanSection({ state, listingCount }: PlanSectionProps) {
                 <TableCell className="font-medium text-neutral-900">
                   {row.name}
                   {row.tier === state.tier && (
-                    <span className="ml-2 text-xs font-mono text-neutral-500">
+                    <span className="ml-2 text-xs font-mono text-neutral-600">
                       paket aktif
                     </span>
                   )}
                 </TableCell>
                 <TableCell className="font-mono font-medium tabular-nums text-primary-900">
                   {row.price}
-                  <span className="font-sans text-neutral-500">/bln</span>
+                  <span className="font-sans text-neutral-600">/bln</span>
                 </TableCell>
                 <TableCell>{row.listings}</TableCell>
                 <TableCell>{row.verified}</TableCell>

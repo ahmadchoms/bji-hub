@@ -73,7 +73,7 @@ export function B2BNegotiationBox({
         <span className="font-semibold text-neutral-800">
           Template Chat B2B Langsung
         </span>
-        <span className="text-[10px] text-neutral-500 font-mono">
+        <span className="text-xs text-neutral-600 font-mono">
           Pilih topik
         </span>
       </div>

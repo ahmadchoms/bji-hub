@@ -35,7 +35,7 @@ function ScoreGauge({ label, score, max }: { label: string; score: number; max: 
     <div className="space-y-1">
       <div className="flex items-center justify-between text-xs">
         <span className="font-sans text-neutral-600">{label}</span>
-        <span className="font-mono tabular-nums text-neutral-900 text-[11px]">
+        <span className="font-mono tabular-nums text-neutral-900 text-xs">
           {score.toFixed(1)}
         </span>
       </div>
@@ -74,7 +74,7 @@ export function FlavorProfile({ tasteProfile, className }: FlavorProfileProps) {
   if (!tasteProfile) {
     return (
       <div className={cn("p-6 bg-surface-base rounded-sm border border-neutral-300", className)}>
-        <p className="font-display text-sm text-neutral-500 italic">
+        <p className="font-display text-sm text-neutral-600 italic">
           Profil sensori belum tersedia untuk lot ini.
         </p>
       </div>
@@ -89,7 +89,7 @@ export function FlavorProfile({ tasteProfile, className }: FlavorProfileProps) {
         <h4 className="font-display text-lg text-neutral-900 font-semibold">
           Lembar Cupping
         </h4>
-        <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest">
+        <span className="text-xs font-mono text-neutral-600 uppercase tracking-widest">
           Skor 1–5
         </span>
       </div>
@@ -135,7 +135,7 @@ export function FlavorProfile({ tasteProfile, className }: FlavorProfileProps) {
 
       {flavorText && (
         <div className="pt-3 border-t border-neutral-300">
-          <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest block mb-1">
+          <span className="text-xs font-mono text-neutral-600 uppercase tracking-widest block mb-1">
             Catatan Rasa
           </span>
           <p className="font-display text-sm italic text-neutral-700 leading-relaxed">

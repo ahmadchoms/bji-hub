@@ -19,7 +19,7 @@ export default async function SellerVerificationPage() {
   ]);
 
   if (!seller) {
-    return <p className="text-neutral-500">Data seller tidak ditemukan.</p>;
+    return <p className="text-neutral-600">Data seller tidak ditemukan.</p>;
   }
 
   const isProfileComplete = Boolean(
@@ -58,7 +58,7 @@ export default async function SellerVerificationPage() {
                 Identitas dan operasional usaha Anda telah divalidasi oleh kurator Biji Hub. Profil dan seluruh katalog produk Anda memiliki tanda verifikasi resmi di direktori kopi.
               </p>
             </div>
-            <span className="text-[11px] font-mono font-medium px-2.5 py-1 bg-neutral-100 border border-neutral-300 rounded text-neutral-700 shrink-0">
+            <span className="text-xs font-mono font-medium px-2.5 py-1 bg-neutral-100 border border-neutral-300 rounded text-neutral-700 shrink-0">
               Status Aktif
             </span>
           </div>
@@ -171,7 +171,7 @@ export default async function SellerVerificationPage() {
               </div>
 
               <div className="pt-4 border-t border-neutral-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <p className="text-xs text-neutral-500">
+                <p className="text-xs text-neutral-600">
                   {isProfileComplete && hasListing
                     ? "Semua kriteria awal terpenuhi. Anda siap mengajukan verifikasi."
                     : "Lengkapi persyaratan bertanda kuning di atas untuk mempercepat persetujuan."}

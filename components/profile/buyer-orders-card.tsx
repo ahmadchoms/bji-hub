@@ -180,7 +180,7 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
         return (
           <Badge
             variant="outline"
-            className="text-emerald-700 bg-emerald-50 border-emerald-300 font-semibold text-[11px]"
+            className="text-emerald-700 bg-emerald-50 border-emerald-300 font-semibold text-xs"
           >
             Selesai
           </Badge>
@@ -189,7 +189,7 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
         return (
           <Badge
             variant="outline"
-            className="text-purple-700 bg-purple-50 border-purple-300 font-semibold text-[11px]"
+            className="text-purple-700 bg-purple-50 border-purple-300 font-semibold text-xs"
           >
             Dikirim
           </Badge>
@@ -198,7 +198,7 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
         return (
           <Badge
             variant="outline"
-            className="text-blue-700 bg-blue-50 border-blue-300 font-semibold text-[11px]"
+            className="text-blue-700 bg-blue-50 border-blue-300 font-semibold text-xs"
           >
             Diproses
           </Badge>
@@ -207,7 +207,7 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
         return (
           <Badge
             variant="outline"
-            className="text-rose-700 bg-rose-50 border-rose-300 font-semibold text-[11px]"
+            className="text-rose-700 bg-rose-50 border-rose-300 font-semibold text-xs"
           >
             Komplain
           </Badge>
@@ -216,7 +216,7 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
         return (
           <Badge
             variant="outline"
-            className="text-neutral-600 bg-neutral-100 border-neutral-300 font-semibold text-[11px]"
+            className="text-neutral-600 bg-neutral-100 border-neutral-300 font-semibold text-xs"
           >
             Dibatalkan
           </Badge>
@@ -225,7 +225,7 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
         return (
           <Badge
             variant="outline"
-            className="text-amber-800 bg-amber-50 border-amber-300 font-semibold text-[11px]"
+            className="text-amber-800 bg-amber-50 border-amber-300 font-semibold text-xs"
           >
             Menunggu Pembayaran
           </Badge>
@@ -242,11 +242,11 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
               <Package className="w-4 h-4 text-primary-600" />
               Riwayat Pesanan Saya
             </CardTitle>
-            <CardDescription className="text-xs text-neutral-500">
+            <CardDescription className="text-xs text-neutral-600">
               Daftar transaksi langsung dan status pengiriman biji kopi Anda.
             </CardDescription>
           </div>
-          <span className="font-mono text-xs text-neutral-500">
+          <span className="font-mono text-xs text-neutral-600">
             {orders.length} Total Pesanan
           </span>
         </div>
@@ -347,7 +347,7 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
       <CardContent className="space-y-4 pt-1">
         {filteredOrders.length === 0 ? (
           <div className="text-center py-8 border border-dashed border-neutral-200 rounded-lg space-y-1.5">
-            <p className="text-xs text-neutral-500">
+            <p className="text-xs text-neutral-600">
               {orders.length === 0
                 ? "Belum ada riwayat pesanan."
                 : searchQuery
@@ -387,13 +387,13 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
                       <ShoppingBag className="w-4 h-4 text-neutral-800 shrink-0" />
                       <span>Belanja</span>
                     </div>
-                    <span className="text-neutral-500 text-xs">
+                    <span className="text-neutral-600 text-xs">
                       {format(new Date(ord.createdAt), "d MMM yyyy", {
                         locale: idLocale,
                       })}
                     </span>
                     <div>{getStatusBadge(ord.status)}</div>
-                    <span className="text-neutral-400 font-mono text-[11px]">
+                    <span className="text-neutral-400 font-mono text-xs">
                       {ord.orderNumber}
                     </span>
                   </div>
@@ -431,10 +431,10 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
                           {ord.listingTitle || `Produk #${ord.listingId}`}
                         </p>
                       )}
-                      <p className="text-xs text-neutral-500 mt-1">
+                      <p className="text-xs text-neutral-600 mt-1">
                         {ord.quantity} barang x {formatRupiah(ord.itemPrice)}
                         {ord.notes && (
-                          <span className="ml-1 text-[11px] text-neutral-400">
+                          <span className="ml-1 text-xs text-neutral-400">
                             ({ord.notes})
                           </span>
                         )}
@@ -444,7 +444,7 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
 
                   {/* Kanan: Border Vertikal + Total Belanja */}
                   <div className="border-t sm:border-t-0 sm:border-l border-neutral-200 pt-2 sm:pt-0 sm:pl-6 shrink-0 sm:min-w-[130px]">
-                    <span className="text-[11px] text-neutral-500 block">
+                    <span className="text-xs text-neutral-600 block">
                       Total Belanja
                     </span>
                     <span className="text-sm sm:text-base font-bold font-mono text-neutral-900 block mt-0.5">

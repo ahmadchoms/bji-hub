@@ -84,7 +84,7 @@ export default async function AdminModerationPage() {
                         <p className="font-medium text-neutral-900 truncate max-w-50">
                           {listing.title}
                         </p>
-                        <p className="text-[11px] text-neutral-500">
+                        <p className="text-xs text-neutral-600">
                           {listing.category.name}
                         </p>
                       </TableCell>
@@ -157,7 +157,7 @@ export default async function AdminModerationPage() {
                       <p className="font-medium text-sm text-neutral-900 truncate">
                         {listing.title}
                       </p>
-                      <p className="text-[11px] text-neutral-500">
+                      <p className="text-xs text-neutral-600">
                         {listing.seller.businessName}
                       </p>
                       <div className="flex items-center gap-2 mt-1">

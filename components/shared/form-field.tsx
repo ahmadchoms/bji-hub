@@ -45,7 +45,7 @@ export function FormField({
           {error}
         </p>
       ) : helperText ? (
-        <p className="text-xs text-neutral-500 mt-0.5 leading-normal">
+        <p className="text-xs text-neutral-600 mt-0.5 leading-normal">
           {helperText}
         </p>
       ) : null}

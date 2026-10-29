@@ -63,7 +63,7 @@ export function OnboardingCard({ seller, totalListings }: OnboardingCardProps) {
             href={step.href}
             className={`flex items-center justify-between p-3 rounded-lg border text-sm transition-colors ${
               step.done
-                ? "bg-white/80 border-neutral-200 text-neutral-500 hover:bg-white"
+                ? "bg-white/80 border-neutral-200 text-neutral-600 hover:bg-white"
                 : "bg-white border-primary-300 text-neutral-900 hover:border-primary-500 shadow-xs"
             }`}
           >

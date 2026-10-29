@@ -25,21 +25,21 @@ export function BrewCalculator() {
     <div className="rounded-xl border border-neutral-200/80 bg-white p-5 shadow-xs space-y-4">
       <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
         <div>
-          <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400">
+          <span className="text-xs font-mono uppercase tracking-wider text-neutral-400">
             Brew Guide
           </span>
           <h4 className="font-display text-base font-semibold text-neutral-900">
             Kalkulator Rasio Seduh
           </h4>
         </div>
-        <span className="text-[11px] font-mono text-neutral-400">
+        <span className="text-xs font-mono text-neutral-400">
           Rasio 1:{selectedRatio}
         </span>
       </div>
 
       {/* Preset Rasio */}
       <div className="space-y-1.5">
-        <label className="text-[11px] font-mono uppercase tracking-wider text-neutral-500 font-medium">
+        <label className="text-xs font-mono uppercase tracking-wider text-neutral-600 font-medium">
           Pilih Metode / Rasio
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -56,10 +56,10 @@ export function BrewCalculator() {
             >
               <p className="text-xs font-semibold">{item.label}</p>
               <p
-                className={`text-[10px] truncate mt-0.5 ${
+                className={`text-xs truncate mt-0.5 ${
                   selectedRatio === item.ratio
                     ? "text-neutral-300"
-                    : "text-neutral-500"
+                    : "text-neutral-600"
                 }`}
               >
                 {item.desc}
@@ -75,7 +75,7 @@ export function BrewCalculator() {
           <span className="text-xs font-semibold text-neutral-900 block">
             Takaran Biji Kopi
           </span>
-          <span className="text-[11px] text-neutral-500">
+          <span className="text-xs text-neutral-600">
             Sesuaikan dengan kapasitas dripper / cangkir
           </span>
         </div>
@@ -93,7 +93,7 @@ export function BrewCalculator() {
             <span className="font-mono text-base font-bold text-neutral-900 tabular-nums">
               {coffeeGrams}
             </span>
-            <span className="text-xs font-medium text-neutral-500 ml-1">gr</span>
+            <span className="text-xs font-medium text-neutral-600 ml-1">gr</span>
           </div>
           <button
             type="button"
@@ -109,35 +109,35 @@ export function BrewCalculator() {
       {/* Hasil Perhitungan Seduh */}
       <div className="grid grid-cols-3 gap-2.5 pt-1">
         <div className="p-3 bg-neutral-50/70 rounded-lg border border-neutral-200/70 space-y-1">
-          <span className="block text-neutral-400 text-[10px] font-mono uppercase tracking-wider">
+          <span className="block text-neutral-400 text-xs font-mono uppercase tracking-wider">
             Air Total
           </span>
           <p className="font-mono text-lg font-bold text-neutral-900 tabular-nums">
             {totalWater}{" "}
-            <span className="text-xs font-normal text-neutral-500">ml</span>
+            <span className="text-xs font-normal text-neutral-600">ml</span>
           </p>
         </div>
 
         <div className="p-3 bg-neutral-50/70 rounded-lg border border-neutral-200/70 space-y-1">
-          <span className="block text-neutral-400 text-[10px] font-mono uppercase tracking-wider">
+          <span className="block text-neutral-400 text-xs font-mono uppercase tracking-wider">
             Blooming
           </span>
           <p className="font-mono text-lg font-bold text-neutral-900 tabular-nums">
             {bloomWater}{" "}
-            <span className="text-xs font-normal text-neutral-500">ml</span>
+            <span className="text-xs font-normal text-neutral-600">ml</span>
           </p>
-          <p className="text-[10px] text-neutral-400 font-mono">Tunggu 40 dtk</p>
+          <p className="text-xs text-neutral-400 font-mono">Tunggu 40 dtk</p>
         </div>
 
         <div className="p-3 bg-neutral-50/70 rounded-lg border border-neutral-200/70 space-y-1">
-          <span className="block text-neutral-400 text-[10px] font-mono uppercase tracking-wider">
+          <span className="block text-neutral-400 text-xs font-mono uppercase tracking-wider">
             Suhu Ideal
           </span>
           <p className="font-mono text-lg font-bold text-neutral-900 tabular-nums">
             91°–93°{" "}
-            <span className="text-xs font-normal text-neutral-500">C</span>
+            <span className="text-xs font-normal text-neutral-600">C</span>
           </p>
-          <p className="text-[10px] text-neutral-400 font-mono">Diamkan 1m</p>
+          <p className="text-xs text-neutral-400 font-mono">Diamkan 1m</p>
         </div>
       </div>
     </div>

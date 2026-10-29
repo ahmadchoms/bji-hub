@@ -28,7 +28,7 @@ export function PriceText({
         {formatted}
       </span>
       {unit && (
-        <span className="text-caption text-neutral-500 font-sans font-normal">
+        <span className="text-caption text-neutral-600 font-sans font-normal">
           / {unit}
         </span>
       )}

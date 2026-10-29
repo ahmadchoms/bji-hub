@@ -13,7 +13,7 @@ export default function RefundPolicyPage() {
         <h1 className="font-display text-3xl font-bold text-neutral-900 tracking-tight">
           Kebijakan Retur & Pengembalian Dana
         </h1>
-        <p className="text-xs text-neutral-500">
+        <p className="text-xs text-neutral-600">
           Setiap transaksi di Biji Hub dilindungi dengan sistem garansi penerimaan pesanan dan mediasi sengketa resmi.
         </p>
 

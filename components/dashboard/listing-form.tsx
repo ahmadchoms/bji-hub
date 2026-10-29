@@ -482,7 +482,7 @@ export function ListingForm({
             <span className="text-xs font-semibold text-neutral-900 uppercase tracking-wide">
               Skor Karakter Rasa (0.0 - 5.0)
             </span>
-            <span className="text-[11px] text-neutral-500 font-mono">
+            <span className="text-xs text-neutral-600 font-mono">
               Skala 0 hingga 5
             </span>
           </div>

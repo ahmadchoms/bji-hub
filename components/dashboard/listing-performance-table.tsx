@@ -20,7 +20,7 @@ export function ListingPerformanceTable({
   if (rows.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-neutral-300 p-8 text-center">
-        <p className="text-xs font-medium text-neutral-500">
+        <p className="text-xs font-medium text-neutral-600">
           Belum ada data performa listing.
         </p>
       </div>
@@ -35,7 +35,7 @@ export function ListingPerformanceTable({
             Performa listing 30 hari terakhir
           </caption>
           <thead>
-            <tr className="border-b border-neutral-200/80 bg-neutral-50/50 text-left text-[11px] font-semibold tracking-wider text-neutral-500 uppercase">
+            <tr className="border-b border-neutral-200/80 bg-neutral-50/50 text-left text-xs font-semibold tracking-wider text-neutral-600 uppercase">
               <th scope="col" className="py-3 px-4 font-semibold">
                 Listing
               </th>
@@ -72,7 +72,7 @@ export function ListingPerformanceTable({
                     </Link>
                     {row.boostUntil ? (
                       <div className="flex items-center gap-1.5">
-                        <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700 ring-1 ring-amber-600/20 ring-inset">
+                        <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-600/20 ring-inset">
                           Iklan aktif s/d{" "}
                           {dateFmt.format(new Date(row.boostUntil))}
                         </span>

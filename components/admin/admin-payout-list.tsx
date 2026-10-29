@@ -104,7 +104,7 @@ export function AdminPayoutList({ payouts }: AdminPayoutListProps) {
       <div className="space-y-4">
         {filteredPayouts.length === 0 ? (
           <div className="text-center py-12 border border-dashed border-neutral-200 rounded-lg">
-            <p className="text-sm text-neutral-500">
+            <p className="text-sm text-neutral-600">
               Tidak ada pengajuan pencairan dana dalam kategori ini.
             </p>
           </div>
@@ -123,7 +123,7 @@ export function AdminPayoutList({ payouts }: AdminPayoutListProps) {
                     <span className="font-mono font-bold text-sm text-neutral-900">
                       {p.id}
                     </span>
-                    <span className="text-xs text-neutral-500 font-mono">
+                    <span className="text-xs text-neutral-600 font-mono">
                       {format(new Date(p.createdAt), "d MMM yyyy, HH:mm", {
                         locale: idLocale,
                       })}
@@ -162,19 +162,19 @@ export function AdminPayoutList({ payouts }: AdminPayoutListProps) {
                   {/* Left: Roastery & Amount */}
                   <div className="md:col-span-6 space-y-2">
                     <div>
-                      <span className="text-xs text-neutral-500">Nama Roastery / Penjual:</span>
+                      <span className="text-xs text-neutral-600">Nama Roastery / Penjual:</span>
                       <p className="font-semibold text-neutral-900 text-base">
                         {p.sellerName || "Mitra Roastery"}
                       </p>
                       {p.whatsappNumber && (
-                        <p className="text-xs text-neutral-500 font-mono">
+                        <p className="text-xs text-neutral-600 font-mono">
                           WA: {p.whatsappNumber}
                         </p>
                       )}
                     </div>
 
                     <div className="pt-2">
-                      <span className="text-xs text-neutral-500">Nominal Penarikan:</span>
+                      <span className="text-xs text-neutral-600">Nominal Penarikan:</span>
                       <p className="text-xl font-bold font-mono text-primary-900">
                         {formatRupiah(p.amount)}
                       </p>

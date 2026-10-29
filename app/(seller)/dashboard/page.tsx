@@ -28,7 +28,7 @@ export default async function DashboardOverviewPage() {
   if (!seller) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <p className="text-neutral-500">Data seller tidak ditemukan.</p>
+        <p className="text-neutral-600">Data seller tidak ditemukan.</p>
       </div>
     );
   }
@@ -57,7 +57,7 @@ export default async function DashboardOverviewPage() {
             </div>
             <Link
               href="/dashboard/listing"
-              className="text-[11px] font-semibold text-amber-900 hover:underline"
+              className="text-xs font-semibold text-amber-900 hover:underline"
             >
               Kelola Inventaris &rarr;
             </Link>
@@ -70,12 +70,12 @@ export default async function DashboardOverviewPage() {
               >
                 <div className="truncate mr-2">
                   <p className="font-semibold text-neutral-900 truncate">{l.title}</p>
-                  <p className="text-[10px] text-neutral-500 font-mono">
+                  <p className="text-xs text-neutral-600 font-mono">
                     {l.tasteProfile?.originRegion || l.category.name}
                   </p>
                 </div>
                 <span
-                  className={`text-[11px] font-bold font-mono px-2 py-0.5 rounded shrink-0 ${
+                  className={`text-xs font-bold font-mono px-2 py-0.5 rounded shrink-0 ${
                     l.stock === 0
                       ? "bg-rose-100 text-rose-800 border border-rose-200"
                       : "bg-amber-100 text-amber-900 border border-amber-300"

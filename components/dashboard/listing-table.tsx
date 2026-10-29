@@ -103,7 +103,7 @@ function QuickStatusToggle({
           "text-xs transition-colors",
           isCurrentActive
             ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-            : "text-neutral-500 hover:bg-neutral-100",
+            : "text-neutral-600 hover:bg-neutral-100",
         )}
       >
         {loading
@@ -163,11 +163,11 @@ function QuickStockDialog({
         }
       >
         {currentStock === 0 ? (
-          <span className="inline-flex items-center text-[11px] font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded cursor-pointer hover:bg-rose-100">
+          <span className="inline-flex items-center text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded cursor-pointer hover:bg-rose-100">
             Habis (0) ✎
           </span>
         ) : currentStock <= 5 ? (
-          <span className="inline-flex items-center text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded cursor-pointer hover:bg-amber-100">
+          <span className="inline-flex items-center text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded cursor-pointer hover:bg-amber-100">
             Menipis ({currentStock} {unit}) ✎
           </span>
         ) : (
@@ -179,7 +179,7 @@ function QuickStockDialog({
       <DialogContent className="sm:max-w-xs">
         <DialogHeader>
           <DialogTitle className="text-sm font-semibold">Update Stok Cepat</DialogTitle>
-          <DialogDescription className="text-xs text-neutral-500 truncate">
+          <DialogDescription className="text-xs text-neutral-600 truncate">
             {title}
           </DialogDescription>
         </DialogHeader>
@@ -289,7 +289,7 @@ export function ListingTable({ listings, className }: ListingTableProps) {
                       </Link>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         {isActiveBoost(listing) && (
-                          <span className="text-[10px] font-mono text-neutral-500">
+                          <span className="text-xs font-mono text-neutral-600">
                             Boost aktif sampai{" "}
                             {new Intl.DateTimeFormat("id-ID", {
                               day: "numeric",
@@ -395,7 +395,7 @@ export function ListingTable({ listings, className }: ListingTableProps) {
                   >
                     {listing.title}
                   </Link>
-                  <p className="text-[11px] text-neutral-500 mt-0.5">
+                  <p className="text-xs text-neutral-600 mt-0.5">
                     {listing.category.name}
                   </p>
                   <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
@@ -419,7 +419,7 @@ export function ListingTable({ listings, className }: ListingTableProps) {
               <div className="flex items-center justify-between mt-3 pt-3 border-t border-neutral-200">
                 <div className="flex items-center gap-1.5">
                   {isActiveBoost(listing) && (
-                    <span className="text-[10px] font-mono text-neutral-500">
+                    <span className="text-xs font-mono text-neutral-600">
                       Boost aktif sampai{" "}
                       {new Intl.DateTimeFormat("id-ID", {
                         day: "numeric",

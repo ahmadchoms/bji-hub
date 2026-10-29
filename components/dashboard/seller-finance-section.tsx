@@ -136,7 +136,7 @@ export function SellerFinanceSection({
               <span className="text-xs font-semibold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
                 <Wallet className="w-4 h-4 text-emerald-600" /> Saldo Siap Ditarik
               </span>
-              <Badge variant="outline" className="text-[10px] bg-emerald-100 text-emerald-800 border-emerald-300">
+              <Badge variant="outline" className="text-xs bg-emerald-100 text-emerald-800 border-emerald-300">
                 Bisa Dicairkan
               </Badge>
             </div>
@@ -144,7 +144,7 @@ export function SellerFinanceSection({
               <p className="text-2xl font-bold font-mono text-emerald-950">
                 {formatRupiah(balanceSummary.availableBalance)}
               </p>
-              <p className="text-[11px] text-emerald-700 mt-0.5">
+              <p className="text-xs text-emerald-700 mt-0.5">
                 Dari pesanan yang sudah dikonfirmasi selesai oleh pembeli.
               </p>
             </div>
@@ -158,7 +158,7 @@ export function SellerFinanceSection({
                 <ArrowUpRight className="w-3.5 h-3.5" /> Tarik Dana ke Rekening
               </Button>
               {balanceSummary.availableBalance < 10000 && (
-                <p className="text-[10px] text-amber-800 bg-amber-50/90 border border-amber-200 p-1.5 rounded leading-tight">
+                <p className="text-xs text-amber-800 bg-amber-50/90 border border-amber-200 p-1.5 rounded leading-tight">
                   Min. penarikan Rp 10.000 (Kurang {formatRupiah(10000 - balanceSummary.availableBalance)}). Saldo tertunda pesanan berjalan: {formatRupiah(balanceSummary.pendingBalance)}.
                 </p>
               )}
@@ -173,7 +173,7 @@ export function SellerFinanceSection({
               <span className="text-xs font-semibold uppercase tracking-wider text-blue-800 flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-blue-600" /> Saldo Tertunda (Pesanan Berjalan)
               </span>
-              <Badge variant="outline" className="text-[10px] bg-blue-100 text-blue-800 border-blue-300">
+              <Badge variant="outline" className="text-xs bg-blue-100 text-blue-800 border-blue-300">
                 Pesanan Berjalan
               </Badge>
             </div>
@@ -181,11 +181,11 @@ export function SellerFinanceSection({
               <p className="text-2xl font-bold font-mono text-blue-950">
                 {formatRupiah(balanceSummary.pendingBalance)}
               </p>
-              <p className="text-[11px] text-blue-700 mt-0.5">
+              <p className="text-xs text-blue-700 mt-0.5">
                 Menunggu pengiriman tiba & konfirmasi penerimaan dari pembeli.
               </p>
             </div>
-            <div className="pt-2 border-t border-blue-100 text-[11px] text-blue-600 flex items-center gap-1">
+            <div className="pt-2 border-t border-blue-100 text-xs text-blue-600 flex items-center gap-1">
               <Clock className="w-3 h-3" /> Cair otomatis setelah status resi selesai
             </div>
           </CardContent>
@@ -196,9 +196,9 @@ export function SellerFinanceSection({
           <CardContent className="p-5 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-neutral-600 flex items-center gap-1.5">
-                <Building2 className="w-4 h-4 text-neutral-500" /> Total Penarikan
+                <Building2 className="w-4 h-4 text-neutral-600" /> Total Penarikan
               </span>
-              <Badge variant="outline" className="text-[10px] text-neutral-600 border-neutral-300">
+              <Badge variant="outline" className="text-xs text-neutral-600 border-neutral-300">
                 Riwayat
               </Badge>
             </div>
@@ -206,11 +206,11 @@ export function SellerFinanceSection({
               <p className="text-2xl font-bold font-mono text-neutral-800">
                 {formatRupiah(balanceSummary.totalWithdrawn)}
               </p>
-              <p className="text-[11px] text-neutral-500 mt-0.5">
+              <p className="text-xs text-neutral-600 mt-0.5">
                 Total akumulasi dana yang telah ditarik ke rekening Anda.
               </p>
             </div>
-            <div className="pt-2 border-t border-neutral-100 text-[11px] text-neutral-500">
+            <div className="pt-2 border-t border-neutral-100 text-xs text-neutral-600">
               Total omzet selesai: {formatRupiah(balanceSummary.totalEarned)}
             </div>
           </CardContent>
@@ -229,7 +229,7 @@ export function SellerFinanceSection({
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowWithdrawForm(false)}
-                className="text-xs text-neutral-500 h-7"
+                className="text-xs text-neutral-600 h-7"
               >
                 Tutup
               </Button>
@@ -242,7 +242,7 @@ export function SellerFinanceSection({
             {bank?.bankAccountNumber ? (
               <form onSubmit={handleRequestPayout} className="space-y-4">
                 <div className="p-3 bg-neutral-50 border border-neutral-200 rounded text-xs space-y-1">
-                  <span className="text-neutral-500 font-medium">Rekening Tujuan Penarikan:</span>
+                  <span className="text-neutral-600 font-medium">Rekening Tujuan Penarikan:</span>
                   <p className="font-semibold text-neutral-900">
                     Bank {bank.bankName} - {bank.bankAccountNumber}
                   </p>
@@ -270,7 +270,7 @@ export function SellerFinanceSection({
                     className="font-mono text-sm"
                     required
                   />
-                  <p className="text-[11px] text-neutral-500">
+                  <p className="text-xs text-neutral-600">
                     Minimal penarikan Rp 10.000. Tersedia: {formatRupiah(balanceSummary.availableBalance)}
                   </p>
                 </div>
@@ -360,7 +360,7 @@ export function SellerFinanceSection({
               <CardTitle className="text-base text-neutral-900 flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-primary-600" /> Rekening Bank Penjual
               </CardTitle>
-              <CardDescription className="text-xs text-neutral-500">
+              <CardDescription className="text-xs text-neutral-600">
                 Rekening tujuan pengiriman dana hasil penjualan biji kopi Anda.
               </CardDescription>
             </div>
@@ -461,12 +461,12 @@ export function SellerFinanceSection({
                   <p className="text-sm font-semibold text-neutral-900">
                     Bank {bank?.bankName} &bull; <span className="font-mono">{bank?.bankAccountNumber}</span>
                   </p>
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-xs text-neutral-600">
                     a.n. <span className="font-medium text-neutral-800">{bank?.bankAccountHolder}</span>
                   </p>
                 </div>
               </div>
-              <Badge variant="outline" className="w-fit text-emerald-800 bg-emerald-50 border-emerald-300 text-[11px]">
+              <Badge variant="outline" className="w-fit text-emerald-800 bg-emerald-50 border-emerald-300 text-xs">
                 <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-600" /> Siap Terima Pencairan
               </Badge>
             </div>
@@ -479,7 +479,7 @@ export function SellerFinanceSection({
         <Card className="border-neutral-300 bg-white">
           <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-sm text-neutral-900 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-neutral-500" /> Riwayat Pengajuan Penarikan Dana
+              <Clock className="w-4 h-4 text-neutral-600" /> Riwayat Pengajuan Penarikan Dana
             </CardTitle>
             <ExportCsvButton
               data={payoutHistory}
@@ -520,7 +520,7 @@ export function SellerFinanceSection({
                         Bank {p.bankName} ({p.bankAccountNumber})
                       </span>
                     </div>
-                    <p className="text-[11px] text-neutral-400 font-mono">
+                    <p className="text-xs text-neutral-400 font-mono">
                       {format(new Date(p.createdAt), "d MMM yyyy, HH:mm", {
                         locale: idLocale,
                       })}

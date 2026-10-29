@@ -78,7 +78,7 @@ export function CategoryQuickGrid({ activeCategory }: CategoryQuickGridProps) {
                   <p className="text-xs font-bold text-neutral-900 group-hover:text-primary-700 transition-colors truncate">
                     {cat.title}
                   </p>
-                  <p className="text-[10px] text-neutral-500 truncate mt-0.5">
+                  <p className="text-xs text-neutral-600 truncate mt-0.5">
                     {cat.subtitle}
                   </p>
                 </div>

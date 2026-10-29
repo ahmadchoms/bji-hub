@@ -58,13 +58,13 @@ export default async function PricingPage() {
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr className="border-b border-neutral-200 bg-neutral-50/50">
-                <th className="text-left py-3.5 px-4 text-[10px] font-semibold text-neutral-500 uppercase tracking-wider">
+                <th className="text-left py-3.5 px-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">
                   Fitur
                 </th>
                 {tiers.map((t) => (
                   <th
                     key={t.tier}
-                    className="text-left py-3.5 px-4 text-[10px] font-semibold text-neutral-500 uppercase tracking-wider"
+                    className="text-left py-3.5 px-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider"
                   >
                     <div className="flex items-center gap-2">
                       <span>{t.name}</span>
@@ -80,7 +80,7 @@ export default async function PricingPage() {
             </thead>
             <tbody>
               <tr className="border-b border-neutral-200/80">
-                <td className="py-3.5 px-4 text-[10px] font-semibold text-neutral-500 uppercase tracking-wider">
+                <td className="py-3.5 px-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">
                   Harga / bulan
                 </td>
                 {tiers.map((t) => (
@@ -169,7 +169,7 @@ export default async function PricingPage() {
             <h2 className="font-display text-xl text-neutral-900 font-semibold">
               Pertanyaan Umum
             </h2>
-            <p className="text-xs text-neutral-500 mt-1">
+            <p className="text-xs text-neutral-600 mt-1">
               Segala hal yang perlu Anda ketahui tentang keanggotaan Biji.
             </p>
           </div>

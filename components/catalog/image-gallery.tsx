@@ -37,7 +37,7 @@ export function ImageGallery({ images, title, className }: ImageGalleryProps) {
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-center p-6 bg-secondary-50">
             <span className="font-display text-xl text-primary-900 font-semibold">{title}</span>
-            <span className="text-[11px] text-neutral-500 uppercase tracking-widest mt-1">Foto belum tersedia</span>
+            <span className="text-xs text-neutral-600 uppercase tracking-widest mt-1">Foto belum tersedia</span>
           </div>
         )}
       </div>

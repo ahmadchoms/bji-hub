@@ -52,7 +52,7 @@ export function TasteSpecList({ tasteProfile, className }: TasteSpecListProps) {
       <dl className="space-y-2">
         {specs.map((item, idx) => (
           <div key={idx} className="flex items-baseline justify-between py-1 border-b border-neutral-100 last:border-0">
-            <dt className="text-[11px] font-mono text-neutral-500 uppercase tracking-wider">
+            <dt className="text-xs font-mono text-neutral-600 uppercase tracking-wider">
               {item.label}
             </dt>
             <dd className="text-sm text-neutral-900 font-medium text-right">

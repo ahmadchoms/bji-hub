@@ -304,7 +304,7 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
       {/* Orders List */}
       <div className="space-y-4">
         {filteredOrders.length === 0 ? (
-          <p className="text-sm text-neutral-500 py-8 text-center">
+          <p className="text-sm text-neutral-600 py-8 text-center">
             Tidak ada pesanan dalam status ini.
           </p>
         ) : (
@@ -323,7 +323,7 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
                     <span className="font-mono font-bold text-sm text-neutral-900">
                       {order.orderNumber}
                     </span>
-                    <span className="text-xs text-neutral-500 font-mono">
+                    <span className="text-xs text-neutral-600 font-mono">
                       {format(new Date(order.createdAt), "d MMM yyyy, HH:mm", {
                         locale: idLocale,
                       })}
@@ -343,20 +343,20 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
                       <p className="font-semibold text-neutral-900 text-base">
                         {order.listingTitle || `Produk #${order.listingId}`}
                       </p>
-                      <p className="text-xs text-neutral-500 mt-0.5">
+                      <p className="text-xs text-neutral-600 mt-0.5">
                         {order.quantity} pcs/kg × {formatRupiah(order.itemPrice)}
                       </p>
                     </div>
 
                     <div className="p-3 bg-neutral-50 rounded border border-neutral-200 flex items-center justify-between text-xs">
                       <div>
-                        <span className="text-neutral-500">Nilai Bersih Penjual:</span>
+                        <span className="text-neutral-600">Nilai Bersih Penjual:</span>
                         <p className="font-bold font-mono text-sm text-primary-900">
                           {formatRupiah(order.subtotal)}
                         </p>
                       </div>
                       <div className="text-right">
-                        <span className="text-neutral-500">Kurir Pengiriman:</span>
+                        <span className="text-neutral-600">Kurir Pengiriman:</span>
                         <p className="font-medium text-neutral-800 flex items-center justify-end gap-1 mt-0.5">
                           <Truck className="w-3.5 h-3.5 text-neutral-600" />
                           {order.shippingCourier}
@@ -376,7 +376,7 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
                   <div className="md:col-span-5 space-y-3 border-t md:border-t-0 md:border-l md:border-neutral-200 md:pl-5 pt-3 md:pt-0">
                     <div>
                       <p className="text-xs font-semibold text-neutral-900 flex items-center gap-1.5 mb-1">
-                        <MapPin className="w-3.5 h-3.5 text-neutral-500" /> Alamat Pengiriman
+                        <MapPin className="w-3.5 h-3.5 text-neutral-600" /> Alamat Pengiriman
                       </p>
                       <div className="flex items-center justify-between gap-2">
                         <p className="font-medium text-neutral-800">{order.buyerName}</p>
@@ -387,7 +387,7 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
                             )}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[11px] text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded font-medium transition-colors"
+                            className="inline-flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded font-medium transition-colors"
                             title="Chat WhatsApp pembeli"
                           >
                             <MessageCircle className="w-3 h-3 text-emerald-600" />
@@ -395,7 +395,7 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
                           </a>
                         )}
                       </div>
-                      <p className="text-xs text-neutral-500 font-mono">{order.buyerPhone}</p>
+                      <p className="text-xs text-neutral-600 font-mono">{order.buyerPhone}</p>
                       <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
                         {order.buyerAddress}, {order.buyerCity}
                       </p>
@@ -418,7 +418,7 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
                                 navigator.clipboard.writeText(order.trackingNumber || "");
                                 toast.success("Nomor resi disalin");
                               }}
-                              className="text-neutral-500 hover:text-neutral-800 text-xs flex items-center gap-1"
+                              className="text-neutral-600 hover:text-neutral-800 text-xs flex items-center gap-1"
                               title="Salin Resi"
                             >
                               <Copy className="w-3.5 h-3.5" />
@@ -435,7 +435,7 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
                               })}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-[11px] text-emerald-700 hover:text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-medium"
+                              className="inline-flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-medium"
                               title="Kirim notifikasi resi ke WhatsApp pembeli"
                             >
                               <MessageCircle className="w-3 h-3" />
@@ -552,7 +552,7 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
                         )}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-medium transition-colors"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition-colors"
                       >
                         <MessageCircle className="w-3.5 h-3.5" /> Hubungi Pembeli
                       </a>
@@ -567,7 +567,7 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
                             [order.id]: !prev[order.id],
                           }))
                         }
-                        className="h-6 text-[11px] border-amber-300 text-amber-800 hover:bg-amber-100"
+                        className="h-6 text-xs border-amber-300 text-amber-800 hover:bg-amber-100"
                       >
                         <Truck className="w-3 h-3 mr-1" /> Kirim Paket Pengganti
                       </Button>
@@ -585,7 +585,7 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
                             handleSellerResolveDispute(order.id, "refund");
                           }
                         }}
-                        className="h-6 text-[11px] border-rose-300 text-rose-700 hover:bg-rose-100"
+                        className="h-6 text-xs border-rose-300 text-rose-700 hover:bg-rose-100"
                       >
                         <RotateCcw className="w-3 h-3 mr-1" /> Setujui Refund Dana
                       </Button>
@@ -593,7 +593,7 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
 
                     {showReshipForm[order.id] && (
                       <div className="pl-5.5 pt-2 space-y-1.5 bg-white/70 p-2.5 rounded border border-rose-200 mt-2">
-                        <label className="text-[11px] font-semibold text-neutral-800 block">
+                        <label className="text-xs font-semibold text-neutral-800 block">
                           Nomor Resi Paket Pengganti:
                         </label>
                         <div className="flex items-center gap-2">
@@ -623,20 +623,20 @@ export function SellerOrderList({ orders: initialOrders }: SellerOrderListProps)
                             Kirim
                           </Button>
                         </div>
-                        <p className="text-[10px] text-neutral-500">
+                        <p className="text-xs text-neutral-600">
                           Memasukkan nomor resi baru akan mengubah status pesanan kembali menjadi &quot;Dikirim&quot; dan mengakhiri penahanan komplain.
                         </p>
                       </div>
                     )}
 
-                    <p className="text-[11px] text-rose-600 pl-5.5 pt-1 border-t border-rose-200/60 mt-1">
+                    <p className="text-xs text-rose-600 pl-5.5 pt-1 border-t border-rose-200/60 mt-1">
                       Anda dapat langsung menyetujui refund, mengirim barang pengganti, atau menunggu peninjauan oleh tim admin Biji Hub.
                     </p>
                   </div>
                 )}
 
                 {/* Footer payout notice */}
-                <div className="flex items-center gap-1.5 text-[11px] text-emerald-800 bg-emerald-50/70 px-3 py-1.5 rounded">
+                <div className="flex items-center gap-1.5 text-xs text-emerald-800 bg-emerald-50/70 px-3 py-1.5 rounded">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                   <span>
                     Dana penjualan otomatis diteruskan ke saldo Anda saat pembeli mengonfirmasi paket

@@ -31,10 +31,17 @@
   /* Neutral Colors (Krem/Kertas) */
   --color-neutral-900: #1F1815;
   --color-neutral-700: #4A403A;
+  --color-neutral-600: #6B6058;
   --color-neutral-500: #8C8078;
   --color-neutral-300: #D8CFC5;
   --color-neutral-100: #F0E9E1;
   --color-neutral-50: #FAF6F1;
+
+  /* Accessible Text Token Helpers (WCAG AA >= 4.5:1) */
+  --color-text-muted: #6B6058;
+  --color-text-warning: #A25A00;
+  --color-text-error: #B91C1C;
+  --color-secondary-text: #8A5A2E;
 
   /* Surface Colors */
   --color-surface-base: #FFFFFF;
@@ -105,7 +112,7 @@
   --secondary: #FBF3E9;
   --secondary-foreground: #3D1D10;
   --muted: #F0E9E1;
-  --muted-foreground: #8C8078;
+  --muted-foreground: #6B6058;
   --accent: #DCEEE3;
   --accent-foreground: #1E4B36;
   --destructive: #DC2626;
@@ -272,6 +279,21 @@
   }
   html {
     @apply font-sans;
+  }
+
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-primary-600);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 

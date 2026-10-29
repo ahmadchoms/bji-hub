@@ -242,7 +242,7 @@ export function ProfileForm({ seller, className }: ProfileFormProps) {
                 <label className="text-xs font-semibold text-neutral-800 block">
                   Logo / Foto Profil Toko
                 </label>
-                <p className="text-[11px] text-neutral-500">
+                <p className="text-xs text-neutral-600">
                   Unggah logo resmi toko atau roastery Anda dari perangkat (JPG, PNG, atau WEBP, maks 2MB).
                 </p>
               </div>
@@ -284,7 +284,7 @@ export function ProfileForm({ seller, className }: ProfileFormProps) {
                     size="sm"
                     disabled={isUploadingLogo}
                     onClick={handleRemoveLogo}
-                    className="text-xs h-8 text-neutral-500 hover:text-rose-600"
+                    className="text-xs h-8 text-neutral-600 hover:text-rose-600"
                   >
                     <Trash2 className="w-3.5 h-3.5 mr-1" /> Hapus
                   </Button>
@@ -292,7 +292,7 @@ export function ProfileForm({ seller, className }: ProfileFormProps) {
               </div>
 
               {errors.avatarUrl?.message && (
-                <p className="text-[11px] text-rose-600">{errors.avatarUrl.message}</p>
+                <p className="text-xs text-rose-600">{errors.avatarUrl.message}</p>
               )}
             </div>
           </div>
@@ -456,7 +456,7 @@ export function ProfileForm({ seller, className }: ProfileFormProps) {
               <p className="text-sm font-medium text-neutral-700">
                 Unggah Dokumen Verifikasi
               </p>
-              <p className="text-xs text-neutral-500 mt-1">
+              <p className="text-xs text-neutral-600 mt-1">
                 SIUP, NIB, atau sertifikat organik (PDF/JPG, maks 2MB)
               </p>
             </div>

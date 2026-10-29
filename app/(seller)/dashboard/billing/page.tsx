@@ -14,7 +14,7 @@ export default async function DashboardBillingPage() {
   ]);
 
   if (!seller) {
-    return <p className="text-neutral-500">Data seller tidak ditemukan.</p>;
+    return <p className="text-neutral-600">Data seller tidak ditemukan.</p>;
   }
 
   return (

@@ -61,7 +61,7 @@ export default async function DashboardOrdersPage() {
           <h2 className="text-lg font-bold font-display text-neutral-900">
             Daftar Pesanan Masuk
           </h2>
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-neutral-600">
             {orders.length} total pesanan dari pembeli dengan garansi pembayaran Midtrans.
           </p>
         </div>
@@ -71,7 +71,7 @@ export default async function DashboardOrdersPage() {
           <Card className="rounded-lg border-neutral-300">
             <CardContent className="p-4 flex items-center justify-between">
               <div>
-                <p className="text-xs text-neutral-500 font-medium">Perlu Dikirim</p>
+                <p className="text-xs text-neutral-600 font-medium">Perlu Dikirim</p>
                 <p className="text-2xl font-bold font-mono text-blue-700">{paidCount}</p>
               </div>
               <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center">
@@ -83,7 +83,7 @@ export default async function DashboardOrdersPage() {
           <Card className="rounded-lg border-neutral-300">
             <CardContent className="p-4 flex items-center justify-between">
               <div>
-                <p className="text-xs text-neutral-500 font-medium">Dalam Pengiriman</p>
+                <p className="text-xs text-neutral-600 font-medium">Dalam Pengiriman</p>
                 <p className="text-2xl font-bold font-mono text-purple-700">{shippedCount}</p>
               </div>
               <div className="w-10 h-10 rounded-full bg-purple-50 text-purple-700 flex items-center justify-center">
@@ -95,7 +95,7 @@ export default async function DashboardOrdersPage() {
           <Card className="rounded-lg border-neutral-300">
             <CardContent className="p-4 flex items-center justify-between">
               <div>
-                <p className="text-xs text-neutral-500 font-medium">Selesai</p>
+                <p className="text-xs text-neutral-600 font-medium">Selesai</p>
                 <p className="text-2xl font-bold font-mono text-emerald-700">{completedCount}</p>
               </div>
               <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center">
@@ -107,7 +107,7 @@ export default async function DashboardOrdersPage() {
           <Card className="rounded-lg border-neutral-300">
             <CardContent className="p-4 flex items-center justify-between">
               <div>
-                <p className="text-xs text-neutral-500 font-medium">Menunggu Bayar</p>
+                <p className="text-xs text-neutral-600 font-medium">Menunggu Bayar</p>
                 <p className="text-2xl font-bold font-mono text-amber-600">{pendingCount}</p>
               </div>
               <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
@@ -121,19 +121,19 @@ export default async function DashboardOrdersPage() {
         <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4 flex flex-wrap items-center justify-between gap-4 text-xs">
           <div className="flex flex-wrap items-center gap-6">
             <div>
-              <span className="text-neutral-500 block">Total Omzet Pesanan Selesai (GMV):</span>
+              <span className="text-neutral-600 block">Total Omzet Pesanan Selesai (GMV):</span>
               <span className="font-mono font-bold text-neutral-900 text-sm">
                 {formatRupiah(totalGmv)}
               </span>
             </div>
             <div className="sm:border-l sm:border-neutral-200 sm:pl-6">
-              <span className="text-neutral-500 block">Pendapatan Bersih Roastery:</span>
+              <span className="text-neutral-600 block">Pendapatan Bersih Roastery:</span>
               <span className="font-mono font-bold text-emerald-800 text-sm">
                 {formatRupiah(netEarnings)}
               </span>
             </div>
           </div>
-          <div className="text-neutral-500 text-[11px]">
+          <div className="text-neutral-600 text-xs">
             <span>Komisi platform 0% untuk roastery mitra &bull; Bebas biaya penarikan</span>
           </div>
         </div>

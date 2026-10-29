@@ -179,7 +179,7 @@ export function AdminOriginsTable({ origins: initialOrigins }: AdminOriginsTable
             <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
               <div>
                 <h3 className="font-semibold text-neutral-900 text-sm">Tambah Master Asal Kopi (Origin)</h3>
-                <p className="text-xs text-neutral-500">
+                <p className="text-xs text-neutral-600">
                   Daftarkan wilayah penghasil kopi baru untuk katalog spesialisasi & buyer internasional.
                 </p>
               </div>
@@ -305,7 +305,7 @@ export function AdminOriginsTable({ origins: initialOrigins }: AdminOriginsTable
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-xs text-neutral-500">
+                <TableCell colSpan={6} className="text-center py-8 text-xs text-neutral-600">
                   Tidak ada data wilayah asal kopi yang sesuai dengan filter.
                 </TableCell>
               </TableRow>
@@ -323,23 +323,23 @@ export function AdminOriginsTable({ origins: initialOrigins }: AdminOriginsTable
                     <TableCell>
                       <div className="flex items-center gap-1.5">
                         {isDomestic ? (
-                          <Badge variant="outline" className="text-[10px] bg-red-50 text-red-700 border-red-200">
+                          <Badge variant="outline" className="text-xs bg-red-50 text-red-700 border-red-200">
                             Indonesia
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="text-[10px] bg-sky-50 text-sky-700 border-sky-200">
+                          <Badge variant="outline" className="text-xs bg-sky-50 text-sky-700 border-sky-200">
                             <Globe className="w-2.5 h-2.5 mr-0.5" />
                             {item.country}
                           </Badge>
                         )}
                         {item.islandOrState && (
-                          <span className="text-neutral-500 text-[11px] font-mono">({item.islandOrState})</span>
+                          <span className="text-neutral-600 text-xs font-mono">({item.islandOrState})</span>
                         )}
                       </div>
                     </TableCell>
                     <TableCell className="font-mono text-neutral-700">
                       {item.minAltitude || item.maxAltitude ? (
-                        <div className="flex items-center gap-1 text-[11px]">
+                        <div className="flex items-center gap-1 text-xs">
                           <Mountain className="w-3 h-3 text-neutral-400 shrink-0" />
                           <span>
                             {item.minAltitude ? `${item.minAltitude.toLocaleString("id-ID")}` : "?"} -{" "}
@@ -355,12 +355,12 @@ export function AdminOriginsTable({ origins: initialOrigins }: AdminOriginsTable
                     </TableCell>
                     <TableCell>
                       {item.isActive ? (
-                        <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-300">
+                        <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-300">
                           <CheckCircle2 className="w-2.5 h-2.5 mr-1" />
                           Aktif di Form
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="text-[10px] bg-neutral-100 text-neutral-500 border-neutral-300">
+                        <Badge variant="outline" className="text-xs bg-neutral-100 text-neutral-600 border-neutral-300">
                           <XCircle className="w-2.5 h-2.5 mr-1" />
                           Nonaktif
                         </Badge>
@@ -372,7 +372,7 @@ export function AdminOriginsTable({ origins: initialOrigins }: AdminOriginsTable
                         variant="ghost"
                         disabled={isPending}
                         onClick={() => handleToggle(item.id)}
-                        className="h-7 text-[11px] text-neutral-600 hover:text-neutral-900"
+                        className="h-7 text-xs text-neutral-600 hover:text-neutral-900"
                       >
                         {item.isActive ? "Nonaktifkan" : "Aktifkan"}
                       </Button>

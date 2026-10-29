@@ -160,7 +160,7 @@ export function InvoicePrintView({
                 className={`px-3 py-1.5 rounded font-medium transition-colors ${
                   mode === "shipping_label"
                     ? "bg-white text-neutral-900 shadow-xs"
-                    : "text-neutral-500 hover:text-neutral-900"
+                    : "text-neutral-600 hover:text-neutral-900"
                 }`}
               >
                 Label Pengiriman (A6)
@@ -171,7 +171,7 @@ export function InvoicePrintView({
                 className={`px-3 py-1.5 rounded font-medium transition-colors ${
                   mode === "invoice"
                     ? "bg-white text-neutral-900 shadow-xs"
-                    : "text-neutral-500 hover:text-neutral-900"
+                    : "text-neutral-600 hover:text-neutral-900"
                 }`}
               >
                 Invoice Transaksi (A4)
@@ -210,7 +210,7 @@ export function InvoicePrintView({
             {/* Header Courier */}
             <div className="flex items-center justify-between border-b-2 border-neutral-900 pb-3">
               <div>
-                <span className="text-[11px] uppercase font-bold tracking-wider text-neutral-500 block">
+                <span className="text-xs uppercase font-bold tracking-wider text-neutral-600 block">
                   Ekspedisi Logistik
                 </span>
                 <span className="text-2xl font-black tracking-tight text-neutral-900 uppercase">
@@ -221,7 +221,7 @@ export function InvoicePrintView({
                 <Badge className="bg-neutral-900 text-white font-bold text-sm uppercase px-3 py-1.5 rounded">
                   NON-COD (LUNAS)
                 </Badge>
-                <span className="text-[11px] text-neutral-500 block mt-1">
+                <span className="text-xs text-neutral-600 block mt-1">
                   Ongkir telah ditanggung Biji Hub
                 </span>
               </div>
@@ -243,7 +243,7 @@ export function InvoicePrintView({
             {/* Recipient & Sender */}
             <div className="grid grid-cols-2 gap-4 border-b-2 border-neutral-200 pb-4 text-xs">
               <div className="space-y-1">
-                <span className="font-bold uppercase text-[11px] text-neutral-500 flex items-center gap-1">
+                <span className="font-bold uppercase text-xs text-neutral-600 flex items-center gap-1">
                   <User className="w-3.5 h-3.5" /> Kepada (Penerima):
                 </span>
                 <p className="font-bold text-neutral-900 text-base leading-tight">
@@ -259,7 +259,7 @@ export function InvoicePrintView({
               </div>
 
               <div className="space-y-1 border-l-2 border-neutral-200 pl-4">
-                <span className="font-bold uppercase text-[11px] text-neutral-500 flex items-center gap-1">
+                <span className="font-bold uppercase text-xs text-neutral-600 flex items-center gap-1">
                   <Building2 className="w-3.5 h-3.5" /> Dari (Pengirim):
                 </span>
                 <p className="font-bold text-neutral-900 text-base leading-tight">
@@ -277,7 +277,7 @@ export function InvoicePrintView({
             {/* Product description & note */}
             <div className="space-y-2 pt-1 text-xs">
               <div className="flex justify-between items-baseline">
-                <span className="font-bold uppercase text-[11px] text-neutral-500">
+                <span className="font-bold uppercase text-xs text-neutral-600">
                   Rincian Isi Paket Kopi:
                 </span>
                 <span className="font-mono font-bold text-neutral-900 text-sm">
@@ -312,7 +312,7 @@ export function InvoicePrintView({
             </div>
 
             {/* Thermal Footer */}
-            <div className="pt-3 border-t-2 border-neutral-900 flex items-center justify-between text-[11px] text-neutral-500">
+            <div className="pt-3 border-t-2 border-neutral-900 flex items-center justify-between text-xs text-neutral-600">
               <span className="flex items-center gap-1 font-medium text-neutral-700">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
                 Biji Hub Verified Shipping Label
@@ -334,7 +334,7 @@ export function InvoicePrintView({
                 <p className="text-xs text-neutral-600 mt-1 font-medium">
                   Marketplace Biji Kopi Sangrai & Green Beans Spesialti Indonesia
                 </p>
-                <p className="text-[11px] text-neutral-400 mt-0.5">
+                <p className="text-xs text-neutral-400 mt-0.5">
                   Biji Hub &bull; Marketplace Kopi Spesialti Indonesia
                 </p>
               </div>
@@ -354,18 +354,18 @@ export function InvoicePrintView({
             {/* Metadata Information */}
             <div className="grid grid-cols-2 gap-6 text-xs">
               <div className="space-y-1">
-                <span className="text-neutral-500 block text-[11px] uppercase font-bold tracking-wider">
+                <span className="text-neutral-600 block text-xs uppercase font-bold tracking-wider">
                   Diterbitkan Untuk:
                 </span>
                 <p className="font-bold text-neutral-900 text-sm">{order.buyerName}</p>
                 <p className="text-neutral-600 font-mono text-xs">{order.buyerPhone}</p>
-                <p className="text-neutral-500 text-xs">{order.buyerEmail}</p>
+                <p className="text-neutral-600 text-xs">{order.buyerEmail}</p>
                 <p className="text-neutral-700 text-xs pt-1 leading-relaxed">
                   {order.buyerAddress}, {order.buyerCity}
                 </p>
               </div>
               <div className="space-y-1 text-right">
-                <span className="text-neutral-500 block text-[11px] uppercase font-bold tracking-wider">
+                <span className="text-neutral-600 block text-xs uppercase font-bold tracking-wider">
                   Penjual (Mitra Roastery):
                 </span>
                 <p className="font-bold text-neutral-900 text-sm">
@@ -388,7 +388,7 @@ export function InvoicePrintView({
             {/* Table of items */}
             <div className="border border-neutral-300 rounded overflow-hidden">
               <table className="w-full text-left text-xs">
-                <thead className="bg-neutral-100 border-b border-neutral-300 text-neutral-700 font-bold uppercase text-[11px]">
+                <thead className="bg-neutral-100 border-b border-neutral-300 text-neutral-700 font-bold uppercase text-xs">
                   <tr>
                     <th className="p-3">Deskripsi Produk Kopi</th>
                     <th className="p-3 text-center">Jumlah</th>
@@ -405,12 +405,12 @@ export function InvoicePrintView({
                             {item.title || order.listingTitle || `Produk ID #${item.listingId}`}
                           </span>
                           {item.grindSize && (
-                            <span className="text-[11px] text-neutral-600 block mt-0.5">
+                            <span className="text-xs text-neutral-600 block mt-0.5">
                               Profil Gilingan: <strong>{item.grindSize}</strong>
                             </span>
                           )}
                           {idx === 0 && order.notes && (
-                            <span className="text-[11px] text-neutral-600 italic block mt-1">
+                            <span className="text-xs text-neutral-600 italic block mt-1">
                               Catatan: {order.notes}
                             </span>
                           )}
@@ -433,7 +433,7 @@ export function InvoicePrintView({
                           {order.listingTitle || `Produk ID #${order.listingId}`}
                         </span>
                         {order.notes && (
-                          <span className="text-[11px] text-neutral-600 italic block mt-1">
+                          <span className="text-xs text-neutral-600 italic block mt-1">
                             Catatan: {order.notes}
                           </span>
                         )}
@@ -474,7 +474,7 @@ export function InvoicePrintView({
             </div>
 
             {/* Bottom Disclaimer */}
-            <div className="pt-6 border-t border-neutral-200 space-y-2 text-[11px] text-neutral-500">
+            <div className="pt-6 border-t border-neutral-200 space-y-2 text-xs text-neutral-600">
               <div className="flex items-center gap-1.5 font-semibold text-emerald-800">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
                 Sertifikasi Bukti Transaksi Resmi

@@ -123,7 +123,7 @@ export default function CartPage() {
       <div className="py-16 text-center">
         <PageContainer className="max-w-md mx-auto space-y-4">
           <div className="w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs text-neutral-500">Memuat keranjang belanja...</p>
+          <p className="text-xs text-neutral-600">Memuat keranjang belanja...</p>
         </PageContainer>
       </div>
     );
@@ -167,7 +167,7 @@ export default function CartPage() {
           <h1 className="text-xl font-bold font-display text-neutral-900">
             Keranjang Belanja Masih Kosong
           </h1>
-          <p className="text-xs text-neutral-500 max-w-sm mx-auto leading-relaxed">
+          <p className="text-xs text-neutral-600 max-w-sm mx-auto leading-relaxed">
             Temukan biji kopi specialty pilihan langsung dari petani dan roastery terbaik di seluruh Indonesia.
           </p>
           <div className="pt-2">
@@ -193,7 +193,7 @@ export default function CartPage() {
             <h1 className="text-2xl font-bold font-display text-neutral-900 flex items-center gap-2">
               <ShoppingCart className="w-6 h-6 text-primary-600" /> Keranjang Belanja
             </h1>
-            <p className="text-xs text-neutral-500 mt-0.5">
+            <p className="text-xs text-neutral-600 mt-0.5">
               {totalItems} item dari {Object.keys(groupedBySeller).length} mitra roastery
             </p>
           </div>
@@ -201,7 +201,7 @@ export default function CartPage() {
             variant="ghost"
             size="sm"
             onClick={clearCart}
-            className="text-xs text-neutral-500 hover:text-rose-600 self-start sm:self-auto"
+            className="text-xs text-neutral-600 hover:text-rose-600 self-start sm:self-auto"
           >
             <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Kosongkan Keranjang
           </Button>
@@ -244,7 +244,7 @@ export default function CartPage() {
                   <p className="font-semibold text-blue-950">
                     Pesanan dari {Object.keys(groupedBySeller).length} Toko Berbeda
                   </p>
-                  <p className="text-[11px] text-blue-800 leading-relaxed">
+                  <p className="text-xs text-blue-800 leading-relaxed">
                     Karena setiap roastery mengirim dari kotanya masing-masing, pengiriman dan pembayaran diproses per toko. Selesaikan transaksi toko pertama, lalu lanjutkan untuk toko berikutnya.
                   </p>
                 </div>
@@ -289,12 +289,12 @@ export default function CartPage() {
                         <p className="text-sm font-bold text-neutral-900">
                           {group.sellerName}
                         </p>
-                        <p className="text-[11px] text-neutral-500">
+                        <p className="text-xs text-neutral-600">
                           Pengiriman dari: {group.sellerCity}
                         </p>
                       </div>
                     </div>
-                    <Badge variant="outline" className="text-[10px] text-neutral-600">
+                    <Badge variant="outline" className="text-xs text-neutral-600">
                       {group.items.length} Produk
                     </Badge>
                   </div>
@@ -338,14 +338,14 @@ export default function CartPage() {
                                 {item.title}
                               </Link>
                               {item.grindSize && (
-                                <span className="inline-block mt-1 text-[11px] font-medium bg-neutral-100 text-neutral-700 px-2 py-0.5 rounded border border-neutral-200">
+                                <span className="inline-block mt-1 text-xs font-medium bg-neutral-100 text-neutral-700 px-2 py-0.5 rounded border border-neutral-200">
                                   Gilingan: {item.grindSize}
                                 </span>
                               )}
-                              <p className="text-neutral-500 mt-1">
+                              <p className="text-neutral-600 mt-1">
                                 {formatRupiah(item.price)} / {item.unit}
                               </p>
-                              <span className="text-[10px] text-neutral-400">
+                              <span className="text-xs text-neutral-400">
                                 Min. order: {item.minOrderQty} {item.unit}
                               </span>
                             </div>
@@ -415,7 +415,7 @@ export default function CartPage() {
                   {/* Seller Checkout CTA */}
                   <div className="pt-3 border-t border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-neutral-50/70 p-3 rounded">
                     <div>
-                      <span className="text-[11px] text-neutral-500">
+                      <span className="text-xs text-neutral-600">
                         Subtotal ({sellerSelected.length} produk dipilih):
                       </span>
                       <p className="font-mono font-bold text-sm text-primary-900">
@@ -465,7 +465,7 @@ export default function CartPage() {
                     {formatRupiah(selectedTotalAmount)}
                   </span>
                 </div>
-                <div className="flex justify-between text-neutral-500 text-[11px]">
+                <div className="flex justify-between text-neutral-600 text-xs">
                   <span>Ongkos Kirim & Asuransi</span>
                   <span className="italic">Dihitung saat checkout</span>
                 </div>
@@ -500,9 +500,9 @@ export default function CartPage() {
                   )}
 
                   {selectedSellerEntries.length > 1 && (
-                    <div className="p-2.5 rounded bg-amber-50 border border-amber-200 text-[11px] text-amber-900 leading-relaxed space-y-0.5">
+                    <div className="p-2.5 rounded bg-amber-50 border border-amber-200 text-xs text-amber-900 leading-relaxed space-y-0.5">
                       <p className="font-semibold">Perhatian Multi-Toko:</p>
-                      <p className="text-[10px] text-amber-800">
+                      <p className="text-xs text-amber-800">
                         Checkout saat ini untuk <strong>{firstSelectedSeller?.[1]?.sellerName}</strong>. Produk toko lain tetap tersimpan aman di keranjang.
                       </p>
                     </div>

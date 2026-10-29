@@ -124,7 +124,7 @@ export function DashboardShell({
         <div className="flex h-14 items-center border-b border-neutral-300 px-4">
           <Logo size="sm" />
         </div>
-        <p className="px-4 pb-1 pt-5 font-mono text-[10px] uppercase tracking-widest text-neutral-500">
+        <p className="px-4 pb-1 pt-5 font-mono text-xs uppercase tracking-widest text-neutral-600">
           {title}
         </p>
         <nav className="flex flex-1 flex-col" aria-label={`Menu ${title}`}>
@@ -152,7 +152,7 @@ export function DashboardShell({
           </SheetTrigger>
           <SheetContent side="left" className="w-64 p-0">
             <SheetHeader className="border-b border-neutral-300 p-4">
-              <SheetTitle className="font-mono text-[10px] font-normal uppercase tracking-widest text-neutral-500">
+              <SheetTitle className="font-mono text-xs font-normal uppercase tracking-widest text-neutral-600">
                 {title}
               </SheetTitle>
             </SheetHeader>

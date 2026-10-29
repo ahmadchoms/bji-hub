@@ -96,7 +96,7 @@ export function OrderStatusStepper({ status, className = "" }: OrderStatusSteppe
                 >
                   {step.label}
                 </p>
-                <p className="text-[10px] text-neutral-500 hidden sm:block">
+                <p className="text-xs text-neutral-600 hidden sm:block">
                   {step.desc}
                 </p>
               </div>

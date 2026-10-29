@@ -63,7 +63,7 @@ export function AccountPrivacyCard() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-neutral-50 rounded border border-neutral-200">
           <div>
             <p className="text-xs font-semibold text-neutral-900">Unduh Salinan Data Pribadi</p>
-            <p className="text-[11px] text-neutral-600">
+            <p className="text-xs text-neutral-600">
               Ekspor seluruh riwayat profil, alamat tersimpan, dan transaksi Anda dalam format JSON standar.
             </p>
           </div>
@@ -82,7 +82,7 @@ export function AccountPrivacyCard() {
             <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
             <div>
               <p className="text-xs font-semibold text-rose-950">Zona Bahaya: Hapus Akun</p>
-              <p className="text-[11px] text-rose-800 leading-relaxed">
+              <p className="text-xs text-rose-800 leading-relaxed">
                 Tindakan ini permanen. Alamat pengiriman akan dihapus dan identitas Anda dianonimkan. Catatan transaksi finansial yang sudah selesai diarsipkan untuk kepatuhan pembukuan.
               </p>
             </div>
@@ -100,7 +100,7 @@ export function AccountPrivacyCard() {
             </Button>
           ) : (
             <div className="space-y-2 pt-2 border-t border-rose-200">
-              <p className="text-[11px] text-rose-900">
+              <p className="text-xs text-rose-900">
                 Ketik <strong className="font-mono bg-rose-100 px-1 py-0.5 rounded">HAPUS AKUN</strong> untuk konfirmasi:
               </p>
               <div className="flex flex-col sm:flex-row gap-2">

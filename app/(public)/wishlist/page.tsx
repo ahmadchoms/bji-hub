@@ -60,7 +60,7 @@ export default function WishlistPage() {
       <div className="py-12 bg-neutral-50/50 min-h-[70vh]">
         <PageContainer className="max-w-5xl mx-auto">
           <div className="h-64 flex items-center justify-center">
-            <div className="flex items-center gap-2 text-sm text-neutral-500 font-mono">
+            <div className="flex items-center gap-2 text-sm text-neutral-600 font-mono">
               <span className="w-2 h-2 rounded-full bg-primary-600 animate-ping" />
               Memuat daftar favorit...
             </div>
@@ -110,21 +110,21 @@ export default function WishlistPage() {
                 Kopi Favorit Saya
               </h1>
             </div>
-            <p className="text-xs text-neutral-500 mt-1">
+            <p className="text-xs text-neutral-600 mt-1">
               Daftar biji kopi specialty dan green bean pilihan yang Anda simpan untuk dipesan nanti.
             </p>
           </div>
 
           {totalItems > 0 && (
             <div className="flex items-center gap-3">
-              <span className="text-xs font-mono text-neutral-500">
+              <span className="text-xs font-mono text-neutral-600">
                 {totalItems} produk tersimpan
               </span>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={clearWishlist}
-                className="text-xs text-neutral-500 hover:text-rose-600 hover:bg-rose-50"
+                className="text-xs text-neutral-600 hover:text-rose-600 hover:bg-rose-50"
               >
                 Kosongkan Semua
               </Button>
@@ -142,7 +142,7 @@ export default function WishlistPage() {
               <h2 className="text-lg font-bold text-neutral-900">
                 Belum Ada Kopi yang Disimpan
               </h2>
-              <p className="text-xs text-neutral-500 max-w-sm mx-auto leading-relaxed">
+              <p className="text-xs text-neutral-600 max-w-sm mx-auto leading-relaxed">
                 Tekan tombol ikon hati pada kartu produk kopi atau halaman detail untuk menyimpan biji kopi favorit Anda. Otomatis tersimpan dan tersinkronisasi di semua perangkat Anda saat login.
               </p>
             </div>
@@ -191,7 +191,7 @@ export default function WishlistPage() {
 
                   {/* Body Content */}
                   <div className="p-3.5 space-y-2">
-                    <div className="flex items-center gap-1.5 text-[11px] text-neutral-500">
+                    <div className="flex items-center gap-1.5 text-xs text-neutral-600">
                       <Store className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
                       <span className="truncate">
                         {item.sellerName} • {item.sellerCity}
@@ -206,7 +206,7 @@ export default function WishlistPage() {
                     </Link>
 
                     {/* Tags / Origin */}
-                    <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-neutral-600">
+                    <div className="flex flex-wrap items-center gap-1.5 text-xs text-neutral-600">
                       {item.originRegion && (
                         <span className="bg-neutral-100 px-1.5 py-0.5 rounded font-medium">
                           {item.originRegion}
@@ -229,7 +229,7 @@ export default function WishlistPage() {
                       <span className="font-mono text-sm font-bold text-neutral-900">
                         {formatRupiah(item.price)}
                       </span>
-                      <span className="text-xs text-neutral-500 font-mono">
+                      <span className="text-xs text-neutral-600 font-mono">
                         {" "}
                         / {item.unit}
                       </span>

@@ -30,7 +30,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
           cancelButton:
             "!bg-neutral-100 !text-neutral-700 hover:!bg-neutral-200 text-xs px-3 py-1.5 rounded-sm transition-colors",
           closeButton:
-            "!border-neutral-300 !text-neutral-500 hover:!text-neutral-900 !bg-white",
+            "!border-neutral-300 !text-neutral-600 hover:!text-neutral-900 !bg-white",
           success:
             "!bg-white dark:!bg-neutral-900 !border-emerald-600/40 !text-neutral-900 dark:!text-neutral-100",
           error:

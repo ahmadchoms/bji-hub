@@ -60,7 +60,7 @@ export default function ForgotPasswordPage() {
               <div className="space-y-1">
                 <p className="font-semibold text-sm">Permintaan Terkirim</p>
                 <p className="leading-relaxed">{message}</p>
-                <p className="text-[11px] text-emerald-700">
+                <p className="text-xs text-emerald-700">
                   Periksa juga folder Spam atau Promosi bila tidak kunjung masuk dalam beberapa menit.
                 </p>
               </div>

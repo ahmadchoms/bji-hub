@@ -79,7 +79,7 @@ export function OrderReviewModal({
 
   if (submitted) {
     return (
-      <span className="text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+      <span className="text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
         Ulasan Terkirim
       </span>
     );
@@ -105,7 +105,7 @@ export function OrderReviewModal({
               <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
               Ulasan Kopi: {listingTitle}
             </DialogTitle>
-            <DialogDescription className="text-xs text-neutral-500">
+            <DialogDescription className="text-xs text-neutral-600">
               Bagikan pengalaman seduhan dan profil rasa kopi yang Anda terima kepada penikmat kopi lainnya.
             </DialogDescription>
           </DialogHeader>
@@ -135,7 +135,7 @@ export function OrderReviewModal({
                   </button>
                 ))}
               </div>
-              <p className="text-[11px] text-neutral-500">
+              <p className="text-xs text-neutral-600">
                 {rating === 5
                   ? "Sangat Puas (Kopi Istimewa!)"
                   : rating === 4
@@ -166,7 +166,7 @@ export function OrderReviewModal({
               <label className="text-xs font-medium text-neutral-700 flex items-center justify-between">
                 <span>Foto Produk / Seduhan (Opsional)</span>
                 {isUploading && (
-                  <span className="text-[11px] text-primary-700 flex items-center gap-1">
+                  <span className="text-xs text-primary-700 flex items-center gap-1">
                     <Loader2 className="w-3 h-3 animate-spin" /> Mengunggah...
                   </span>
                 )}
@@ -205,7 +205,7 @@ export function OrderReviewModal({
                     htmlFor="review-file-upload"
                     className="flex items-center justify-center gap-2 p-2.5 border border-dashed border-neutral-300 rounded text-xs text-neutral-600 hover:bg-neutral-50 cursor-pointer transition-colors"
                   >
-                    <Camera className="w-4 h-4 text-neutral-500" />
+                    <Camera className="w-4 h-4 text-neutral-600" />
                     <span>Tambahkan foto kemasan atau hasil seduhan</span>
                   </label>
                 </div>

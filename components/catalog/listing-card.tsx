@@ -58,12 +58,12 @@ export function ListingCard({
             </div>
           )}
           {isAd && !isOutOfStock && (
-            <span className="absolute top-2 left-2 z-10 text-[10px] font-mono font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-xs bg-amber-600 text-white shadow-xs">
+            <span className="absolute top-2 left-2 z-10 text-xs font-mono font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-xs bg-amber-600 text-white shadow-xs">
               Iklan
             </span>
           )}
           {listing.minOrderQty >= 30 && !isAd && !isOutOfStock && (
-            <span className="absolute top-2 left-2 z-10 text-[10px] font-mono font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-xs bg-primary-900/90 text-white backdrop-blur-xs shadow-xs">
+            <span className="absolute top-2 left-2 z-10 text-xs font-mono font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-xs bg-primary-900/90 text-white backdrop-blur-xs shadow-xs">
               Partai B2B
             </span>
           )}
@@ -73,12 +73,12 @@ export function ListingCard({
             !isOutOfStock &&
             !isAd &&
             listing.minOrderQty < 30 && (
-              <span className="absolute top-2 left-2 z-10 text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded-xs bg-emerald-700 text-white shadow-xs">
+              <span className="absolute top-2 left-2 z-10 text-xs font-mono font-semibold px-1.5 py-0.5 rounded-xs bg-emerald-700 text-white shadow-xs">
                 Fresh Roast
               </span>
             )}
           {isLowStock && !isOutOfStock && (
-            <span className="absolute bottom-2 left-2 z-10 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-xs bg-amber-500 text-white shadow-xs">
+            <span className="absolute bottom-2 left-2 z-10 text-xs font-mono font-bold px-1.5 py-0.5 rounded-xs bg-amber-500 text-white shadow-xs">
               Sisa {listing.stock} {listing.unit}
             </span>
           )}
@@ -107,7 +107,7 @@ export function ListingCard({
           <h2 className="line-clamp-2 min-h-10 font-display text-base font-semibold leading-snug text-neutral-900 group-hover:underline">
             {listing.title}
           </h2>
-          <div className="flex flex-wrap items-center gap-1 text-[10px] font-mono">
+          <div className="flex flex-wrap items-center gap-1 text-xs font-mono">
             <span className="bg-neutral-100 text-neutral-800 px-1.5 py-0.5 rounded font-medium truncate max-w-[120px]">
               {origin}
             </span>
@@ -140,8 +140,8 @@ export function ListingCard({
           </div>
 
           {listing.tasteProfile?.flavorNotes && (
-            <p className="line-clamp-1 text-[11px] text-neutral-600 bg-neutral-50 px-1.5 py-0.5 rounded border border-neutral-200 w-fit">
-              <span className="font-semibold text-neutral-500">Notes:</span>{" "}
+            <p className="line-clamp-1 text-xs text-neutral-600 bg-neutral-50 px-1.5 py-0.5 rounded border border-neutral-200 w-fit">
+              <span className="font-semibold text-neutral-600">Notes:</span>{" "}
               {listing.tasteProfile.flavorNotes}
             </p>
           )}
@@ -151,7 +151,7 @@ export function ListingCard({
               <p className="font-mono text-base font-bold tabular-nums text-neutral-400 line-through">
                 {formatRupiah(listing.price)}
               </p>
-              <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200 px-1.5 py-0.5 rounded font-mono">
+              <span className="text-xs font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200 px-1.5 py-0.5 rounded font-mono">
                 Habis
               </span>
             </div>
@@ -161,14 +161,14 @@ export function ListingCard({
             </p>
           )}
           {listing.minOrderQty > 1 && (
-            <p className="text-[11px] font-mono text-neutral-500">
+            <p className="text-xs font-mono text-neutral-600">
               Min. order {listing.minOrderQty} {listing.unit}
             </p>
           )}
           <div className="flex items-center gap-1.5 text-xs text-neutral-600 truncate">
             <span className="truncate">{listing.seller.businessName}</span>
             {listing.seller.isVerified && (
-              <span className="inline-block text-[10px] font-semibold text-accent-700 bg-accent-100 px-1 py-0.2 rounded-xs border border-accent-500/20 shrink-0">
+              <span className="inline-block text-xs font-semibold text-accent-700 bg-accent-100 px-1 py-0.2 rounded-xs border border-accent-500/20 shrink-0">
                 Terverifikasi
               </span>
             )}

@@ -31,7 +31,7 @@ export default async function OrdersPage() {
             <h1 className="text-2xl font-bold font-display text-neutral-900">
               Riwayat Pesanan Saya
             </h1>
-            <p className="text-xs text-neutral-500 mt-0.5">
+            <p className="text-xs text-neutral-600 mt-0.5">
               Pantau status pesanan, verifikasi pembayaran, dan nomor resi pengiriman Anda.
             </p>
           </div>

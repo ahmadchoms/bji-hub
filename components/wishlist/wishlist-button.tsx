@@ -65,7 +65,7 @@ export function WishlistButton({
           "size-7 rounded-sm flex items-center justify-center transition-all duration-150 text-xs",
           saved
             ? "bg-rose-50 text-rose-600 border border-rose-200 shadow-2xs"
-            : "bg-white/90 text-neutral-500 hover:text-rose-600 hover:bg-white border border-neutral-200 shadow-2xs",
+            : "bg-white/90 text-neutral-600 hover:text-rose-600 hover:bg-white border border-neutral-200 shadow-2xs",
           className,
         )}
       >
@@ -94,7 +94,7 @@ export function WishlistButton({
       <Heart
         className={cn(
           "size-4",
-          saved ? "fill-rose-500 text-rose-500" : "text-neutral-500",
+          saved ? "fill-rose-500 text-rose-500" : "text-neutral-600",
         )}
       />
       <span>{saved ? "Tersimpan di Favorit" : "Simpan Favorit"}</span>

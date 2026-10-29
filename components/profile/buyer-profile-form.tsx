@@ -298,7 +298,7 @@ export function BuyerProfileForm({
           <h2 className="font-display text-lg text-neutral-900 font-bold">
             Biodata Diri
           </h2>
-          <p className="text-xs text-neutral-500 mt-0.5">
+          <p className="text-xs text-neutral-600 mt-0.5">
             Informasi nama dan kontak akun pembeli Anda.
           </p>
         </div>
@@ -363,13 +363,13 @@ export function BuyerProfileForm({
                   size="sm"
                   disabled={isUploading}
                   onClick={handleRemoveAvatar}
-                  className="text-xs h-8 text-neutral-500 hover:text-rose-600"
+                  className="text-xs h-8 text-neutral-600 hover:text-rose-600"
                 >
                   <Trash2 className="w-3.5 h-3.5 mr-1" /> Hapus
                 </Button>
               )}
             </div>
-            <p className="text-[11px] text-neutral-500">
+            <p className="text-xs text-neutral-600">
               Format JPG, PNG, atau WEBP. Maksimum 2 MB.
             </p>
           </div>
@@ -453,7 +453,7 @@ export function BuyerProfileForm({
             <h2 className="font-display text-lg text-neutral-900 font-bold">
               Daftar Alamat
             </h2>
-            <p className="text-xs text-neutral-500 mt-0.5">
+            <p className="text-xs text-neutral-600 mt-0.5">
               Kelola alamat pengiriman untuk kemudahan checkout transaksi biji
               kopi Anda.
             </p>
@@ -489,7 +489,7 @@ export function BuyerProfileForm({
                   setShowAddressForm(false);
                   setEditingAddressId(null);
                 }}
-                className="text-xs text-neutral-500 hover:text-neutral-800"
+                className="text-xs text-neutral-600 hover:text-neutral-800"
               >
                 Batal
               </button>
@@ -650,7 +650,7 @@ export function BuyerProfileForm({
             <p className="text-xs font-semibold text-neutral-700">
               Belum ada alamat pengiriman tersimpan
             </p>
-            <p className="text-[11px] text-neutral-500 max-w-sm mx-auto">
+            <p className="text-xs text-neutral-600 max-w-sm mx-auto">
               Tambahkan alamat untuk mempermudah perhitungan ongkir dan pengiriman otomatis saat checkout kopi.
             </p>
             <div className="pt-2">
@@ -685,7 +685,7 @@ export function BuyerProfileForm({
                       {addr.isPrimary && (
                         <Badge
                           variant="outline"
-                          className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-300 font-semibold px-2 py-0.5 rounded"
+                          className="text-xs bg-emerald-50 text-emerald-700 border-emerald-300 font-semibold px-2 py-0.5 rounded"
                         >
                           Utama
                         </Badge>
@@ -694,7 +694,7 @@ export function BuyerProfileForm({
 
                     <p className="text-xs font-semibold text-neutral-900">
                       {addr.recipientName}{" "}
-                      <span className="text-neutral-500 font-normal">
+                      <span className="text-neutral-600 font-normal">
                         ({addr.phone})
                       </span>
                     </p>
@@ -703,7 +703,7 @@ export function BuyerProfileForm({
                       {addr.address}
                     </p>
 
-                    <p className="text-xs text-neutral-500">
+                    <p className="text-xs text-neutral-600">
                       {addr.city}, {addr.province}
                       {addr.postalCode ? ` - ${addr.postalCode}` : ""}
                     </p>
@@ -731,7 +731,7 @@ export function BuyerProfileForm({
                       onClick={() => handleOpenEditAddress(addr)}
                       className="text-xs h-8 border-neutral-200 text-neutral-700 hover:bg-neutral-50 px-2.5"
                     >
-                      <Edit3 className="w-3.5 h-3.5 mr-1 text-neutral-500" />
+                      <Edit3 className="w-3.5 h-3.5 mr-1 text-neutral-600" />
                       Ubah
                     </Button>
 

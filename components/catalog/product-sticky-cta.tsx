@@ -48,7 +48,7 @@ export function ProductStickyCTA({
         {isOutOfStock ? (
           <button
             disabled
-            className="flex min-h-12 flex-1 items-center justify-center bg-neutral-200 text-neutral-500 text-sm font-medium cursor-not-allowed"
+            className="flex min-h-12 flex-1 items-center justify-center bg-neutral-200 text-neutral-600 text-sm font-medium cursor-not-allowed"
           >
             Stok Habis
           </button>

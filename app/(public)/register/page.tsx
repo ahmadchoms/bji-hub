@@ -70,7 +70,7 @@ function RegisterForm() {
             <div className="flex justify-center mb-2">
               <Logo size="md" />
             </div>
-            <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest">
+            <p className="text-xs font-mono text-neutral-600 uppercase tracking-widest">
               Pendaftaran Akun
             </p>
             <h1 className="font-display text-2xl text-neutral-900 font-semibold">
@@ -87,7 +87,7 @@ function RegisterForm() {
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-neutral-300" />
             </div>
-            <div className="relative bg-surface-base px-3 text-xs uppercase text-neutral-500 font-medium">
+            <div className="relative bg-surface-base px-3 text-xs uppercase text-neutral-600 font-medium">
               atau
             </div>
           </div>
@@ -135,7 +135,7 @@ function RegisterForm() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-700"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-600 hover:text-neutral-700"
                   aria-label={showPassword ? "Sembunyikan sandi" : "Tampilkan sandi"}
                 >
                   {showPassword ? (
@@ -219,7 +219,7 @@ function RegisterForm() {
               <p className="text-xs font-semibold text-primary-900">
                 Punya kebun kopi atau roastery?
               </p>
-              <p className="text-[11px] text-primary-800 mt-0.5">
+              <p className="text-xs text-primary-800 mt-0.5">
                 Buka toko dan pasang katalog kopi specialty Anda gratis.
               </p>
               <Link

@@ -128,7 +128,7 @@ export default async function AdminTransaksiPage() {
                             {statusConf.label}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-neutral-500 font-mono text-xs">
+                        <TableCell className="text-neutral-600 font-mono text-xs">
                           {pay.paidAt
                             ? format(new Date(pay.paidAt), "d MMM yyyy", {
                                 locale: idLocale,
@@ -162,10 +162,10 @@ export default async function AdminTransaksiPage() {
                     <p className="font-mono tabular-nums font-medium text-primary-900 text-sm">
                       {formatRupiah(pay.amount)}
                     </p>
-                    <p className="text-[11px] text-neutral-500">
+                    <p className="text-xs text-neutral-600">
                       {sellerMap[pay.sellerId] ?? pay.sellerId}
                     </p>
-                    <p className="text-[11px] text-neutral-500 font-mono mt-0.5">
+                    <p className="text-xs text-neutral-600 font-mono mt-0.5">
                       {pay.paidAt
                         ? format(new Date(pay.paidAt), "d MMM yyyy HH:mm", {
                             locale: idLocale,

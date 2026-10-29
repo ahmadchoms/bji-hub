@@ -58,7 +58,7 @@ export function ProductShippingEstimator({
         <span className="font-semibold flex items-center gap-1.5 text-neutral-900">
           <Truck className="w-3.5 h-3.5 text-primary-600" /> Estimasi Ongkir
         </span>
-        <span className="text-[11px] text-neutral-500 font-mono">
+        <span className="text-xs text-neutral-600 font-mono">
           Dari {originCity}
         </span>
       </div>
@@ -70,7 +70,7 @@ export function ProductShippingEstimator({
           value={destCity}
           onChange={(e) => setDestCity(e.target.value)}
           placeholder="Ketik kota tujuan (contoh: Surabaya, Medan)"
-          className="w-full text-xs outline-none bg-transparent text-neutral-900 placeholder:text-neutral-400"
+          className="w-full text-xs outline-none focus-visible:ring-1 focus-visible:ring-primary-600 rounded-xs bg-transparent text-neutral-900 placeholder:text-neutral-400"
         />
         {loading && (
           <Loader2 className="w-3.5 h-3.5 text-neutral-400 animate-spin shrink-0" />
@@ -82,14 +82,14 @@ export function ProductShippingEstimator({
           {rates.map((rate) => (
             <div
               key={rate.id}
-              className="flex items-center justify-between text-[11px] py-1 border-b border-neutral-200/50 last:border-0"
+              className="flex items-center justify-between text-xs py-1 border-b border-neutral-200/50 last:border-0"
             >
               <div className="flex items-center gap-1.5">
                 <span className="font-semibold text-neutral-800">
                   {rate.courierName}
                 </span>
-                <span className="text-neutral-500">({rate.service})</span>
-                <span className="text-neutral-400 text-[10px]">
+                <span className="text-neutral-600">({rate.service})</span>
+                <span className="text-neutral-400 text-xs">
                   • {rate.etd}
                 </span>
               </div>

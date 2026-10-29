@@ -13,7 +13,7 @@ export function StatList({ items }: { items: StatItem[] }) {
           className="flex flex-col rounded-lg border bg-secondary/50 p-4 shadow-xs transition-shadow hover:shadow-sm"
         >
           {/* Header Label: Diberikan min-height agar jika label membungkus 2 baris tetap sejajar */}
-          <dt className="line-clamp-1 text-[11px] font-semibold tracking-wider uppercase text-neutral-500">
+          <dt className="line-clamp-1 text-xs font-semibold tracking-wider uppercase text-neutral-600">
             {item.label}
           </dt>
 
@@ -25,7 +25,7 @@ export function StatList({ items }: { items: StatItem[] }) {
           {/* Hint Area: Diberi margin-top otomatis dan min-height tetap */}
           <div className="mt-auto pt-2 min-h-6 flex items-center">
             {item.hint ? (
-              <p className="line-clamp-1 text-xs text-neutral-500">
+              <p className="line-clamp-1 text-xs text-neutral-600">
                 {item.hint}
               </p>
             ) : (

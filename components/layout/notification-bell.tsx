@@ -73,12 +73,12 @@ export function NotificationBell({ initialCount = 0 }: NotificationBellProps) {
     <div className="relative" ref={containerRef}>
       <button
         onClick={handleToggle}
-        className="relative p-2 rounded-full text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition-colors focus:outline-none"
+        className="relative p-2 rounded-full text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition-colors focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:outline-none"
         aria-label="Notifikasi"
       >
         <Bell className="w-5 h-5" />
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 flex items-center justify-center min-w-4 h-4 px-1 text-[10px] font-bold text-white bg-rose-600 rounded-full">
+          <span className="absolute top-1 right-1 flex items-center justify-center min-w-4 h-4 px-1 text-xs font-bold text-white bg-rose-600 rounded-full">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -90,7 +90,7 @@ export function NotificationBell({ initialCount = 0 }: NotificationBellProps) {
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-neutral-900">Notifikasi</span>
               {unreadCount > 0 && (
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-rose-200 text-rose-700 bg-rose-50">
+                <Badge variant="outline" className="text-xs px-1.5 py-0 border-rose-200 text-rose-700 bg-rose-50">
                   {unreadCount} baru
                 </Badge>
               )}
@@ -98,7 +98,7 @@ export function NotificationBell({ initialCount = 0 }: NotificationBellProps) {
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllAsRead}
-                className="text-[11px] text-primary-700 hover:text-primary-900 font-medium flex items-center gap-1"
+                className="text-xs text-primary-700 hover:text-primary-900 font-medium flex items-center gap-1"
               >
                 <CheckCheck className="w-3 h-3" />
                 Tandai semua dibaca
@@ -108,12 +108,12 @@ export function NotificationBell({ initialCount = 0 }: NotificationBellProps) {
 
           <div className="max-h-80 overflow-y-auto divide-y divide-neutral-100">
             {isLoading && notifications.length === 0 ? (
-              <div className="p-6 text-center text-xs text-neutral-500 flex items-center justify-center gap-2">
+              <div className="p-6 text-center text-xs text-neutral-600 flex items-center justify-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin text-neutral-400" />
                 Memuat notifikasi...
               </div>
             ) : notifications.length === 0 ? (
-              <div className="p-6 text-center text-xs text-neutral-500">
+              <div className="p-6 text-center text-xs text-neutral-600">
                 Belum ada notifikasi.
               </div>
             ) : (
@@ -133,11 +133,11 @@ export function NotificationBell({ initialCount = 0 }: NotificationBellProps) {
                       <span className="w-1.5 h-1.5 rounded-full bg-rose-600 shrink-0 mt-1" />
                     )}
                   </div>
-                  <p className="text-neutral-600 leading-relaxed text-[11px]">
+                  <p className="text-neutral-600 leading-relaxed text-xs">
                     {notif.message}
                   </p>
                   <div className="flex items-center justify-between pt-1">
-                    <span className="text-[10px] text-neutral-400">
+                    <span className="text-xs text-neutral-400">
                       {new Date(notif.createdAt).toLocaleDateString("id-ID", {
                         day: "numeric",
                         month: "short",
@@ -153,7 +153,7 @@ export function NotificationBell({ initialCount = 0 }: NotificationBellProps) {
                           setOpen(false);
                           if (!notif.isRead) handleMarkAsRead(notif.id);
                         }}
-                        className="text-[11px] font-medium text-primary-700 hover:text-primary-900 inline-flex items-center gap-0.5"
+                        className="text-xs font-medium text-primary-700 hover:text-primary-900 inline-flex items-center gap-0.5"
                       >
                         Buka <ExternalLink className="w-2.5 h-2.5" />
                       </Link>

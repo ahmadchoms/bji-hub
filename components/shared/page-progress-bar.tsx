@@ -134,7 +134,7 @@ function PageProgressBarInner() {
         className="fixed top-3 right-4 z-[99999] pointer-events-none transition-opacity duration-200"
         style={{ opacity: isLoading ? 1 : 0 }}
       >
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-neutral-900/90 text-white text-[11px] font-medium shadow-md backdrop-blur-xs">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-neutral-900/90 text-white text-xs font-medium shadow-md backdrop-blur-xs">
           <Loader2 className="w-3 h-3 animate-spin text-amber-400" />
           <span>Memuat...</span>
         </div>

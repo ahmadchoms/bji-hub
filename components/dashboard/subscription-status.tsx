@@ -26,7 +26,7 @@ export function SubscriptionStatus({
         className,
       )}
     >
-      <h3 className="font-mono text-[10px] uppercase tracking-widest text-neutral-500">
+      <h3 className="font-mono text-xs uppercase tracking-widest text-neutral-600">
         Paket
       </h3>
       <p className="font-display text-lg font-semibold text-neutral-900">

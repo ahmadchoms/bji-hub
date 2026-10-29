@@ -133,7 +133,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
           <h1 className="font-display text-2xl font-semibold text-neutral-900">
             Akun Pembeli
           </h1>
-          <p className="text-xs text-neutral-500 mt-0.5">
+          <p className="text-xs text-neutral-600 mt-0.5">
             Kelola profil diri, alamat pengiriman, dan jelajahi direktori kopi specialty Indonesia.
           </p>
         </div>

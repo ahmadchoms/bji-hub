@@ -366,7 +366,7 @@ export function BillingSection({
                             {statusConf.label}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-neutral-500 font-mono text-xs">
+                        <TableCell className="text-neutral-600 font-mono text-xs">
                           {pay.paidAt
                             ? format(new Date(pay.paidAt), "d MMM yyyy", {
                                 locale: idLocale,
@@ -417,7 +417,7 @@ export function BillingSection({
                     <p className="font-mono tabular-nums font-medium text-primary-900 text-sm">
                       {formatRupiah(pay.amount)}
                     </p>
-                    <p className="text-[11px] text-neutral-500 font-mono">
+                    <p className="text-xs text-neutral-600 font-mono">
                       {pay.paidAt
                         ? format(new Date(pay.paidAt), "d MMM yyyy HH:mm", {
                             locale: idLocale,

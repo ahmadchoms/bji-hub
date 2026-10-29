@@ -93,17 +93,17 @@ export function ShipmentTrackingModal({
                 title="Perbarui status"
               >
                 <RefreshCw
-                  className={`w-3.5 h-3.5 text-neutral-500 ${isPending ? "animate-spin" : ""}`}
+                  className={`w-3.5 h-3.5 text-neutral-600 ${isPending ? "animate-spin" : ""}`}
                 />
               </Button>
             </div>
-            <DialogDescription className="text-xs text-neutral-500">
+            <DialogDescription className="text-xs text-neutral-600">
               Informasi live tracking posisi paket dari sistem logistik ekspedisi.
             </DialogDescription>
           </DialogHeader>
 
           {isPending && !trackingData ? (
-            <div className="py-12 flex flex-col items-center justify-center text-xs text-neutral-500 gap-2">
+            <div className="py-12 flex flex-col items-center justify-center text-xs text-neutral-600 gap-2">
               <Loader2 className="w-6 h-6 animate-spin text-primary-600" />
               <span>Menghubungi gateway logistik kurir...</span>
             </div>
@@ -128,13 +128,13 @@ export function ShipmentTrackingModal({
                 </div>
 
                 <div className="flex items-center justify-between pt-1 border-t border-neutral-200/60">
-                  <span className="text-neutral-500 font-mono text-[11px]">
+                  <span className="text-neutral-600 font-mono text-xs">
                     No. Resi: <strong className="text-neutral-900 font-bold">{trackingData.waybillNumber}</strong>
                   </span>
                   <button
                     type="button"
                     onClick={copyResi}
-                    className="text-primary-700 hover:text-primary-900 text-[11px] font-medium flex items-center gap-1"
+                    className="text-primary-700 hover:text-primary-900 text-xs font-medium flex items-center gap-1"
                   >
                     <Copy className="w-3 h-3" />
                     Salin
@@ -145,7 +145,7 @@ export function ShipmentTrackingModal({
               {/* Manifest Timeline */}
               <div className="space-y-3 pt-1">
                 <p className="text-xs font-semibold text-neutral-800 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-neutral-500" /> Riwayat Perjalanan Paket
+                  <Clock className="w-3.5 h-3.5 text-neutral-600" /> Riwayat Perjalanan Paket
                 </p>
 
                 <div className="relative pl-6 space-y-5 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-neutral-200">
@@ -175,7 +175,7 @@ export function ShipmentTrackingModal({
                           {m.manifestDescription}
                         </p>
 
-                        <div className="flex items-center gap-2 text-[11px] text-neutral-400 font-mono">
+                        <div className="flex items-center gap-2 text-xs text-neutral-400 font-mono">
                           <span>{m.manifestDate} {m.manifestTime}</span>
                           {m.cityName && (
                             <>
@@ -194,7 +194,7 @@ export function ShipmentTrackingModal({
               </div>
             </div>
           ) : (
-            <div className="py-8 text-center text-xs text-neutral-500">
+            <div className="py-8 text-center text-xs text-neutral-600">
               Tidak ada data pelacakan yang dapat ditampilkan.
             </div>
           )}

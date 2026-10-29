@@ -114,7 +114,7 @@ export function RequestVerificationButton({
             onClick={() => fileInputRef.current?.click()}
             className="gap-1.5 text-xs border-dashed border-neutral-300 text-neutral-700 hover:bg-neutral-50"
           >
-            <Upload className="h-3.5 w-3.5 text-neutral-500" />
+            <Upload className="h-3.5 w-3.5 text-neutral-600" />
             Lampirkan Dokumen KYC (KTP/NIB/NPWP)
           </Button>
         ) : (
@@ -150,7 +150,7 @@ export function RequestVerificationButton({
           )}
         </Button>
       </div>
-      <p className="text-[11px] text-neutral-500">
+      <p className="text-xs text-neutral-600">
         Format file: PDF, JPG, PNG, atau WebP (maks. 5 MB). Dokumen disimpan di bucket terenkripsi privat.
       </p>
     </div>

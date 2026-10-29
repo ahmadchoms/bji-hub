@@ -37,7 +37,7 @@ export function PaymentStatusPoller({
   if (query.data?.isPaid) return null;
 
   return (
-    <p role="status" aria-live="polite" className="text-xs text-neutral-500">
+    <p role="status" aria-live="polite" className="text-xs text-neutral-600">
       {query.isError
         ? "Gagal memeriksa status pembayaran. Muat ulang halaman atau coba lagi nanti."
         : "Memeriksa status pembayaran…"}

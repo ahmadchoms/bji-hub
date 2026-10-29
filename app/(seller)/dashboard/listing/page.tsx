@@ -12,7 +12,7 @@ export default async function DashboardListingPage() {
   const seller = await getSellerById(sellerId);
 
   if (!seller) {
-    return <p className="text-neutral-500">Data seller tidak ditemukan.</p>;
+    return <p className="text-neutral-600">Data seller tidak ditemukan.</p>;
   }
 
   const formattedListingCsvData = seller.listings.map((l) => ({

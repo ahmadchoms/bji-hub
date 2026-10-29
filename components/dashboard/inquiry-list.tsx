@@ -55,7 +55,7 @@ export function InquiryList({ inquiries, className }: InquiryListProps) {
               <div>
                 <div className="flex items-center gap-2">
                   <p className="font-semibold text-sm text-neutral-900">{inq.buyerName}</p>
-                  <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-800 border-amber-300">
+                  <Badge variant="outline" className="text-xs bg-amber-50 text-amber-800 border-amber-300">
                     B2B Lead
                   </Badge>
                 </div>
@@ -75,7 +75,7 @@ export function InquiryList({ inquiries, className }: InquiryListProps) {
                   </button>
                 </div>
               </div>
-              <span className="text-[11px] text-neutral-500 font-mono shrink-0">
+              <span className="text-xs text-neutral-600 font-mono shrink-0">
                 {format(new Date(inq.createdAt), "d MMM yyyy, HH:mm", { locale: idLocale })}
               </span>
             </div>
@@ -110,7 +110,7 @@ export function InquiryList({ inquiries, className }: InquiryListProps) {
                   )}&body=${waText}`}
                   className="inline-flex items-center gap-1.5 px-3 py-1 rounded border border-neutral-300 hover:bg-neutral-50 text-neutral-800 text-xs font-medium transition-colors"
                 >
-                  <Mail className="w-3.5 h-3.5 text-neutral-500" />
+                  <Mail className="w-3.5 h-3.5 text-neutral-600" />
                   Kirim Email Resmi
                 </a>
               )}
@@ -123,7 +123,7 @@ export function InquiryList({ inquiries, className }: InquiryListProps) {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-3 py-1 rounded border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 text-neutral-700 text-xs font-medium transition-colors ml-auto"
               >
-                <FileSpreadsheet className="w-3.5 h-3.5 text-neutral-500" />
+                <FileSpreadsheet className="w-3.5 h-3.5 text-neutral-600" />
                 Lanjut Kontrak Partai
               </a>
             </div>

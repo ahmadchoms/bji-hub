@@ -36,7 +36,7 @@ export function RevenueChart({ data, totalRevenue, className }: RevenueChartProp
         <p className="font-semibold text-sm text-neutral-800">
           Belum Ada Transaksi Penjualan Online
         </p>
-        <p className="text-xs text-neutral-500">
+        <p className="text-xs text-neutral-600">
           Grafik tren omzet akan muncul secara otomatis saat pesanan online mulai masuk dan dibayar.
         </p>
       </div>
@@ -55,12 +55,12 @@ export function RevenueChart({ data, totalRevenue, className }: RevenueChartProp
           <h3 className="font-display text-base font-bold text-neutral-900">
             Tren Omzet Penjualan
           </h3>
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-neutral-600">
             Penerimaan bersih penjual dari pesanan langsung online
           </p>
         </div>
         <div className="text-right">
-          <span className="text-[11px] text-neutral-500">Total Omzet:</span>
+          <span className="text-xs text-neutral-600">Total Omzet:</span>
           <p className="font-mono text-base font-bold text-emerald-700">
             {formatRupiah(totalRevenue)}
           </p>

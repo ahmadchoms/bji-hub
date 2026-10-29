@@ -94,7 +94,7 @@ export default async function AdminOverviewPage() {
                         {statusConf.label}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-neutral-500 font-mono text-xs">
+                    <TableCell className="text-neutral-600 font-mono text-xs">
                       {pay.paidAt
                         ? format(new Date(pay.paidAt), "d MMM yyyy", {
                             locale: idLocale,

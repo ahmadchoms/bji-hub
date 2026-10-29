@@ -122,7 +122,7 @@ export function AdminRefundQueue({ refunds }: AdminRefundQueueProps) {
           <h3 className="text-sm font-semibold text-neutral-800">
             Tidak ada pengembalian dana
           </h3>
-          <p className="text-xs text-neutral-500 mt-1">
+          <p className="text-xs text-neutral-600 mt-1">
             Belum ada antrean refund pada kategori ini.
           </p>
         </div>
@@ -148,7 +148,7 @@ export function AdminRefundQueue({ refunds }: AdminRefundQueueProps) {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs text-neutral-500">
+                      <span className="font-mono text-xs text-neutral-600">
                         Refund #{ref.id}
                       </span>
                       <span className="text-neutral-300">•</span>
@@ -187,28 +187,28 @@ export function AdminRefundQueue({ refunds }: AdminRefundQueueProps) {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-neutral-600 bg-neutral-50 p-3 rounded-md border border-neutral-200/60">
                   <div>
-                    <span className="text-neutral-400 block text-[11px]">Alasan Pembatalan:</span>
+                    <span className="text-neutral-400 block text-xs">Alasan Pembatalan:</span>
                     <span className="font-medium text-neutral-800">{ref.reason}</span>
                   </div>
                   <div>
-                    <span className="text-neutral-400 block text-[11px]">Diajukan oleh:</span>
+                    <span className="text-neutral-400 block text-xs">Diajukan oleh:</span>
                     <span className="font-medium text-neutral-800">{ref.createdBy || "Sistem"}</span>
                   </div>
                   {ref.providerRef && (
                     <div>
-                      <span className="text-neutral-400 block text-[11px]">ID Referensi Gateway:</span>
-                      <span className="font-mono text-[11px] text-neutral-700">{ref.providerRef}</span>
+                      <span className="text-neutral-400 block text-xs">ID Referensi Gateway:</span>
+                      <span className="font-mono text-xs text-neutral-700">{ref.providerRef}</span>
                     </div>
                   )}
                   {ref.failureReason && (
                     <div className="sm:col-span-2 text-amber-800">
-                      <span className="text-neutral-400 block text-[11px]">Catatan / Pesan Gateway:</span>
+                      <span className="text-neutral-400 block text-xs">Catatan / Pesan Gateway:</span>
                       <span className="text-xs">{ref.failureReason}</span>
                     </div>
                   )}
                   {ref.resolvedBy && (
                     <div>
-                      <span className="text-neutral-400 block text-[11px]">Diselesaikan oleh:</span>
+                      <span className="text-neutral-400 block text-xs">Diselesaikan oleh:</span>
                       <span className="font-medium text-neutral-800">{ref.resolvedBy}</span>
                     </div>
                   )}

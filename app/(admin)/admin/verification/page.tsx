@@ -76,7 +76,7 @@ export default async function AdminVerificationPage() {
                   <TableCell>
                     <Badge
                       variant="outline"
-                      className="font-medium text-[11px] uppercase tracking-wide border-neutral-300 text-neutral-700 bg-neutral-50/50"
+                      className="font-medium text-xs uppercase tracking-wide border-neutral-300 text-neutral-700 bg-neutral-50/50"
                     >
                       {seller.tier}
                     </Badge>
@@ -92,7 +92,7 @@ export default async function AdminVerificationPage() {
                       {seller.whatsappNumber}
                     </a>
                   </TableCell>
-                  <TableCell className="text-right text-xs font-mono text-neutral-500 tabular-nums">
+                  <TableCell className="text-right text-xs font-mono text-neutral-600 tabular-nums">
                     <div className="inline-flex items-center gap-1.5 justify-end">
                       <Calendar className="w-3.5 h-3.5 text-neutral-400" />
                       {new Date(seller.createdAt).toLocaleDateString("id-ID", {

@@ -88,7 +88,7 @@ export function OrderDisputeModal({ orderId, orderNumber }: OrderDisputeModalPro
               <AlertTriangle className="w-4 h-4 text-rose-600" />
               Ajukan Komplain Pesanan ({orderNumber})
             </DialogTitle>
-            <DialogDescription className="text-xs text-neutral-500">
+            <DialogDescription className="text-xs text-neutral-600">
               Pengajuan ini akan menahan penerusan dana ke penjual sampai kendala diselesaikan.
             </DialogDescription>
           </DialogHeader>
@@ -113,7 +113,7 @@ export function OrderDisputeModal({ orderId, orderNumber }: OrderDisputeModalPro
               <label className="text-xs font-medium text-neutral-700 flex items-center justify-between">
                 <span>Foto Bukti Fisik / Kerusakan (Opsional)</span>
                 {isUploading && (
-                  <span className="text-[11px] text-primary-700 flex items-center gap-1">
+                  <span className="text-xs text-primary-700 flex items-center gap-1">
                     <Loader2 className="w-3 h-3 animate-spin" /> Mengunggah...
                   </span>
                 )}
@@ -152,7 +152,7 @@ export function OrderDisputeModal({ orderId, orderNumber }: OrderDisputeModalPro
                     htmlFor="dispute-file-upload"
                     className="flex items-center justify-center gap-2 p-3 border border-dashed border-neutral-300 rounded text-xs text-neutral-600 hover:bg-neutral-50 cursor-pointer transition-colors"
                   >
-                    <Camera className="w-4 h-4 text-neutral-500" />
+                    <Camera className="w-4 h-4 text-neutral-600" />
                     <span>Unggah foto kondisi paket / barang</span>
                   </label>
                 </div>

@@ -71,7 +71,7 @@ export function AdminAuditLogs({ logs }: AdminAuditLogsProps) {
         </div>
 
         <div className="flex items-center gap-2 text-xs">
-          <span className="text-neutral-500 font-medium">Filter Aksi:</span>
+          <span className="text-neutral-600 font-medium">Filter Aksi:</span>
           <select
             value={filterAction}
             onChange={(e) => setFilterAction(e.target.value)}
@@ -93,7 +93,7 @@ export function AdminAuditLogs({ logs }: AdminAuditLogsProps) {
           <h3 className="text-sm font-semibold text-neutral-800">
             Tidak ada riwayat log
           </h3>
-          <p className="text-xs text-neutral-500 mt-1">
+          <p className="text-xs text-neutral-600 mt-1">
             Belum ada aktivitas admin yang tercatat pada filter ini.
           </p>
         </div>
@@ -119,7 +119,7 @@ export function AdminAuditLogs({ logs }: AdminAuditLogsProps) {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-500">
+                <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-600">
                   <span>
                     Pelaku: <strong className="text-neutral-700">{log.actorId}</strong> ({log.actorRole})
                   </span>
@@ -129,7 +129,7 @@ export function AdminAuditLogs({ logs }: AdminAuditLogsProps) {
                     </span>
                   )}
                   {log.details && (
-                    <span className="text-neutral-600 truncate max-w-lg font-mono text-[11px] bg-neutral-100 px-2 py-0.5 rounded-sm">
+                    <span className="text-neutral-600 truncate max-w-lg font-mono text-xs bg-neutral-100 px-2 py-0.5 rounded-sm">
                       {log.details}
                     </span>
                   )}

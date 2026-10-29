@@ -137,7 +137,7 @@ export function OrderDetailDialog({
               <DialogTitle className="text-base sm:text-lg font-bold text-neutral-900">
                 Detail Transaksi
               </DialogTitle>
-              <p className="text-xs text-neutral-500 font-mono mt-0.5">
+              <p className="text-xs text-neutral-600 font-mono mt-0.5">
                 No. Pesanan: <strong className="text-neutral-800">{order.orderNumber}</strong>
               </p>
             </div>
@@ -160,7 +160,7 @@ export function OrderDetailDialog({
               <Clock className="w-4 h-4 text-amber-700 shrink-0" />
               Menunggu Penyelesaian Pembayaran (Batas 60 Menit)
             </div>
-            <p className="text-amber-800 text-[11px] leading-relaxed">
+            <p className="text-amber-800 text-xs leading-relaxed">
               Selesaikan pembayaran dalam 60 menit sebelum pesanan otomatis dibatalkan agar stok kopi yang dipesan tidak dilepaskan kembali.
             </p>
             <div className="flex items-center justify-end gap-2 pt-1 border-t border-amber-200/60">
@@ -200,11 +200,11 @@ export function OrderDetailDialog({
               <span className="font-semibold flex items-center gap-1.5">
                 <Check className="w-4 h-4 text-emerald-600 shrink-0" /> Pembayaran Terverifikasi
               </span>
-              <span className="text-[11px] font-medium text-emerald-800">
+              <span className="text-xs font-medium text-emerald-800">
                 Menunggu Pengiriman
               </span>
             </div>
-            <p className="text-emerald-800 text-[11px] leading-relaxed">
+            <p className="text-emerald-800 text-xs leading-relaxed">
               Pesanan Anda sedang dipersiapkan oleh pihak roastery. Anda dapat mengajukan pembatalan dan refund sebelum pesanan diserahkan ke kurir ekspedisi.
             </p>
             {onCancelPaidOrder && (
@@ -237,11 +237,11 @@ export function OrderDetailDialog({
               <span className="font-semibold flex items-center gap-1.5">
                 <Truck className="w-4 h-4 text-purple-700 shrink-0" /> Paket Sedang Dalam Pengiriman
               </span>
-              <span className="text-[11px] font-medium text-purple-800">
+              <span className="text-xs font-medium text-purple-800">
                 Garansi Otomatis 2x24 Jam
               </span>
             </div>
-            <p className="text-[11px] text-purple-800">
+            <p className="text-xs text-purple-800">
               Paket telah diserahkan ke kurir ekspedisi. Harap periksa isi paket setelah tiba dan segera konfirmasi penerimaan di bawah.
             </p>
             <div className="flex items-center justify-end gap-2 pt-1.5 border-t border-purple-200/60">
@@ -266,7 +266,7 @@ export function OrderDetailDialog({
                 href={order.disputeEvidenceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-[11px] text-rose-700 underline font-medium hover:text-rose-900"
+                className="inline-flex items-center gap-1 text-xs text-rose-700 underline font-medium hover:text-rose-900"
               >
                 <ExternalLink className="w-3 h-3" /> Foto Bukti Kendala Terlampir
               </a>
@@ -281,19 +281,19 @@ export function OrderDetailDialog({
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-neutral-100 text-neutral-700">
             <div>
-              <span className="text-neutral-500 text-[11px] block">Kurir Ekspedisi:</span>
+              <span className="text-neutral-600 text-xs block">Kurir Ekspedisi:</span>
               <p className="font-semibold text-neutral-900 mt-0.5">
                 {order.shippingCourier || "JNE Reguler"}
               </p>
               {order.trackingNumber && (
                 <div className="mt-1 flex items-center gap-2">
-                  <span className="font-mono font-bold text-neutral-900 bg-neutral-100 px-2 py-0.5 rounded text-[11px] border border-neutral-200">
+                  <span className="font-mono font-bold text-neutral-900 bg-neutral-100 px-2 py-0.5 rounded text-xs border border-neutral-200">
                     {order.trackingNumber}
                   </span>
                   <button
                     type="button"
                     onClick={() => handleCopy(order.trackingNumber!)}
-                    className="text-neutral-500 hover:text-neutral-900 transition-colors flex items-center gap-0.5 cursor-pointer text-[11px]"
+                    className="text-neutral-600 hover:text-neutral-900 transition-colors flex items-center gap-0.5 cursor-pointer text-xs"
                     title="Salin nomor resi"
                   >
                     {copiedResi ? (
@@ -313,11 +313,11 @@ export function OrderDetailDialog({
             </div>
 
             <div>
-              <span className="text-neutral-500 text-[11px] block">Alamat Penerima:</span>
+              <span className="text-neutral-600 text-xs block">Alamat Penerima:</span>
               <p className="font-semibold text-neutral-900 mt-0.5">
-                {order.buyerName} <span className="font-normal text-neutral-500 font-mono">({order.buyerPhone})</span>
+                {order.buyerName} <span className="font-normal text-neutral-600 font-mono">({order.buyerPhone})</span>
               </p>
-              <p className="text-neutral-600 text-[11px] mt-0.5 leading-relaxed">
+              <p className="text-neutral-600 text-xs mt-0.5 leading-relaxed">
                 {order.buyerAddress}, {order.buyerCity}
               </p>
             </div>
@@ -338,7 +338,7 @@ export function OrderDetailDialog({
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[11px] text-emerald-700 hover:text-emerald-800 flex items-center gap-1 font-medium bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200 transition-colors"
+                className="text-xs text-emerald-700 hover:text-emerald-800 flex items-center gap-1 font-medium bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200 transition-colors"
                 title="Hubungi penjual via WhatsApp"
               >
                 <MessageCircle className="w-3 h-3 text-emerald-600" />
@@ -376,11 +376,11 @@ export function OrderDetailDialog({
                   {order.listingTitle || `Produk #${order.listingId}`}
                 </p>
               )}
-              <p className="text-xs text-neutral-500 mt-0.5">
+              <p className="text-xs text-neutral-600 mt-0.5">
                 {order.quantity} pcs/kg × {formatRupiah(order.itemPrice)}
               </p>
               {order.notes && (
-                <p className="text-[11px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200/80 mt-1 inline-block">
+                <p className="text-xs text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200/80 mt-1 inline-block">
                   Catatan: {order.notes}
                 </p>
               )}

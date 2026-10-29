@@ -4,7 +4,7 @@ import { buttonVariants } from "@/components/ui/button";
 export default function PublicNotFound() {
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-xl flex-col items-start justify-center gap-4 px-4 py-16">
-      <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-500">
+      <p className="font-mono text-xs uppercase tracking-widest text-neutral-600">
         Kode 404
       </p>
       <h1 className="font-display text-3xl font-semibold text-neutral-900">

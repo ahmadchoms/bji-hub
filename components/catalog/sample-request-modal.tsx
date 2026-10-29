@@ -122,7 +122,7 @@ export function SampleRequestModal({
         <DialogHeader>
           <div className="flex items-center gap-2 text-primary-600 mb-1">
             <Sparkles className="w-4 h-4" />
-            <span className="text-[11px] font-mono uppercase tracking-wider font-semibold">
+            <span className="text-xs font-mono uppercase tracking-wider font-semibold">
               B2B & Roastery Direct
             </span>
           </div>
@@ -187,7 +187,7 @@ export function SampleRequestModal({
                   key={item.id}
                   type="button"
                   onClick={() => setRequestType(item.id as typeof requestType)}
-                  className={`py-1.5 px-2 text-[11px] font-medium rounded-sm border text-center transition-colors ${
+                  className={`py-1.5 px-2 text-xs font-medium rounded-sm border text-center transition-colors ${
                     requestType === item.id
                       ? "border-primary-600 bg-primary-50 text-primary-900 font-semibold"
                       : "border-neutral-300 bg-surface-base text-neutral-700 hover:bg-neutral-50"

@@ -211,7 +211,7 @@ export function TasteQuizModal({
                 <button
                   type="button"
                   onClick={handleBack}
-                  className="inline-flex items-center gap-1 text-xs text-neutral-500 hover:text-neutral-900 transition-colors pr-1"
+                  className="inline-flex items-center gap-1 text-xs text-neutral-600 hover:text-neutral-900 transition-colors pr-1"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Kembali</span>
@@ -219,7 +219,7 @@ export function TasteQuizModal({
               ) : (
                 <Badge
                   variant="outline"
-                  className="gap-1.5 border-neutral-200 bg-neutral-50 text-neutral-700 text-[11px] font-mono tracking-wide"
+                  className="gap-1.5 border-neutral-200 bg-neutral-50 text-neutral-700 text-xs font-mono tracking-wide"
                 >
                   <Sparkles className="w-3 h-3 text-amber-600" />
                   TASTE MATCH
@@ -252,7 +252,7 @@ export function TasteQuizModal({
                 <DialogTitle className="text-xl font-bold tracking-tight text-neutral-900 leading-snug">
                   {STEPS[currentStep].question}
                 </DialogTitle>
-                <DialogDescription className="text-xs text-neutral-500 leading-relaxed">
+                <DialogDescription className="text-xs text-neutral-600 leading-relaxed">
                   {STEPS[currentStep].subtitle}
                 </DialogDescription>
               </>
@@ -261,7 +261,7 @@ export function TasteQuizModal({
                 <DialogTitle className="text-xl font-bold tracking-tight text-neutral-900 leading-snug">
                   Profil Seduhan Ditemukan
                 </DialogTitle>
-                <DialogDescription className="text-xs text-neutral-500 leading-relaxed">
+                <DialogDescription className="text-xs text-neutral-600 leading-relaxed">
                   Berdasarkan preferensimu, berikut acuan filter biji kopi yang
                   ideal untuk cangkir harianmu.
                 </DialogDescription>
@@ -290,7 +290,7 @@ export function TasteQuizModal({
                       <p className="text-sm font-semibold text-neutral-900 group-hover:text-neutral-950">
                         {opt.title}
                       </p>
-                      <p className="text-xs text-neutral-500 truncate mt-0.5">
+                      <p className="text-xs text-neutral-600 truncate mt-0.5">
                         {opt.desc}
                       </p>
                     </div>
@@ -311,7 +311,7 @@ export function TasteQuizModal({
 
                 <div className="grid grid-cols-3 gap-2.5">
                   <div className="p-3 bg-white rounded-md border border-neutral-200/70 shadow-2xs space-y-1">
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 block font-medium">
+                    <span className="text-xs font-mono uppercase tracking-wider text-neutral-400 block font-medium">
                       Sangrai
                     </span>
                     <span className="text-xs font-bold text-neutral-900 block truncate">
@@ -319,7 +319,7 @@ export function TasteQuizModal({
                     </span>
                   </div>
                   <div className="p-3 bg-white rounded-md border border-neutral-200/70 shadow-2xs space-y-1">
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 block font-medium">
+                    <span className="text-xs font-mono uppercase tracking-wider text-neutral-400 block font-medium">
                       Proses
                     </span>
                     <span className="text-xs font-bold text-neutral-900 block truncate">
@@ -327,7 +327,7 @@ export function TasteQuizModal({
                     </span>
                   </div>
                   <div className="p-3 bg-white rounded-md border border-neutral-200/70 shadow-2xs space-y-1">
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 block font-medium">
+                    <span className="text-xs font-mono uppercase tracking-wider text-neutral-400 block font-medium">
                       Acidity
                     </span>
                     <span className="text-xs font-bold text-neutral-900 block truncate">
@@ -336,7 +336,7 @@ export function TasteQuizModal({
                   </div>
                 </div>
 
-                <p className="text-xs text-neutral-500 leading-relaxed">
+                <p className="text-xs text-neutral-600 leading-relaxed">
                   Filter katalog telah disesuaikan agar kamu langsung menemukan
                   biji kopi dengan variabel di atas.
                 </p>

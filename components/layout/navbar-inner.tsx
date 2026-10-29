@@ -150,7 +150,7 @@ export function NavbarInner({
   return (
     <>
       {/* Tokopedia-Style Top Sub-Navbar (Desktop) */}
-      <div className="hidden md:block border-b border-neutral-200/70 bg-neutral-50/90 text-[11px] text-neutral-500 py-1 px-4 sm:px-6 lg:px-8">
+      <div className="hidden md:block border-b border-neutral-200/70 bg-neutral-50/90 text-xs text-neutral-600 py-1 px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1 text-neutral-600 font-medium">
@@ -158,7 +158,7 @@ export function NavbarInner({
               Dikirim ke: <strong className="text-neutral-800">Seluruh Indonesia</strong>
             </span>
             <span className="text-neutral-300">|</span>
-            <span className="text-neutral-500">Transaksi Belanja Kopi 100% Terverifikasi & Terjamin Aman</span>
+            <span className="text-neutral-600">Transaksi Belanja Kopi 100% Terverifikasi & Terjamin Aman</span>
           </div>
           <div className="flex items-center gap-4 text-neutral-600">
             <Link href="/about" className="hover:text-primary-700 transition-colors">
@@ -213,8 +213,8 @@ export function NavbarInner({
             </div>
 
             {/* Trending Keywords Chips (Tokopedia Style) */}
-            <div className="flex items-center gap-2 pl-2 text-[11px] text-neutral-500 overflow-hidden whitespace-nowrap">
-              <span className="text-neutral-400 text-[10px] font-medium shrink-0">
+            <div className="flex items-center gap-2 pl-2 text-xs text-neutral-600 overflow-hidden whitespace-nowrap">
+              <span className="text-neutral-400 text-xs font-medium shrink-0">
                 Pencarian populer:
               </span>
               <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
@@ -259,7 +259,7 @@ export function NavbarInner({
             >
               <Receipt className="w-4 h-4" />
               {activeOrdersCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-amber-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 animate-in zoom-in-50">
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-amber-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1 animate-in zoom-in-50">
                   {activeOrdersCount > 9 ? "9+" : activeOrdersCount}
                 </span>
               )}
@@ -282,7 +282,7 @@ export function NavbarInner({
                 <div className="absolute right-0 top-full mt-1.5 w-72 rounded-md border border-neutral-200 bg-white p-3 shadow-lg z-50 animate-in fade-in-50 zoom-in-95 text-xs space-y-2.5">
                   <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
                     <span className="font-semibold text-neutral-900">Pesan & Layanan</span>
-                    <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-mono">
+                    <span className="text-xs text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-mono">
                       Online
                     </span>
                   </div>
@@ -296,9 +296,9 @@ export function NavbarInner({
                       >
                         <div className="flex items-center justify-between font-medium text-neutral-900">
                           <span>Inquiry Pembeli B2B</span>
-                          <span className="text-[10px] text-amber-700 font-mono">Permintaan Sampel</span>
+                          <span className="text-xs text-amber-700 font-mono">Permintaan Sampel</span>
                         </div>
-                        <p className="text-[11px] text-neutral-500 mt-0.5">
+                        <p className="text-xs text-neutral-600 mt-0.5">
                           Tinjau pesan dan permintaan penawaran grosir dari roastery atau cafe.
                         </p>
                       </Link>
@@ -310,9 +310,9 @@ export function NavbarInner({
                       >
                         <div className="flex items-center justify-between font-medium text-neutral-900">
                           <span>Hubungi Penjual</span>
-                          <span className="text-[10px] text-neutral-400 font-mono">Pesanan</span>
+                          <span className="text-xs text-neutral-400 font-mono">Pesanan</span>
                         </div>
-                        <p className="text-[11px] text-neutral-500 mt-0.5">
+                        <p className="text-xs text-neutral-600 mt-0.5">
                           Kirim pesan WhatsApp langsung ke petani atau roastery penjual via kartu pesanan.
                         </p>
                       </Link>
@@ -326,9 +326,9 @@ export function NavbarInner({
                     >
                       <div className="flex items-center justify-between font-medium text-neutral-900">
                         <span>Customer Care Biji Hub</span>
-                        <span className="text-[10px] text-emerald-700 font-mono">WhatsApp 24/7</span>
+                        <span className="text-xs text-emerald-700 font-mono">WhatsApp 24/7</span>
                       </div>
-                      <p className="text-[11px] text-neutral-500 mt-0.5">
+                      <p className="text-xs text-neutral-600 mt-0.5">
                         Tanyakan seputar pesanan, kurir, atau cara mendaftar toko kopi.
                       </p>
                     </a>
@@ -368,7 +368,7 @@ export function NavbarInner({
                   {isSeller ? (
                     <>
                       <div className="pb-2 border-b border-neutral-100">
-                        <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 block font-semibold">
+                        <span className="text-xs font-mono uppercase tracking-wider text-neutral-400 block font-semibold">
                           Toko Terdaftar
                         </span>
                         <p className="font-bold text-neutral-900 text-sm truncate">
@@ -381,7 +381,7 @@ export function NavbarInner({
                           onClick={() => setStoreOpen(false)}
                           className="flex items-center gap-2 p-1.5 rounded hover:bg-neutral-50 text-neutral-700"
                         >
-                          <Package className="w-3.5 h-3.5 text-neutral-500" />
+                          <Package className="w-3.5 h-3.5 text-neutral-600" />
                           <span>Kelola Produk / Jual Kopi</span>
                         </Link>
                         <Link
@@ -389,7 +389,7 @@ export function NavbarInner({
                           onClick={() => setStoreOpen(false)}
                           className="flex items-center gap-2 p-1.5 rounded hover:bg-neutral-50 text-neutral-700"
                         >
-                          <Receipt className="w-3.5 h-3.5 text-neutral-500" />
+                          <Receipt className="w-3.5 h-3.5 text-neutral-600" />
                           <span>Pesanan Toko Masuk</span>
                         </Link>
                         <Link
@@ -397,7 +397,7 @@ export function NavbarInner({
                           onClick={() => setStoreOpen(false)}
                           className="flex items-center gap-2 p-1.5 rounded hover:bg-neutral-50 text-neutral-700"
                         >
-                          <Store className="w-3.5 h-3.5 text-neutral-500" />
+                          <Store className="w-3.5 h-3.5 text-neutral-600" />
                           <span>Pengaturan Profil Toko</span>
                         </Link>
                       </div>
@@ -407,7 +407,7 @@ export function NavbarInner({
                       <div className="text-primary-700 font-semibold text-xs">
                         <span>Buka Toko Kopi Gratis</span>
                       </div>
-                      <p className="text-[11px] text-neutral-500 leading-relaxed">
+                      <p className="text-xs text-neutral-600 leading-relaxed">
                         Jual hasil panen kopi atau sangrai Anda ke ribuan roastery & pembeli di seluruh Indonesia tanpa biaya komisi.
                       </p>
                       <Link
@@ -455,7 +455,7 @@ export function NavbarInner({
                       onClick={() => setProfileOpen(false)}
                       className="flex items-center gap-2 px-3 py-2 text-xs text-neutral-700 hover:bg-neutral-50 transition-colors"
                     >
-                      <User className="w-3.5 h-3.5 text-neutral-500" />
+                      <User className="w-3.5 h-3.5 text-neutral-600" />
                       <span>Profil Saya</span>
                     </Link>
                     <Link
@@ -463,7 +463,7 @@ export function NavbarInner({
                       onClick={() => setProfileOpen(false)}
                       className="flex items-center gap-2 px-3 py-2 text-xs text-neutral-700 hover:bg-neutral-50 transition-colors"
                     >
-                      <Receipt className="w-3.5 h-3.5 text-neutral-500" />
+                      <Receipt className="w-3.5 h-3.5 text-neutral-600" />
                       <span>Pesanan Saya</span>
                     </Link>
                     {isSeller && (
@@ -548,7 +548,7 @@ export function NavbarInner({
 
                   {/* Kategori Mobile */}
                   <div className="space-y-1">
-                    <p className="text-[11px] font-mono uppercase tracking-wider text-neutral-400 font-semibold px-2">
+                    <p className="text-xs font-mono uppercase tracking-wider text-neutral-400 font-semibold px-2">
                       Kategori Kopi
                     </p>
                     <nav className="flex flex-col gap-0.5">
@@ -574,7 +574,7 @@ export function NavbarInner({
 
                   {/* Menu Akses Cepat */}
                   <div className="space-y-1 pt-3 border-t border-neutral-200/80">
-                    <p className="text-[11px] font-mono uppercase tracking-wider text-neutral-400 font-semibold px-2">
+                    <p className="text-xs font-mono uppercase tracking-wider text-neutral-400 font-semibold px-2">
                       Aktivitas & Akun
                     </p>
 
@@ -593,11 +593,11 @@ export function NavbarInner({
                       className="flex items-center justify-between px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md"
                     >
                       <div className="flex items-center gap-2.5">
-                        <Receipt className="w-4 h-4 text-neutral-500" />
+                        <Receipt className="w-4 h-4 text-neutral-600" />
                         <span>Riwayat Pesanan</span>
                       </div>
                       {activeOrdersCount > 0 && (
-                        <span className="bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                        <span className="bg-amber-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
                           {activeOrdersCount} aktif
                         </span>
                       )}
@@ -608,7 +608,7 @@ export function NavbarInner({
                       onClick={() => setMobileOpen(false)}
                       className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md"
                     >
-                      <Store className="w-4 h-4 text-neutral-500" />
+                      <Store className="w-4 h-4 text-neutral-600" />
                       <span>{storeLabel}</span>
                     </Link>
 
@@ -618,7 +618,7 @@ export function NavbarInner({
                         onClick={() => setMobileOpen(false)}
                         className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md"
                       >
-                        <User className="w-4 h-4 text-neutral-500" />
+                        <User className="w-4 h-4 text-neutral-600" />
                         <span>Profil ({user.firstName})</span>
                       </Link>
                     ) : (
@@ -627,7 +627,7 @@ export function NavbarInner({
                         onClick={() => setMobileOpen(false)}
                         className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md"
                       >
-                        <User className="w-4 h-4 text-neutral-500" />
+                        <User className="w-4 h-4 text-neutral-600" />
                         <span>Masuk ke Akun</span>
                       </Link>
                     )}

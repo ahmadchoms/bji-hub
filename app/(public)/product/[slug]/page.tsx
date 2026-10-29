@@ -134,7 +134,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
       <PageContainer className="space-y-8">
         {/* Breadcrumb */}
         <nav
-          className="flex items-center gap-2 text-xs text-neutral-500 font-mono overflow-x-auto whitespace-nowrap"
+          className="flex items-center gap-2 text-xs text-neutral-600 font-mono overflow-x-auto whitespace-nowrap"
           aria-label="Breadcrumb"
         >
           <Link href="/" className="hover:text-primary-700">
@@ -187,7 +187,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
               </div>
 
               {reviews.length === 0 ? (
-                <div className="p-4 bg-neutral-50 rounded border border-neutral-200 text-xs text-neutral-500 text-center">
+                <div className="p-4 bg-neutral-50 rounded border border-neutral-200 text-xs text-neutral-600 text-center">
                   Belum ada ulasan untuk produk ini. Ulasan akan muncul setelah pembeli menyelesaikan pesanan.
                 </div>
               ) : (
@@ -199,7 +199,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-semibold text-neutral-900">{r.buyerName}</span>
-                        <span className="text-neutral-400 font-mono text-[11px]">
+                        <span className="text-neutral-400 font-mono text-xs">
                           {new Date(r.createdAt).toLocaleDateString("id-ID", {
                             day: "numeric",
                             month: "short",
@@ -243,11 +243,11 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                       )}
 
                       {r.sellerReply && (
-                        <div className="mt-2.5 p-2.5 bg-neutral-100 rounded border-l-2 border-primary-600 text-[11px] space-y-1">
+                        <div className="mt-2.5 p-2.5 bg-neutral-100 rounded border-l-2 border-primary-600 text-xs space-y-1">
                           <p className="font-semibold text-neutral-900">Respon Penjual:</p>
                           <p className="text-neutral-700 leading-relaxed">{r.sellerReply}</p>
                           {r.sellerRepliedAt && (
-                            <p className="text-[10px] text-neutral-400">
+                            <p className="text-xs text-neutral-400">
                               {new Date(r.sellerRepliedAt).toLocaleDateString("id-ID", {
                                 day: "numeric",
                                 month: "short",
@@ -260,7 +260,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
                       {r.isReported && (
                         <div className="pt-1">
-                          <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                          <span className="text-xs text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
                             Dalam Peninjauan Moderasi
                           </span>
                         </div>
@@ -285,11 +285,11 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
             <div className="space-y-6 lg:sticky lg:top-24">
               {/* Badges */}
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-mono text-neutral-500 uppercase tracking-wider">
+                <span className="text-xs font-mono text-neutral-600 uppercase tracking-wider">
                   {listing.category.name}
                 </span>
                 {listing.seller.isVerified && <VerifiedBadge size="sm" />}
-                <span className="text-[10px] font-mono text-neutral-400 bg-neutral-100 px-1.5 py-0.5 rounded border border-neutral-200" title="Kode Unik Lot/SKU">
+                <span className="text-xs font-mono text-neutral-400 bg-neutral-100 px-1.5 py-0.5 rounded border border-neutral-200" title="Kode Unik Lot/SKU">
                   SKU: #{listing.id.slice(-6).toUpperCase()}
                 </span>
               </div>
@@ -312,7 +312,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                         <strong>{reviewStats.average.toFixed(1)}</strong> ({reviewStats.count} ulasan)
                       </span>
                     ) : (
-                      <span className="text-neutral-500">Belum ada ulasan</span>
+                      <span className="text-neutral-600">Belum ada ulasan</span>
                     )}
                   </div>
                 </div>
@@ -327,7 +327,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                   <div className="w-full border-t border-neutral-300" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-neutral-500 font-mono">
+                  <span className="bg-white px-2 text-neutral-600 font-mono">
                     atau negosiasi langsung
                   </span>
                 </div>
@@ -365,7 +365,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                       <VerifiedBadge size="sm" showLabel={false} />
                     )}
                   </div>
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-xs text-neutral-600">
                     {listing.seller.city}, {listing.seller.province}
                   </p>
                 </div>

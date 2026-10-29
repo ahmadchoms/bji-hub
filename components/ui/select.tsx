@@ -107,7 +107,7 @@ function SelectLabel({
     <SelectPrimitive.GroupLabel
       data-slot="select-label"
       className={cn(
-        "px-2.5 py-1.5 text-[11px] font-semibold text-neutral-400 tracking-wider uppercase",
+        "px-2.5 py-1.5 text-xs font-semibold text-neutral-400 tracking-wider uppercase",
         className,
       )}
       {...props}
@@ -167,7 +167,7 @@ function SelectScrollUpButton({
     <SelectPrimitive.ScrollUpArrow
       data-slot="select-scroll-up-button"
       className={cn(
-        "top-0 z-10 flex w-full cursor-default items-center justify-center bg-surface-base py-1 text-neutral-500 [&_svg:not([class*='size-'])]:size-4",
+        "top-0 z-10 flex w-full cursor-default items-center justify-center bg-surface-base py-1 text-neutral-600 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}
@@ -185,7 +185,7 @@ function SelectScrollDownButton({
     <SelectPrimitive.ScrollDownArrow
       data-slot="select-scroll-down-button"
       className={cn(
-        "bottom-0 z-10 flex w-full cursor-default items-center justify-center bg-surface-base py-1 text-neutral-500 [&_svg:not([class*='size-'])]:size-4",
+        "bottom-0 z-10 flex w-full cursor-default items-center justify-center bg-surface-base py-1 text-neutral-600 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}

@@ -79,12 +79,12 @@ export async function CatalogFeed({ params }: { params: CatalogParams }) {
             </p>
             {params.q && (
               <div className="mt-3.5 flex flex-wrap items-center justify-center gap-1.5 max-w-md mx-auto">
-                <span className="text-[11px] text-neutral-500 w-full mb-0.5">Saran pencarian:</span>
+                <span className="text-xs text-neutral-600 w-full mb-0.5">Saran pencarian:</span>
                 {["Gayo Bourbon", "Kintamani", "Anaerobic", "Natural", "Robusta", "Honey"].map((suggestion) => (
                   <Link
                     key={suggestion}
                     href={`/?q=${encodeURIComponent(suggestion)}`}
-                    className="px-2.5 py-1 text-[11px] rounded-full border border-neutral-300 bg-white hover:bg-neutral-100 text-neutral-700 transition-colors"
+                    className="px-2.5 py-1 text-xs rounded-full border border-neutral-300 bg-white hover:bg-neutral-100 text-neutral-700 transition-colors"
                   >
                     {suggestion}
                   </Link>

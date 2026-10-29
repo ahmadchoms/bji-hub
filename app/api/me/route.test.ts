@@ -18,7 +18,7 @@ describe("GET /api/me (PERF-1)", () => {
     const json = await res.json();
     expect(json).toEqual({
       authenticated: false,
-      role: "buyer",
+      role: "guest",
       user: null,
       storeName: null,
       activeOrdersCount: 0,

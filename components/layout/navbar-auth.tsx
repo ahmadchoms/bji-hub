@@ -13,76 +13,25 @@ import {
 } from "lucide-react";
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { logoutAction } from "@/actions/auth.actions";
-import type { Role } from "@/lib/auth/roles";
+import {
+  useNavbarAuth,
+  clearCachedAuth,
+  type NavbarAuthState,
+} from "@/lib/auth/client-session";
 
-export interface NavbarAuthState {
-  isLoading: boolean;
-  authenticated: boolean;
-  role: Role;
-  user: {
-    firstName: string;
-    avatarUrl?: string;
-  } | null;
-  storeName: string | null;
-  activeOrdersCount: number;
-  unreadCount: number;
-}
-
-export function useNavbarAuth(): NavbarAuthState {
-  const [state, setState] = useState<NavbarAuthState>({
-    isLoading: true,
-    authenticated: false,
-    role: "guest",
-    user: null,
-    storeName: null,
-    activeOrdersCount: 0,
-    unreadCount: 0,
-  });
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    fetch("/api/me", {
-      credentials: "same-origin",
-      signal: controller.signal,
-      headers: { credentials: "same-origin" },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch session");
-        return res.json();
-      })
-      .then((data) => {
-        setState({
-          isLoading: false,
-          authenticated: Boolean(data.authenticated),
-          role: (data.role as Role) || (data.authenticated ? "buyer" : "guest"),
-          user: data.user || null,
-          storeName: data.storeName || null,
-          activeOrdersCount: Number(data.activeOrdersCount) || 0,
-          unreadCount: Number(data.unreadCount) || 0,
-        });
-      })
-      .catch((err) => {
-        if (err.name === "AbortError") return;
-        setState((prev) => ({ ...prev, isLoading: false }));
-      });
-
-    return () => controller.abort();
-  }, []);
-
-  return state;
-}
+export { useNavbarAuth, clearCachedAuth, type NavbarAuthState };
 
 function handleClientLogout() {
   if (typeof window !== "undefined") {
     try {
+      clearCachedAuth();
       localStorage.removeItem("biji_wishlist_items");
       localStorage.removeItem("biji_cart_items");
       localStorage.removeItem("biji_compare_items");
       window.dispatchEvent(new Event("biji-wishlist-changed"));
       window.dispatchEvent(new Event("biji-cart-changed"));
     } catch {
-      // ignore storage errors
+      // ignore: local/session storage cleanup failure
     }
   }
 }

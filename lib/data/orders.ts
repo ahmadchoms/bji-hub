@@ -464,6 +464,30 @@ export async function getAllOrders(): Promise<Order[]> {
   return [...mockOrders];
 }
 
+export async function countActiveOrdersByBuyer(
+  buyerId: string,
+): Promise<number> {
+  const pool = getPool();
+  if (!pool) {
+    return mockOrders.filter(
+      (o) =>
+        o.buyerId === buyerId &&
+        (o.status === "paid" || o.status === "shipped"),
+    ).length;
+  }
+  try {
+    const res = await pool.query(
+      `SELECT COUNT(*)::int AS n FROM public.orders
+       WHERE buyer_id = $1 AND status IN ('paid','shipped')`,
+      [buyerId],
+    );
+    return res.rows[0]?.n ?? 0;
+  } catch (err) {
+    logger.warn("orders.count_active_failed", { buyerId, error: err });
+    return 0;
+  }
+}
+
 export async function getOrdersByBuyer(
   buyerId?: string,
   buyerEmail?: string,

@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { getSellerById } from "@/lib/data";
 import { getUnreadNotificationCount } from "@/lib/data/notifications";
-import { getOrdersByBuyer } from "@/lib/data/orders";
-import { createClient } from "@/lib/supabase/server";
+import { countActiveOrdersByBuyer } from "@/lib/data/orders";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +15,7 @@ export async function GET() {
       return NextResponse.json(
         {
           authenticated: false,
-          role: "buyer" as const,
+          role: "guest" as const,
           user: null,
           storeName: null,
           activeOrdersCount: 0,
@@ -25,76 +25,49 @@ export async function GET() {
       );
     }
 
-    let storeName: string | null = null;
-    if (session.sellerId) {
-      try {
-        const seller = await getSellerById(session.sellerId);
-        if (seller) storeName = seller.businessName;
-      } catch {
-        // ignore
-      }
-    }
+    // Parallel fetch: seller profile, active orders count, and notifications
+    const [seller, activeOrdersCount, unreadCount] = await Promise.all([
+      session.sellerId
+        ? getSellerById(session.sellerId).catch((err) => {
+            // ignore: seller profile may not exist yet or connection timed out
+            logger.warn("me.get_seller_failed", { sellerId: session.sellerId, error: err });
+            return null;
+          })
+        : Promise.resolve(null),
+      countActiveOrdersByBuyer(session.userId).catch((err) => {
+        // ignore: non-blocking order count calculation failure
+        logger.warn("me.count_orders_failed", { userId: session.userId, error: err });
+        return 0;
+      }),
+      getUnreadNotificationCount(session.userId).catch((err) => {
+        // ignore: non-blocking notification count calculation failure
+        logger.warn("me.count_notifications_failed", { userId: session.userId, error: err });
+        return 0;
+      }),
+    ]);
 
-    let userName = session.email?.split("@")[0] || "User";
-    let userAvatarUrl = "";
-
-    if (
-      process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    ) {
-      try {
-        const supabase = await createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (user) {
-          userName =
-            ((user.user_metadata?.name ||
-              user.user_metadata?.full_name ||
-              user.email?.split("@")[0]) as string) || userName;
-          userAvatarUrl = (user.user_metadata?.avatar_url as string) || "";
-        }
-      } catch {
-        // ignore
-      }
-    }
-
-    let activeOrdersCount = 0;
-    try {
-      const orders = await getOrdersByBuyer(session.userId);
-      activeOrdersCount = orders.filter(
-        (o) => o.status === "paid" || o.status === "shipped"
-      ).length;
-    } catch {
-      // ignore
-    }
-
-    let unreadCount = 0;
-    try {
-      unreadCount = await getUnreadNotificationCount(session.userId);
-    } catch {
-      // ignore
-    }
+    const firstName = session.name || session.email?.split("@")[0] || "User";
 
     return NextResponse.json(
       {
         authenticated: true,
         role: session.role || "buyer",
         user: {
-          firstName: userName,
-          avatarUrl: userAvatarUrl || undefined,
+          firstName,
+          avatarUrl: undefined, // Avoid hotlinking Google avatars to protect buyer IP/privacy
         },
-        storeName,
+        storeName: seller?.businessName ?? null,
         activeOrdersCount,
         unreadCount,
       },
       { headers: { "Cache-Control": "private, no-store, max-age=0" } }
     );
-  } catch {
+  } catch (error) {
+    logger.error("me.route_unhandled_failure", error);
     return NextResponse.json(
       {
         authenticated: false,
-        role: "buyer" as const,
+        role: "guest" as const,
         user: null,
         storeName: null,
         activeOrdersCount: 0,

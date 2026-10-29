@@ -3,7 +3,7 @@ import * as Sentry from "@sentry/nextjs";
 type LogLevel = "info" | "warn" | "error";
 
 const SENSITIVE_KEY_PATTERN =
-  /password|token|secret|apiKey|authorization|cookie|key|credential|pin|cvv|phone|telephone|rekening|accountNumber/i;
+  /email|password|token|secret|apiKey|authorization|cookie|key|credential|pin|cvv|phone|telephone|rekening|accountNumber/i;
 
 function isPlainObject(val: unknown): val is Record<string, unknown> {
   return typeof val === "object" && val !== null && !Array.isArray(val) && !(val instanceof Error);

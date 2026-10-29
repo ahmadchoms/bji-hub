@@ -21,6 +21,8 @@ describe("Structured Logger", () => {
       userPassword: "password456",
       phoneNumber: "081234567890",
       accountNumber: "123456789",
+      email: "buyer@example.com",
+      authorization: "Bearer secret-token",
       normalField: "public-val",
     });
     expect(consoleSpy).toHaveBeenCalled();
@@ -30,6 +32,8 @@ describe("Structured Logger", () => {
     expect(loggedContext.userPassword).toBe("[REDACTED]");
     expect(loggedContext.phoneNumber).toBe("[REDACTED]");
     expect(loggedContext.accountNumber).toBe("[REDACTED]");
+    expect(loggedContext.email).toBe("[REDACTED]");
+    expect(loggedContext.authorization).toBe("[REDACTED]");
     expect(loggedContext.normalField).toBe("public-val");
     consoleSpy.mockRestore();
   });

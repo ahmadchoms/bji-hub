@@ -13,7 +13,10 @@ export async function middleware(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const isProtected =
-    pathname.startsWith("/admin") || pathname.startsWith("/dashboard");
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/orders") ||
+    pathname.startsWith("/profile");
 
   if (!url || !key) {
     const hasMock =
@@ -56,6 +59,14 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|monitoring|api/webhooks|api/cron|.*\\.(?:svg|png|jpg|jpeg|webp|gif|ico)$).*)",
+    "/admin/:path*",
+    "/dashboard/:path*",
+    "/orders/:path*",
+    "/profile/:path*",
+    "/checkout/:path*",
+    "/auth/:path*",
+    "/login",
+    "/register",
+    "/reset-password",
   ],
 };

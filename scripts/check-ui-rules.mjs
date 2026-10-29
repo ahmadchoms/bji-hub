@@ -1,30 +1,54 @@
-import { execSync } from "child_process";
+import fs from "fs";
+import path from "path";
 
 console.log("Checking UI accessibility rules...");
 let failed = false;
 
-function check(pattern, description) {
-  try {
-    const output = execSync(`git grep -E "${pattern}" -- "app/*.tsx" "components/*.tsx"`, {
-      encoding: "utf8",
-      stdio: ["pipe", "pipe", "ignore"],
-    });
-    if (output.trim()) {
-      console.error(`❌ Found violations for: ${description}`);
-      console.error(output.trim().split("\n").slice(0, 5).join("\n"));
-      failed = true;
+function walk(dir, fileList = []) {
+  if (!fs.existsSync(dir)) return fileList;
+  for (const file of fs.readdirSync(dir)) {
+    const full = path.join(dir, file);
+    if (fs.statSync(full).isDirectory()) {
+      if (file !== "node_modules" && file !== ".next" && file !== ".git") {
+        walk(full, fileList);
+      }
+    } else if (file.endsWith(".tsx")) {
+      fileList.push(full);
     }
-  } catch {
-    // Exit code 1 from git grep means 0 matches, which is what we want!
   }
+  return fileList;
 }
 
-check("text-\\[1[01]px\\]", "Text size <= 11px (use text-xs >= 12px)");
-check("text-neutral-500", "Low contrast text-neutral-500 (use text-neutral-600)");
+const files = [...walk("app"), ...walk("components")];
+
+for (const file of files) {
+  const content = fs.readFileSync(file, "utf8");
+
+  // Rule 1: Text size <= 11px
+  if (/text-\[1[01]px\]/.test(content)) {
+    console.error(`❌ Found text size <= 11px in ${file} (use text-xs >= 12px)`);
+    failed = true;
+  }
+
+  // Rule 2: Low contrast text-neutral-500
+  if (/text-neutral-500/.test(content)) {
+    console.error(`❌ Found low-contrast text-neutral-500 in ${file} (use text-neutral-600)`);
+    failed = true;
+  }
+
+  // Rule 3: Small buttons without coarse pointer expansion
+  const buttonMatches = content.match(/<button[^>]*>/gs) || [];
+  for (const btn of buttonMatches) {
+    if (/\b(h-7|h-8|size-7|size-8)\b/.test(btn) && !btn.includes("coarse:")) {
+      console.error(`❌ Found button with small touch target lacking coarse variant in ${file}:\n   ${btn.replace(/\s+/g, " ").slice(0, 80)}`);
+      failed = true;
+    }
+  }
+}
 
 if (failed) {
   console.error("\nUI rule check failed.");
   process.exit(1);
 } else {
-  console.log("✅ All UI accessibility rules passed!");
+  console.log(`✅ All UI accessibility rules passed across ${files.length} tsx files!`);
 }

@@ -165,7 +165,7 @@ export function ProductPurchaseBox({ listing }: ProductPurchaseBoxProps) {
                 type="button"
                 onClick={handleDecrease}
                 disabled={quantity <= (listing.minOrderQty || 1)}
-                className="w-8 h-8 flex items-center justify-center bg-neutral-100 hover:bg-neutral-200 text-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="w-8 h-8 coarse:w-11 coarse:h-11 flex items-center justify-center bg-neutral-100 hover:bg-neutral-200 text-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 title="Kurangi jumlah"
               >
                 <Minus className="w-3.5 h-3.5" />
@@ -177,7 +177,7 @@ export function ProductPurchaseBox({ listing }: ProductPurchaseBoxProps) {
                 type="button"
                 onClick={handleIncrease}
                 disabled={quantity >= maxStock}
-                className="w-8 h-8 flex items-center justify-center bg-neutral-100 hover:bg-neutral-200 text-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="w-8 h-8 coarse:w-11 coarse:h-11 flex items-center justify-center bg-neutral-100 hover:bg-neutral-200 text-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 title="Tambah jumlah"
               >
                 <Plus className="w-3.5 h-3.5" />

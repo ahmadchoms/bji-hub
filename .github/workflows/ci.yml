@@ -39,6 +39,9 @@ jobs:
       - name: ESLint
         run: npm run lint
 
+      - name: UI Accessibility Rules Check
+        run: npm run lint:ui
+
       - name: Audit Production Dependencies
         run: npm audit --omit=dev --audit-level=high
         continue-on-error: true

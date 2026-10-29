@@ -40,7 +40,7 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "flex w-fit items-center justify-between gap-2 rounded-md border border-neutral-300 bg-surface-base py-2 pr-3 pl-3.5 text-sm whitespace-nowrap transition-all duration-150 outline-none select-none hover:border-neutral-300 focus-visible:border-primary-600 focus-visible:ring-2 focus-visible:ring-primary-600/20 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-status-error data-placeholder:text-neutral-400 data-[size=default]:h-10 data-[size=sm]:h-8 data-[size=sm]:rounded-md *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 text-neutral-800 font-medium",
+        "flex w-fit items-center justify-between gap-2 rounded-md border border-neutral-300 bg-surface-base py-2 pr-3 pl-3.5 text-sm whitespace-nowrap transition-all duration-150 outline-none select-none hover:border-neutral-300 focus-visible:border-primary-600 focus-visible:ring-2 focus-visible:ring-primary-600/20 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-status-error data-placeholder:text-neutral-400 data-[size=default]:h-10 data-[size=default]:coarse:h-11 data-[size=sm]:h-8 data-[size=sm]:coarse:h-11 data-[size=sm]:rounded-md *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 text-neutral-800 font-medium",
         className,
       )}
       {...props}
@@ -124,7 +124,7 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "relative flex w-full cursor-pointer items-center justify-between rounded-md px-2.5 py-2 text-xs font-medium text-neutral-700 outline-none select-none transition-colors hover:bg-neutral-100/80 focus:bg-primary-50 focus:text-primary-900 data-highlighted:bg-primary-50 data-highlighted:text-primary-900 data-disabled:pointer-events-none data-disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "relative flex w-full cursor-pointer items-center justify-between rounded-md px-2.5 py-2 coarse:py-3 coarse:min-h-11 text-xs font-medium text-neutral-700 outline-none select-none transition-colors hover:bg-neutral-100/80 focus:bg-primary-50 focus:text-primary-900 data-highlighted:bg-primary-50 data-highlighted:text-primary-900 data-disabled:pointer-events-none data-disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}

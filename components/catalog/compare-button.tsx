@@ -36,7 +36,7 @@ export function CompareButton({
         onClick={toggle}
         aria-label={active ? "Hapus dari perbandingan" : "Bandingkan lot ini"}
         className={cn(
-          "size-7 rounded-sm flex items-center justify-center transition-colors text-xs font-mono",
+          "size-7 coarse:size-11 rounded-sm flex items-center justify-center transition-colors text-xs font-mono",
           active
             ? "bg-neutral-900 text-white"
             : "bg-white/90 text-neutral-600 hover:text-neutral-900 hover:bg-white border border-neutral-200 shadow-2xs",

@@ -25,12 +25,12 @@ const buttonVariants = cva(
       },
       size: {
         default:
-          "h-10 min-h-[40px] px-4 py-2 text-xs font-semibold tracking-wide gap-2",
-        md: "h-10 min-h-[40px] px-4 py-2 text-xs font-semibold tracking-wide gap-2",
-        sm: "h-8 min-h-[32px] px-3 text-xs gap-1.5",
+          "h-10 min-h-[40px] coarse:min-h-11 px-4 py-2 text-xs font-semibold tracking-wide gap-2",
+        md: "h-10 min-h-[40px] coarse:min-h-11 px-4 py-2 text-xs font-semibold tracking-wide gap-2",
+        sm: "h-8 min-h-[32px] coarse:h-11 coarse:min-h-11 px-3 text-xs gap-1.5",
         lg: "h-11 min-h-[44px] px-5 text-sm gap-2.5",
-        icon: "size-10 min-w-[40px] min-h-[40px]",
-        "icon-sm": "size-8 min-w-[32px] min-h-[32px]",
+        icon: "size-10 min-w-[40px] min-h-[40px] coarse:size-11",
+        "icon-sm": "size-8 min-w-[32px] min-h-[32px] coarse:size-11",
         "icon-lg": "size-11 min-w-[44px] min-h-[44px]",
       },
     },

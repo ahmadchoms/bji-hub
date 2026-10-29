@@ -62,7 +62,7 @@ export function WishlistButton({
         aria-label={saved ? "Hapus dari favorit" : "Simpan ke favorit"}
         title={saved ? "Hapus dari kopi favorit" : "Simpan ke kopi favorit"}
         className={cn(
-          "size-7 rounded-sm flex items-center justify-center transition-all duration-150 text-xs",
+          "size-7 coarse:size-11 rounded-sm flex items-center justify-center transition-all duration-150 text-xs",
           saved
             ? "bg-rose-50 text-rose-600 border border-rose-200 shadow-2xs"
             : "bg-white/90 text-neutral-600 hover:text-rose-600 hover:bg-white border border-neutral-200 shadow-2xs",

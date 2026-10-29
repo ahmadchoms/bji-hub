@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fraunces, Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
+import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/shared/providers";
 import { PageProgressBar } from "@/components/shared/page-progress-bar";
@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/sonner";
 const fraunces = Fraunces({
   subsets: ["latin"],
   variable: "--font-display",
-  weight: ["500", "600", "700"],
+  weight: ["600", "700"],
   display: "swap",
 });
 
@@ -19,23 +19,16 @@ const jakarta = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-mono",
-  weight: ["500", "700"],
-  display: "swap",
-});
-
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://bijihub.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: "Biji Hub — Direktori & Katalog Kopi Specialty Indonesia",
+    default: "Biji Hub — Marketplace Kopi Specialty Indonesia",
     template: "%s | Biji Hub",
   },
   description:
-    "Direktori kopi specialty Indonesia. Hubungkan petani, roastery, dan processor lokal langsung dengan kedai kopi dan penikmat kopi tanpa komisi.",
+    "Marketplace kopi specialty Indonesia yang mengutamakan kesegaran sangrai, ketertelusuran asal-usul, dan eksplorasi profil rasa terbaik nusantara.",
   keywords: [
     "kopi specialty",
     "biji kopi indonesia",
@@ -43,11 +36,11 @@ export const metadata: Metadata = {
     "roasted beans",
     "roastery lokal",
     "petani kopi nusantara",
-    "direktori kopi",
+    "marketplace kopi",
     "biji hub",
   ],
   openGraph: {
-    title: "Biji Hub — Direktori & Katalog Kopi Specialty Indonesia",
+    title: "Biji Hub — Marketplace Kopi Specialty Indonesia",
     description:
       "Temukan biji kopi specialty terbaik langsung dari roastery dan kebun kopi lokal se-Indonesia.",
     type: "website",
@@ -56,7 +49,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Biji Hub — Direktori & Katalog Kopi Specialty Indonesia",
+    title: "Biji Hub — Marketplace Kopi Specialty Indonesia",
     description:
       "Temukan biji kopi specialty terbaik langsung dari roastery dan kebun kopi lokal se-Indonesia.",
   },
@@ -70,7 +63,7 @@ export default function RootLayout({
   return (
     <html
       lang="id"
-      className={`${fraunces.variable} ${jakarta.variable} ${spaceGrotesk.variable}`}
+      className={`${fraunces.variable} ${jakarta.variable}`}
     >
       <body className="font-sans bg-background text-foreground antialiased min-h-screen">
         <Providers>

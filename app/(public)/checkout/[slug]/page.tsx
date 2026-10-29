@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { getListingBySlug } from "@/lib/data";
 import { PageContainer } from "@/components/layout/page-container";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
+import { SnapLoader } from "@/components/payment/snap-loader";
 import { createClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth/session";
 import { getOrdersByBuyer } from "@/lib/data/orders";
@@ -215,6 +216,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
           <span className="text-neutral-900 font-medium">Checkout</span>
         </nav>
 
+        <SnapLoader />
         <CheckoutForm
           listing={listing}
           initialBuyer={initialBuyer}

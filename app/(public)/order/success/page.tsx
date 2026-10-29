@@ -28,6 +28,7 @@ import { OrderPrintModal } from "@/components/order/order-print-modal";
 import { OrderStatusStepper } from "@/components/order/order-status-stepper";
 import { ResumePaymentButton } from "@/components/order/resume-payment-button";
 import { PaymentStatusPoller } from "@/components/order/payment-status-poller";
+import { SnapLoader } from "@/components/payment/snap-loader";
 import { buildOrderPaidNotificationUrl } from "@/lib/notifications";
 
 export const metadata: Metadata = {
@@ -105,6 +106,7 @@ export default async function OrderSuccessPage({
   return (
     <div className="py-8 md:py-12 bg-neutral-50/50 min-h-[80vh]">
       <PageContainer className="max-w-3xl mx-auto space-y-6">
+        <SnapLoader />
         {/* Header Status Card */}
         <div className="bg-white border border-neutral-300 rounded-lg p-6 md:p-8 text-center space-y-4 shadow-xs">
           <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">

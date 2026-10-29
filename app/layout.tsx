@@ -4,7 +4,6 @@ import "./globals.css";
 import { Providers } from "@/components/shared/providers";
 import { PageProgressBar } from "@/components/shared/page-progress-bar";
 import { Toaster } from "@/components/ui/sonner";
-import Script from "next/script";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -63,14 +62,6 @@ export const metadata: Metadata = {
   },
 };
 
-const snapScriptUrl =
-  process.env.MIDTRANS_IS_PRODUCTION === "true"
-    ? "https://app.midtrans.com/snap/snap.js"
-    : "https://app.sandbox.midtrans.com/snap/snap.js";
-const clientKey =
-  process.env.MIDTRANS_CLIENT_KEY ||
-  process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY;
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -87,13 +78,6 @@ export default function RootLayout({
           {children}
           <Toaster position="top-right" />
         </Providers>
-        {clientKey && (
-          <Script
-            src={snapScriptUrl}
-            data-client-key={clientKey}
-            strategy="afterInteractive"
-          />
-        )}
       </body>
     </html>
   );

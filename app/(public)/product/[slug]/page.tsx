@@ -124,6 +124,15 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
         name: listing.seller.businessName,
       },
     },
+    ...(listing.ratingCount && listing.ratingCount > 0 && listing.ratingAvg
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: listing.ratingAvg,
+            reviewCount: listing.ratingCount,
+          },
+        }
+      : {}),
   };
 
   return (

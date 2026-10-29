@@ -90,6 +90,8 @@ export function toListing(row: ListingRow): ListingWithRelations {
     status: row.status,
     isBoosted: row.isBoosted,
     boostUntil: row.boostUntil ? iso(row.boostUntil) : null,
+    ratingAvg: (row as { ratingAvg?: unknown }).ratingAvg ? num((row as { ratingAvg?: unknown }).ratingAvg as Prisma.Decimal) : null,
+    ratingCount: (row as { ratingCount?: number }).ratingCount ?? 0,
     createdAt: iso(row.createdAt),
     seller: toSeller(row.seller),
     category: toCategory(row.category),

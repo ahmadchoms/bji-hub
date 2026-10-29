@@ -47,6 +47,16 @@ function buildWhere(filters: ListingFilters): Prisma.ListingWhereInput {
     taste.roastLevel = filters.roastLevel;
   if (typeof filters.minCuppingScore === "number" && !Number.isNaN(filters.minCuppingScore))
     taste.cuppingScore = { gte: filters.minCuppingScore };
+
+  if (filters.sort === "freshest") {
+    taste.roastDate = { lte: new Date() };
+    where.category = {
+      is: {
+        slug: { not: "green-beans" },
+      },
+    };
+  }
+
   if (Object.keys(taste).length > 0) where.tasteProfile = { is: taste };
 
   if (filters.isVerified) where.seller = { is: { isVerified: true } };
@@ -78,9 +88,25 @@ function buildOrderBy(
 ): Prisma.ListingOrderByWithRelationInput[] {
   if (sort === "price_asc") return [{ price: "asc" }, { id: "asc" }];
   if (sort === "price_desc") return [{ price: "desc" }, { id: "asc" }];
-  if (sort === "freshest") return [{ tasteProfile: { roastDate: "desc" } }, { createdAt: "desc" }];
-  if (sort === "cupping_desc") return [{ tasteProfile: { cuppingScore: "desc" } }, { createdAt: "desc" }];
-  if (sort === "rating_desc") return [{ seller: { isVerified: "desc" } }, { createdAt: "desc" }];
+  if (sort === "freshest") {
+    return [
+      { tasteProfile: { roastDate: "desc" } } as Prisma.ListingOrderByWithRelationInput,
+      { createdAt: "desc" },
+    ];
+  }
+  if (sort === "cupping_desc") {
+    return [
+      { tasteProfile: { cuppingScore: "desc" } } as Prisma.ListingOrderByWithRelationInput,
+      { createdAt: "desc" },
+    ];
+  }
+  if (sort === "rating_desc") {
+    return [
+      { ratingAvg: "desc" } as unknown as Prisma.ListingOrderByWithRelationInput,
+      { ratingCount: "desc" } as unknown as Prisma.ListingOrderByWithRelationInput,
+      { createdAt: "desc" },
+    ];
+  }
   if (sort === "popular") return [{ minOrderQty: "asc" }, { id: "asc" }];
   return [{ createdAt: "desc" }, { id: "asc" }];
 }

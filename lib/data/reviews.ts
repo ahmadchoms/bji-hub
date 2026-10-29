@@ -1,6 +1,7 @@
 import { Pool } from "pg";
 import { logger } from "@/lib/logger";
 import type { Review } from "@/types";
+import { mockListings } from "@/lib/mock/data";
 
 let poolInstance: Pool | null = null;
 function getPool(): Pool | null {
@@ -74,7 +75,51 @@ export async function createReview(data: {
   }
 
   mockReviews.unshift(newReview);
+  await syncListingRating(data.listingId);
   return newReview;
+}
+
+export async function syncListingRating(listingId: string): Promise<void> {
+  const pool = getPool();
+  if (pool) {
+    try {
+      await pool.query(
+        `WITH agg AS (
+          SELECT
+            ROUND(AVG(rating)::numeric, 2) AS avg_rating,
+            COUNT(*)::int AS cnt
+          FROM public.reviews
+          WHERE listing_id = $1 AND (moderation_status = 'approved' OR moderation_status IS NULL)
+        )
+        UPDATE public.listings l
+        SET rating_avg = agg.avg_rating, rating_count = agg.cnt
+        FROM agg
+        WHERE l.id = $1`,
+        [listingId],
+      );
+    } catch (e) {
+      logger.error("reviews.sync_rating_failed", e, { listingId });
+    }
+  }
+
+  const activeReviews = mockReviews.filter(
+    (r) => r.listingId === listingId && r.moderationStatus !== "hidden_pending_review",
+  );
+  const count = activeReviews.length;
+  const avg =
+    count > 0
+      ? Number(
+          (
+            activeReviews.reduce((sum, r) => sum + r.rating, 0) / count
+          ).toFixed(2),
+        )
+      : null;
+
+  const target = mockListings.find((l) => l.id === listingId);
+  if (target) {
+    target.ratingAvg = avg;
+    target.ratingCount = count;
+  }
 }
 
 export async function getReviewByOrderAndListing(
@@ -321,6 +366,9 @@ export async function reportReview(
          WHERE id = $2`,
         [cleanReason, reviewId],
       );
+      if (reviewRes.rows[0]?.listing_id) {
+        await syncListingRating(reviewRes.rows[0].listing_id);
+      }
     } else {
       await pool.query(
         `UPDATE public.reviews
@@ -365,6 +413,7 @@ export async function reportReview(
   r.reportReason = cleanReason;
   if (distinctReporters >= 3) {
     r.moderationStatus = "hidden_pending_review";
+    await syncListingRating(r.listingId);
   }
 
   return true;

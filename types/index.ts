@@ -122,6 +122,8 @@ export interface Listing {
   status: "active" | "draft" | "archived" | "suspended";
   isBoosted: boolean;
   boostUntil?: string | null;
+  ratingAvg?: number | null;
+  ratingCount?: number;
   createdAt: string;
 }
 

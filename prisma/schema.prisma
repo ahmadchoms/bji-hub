@@ -133,6 +133,8 @@ model Listing {
   status      ListingStatus @default(draft)
   isBoosted   Boolean       @default(false)
   boostUntil  DateTime?
+  ratingAvg   Decimal?      @map("rating_avg") @db.Decimal(3, 2)
+  ratingCount Int           @default(0) @map("rating_count")
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
@@ -149,6 +151,7 @@ model Listing {
   @@index([sellerId])
   @@index([categoryId])
   @@index([isBoosted, boostUntil])
+  @@index([ratingAvg(sort: Desc), ratingCount(sort: Desc)])
   @@map("listings")
 }
 

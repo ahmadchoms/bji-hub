@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Star } from "lucide-react";
 import { ListingWithRelations } from "@/types";
 import { cn } from "@/lib/utils";
 import { formatRupiah } from "@/components/shared/price-text";
@@ -165,6 +166,15 @@ export function ListingCard({
               </span>
             )}
           </div>
+          {listing.ratingCount && listing.ratingCount >= 3 && listing.ratingAvg ? (
+            <div className="flex items-center gap-1 text-xs font-mono font-medium text-neutral-800">
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" aria-hidden="true" />
+              <span>{listing.ratingAvg.toFixed(1)}</span>
+              <span className="text-neutral-600 font-sans">({listing.ratingCount})</span>
+            </div>
+          ) : listing.ratingCount && listing.ratingCount > 0 ? (
+            <div className="text-xs text-neutral-600 italic">Belum cukup ulasan</div>
+          ) : null}
         </div>
       </Link>
     </li>

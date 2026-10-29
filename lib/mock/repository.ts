@@ -187,22 +187,41 @@ async function findListings(
     });
   }
 
+  // Filter out green beans and null/future roast dates when freshest sort is selected (N4)
+  if (filters.sort === "freshest") {
+    const nowTime = Date.now();
+    results = results.filter((item) => {
+      if (item.category?.slug === "green-beans") return false;
+      if (!item.tasteProfile?.roastDate) return false;
+      const roastTime = new Date(item.tasteProfile.roastDate).getTime();
+      return !isNaN(roastTime) && roastTime <= nowTime;
+    });
+  }
+
   // Sort by requested criteria only — boost placement is handled by getCatalogFeed.
   results.sort((a, b) => {
     if (filters.sort === "price_asc") return a.price - b.price;
     if (filters.sort === "price_desc") return b.price - a.price;
     if (filters.sort === "freshest") {
-      const dateA = a.tasteProfile?.roastDate ? new Date(a.tasteProfile.roastDate).getTime() : 0;
-      const dateB = b.tasteProfile?.roastDate ? new Date(b.tasteProfile.roastDate).getTime() : 0;
-      return dateB - dateA;
+      const dateA = a.tasteProfile?.roastDate ? new Date(a.tasteProfile.roastDate).getTime() : -1;
+      const dateB = b.tasteProfile?.roastDate ? new Date(b.tasteProfile.roastDate).getTime() : -1;
+      if (dateB !== dateA) return dateB - dateA;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     }
     if (filters.sort === "cupping_desc") {
-      return (b.tasteProfile?.cuppingScore || 0) - (a.tasteProfile?.cuppingScore || 0);
+      const scoreA = typeof a.tasteProfile?.cuppingScore === "number" ? a.tasteProfile.cuppingScore : -1;
+      const scoreB = typeof b.tasteProfile?.cuppingScore === "number" ? b.tasteProfile.cuppingScore : -1;
+      if (scoreB !== scoreA) return scoreB - scoreA;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     }
     if (filters.sort === "rating_desc") {
-      const rateA = Number((a.seller as { rating?: number }).rating || (a.seller.isVerified ? 5 : 4));
-      const rateB = Number((b.seller as { rating?: number }).rating || (b.seller.isVerified ? 5 : 4));
-      return rateB - rateA;
+      const rateA = typeof a.ratingAvg === "number" ? a.ratingAvg : -1;
+      const rateB = typeof b.ratingAvg === "number" ? b.ratingAvg : -1;
+      if (rateB !== rateA) return rateB - rateA;
+      const countA = a.ratingCount ?? 0;
+      const countB = b.ratingCount ?? 0;
+      if (countB !== countA) return countB - countA;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     }
     if (filters.sort === "popular") return a.minOrderQty - b.minOrderQty;
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();

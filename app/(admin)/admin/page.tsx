@@ -14,6 +14,7 @@ import { id as idLocale } from "date-fns/locale";
 import { getAdminStats } from "@/lib/data";
 import { StatList } from "@/components/dashboard/stat-list";
 import { EmptyState } from "@/components/shared/empty-state";
+import { AlertTriangle } from "lucide-react";
 
 const PAYMENT_STATUS_MAP: Record<
   string,
@@ -27,12 +28,29 @@ const PAYMENT_STATUS_MAP: Record<
 export default async function AdminOverviewPage() {
   const stats = await getAdminStats();
 
+  const missingEnvVars: string[] = [];
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) missingEnvVars.push("SUPABASE_SERVICE_ROLE_KEY");
+  if (!process.env.CRON_SECRET) missingEnvVars.push("CRON_SECRET");
+  if (!process.env.RESEND_API_KEY && process.env.EMAIL_MODE !== "disabled") missingEnvVars.push("RESEND_API_KEY");
+
   return (
     <div className="space-y-8">
       <SectionHeader
         title="Admin Panel"
         subtitle="Pantau platform, verifikasi toko penjual, dan kelola produk."
       />
+
+      {missingEnvVars.length > 0 && (
+        <div className="p-4 bg-amber-50 border border-amber-300 rounded-lg flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+          <div className="space-y-1 text-sm text-amber-900">
+            <p className="font-semibold">Peringatan Konfigurasi Lingkungan (Degraded)</p>
+            <p className="text-xs text-amber-800">
+              Variabel operasional berikut belum diatur: <span className="font-mono font-medium">{missingEnvVars.join(", ")}</span>. Operasi otomatisasi hapus akun Supabase, endpoint cron terjadwal, atau email transaksi beroperasi dalam mode terbatas.
+            </p>
+          </div>
+        </div>
+      )}
 
       <StatList
         items={[

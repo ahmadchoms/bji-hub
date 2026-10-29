@@ -71,6 +71,26 @@ export function validateEnv(): boolean {
           warning: "RESEND_API_KEY belum diisi. Pengiriman email transaksi berjalan dalam mode mock.",
         });
       }
+
+      // SEC-4: Notify admins once per cold start if operational env keys are omitted
+      const missingKeys = [
+        !process.env.SUPABASE_SERVICE_ROLE_KEY ? "SUPABASE_SERVICE_ROLE_KEY" : null,
+        !process.env.CRON_SECRET ? "CRON_SECRET" : null,
+        !process.env.RESEND_API_KEY && process.env.EMAIL_MODE !== "disabled" ? "RESEND_API_KEY" : null,
+      ].filter(Boolean) as string[];
+
+      if (missingKeys.length > 0) {
+        import("@/lib/data/notifications")
+          .then(({ notifyAdmins }) => {
+            notifyAdmins({
+              title: "Konfigurasi Lingkungan Belum Lengkap (Degraded)",
+              message: `Variabel operasional berikut belum diatur: ${missingKeys.join(", ")}. Beberapa fitur admin/cron akan berjalan terbatas.`,
+              type: "system",
+              link: "/admin/maintenance",
+            }).catch(() => {});
+          })
+          .catch(() => {});
+      }
     }
   }
 

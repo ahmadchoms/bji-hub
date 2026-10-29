@@ -41,6 +41,7 @@ export async function GET(req: Request) {
       storage: string;
       payment: { status: string; environment: string };
       email: string;
+      configuration: { status: "ok" | "degraded"; missingOptionalVars: string[] };
     } = {
       database: "ok",
       storage: "ok",
@@ -49,6 +50,10 @@ export async function GET(req: Request) {
         environment: process.env.MIDTRANS_IS_PRODUCTION === "true" ? "production" : "sandbox",
       },
       email: process.env.RESEND_API_KEY ? "configured" : "mock_fallback",
+      configuration: {
+        status: "ok",
+        missingOptionalVars: [],
+      },
     };
 
     let isHealthy = true;
@@ -77,9 +82,26 @@ export async function GET(req: Request) {
       checks.payment.status = "missing_server_key";
     }
 
+    // SEC-4: Operational configuration check for optional variables
+    const missingOptional: string[] = [];
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) missingOptional.push("SUPABASE_SERVICE_ROLE_KEY");
+    if (!process.env.CRON_SECRET) missingOptional.push("CRON_SECRET");
+    if (!process.env.RESEND_API_KEY && process.env.EMAIL_MODE !== "disabled") missingOptional.push("RESEND_API_KEY");
+
+    if (missingOptional.length > 0) {
+      checks.configuration.status = "degraded";
+      checks.configuration.missingOptionalVars = missingOptional;
+    }
+
+    const overallStatus = !isHealthy
+      ? "unhealthy"
+      : checks.configuration.status === "degraded"
+        ? "degraded"
+        : "ok";
+
     return NextResponse.json(
       {
-        status: isHealthy ? "ok" : "unhealthy",
+        status: overallStatus,
         deep: true,
         checks,
         timestamp: new Date().toISOString(),

@@ -64,6 +64,9 @@ describe("GET /api/health (B8)", () => {
       vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
       vi.stubEnv("MIDTRANS_SERVER_KEY", "midtrans-key");
       vi.stubEnv("DATA_SOURCE", "mock");
+      vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service-key");
+      vi.stubEnv("CRON_SECRET", "cron-secret");
+      vi.stubEnv("EMAIL_MODE", "disabled");
 
       const req = new Request("http://localhost:3000/api/health?deep=1", {
         headers: { Authorization: "Bearer dedicated-health-token" },
@@ -77,6 +80,32 @@ describe("GET /api/health (B8)", () => {
       expect(json.checks.database).toBe("ok");
       expect(json.checks.storage).toBe("ok");
       expect(json.checks.payment.status).toBe("ok");
+
+      vi.unstubAllEnvs();
+    });
+
+    it("reports degraded status and missing optional env vars when secondary credentials omitted (SEC-4)", async () => {
+      vi.stubEnv("NODE_ENV", "production");
+      vi.stubEnv("HEALTH_CHECK_TOKEN", "dedicated-health-token");
+      vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
+      vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
+      vi.stubEnv("MIDTRANS_SERVER_KEY", "midtrans-key");
+      vi.stubEnv("DATA_SOURCE", "mock");
+      vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "");
+      vi.stubEnv("CRON_SECRET", "");
+      vi.stubEnv("RESEND_API_KEY", "");
+      vi.stubEnv("EMAIL_MODE", "enabled");
+
+      const req = new Request("http://localhost:3000/api/health?deep=1", {
+        headers: { Authorization: "Bearer dedicated-health-token" },
+      });
+      const res = await GET(req);
+      expect(res.status).toBe(200);
+
+      const json = await res.json();
+      expect(json.status).toBe("degraded");
+      expect(json.checks.configuration.status).toBe("degraded");
+      expect(json.checks.configuration.missingOptionalVars).toContain("SUPABASE_SERVICE_ROLE_KEY");
 
       vi.unstubAllEnvs();
     });

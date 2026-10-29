@@ -20,6 +20,7 @@ import { TrackOnMount } from "@/components/shared/track-visible";
 import { Star } from "lucide-react";
 import { ProductPurchaseBox } from "@/components/product/product-purchase-box";
 import { getReviewsByListing, computeReviewStats } from "@/lib/data/reviews";
+import { FreshnessBadge } from "@/components/catalog/freshness-badge";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
@@ -328,6 +329,16 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                   </div>
                 </div>
               </div>
+
+              {/* Lencana Kesegaran Sangrai (COF-1) */}
+              {listing.tasteProfile?.roastDate && (
+                <div>
+                  <FreshnessBadge
+                    roastDate={listing.tasteProfile.roastDate}
+                    roastLevel={listing.tasteProfile.roastLevel}
+                  />
+                </div>
+              )}
 
               {/* Pricing, Grind Selector, Stock & Purchase Box */}
               <ProductPurchaseBox listing={listing} />

@@ -6,6 +6,7 @@ import { formatRupiah } from "@/components/shared/price-text";
 import { TrackVisible } from "../shared/track-visible";
 import { CompareButton } from "./compare-button";
 import { WishlistButton } from "@/components/wishlist/wishlist-button";
+import { FreshnessBadge } from "@/components/catalog/freshness-badge";
 
 interface ListingCardProps {
   listing: ListingWithRelations;
@@ -117,16 +118,12 @@ export function ListingCard({
             <span className="bg-amber-50 text-amber-800 border border-amber-200/60 px-1.5 py-0.5 rounded font-medium">
               {roast}
             </span>
-            {daysSinceRoast !== null && daysSinceRoast >= 0 ? (
-              daysSinceRoast <= 14 ? (
-                <span className="bg-emerald-50 text-emerald-800 border border-emerald-300/80 px-1.5 py-0.5 rounded font-semibold">
-                  Fresh {daysSinceRoast}h
-                </span>
-              ) : daysSinceRoast <= 30 ? (
-                <span className="bg-blue-50 text-blue-800 border border-blue-200/80 px-1.5 py-0.5 rounded font-medium">
-                  Peak Flavor
-                </span>
-              ) : null
+            {listing.tasteProfile?.roastDate ? (
+              <FreshnessBadge
+                compact
+                roastDate={listing.tasteProfile.roastDate}
+                roastLevel={listing.tasteProfile.roastLevel}
+              />
             ) : isGreenBean ? (
               <span className="bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-1.5 py-0.5 rounded font-medium">
                 Mentah

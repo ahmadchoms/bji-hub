@@ -49,7 +49,9 @@ next-env.d.ts
 .windsurf
 
 # internal security audit & agent task docs
+docs/AUDIT*.md
 docs/ANALYSIS*.md
+docs/READINESS*.md
 BIJI-HUB-AGENT-TASKS.md
 
 # Sentry Config File

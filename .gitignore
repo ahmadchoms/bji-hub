@@ -50,6 +50,7 @@ next-env.d.ts
 
 # internal security audit & agent task docs
 docs/AUDIT*.md
+docs/*AUDIT*.md
 docs/ANALYSIS*.md
 docs/READINESS*.md
 BIJI-HUB-AGENT-TASKS.md

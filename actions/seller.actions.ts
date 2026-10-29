@@ -23,6 +23,8 @@ import {
 import type { Payment } from "@/types";
 import { findInvalidImageUrl } from "@/lib/storage";
 import { decideBoostPayment, getBoostCredits } from "@/lib/boost-credits";
+import { runAfterResponse } from "@/lib/after";
+import { recordAuditLog } from "@/lib/data/audit-logs";
 
 type FieldErrors = Record<string, string[]>;
 
@@ -73,6 +75,36 @@ export async function saveListingAction(
   }
 
   if (listingId) {
+    if (
+      existing &&
+      parsed.data.roastDate &&
+      existing.tasteProfile?.roastDate &&
+      existing.tasteProfile.roastDate.split("T")[0] !== parsed.data.roastDate
+    ) {
+      const lastUpdated = (existing as { roastDateUpdatedAt?: string }).roastDateUpdatedAt
+        ? new Date((existing as { roastDateUpdatedAt?: string }).roastDateUpdatedAt!).getTime()
+        : 0;
+      const hoursSinceLastChange = (Date.now() - lastUpdated) / (1000 * 60 * 60);
+      if (lastUpdated > 0 && hoursSinceLastChange < 24) {
+        return fail(
+          "Tanggal sangrai hanya dapat diubah maksimal 1 kali per 24 jam demi menjaga keaslian data kesegaran",
+        );
+      }
+      runAfterResponse(async () => {
+        await recordAuditLog({
+          actorId: sellerId,
+          actorRole: "seller",
+          action: "listing.roast_date_updated",
+          targetType: "listing",
+          targetId: listingId,
+          details: {
+            old: existing.tasteProfile?.roastDate,
+            new: parsed.data.roastDate,
+          },
+        });
+      });
+    }
+
     const updated = await updateListing(sellerId, listingId, parsed.data);
     if (!updated) return fail("Listing tidak ditemukan");
     revalidatePath("/dashboard/listing");

@@ -331,7 +331,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
               </div>
 
               {/* Lencana Kesegaran Sangrai (COF-1) */}
-              {listing.tasteProfile?.roastDate && (
+              {listing.tasteProfile?.roastDate && listing.category?.slug !== "green-beans" && (
                 <div>
                   <FreshnessBadge
                     roastDate={listing.tasteProfile.roastDate}

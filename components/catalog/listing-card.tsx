@@ -7,6 +7,7 @@ import { TrackVisible } from "../shared/track-visible";
 import { CompareButton } from "./compare-button";
 import { WishlistButton } from "@/components/wishlist/wishlist-button";
 import { FreshnessBadge } from "@/components/catalog/freshness-badge";
+import { daysSinceRoast } from "@/lib/coffee/freshness";
 
 interface ListingCardProps {
   listing: ListingWithRelations;
@@ -28,16 +29,10 @@ export function ListingCard({
   const isOutOfStock = listing.stock === 0;
   const isLowStock =
     listing.stock !== undefined && listing.stock > 0 && listing.stock <= 5;
-  const roastDate = listing.tasteProfile?.roastDate
-    ? new Date(listing.tasteProfile.roastDate)
-    : null;
-  const daysSinceRoast =
-    roastDate && !isNaN(roastDate.getTime())
-      ? Math.floor((Date.now() - roastDate.getTime()) / (1000 * 60 * 60 * 24))
-      : null;
   const isGreenBean =
     listing.category?.slug === "green-beans" ||
     roast.toLowerCase().includes("green");
+  const daysSince = !isGreenBean ? daysSinceRoast(listing.tasteProfile?.roastDate) : null;
 
   return (
     <li className={cn("relative min-w-0 group/item", className)}>
@@ -68,9 +63,9 @@ export function ListingCard({
               Partai B2B
             </span>
           )}
-          {daysSinceRoast !== null &&
-            daysSinceRoast >= 0 &&
-            daysSinceRoast <= 14 &&
+          {daysSince !== null &&
+            daysSince >= 0 &&
+            daysSince <= 14 &&
             !isOutOfStock &&
             !isAd &&
             listing.minOrderQty < 30 && (
@@ -118,7 +113,7 @@ export function ListingCard({
             <span className="bg-amber-50 text-amber-800 border border-amber-200/60 px-1.5 py-0.5 rounded font-medium">
               {roast}
             </span>
-            {listing.tasteProfile?.roastDate ? (
+            {!isGreenBean && listing.tasteProfile?.roastDate ? (
               <FreshnessBadge
                 compact
                 roastDate={listing.tasteProfile.roastDate}

@@ -405,7 +405,11 @@ export function ListingForm({
             required
             error={errors.roastDate?.message}
           >
-            <Input type="date" {...register("roastDate")} />
+            <Input
+              type="date"
+              max={new Date().toLocaleDateString("en-CA")}
+              {...register("roastDate")}
+            />
           </FormField>
 
           <FormField

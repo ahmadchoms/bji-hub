@@ -1,6 +1,18 @@
 import { z } from "zod";
 import { IMAGE_RULES } from "../storage";
 
+const DAY_MS = 86_400_000;
+
+export const roastDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Format tanggal tidak valid")
+  .refine((value) => {
+    const parsed = new Date(`${value}T00:00:00+07:00`).getTime();
+    if (Number.isNaN(parsed)) return false;
+    const now = Date.now();
+    return parsed <= now + DAY_MS && parsed >= now - 3 * 365 * DAY_MS;
+  }, "Tanggal sangrai tidak boleh di masa depan atau lebih dari 3 tahun lalu");
+
 export const listingImageSchema = z.object({
   url: z.string().min(1).max(500),
   path: z.string().min(1).max(200),
@@ -58,6 +70,48 @@ export const listingSchema = listingBaseSchema.superRefine((value, ctx) => {
       path: ["images"],
       message: "Listing aktif minimal punya 1 foto",
     });
+  }
+
+  const isGreenBean =
+    value.categoryId === "cat-1" ||
+    value.categoryId === "green-beans" ||
+    value.categoryId.toLowerCase().includes("green");
+
+  const isEquipment =
+    value.categoryId === "cat-4" ||
+    value.categoryId === "equipment" ||
+    value.categoryId.toLowerCase().includes("equipment");
+
+  if (value.status === "active") {
+    if (isGreenBean) {
+      if (!value.cropYear || !value.cropYear.trim()) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["cropYear"],
+          message: "Tahun panen (crop year) wajib diisi untuk green bean aktif",
+        });
+      }
+    } else if (!isEquipment) {
+      if (!value.roastDate || !value.roastDate.trim()) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["roastDate"],
+          message: "Tanggal sangrai wajib diisi untuk kopi sangrai aktif",
+        });
+      }
+    }
+  }
+
+  if (value.roastDate && value.roastDate.trim() !== "") {
+    const res = roastDateSchema.safeParse(value.roastDate);
+    if (!res.success) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["roastDate"],
+        message:
+          res.error.issues[0]?.message || "Format tanggal tidak valid",
+      });
+    }
   }
 });
 

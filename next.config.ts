@@ -50,6 +50,12 @@ if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
 }
 
 const nextConfig: NextConfig = {
+  env: {
+    NEXT_PUBLIC_MIDTRANS_CLIENT_KEY:
+      process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY ||
+      process.env.MIDTRANS_CLIENT_KEY ||
+      "",
+  },
   compress: true,
   poweredByHeader: false,
   images: {

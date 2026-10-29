@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ShieldCheck, Minus, Plus } from "lucide-react";
+import { ShieldCheck, Minus, Plus, Sparkles, X } from "lucide-react";
 import { ListingWithRelations } from "@/types";
 import { PriceText, formatRupiah } from "@/components/shared/price-text";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { ProductShippingEstimator } from "@/components/product/product-shipping-estimator";
+import { GRIND_OPTIONS } from "@/lib/coffee/brew-methods";
+import { BrewCalculator } from "@/components/catalog/brew-calculator";
 
 interface ProductPurchaseBoxProps {
   listing: ListingWithRelations;
@@ -17,6 +19,8 @@ export function ProductPurchaseBox({ listing }: ProductPurchaseBoxProps) {
 
   const [quantity, setQuantity] = useState<number>(listing.minOrderQty || 1);
   const [confirmedGreenBean, setConfirmedGreenBean] = useState(false);
+  const [selectedGrind, setSelectedGrind] = useState<string>("Biji Utuh (Whole Bean)");
+  const [showCalculator, setShowCalculator] = useState(false);
 
   const isOutOfStock = listing.stock === 0;
   const maxStock = listing.stock !== undefined ? listing.stock : 9999;
@@ -30,7 +34,9 @@ export function ProductPurchaseBox({ listing }: ProductPurchaseBoxProps) {
   };
 
   const subtotal = Number(listing.price) * quantity;
-  const directCheckoutUrl = `/checkout/${listing.slug}?qty=${quantity}`;
+  const directCheckoutUrl = `/checkout/${listing.slug}?qty=${quantity}${
+    !isGreenBean && selectedGrind ? `&grind=${encodeURIComponent(selectedGrind)}` : ""
+  }`;
 
   return (
     <div className="space-y-4">
@@ -104,6 +110,48 @@ export function ProductPurchaseBox({ listing }: ProductPurchaseBoxProps) {
               Saya mengonfirmasi bahwa saya memahami produk ini adalah biji kopi mentah belum disangrai.
             </span>
           </label>
+        </div>
+      )}
+
+      {/* Grind Selector & Brew Method Matcher (COF-3) */}
+      {!isGreenBean && !isOutOfStock && (
+        <div className="space-y-2 pt-2 border-t border-neutral-200">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-semibold text-neutral-800">
+              Pilihan Bentuk & Gilingan:
+            </label>
+            <button
+              type="button"
+              onClick={() => setShowCalculator((prev) => !prev)}
+              className="inline-flex items-center gap-1 text-xs text-primary-800 font-semibold hover:text-primary-900 hover:underline cursor-pointer"
+            >
+              <Sparkles className="w-3 h-3 text-amber-600" />
+              <span>{showCalculator ? "Tutup Panduan" : "Panduan & Kalkulator Seduh"}</span>
+            </button>
+          </div>
+
+          <select
+            value={selectedGrind}
+            onChange={(e) => setSelectedGrind(e.target.value)}
+            className="w-full h-9 px-3 rounded-sm border border-neutral-300 bg-white text-xs font-medium text-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-400 cursor-pointer"
+          >
+            {GRIND_OPTIONS.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+
+          {showCalculator && (
+            <div className="pt-2 animate-in fade-in-50">
+              <BrewCalculator
+                onSelectGrind={(grind) => {
+                  setSelectedGrind(grind);
+                  setShowCalculator(false);
+                }}
+              />
+            </div>
+          )}
         </div>
       )}
 
@@ -187,6 +235,7 @@ export function ProductPurchaseBox({ listing }: ProductPurchaseBoxProps) {
                 unit: listing.unit,
                 minOrderQty: listing.minOrderQty,
                 quantity: quantity,
+                grindSize: isGreenBean ? undefined : selectedGrind,
                 imageUrl: listing.images?.[0]?.url,
                 sellerId: listing.sellerId,
                 sellerName: listing.seller.businessName,

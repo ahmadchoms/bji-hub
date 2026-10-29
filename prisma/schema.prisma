@@ -361,6 +361,8 @@ model Review {
   sellerRepliedAt DateTime? @map("seller_replied_at")
   isReported      Boolean   @default(false) @map("is_reported")
   reportReason    String?   @map("report_reason")
+  moderationStatus String?   @map("moderation_status")
+  adminApprovedAt  DateTime? @map("admin_approved_at")
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([listingId])

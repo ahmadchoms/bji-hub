@@ -329,6 +329,7 @@ export interface Review {
   isReported?: boolean;
   reportReason?: string | null;
   moderationStatus?: "approved" | "hidden_pending_review" | "rejected";
+  adminApprovedAt?: string | null;
   createdAt: string;
 }
 

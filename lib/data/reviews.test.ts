@@ -164,4 +164,68 @@ describe("reviews data and stats", () => {
     visible = await getReviewsByListing("list-1");
     expect(visible.length).toBe(0);
   });
+
+  it("enforces reporter eligibility: blocks store owner, new accounts, and dismissed re-reports (N7)", async () => {
+    const {
+      createReview,
+      reportReview,
+      adminApproveReview,
+      getReviewsByListing,
+      _configureMockReporter,
+      _resetMockReviewsForTest,
+    } = await import("@/lib/data/reviews");
+    _resetMockReviewsForTest();
+
+    // list-1 belongs to seller-1 (userId: "user-1" / "seller-1")
+    const rev = await createReview({
+      listingId: "list-1",
+      buyerId: "buyer-author",
+      buyerName: "Buyer Author",
+      rating: 2,
+      comment: "Rasa kurang pas",
+    });
+
+    // 1. Listing owner cannot report reviews on their own listing
+    await expect(
+      reportReview(rev.id, "seller-1", "Saya pemilik toko ingin hapus ini")
+    ).rejects.toThrow("Pemilik toko tidak dapat melaporkan ulasan pada produk sendiri.");
+
+    // 2. New account (< 7 days old) cannot report
+    _configureMockReporter("newbie-user", {
+      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days old
+      completedOrdersCount: 5,
+    });
+    await expect(
+      reportReview(rev.id, "newbie-user", "Akun baru coba melapor")
+    ).rejects.toThrow("Akun Anda harus berumur minimal 7 hari untuk dapat melaporkan ulasan.");
+
+    // 3. Account with 0 completed orders cannot report
+    _configureMockReporter("zero-order-user", {
+      createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+      completedOrdersCount: 0,
+    });
+    await expect(
+      reportReview(rev.id, "zero-order-user", "Akun lama tanpa belanja")
+    ).rejects.toThrow("Anda harus memiliki minimal 1 pesanan selesai untuk dapat melaporkan ulasan.");
+
+    // 4. Three eligible reporters hide the review
+    await reportReview(rev.id, "rep-a", "Alasan valid spam 1");
+    await reportReview(rev.id, "rep-b", "Alasan valid spam 2");
+    await reportReview(rev.id, "rep-c", "Alasan valid spam 3");
+
+    let reviews = await getReviewsByListing("list-1");
+    expect(reviews.length).toBe(0); // hidden_pending_review
+
+    // 5. Admin approves review and dismisses previous reports
+    const approved = await adminApproveReview(rev.id);
+    expect(approved).toBe(true);
+
+    reviews = await getReviewsByListing("list-1");
+    expect(reviews.length).toBe(1); // restored to approved
+
+    // 6. Dismissed report cannot be reopened by the same reporter
+    await expect(
+      reportReview(rev.id, "rep-a", "Coba spam laporan lagi setelah ditolak")
+    ).rejects.toThrow("Laporan Anda sudah ditinjau.");
+  });
 });

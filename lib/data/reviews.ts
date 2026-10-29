@@ -161,9 +161,24 @@ export async function getReviewByOrderAndListing(
   );
 }
 
+export interface MockReporterConfig {
+  createdAt?: string;
+  completedOrdersCount?: number;
+}
+
+const mockReporterConfigs = new Map<string, MockReporterConfig>();
+
+export function _configureMockReporter(
+  reporterId: string,
+  config: MockReporterConfig,
+): void {
+  mockReporterConfigs.set(reporterId, config);
+}
+
 export function _resetMockReviewsForTest(): void {
   mockReviews.length = 0;
   mockReviewReports.length = 0;
+  mockReporterConfigs.clear();
 }
 
 function mapReviewRow(row: Record<string, unknown>): Review {
@@ -183,6 +198,9 @@ function mapReviewRow(row: Record<string, unknown>): Review {
     isReported: Boolean(row.is_reported || row.isReported),
     reportReason: (row.report_reason || row.reportReason || null) as string | null,
     moderationStatus: (row.moderation_status || row.moderationStatus || "approved") as Review["moderationStatus"],
+    adminApprovedAt: row.admin_approved_at
+      ? new Date(row.admin_approved_at as string).toISOString()
+      : (row.adminApprovedAt as string | null) ?? null,
     createdAt: new Date((row.created_at || row.createdAt) as string).toISOString(),
   };
 }
@@ -328,33 +346,89 @@ export async function reportReview(
   const pool = getPool();
 
   if (pool) {
-    // 1. Fetch review to verify existence and check self-reporting
+    // 1. Fetch review to verify existence and check self-reporting and store owner
     const reviewRes = await pool.query(
-      `SELECT id, buyer_id FROM public.reviews WHERE id = $1 LIMIT 1`,
+      `SELECT
+         r.id,
+         r.buyer_id,
+         r.listing_id,
+         r.admin_approved_at,
+         s.user_id as seller_user_id
+       FROM public.reviews r
+       JOIN public.listings l ON l.id = r.listing_id
+       JOIN public.sellers s ON s.id = l.seller_id
+       WHERE r.id = $1 LIMIT 1`,
       [reviewId],
     );
     if (reviewRes.rows.length === 0) {
       return false;
     }
-    if (reviewRes.rows[0].buyer_id && reviewRes.rows[0].buyer_id === reporterId) {
+    const reviewRow = reviewRes.rows[0];
+
+    if (reviewRow.buyer_id && reviewRow.buyer_id === reporterId) {
       throw new Error("Pelapor tidak boleh melaporkan ulasannya sendiri.");
     }
+    if (reviewRow.seller_user_id && reviewRow.seller_user_id === reporterId) {
+      throw new Error("Pemilik toko tidak dapat melaporkan ulasan pada produk sendiri.");
+    }
 
-    // 2. Structured report insert with idempotency (upsert)
+    // 2. Check reporter account age (>= 7 days) and completed orders (>= 1)
+    const reporterRes = await pool.query(
+      `SELECT
+         u.created_at,
+         COUNT(o.id) FILTER (WHERE o.status = 'completed') as completed_orders
+       FROM public.users u
+       LEFT JOIN public.orders o ON o.buyer_id = u.id
+       WHERE u.id = $1
+       GROUP BY u.id`,
+      [reporterId],
+    );
+    if (reporterRes.rows.length > 0) {
+      const u = reporterRes.rows[0];
+      const ageDays = (Date.now() - new Date(u.created_at).getTime()) / (24 * 60 * 60 * 1000);
+      if (ageDays < 7) {
+        throw new Error("Akun Anda harus berumur minimal 7 hari untuk dapat melaporkan ulasan.");
+      }
+      if (Number(u.completed_orders || 0) < 1) {
+        throw new Error("Anda harus memiliki minimal 1 pesanan selesai untuk dapat melaporkan ulasan.");
+      }
+    }
+
+    // 3. Check existing report status (do not reopen dismissed/actioned reports)
+    const existingRes = await pool.query(
+      `SELECT status FROM public.review_reports WHERE review_id = $1 AND reporter_id = $2 LIMIT 1`,
+      [reviewId, reporterId],
+    );
+    if (existingRes.rows.length > 0) {
+      const status = existingRes.rows[0].status;
+      if (status === "dismissed" || status === "actioned") {
+        throw new Error("Laporan Anda sudah ditinjau.");
+      }
+    }
+
+    // 4. Structured report insert with idempotency (upsert)
     await pool.query(
-      `INSERT INTO public.review_reports (review_id, reporter_id, reason, status)
-       VALUES ($1, $2, $3, 'open')
+      `INSERT INTO public.review_reports (review_id, reporter_id, reason, status, created_at)
+       VALUES ($1, $2, $3, 'open', NOW())
        ON CONFLICT (review_id, reporter_id)
-       DO UPDATE SET reason = EXCLUDED.reason, status = 'open'`,
+       DO UPDATE SET reason = EXCLUDED.reason
+       WHERE public.review_reports.status = 'open'`,
       [reviewId, reporterId, cleanReason],
     );
 
-    // 3. Count distinct open reports
+    // 5. Count distinct eligible open reports created after admin_approved_at
     const countRes = await pool.query(
-      `SELECT COUNT(DISTINCT reporter_id) as count
-       FROM public.review_reports
-       WHERE review_id = $1 AND status = 'open'`,
-      [reviewId],
+      `SELECT COUNT(DISTINCT rr.reporter_id) as count
+       FROM public.review_reports rr
+       JOIN public.users u ON u.id = rr.reporter_id
+       JOIN (
+         SELECT buyer_id FROM public.orders WHERE status = 'completed' GROUP BY buyer_id
+       ) co ON co.buyer_id = rr.reporter_id
+       WHERE rr.review_id = $1
+         AND rr.status = 'open'
+         AND u.created_at <= NOW() - INTERVAL '7 days'
+         AND ($2::timestamptz IS NULL OR rr.created_at > $2::timestamptz)`,
+      [reviewId, reviewRow.admin_approved_at || null],
     );
     const reportCount = Number(countRes.rows[0]?.count || 0);
 
@@ -366,8 +440,21 @@ export async function reportReview(
          WHERE id = $2`,
         [cleanReason, reviewId],
       );
-      if (reviewRes.rows[0]?.listing_id) {
-        await syncListingRating(reviewRes.rows[0].listing_id);
+      if (reviewRow.buyer_id) {
+        try {
+          const { createNotification } = await import("@/lib/data/notifications");
+          await createNotification({
+            userId: reviewRow.buyer_id,
+            title: "Ulasan Anda Sedang Ditinjau",
+            message: "Ulasan Anda pada produk sedang ditinjau oleh tim moderasi karena adanya laporan.",
+            type: "system",
+          });
+        } catch {
+          // ignore: non-blocking notification failure
+        }
+      }
+      if (reviewRow.listing_id) {
+        await syncListingRating(reviewRow.listing_id);
       }
     } else {
       await pool.query(
@@ -381,18 +468,54 @@ export async function reportReview(
   }
 
   // Mock implementation
+  const { mockListings, mockSellers } = await import("@/lib/mock/data");
+  const { mockOrders } = await import("@/lib/data/orders");
+
   const r = mockReviews.find((rev) => rev.id === reviewId);
   if (!r) return false;
+
+  // 1. Cannot report own review
   if (r.buyerId && r.buyerId === reporterId) {
     throw new Error("Pelapor tidak boleh melaporkan ulasannya sendiri.");
   }
 
+  // 2. Listing owner cannot report reviews on their own listing
+  const listing = mockListings.find((l) => l.id === r.listingId);
+  const seller = listing ? mockSellers.find((s) => s.id === listing.sellerId) : null;
+  if (seller && (seller.userId === reporterId || seller.id === reporterId)) {
+    throw new Error("Pemilik toko tidak dapat melaporkan ulasan pada produk sendiri.");
+  }
+
+  // 3. Reporter eligibility: account age >= 7 days and >= 1 completed orders
+  const reporterCfg = mockReporterConfigs.get(reporterId);
+  const accountAgeDays = reporterCfg?.createdAt
+    ? (Date.now() - new Date(reporterCfg.createdAt).getTime()) / (24 * 60 * 60 * 1000)
+    : 30; // default to mature account unless test explicitly configures recent
+
+  if (accountAgeDays < 7) {
+    throw new Error("Akun Anda harus berumur minimal 7 hari untuk dapat melaporkan ulasan.");
+  }
+
+  const completedCount =
+    reporterCfg?.completedOrdersCount !== undefined
+      ? reporterCfg.completedOrdersCount
+      : mockOrders.filter(
+          (o) => o.buyerId === reporterId && o.status === "completed",
+        ).length || 1; // default to 1 order unless test explicitly configures 0
+
+  if (completedCount < 1) {
+    throw new Error("Anda harus memiliki minimal 1 pesanan selesai untuk dapat melaporkan ulasan.");
+  }
+
+  // 4. Do not reopen dismissed or actioned reports
   const existing = mockReviewReports.find(
     (rep) => rep.reviewId === reviewId && rep.reporterId === reporterId,
   );
   if (existing) {
+    if (existing.status === "dismissed" || existing.status === "actioned") {
+      throw new Error("Laporan Anda sudah ditinjau.");
+    }
     existing.reason = cleanReason;
-    existing.status = "open";
   } else {
     mockReviewReports.push({
       reviewId,
@@ -403,18 +526,79 @@ export async function reportReview(
     });
   }
 
-  const distinctReporters = new Set(
-    mockReviewReports
-      .filter((rep) => rep.reviewId === reviewId && rep.status === "open")
-      .map((rep) => rep.reporterId),
-  ).size;
+  // 5. Count distinct open reports created after adminApprovedAt (if any)
+  const approvedAt = r.adminApprovedAt ? new Date(r.adminApprovedAt).getTime() : 0;
+  const eligibleReports = mockReviewReports.filter(
+    (rep) =>
+      rep.reviewId === reviewId &&
+      rep.status === "open" &&
+      new Date(rep.createdAt).getTime() > approvedAt,
+  );
+  const distinctReporters = new Set(eligibleReports.map((rep) => rep.reporterId)).size;
 
   r.isReported = true;
   r.reportReason = cleanReason;
   if (distinctReporters >= 3) {
     r.moderationStatus = "hidden_pending_review";
+    if (r.buyerId) {
+      try {
+        const { createNotification } = await import("@/lib/data/notifications");
+        await createNotification({
+          userId: r.buyerId,
+          title: "Ulasan Anda Sedang Ditinjau",
+          message: "Ulasan Anda pada produk sedang ditinjau oleh tim moderasi karena adanya laporan.",
+          type: "system",
+        });
+      } catch {
+        // ignore: non-blocking notification failure
+      }
+    }
     await syncListingRating(r.listingId);
   }
 
+  return true;
+}
+
+export async function adminApproveReview(reviewId: string): Promise<boolean> {
+  const pool = getPool();
+  const now = new Date().toISOString();
+
+  if (pool) {
+    try {
+      const res = await pool.query(
+        `UPDATE public.reviews
+         SET moderation_status = 'approved', is_reported = false, admin_approved_at = $1
+         WHERE id = $2
+         RETURNING listing_id`,
+        [now, reviewId],
+      );
+      if (res.rows.length === 0) return false;
+      await pool.query(
+        `UPDATE public.review_reports
+         SET status = 'dismissed'
+         WHERE review_id = $1 AND status = 'open'`,
+        [reviewId],
+      );
+      if (res.rows[0].listing_id) {
+        await syncListingRating(res.rows[0].listing_id);
+      }
+      return true;
+    } catch (e) {
+      logger.error("reviews.admin_approve_failed", e, { reviewId });
+      return false;
+    }
+  }
+
+  const r = mockReviews.find((rev) => rev.id === reviewId);
+  if (!r) return false;
+  r.moderationStatus = "approved";
+  r.isReported = false;
+  r.adminApprovedAt = now;
+  for (const rep of mockReviewReports) {
+    if (rep.reviewId === reviewId && rep.status === "open") {
+      rep.status = "dismissed";
+    }
+  }
+  await syncListingRating(r.listingId);
   return true;
 }

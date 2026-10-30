@@ -35,6 +35,19 @@ BEGIN
   ) THEN
     ALTER TABLE public.listing_waitlist ALTER COLUMN user_id TYPE text USING user_id::text;
   END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'producers' AND column_name = 'id' AND data_type != 'text'
+  ) THEN
+    ALTER TABLE public.taste_profiles DROP CONSTRAINT IF EXISTS taste_profiles_producer_id_fkey;
+    ALTER TABLE public.taste_profiles ALTER COLUMN producer_id TYPE text USING producer_id::text;
+    ALTER TABLE public.producers ALTER COLUMN id TYPE text USING id::text;
+    ALTER TABLE public.producers ALTER COLUMN id SET DEFAULT gen_random_uuid()::text;
+    ALTER TABLE public.taste_profiles
+      ADD CONSTRAINT taste_profiles_producer_id_fkey
+      FOREIGN KEY (producer_id) REFERENCES public.producers(id) ON DELETE SET NULL;
+  END IF;
 END $$;
 
 -- Ensure foreign keys exist

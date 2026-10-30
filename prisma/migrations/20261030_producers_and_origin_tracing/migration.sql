@@ -1,6 +1,6 @@
 -- Idempotent migration: producers and traceable coffee origins (COF-2)
 CREATE TABLE IF NOT EXISTS public.producers (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  id text PRIMARY KEY DEFAULT gen_random_uuid()::text,
   slug text UNIQUE NOT NULL,
   name text NOT NULL,
   kind text NOT NULL CHECK (kind IN ('petani','koperasi','estate','processor')),
@@ -32,7 +32,7 @@ CREATE INDEX IF NOT EXISTS idx_producers_slug ON public.producers (slug);
 CREATE INDEX IF NOT EXISTS idx_producers_origin_id ON public.producers (origin_id);
 
 ALTER TABLE public.taste_profiles
-  ADD COLUMN IF NOT EXISTS producer_id uuid REFERENCES public.producers(id),
+  ADD COLUMN IF NOT EXISTS producer_id text REFERENCES public.producers(id),
   ADD COLUMN IF NOT EXISTS lot_code text,
   ADD COLUMN IF NOT EXISTS varieties text[] NOT NULL DEFAULT '{}',
   ADD COLUMN IF NOT EXISTS harvest_month smallint CHECK (harvest_month BETWEEN 1 AND 12),

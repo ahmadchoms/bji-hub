@@ -29,6 +29,7 @@ import { OrderStatusStepper } from "@/components/order/order-status-stepper";
 import { ResumePaymentButton } from "@/components/order/resume-payment-button";
 import { PaymentStatusPoller } from "@/components/order/payment-status-poller";
 import { SnapLoader } from "@/components/payment/snap-loader";
+import { PaymentCountdown } from "@/components/order/payment-countdown";
 import { buildOrderPaidNotificationUrl } from "@/lib/notifications";
 
 export const metadata: Metadata = {
@@ -157,9 +158,7 @@ export default async function OrderSuccessPage({
           </div>
 
           {order.status === "pending_payment" && (
-            <div className="p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-900 text-xs text-center font-medium">
-              ⏰ Selesaikan pembayaran dalam 60 menit sebelum pesanan otomatis dibatalkan.
-            </div>
+            <PaymentCountdown createdAt={order.createdAt} durationMinutes={60} />
           )}
 
           <p className="text-xs text-neutral-600 max-w-md mx-auto">

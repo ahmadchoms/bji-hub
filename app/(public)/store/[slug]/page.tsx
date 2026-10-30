@@ -19,6 +19,8 @@ import { getReviewsByListingIds, computeReviewStats } from "@/lib/data/reviews";
 import { PageContainer } from "@/components/layout/page-container";
 import { ListingGrid } from "@/components/catalog/listing-grid";
 import { VerifiedBadge } from "@/components/shared/verified-badge";
+import { calculateRoastToShipSla } from "@/lib/coffee/shipping-sla";
+import { RoastSlaBadge } from "@/components/catalog/roast-sla-badge";
 
 interface StorePageProps {
   params: Promise<{ slug: string }>;
@@ -78,6 +80,7 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
   const listingIds = seller.listings.map((l) => l.id);
   const reviews = await getReviewsByListingIds(listingIds);
   const reviewStats = computeReviewStats(reviews);
+  const slaResult = await calculateRoastToShipSla(seller.id);
 
   const cleanPhone = sanitizeWhatsApp(seller.whatsappNumber);
   const waMessage = encodeURIComponent(
@@ -151,6 +154,7 @@ export default async function StoreDetailPage({ params }: StorePageProps) {
                       {seller.businessName}
                     </h1>
                     {seller.isVerified && <VerifiedBadge size="md" />}
+                    {slaResult.qualifiesForSlaBadge && <RoastSlaBadge />}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-xs text-neutral-600">

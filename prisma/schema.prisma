@@ -73,6 +73,7 @@ model User {
   reviews       Review[]
   addresses       UserAddress[]
   tastePreference UserTastePreference?
+  waitlist        ListingWaitlist[]
 
   @@map("users")
 }
@@ -135,8 +136,9 @@ model Listing {
   isBoosted   Boolean       @default(false)
   boostUntil  DateTime?
   ratingAvg   Decimal?      @map("rating_avg") @db.Decimal(3, 2)
-  ratingCount Int           @default(0) @map("rating_count")
-  createdAt   DateTime      @default(now())
+  ratingCount   Int           @default(0) @map("rating_count")
+  nextRoastDate DateTime?     @map("next_roast_date")
+  createdAt     DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
   tasteProfile TasteProfile?
@@ -146,8 +148,10 @@ model Listing {
   payments     Payment[]
   orders       Order[]
   orderItems   OrderItem[]
-  reviews    Review[]
-  flavorTags ListingFlavorTag[]
+  reviews      Review[]
+  flavorTags   ListingFlavorTag[]
+  roastBatches RoastBatch[]
+  waitlist     ListingWaitlist[]
 
   @@index([status, createdAt])
   @@index([sellerId])
@@ -504,4 +508,32 @@ model UserTastePreference {
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("user_taste_preferences")
+}
+
+model RoastBatch {
+  id         String   @id @default(uuid())
+  listingId  String   @map("listing_id")
+  listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  roastedOn  DateTime @map("roasted_on")
+  quantityKg Decimal? @map("quantity_kg") @db.Decimal(6, 2)
+  notes      String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([listingId, roastedOn(sort: Desc)])
+  @@map("roast_batches")
+}
+
+model ListingWaitlist {
+  id         String    @id @default(uuid())
+  listingId  String    @map("listing_id")
+  listing    Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  userId     String    @map("user_id")
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notifiedAt DateTime? @map("notified_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@unique([listingId, userId])
+  @@index([userId])
+  @@index([listingId])
+  @@map("listing_waitlist")
 }

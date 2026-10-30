@@ -149,6 +149,23 @@ export interface ListingImage {
   sortOrder: number;
 }
 
+export interface RoastBatch {
+  id: string;
+  listingId: string;
+  roastedOn: string;
+  quantityKg?: number | null;
+  notes?: string | null;
+  createdAt: string;
+}
+
+export interface ListingWaitlist {
+  id: string;
+  listingId: string;
+  userId: string;
+  notifiedAt?: string | null;
+  createdAt: string;
+}
+
 export interface Listing {
   id: string;
   slug: string;
@@ -165,6 +182,7 @@ export interface Listing {
   boostUntil?: string | null;
   ratingAvg?: number | null;
   ratingCount?: number;
+  nextRoastDate?: string | null;
   createdAt: string;
 }
 
@@ -229,6 +247,8 @@ export interface ListingWithRelations extends Listing {
   tasteProfile?: TasteProfile | null;
   images: ListingImage[];
   flavorTags?: string[];
+  roastBatches?: RoastBatch[];
+  waitlistCount?: number;
   inquiries?: Inquiry[];
   events?: AnalyticsEvent[];
 }

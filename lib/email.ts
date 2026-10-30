@@ -521,3 +521,57 @@ export async function sendBankDetailsChangedEmail({
   }
 }
 
+/**
+ * Sends notification email when a coffee listing on waitlist is restocked / has a new roast batch.
+ */
+export async function sendWaitlistRestockedEmail({
+  to,
+  listingTitle,
+  listingSlug,
+  roastDate,
+}: {
+  to: string;
+  listingTitle: string;
+  listingSlug?: string;
+  roastDate: string;
+}): Promise<EmailResult> {
+  const resend = getResend();
+  const productUrl = `${APP_URL}/product/${listingSlug || ""}`;
+
+  if (!resend || !to) {
+    logger.info("email.mock_send", {
+      type: "waitlist_restocked",
+      to: to || "no-email",
+      listingTitle,
+      roastDate,
+    });
+    return { success: true, mocked: true };
+  }
+
+  try {
+    const res = await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: `Batch Sangrai Baru Tersedia: ${listingTitle}`,
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1F1815; background-color: #FAF6F1; border-radius: 8px;">
+          <h2 style="color: #2E150C;">Batch Baru Telah Disangrai! ☕</h2>
+          <p>Kabar gembira! Kopi <strong>${listingTitle}</strong> yang kamu nantikan baru saja disangrai pada tanggal <strong>${roastDate}</strong>.</p>
+          <p><a href="${productUrl}" style="display: inline-block; padding: 10px 18px; background-color: #512615; color: #FFFFFF; text-decoration: none; border-radius: 4px; font-weight: bold;">Pesan Sekarang Selagi Segar</a></p>
+        </div>
+      `,
+    });
+
+    return {
+      success: true,
+      messageId: res.data?.id,
+    };
+  } catch (error) {
+    logger.error("email.waitlist_failed", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to send waitlist email",
+    };
+  }
+}
+

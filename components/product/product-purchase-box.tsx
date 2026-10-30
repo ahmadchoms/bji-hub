@@ -9,6 +9,7 @@ import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { ProductShippingEstimator } from "@/components/product/product-shipping-estimator";
 import { GRIND_OPTIONS } from "@/lib/coffee/brew-methods";
 import { BrewCalculator } from "@/components/catalog/brew-calculator";
+import { WaitlistButton } from "@/components/catalog/waitlist-button";
 
 interface ProductPurchaseBoxProps {
   listing: ListingWithRelations;
@@ -198,12 +199,18 @@ export function ProductPurchaseBox({ listing }: ProductPurchaseBoxProps) {
       {/* Primary Online Checkout & Cart CTAs */}
       <div className="space-y-2 pt-1">
         {isOutOfStock ? (
-          <button
-            disabled
-            className="w-full bg-neutral-200 text-neutral-600 font-medium py-3 px-4 rounded-sm text-base cursor-not-allowed flex items-center justify-center border border-neutral-300"
-          >
-            Stok Habis Terjual
-          </button>
+          <div className="space-y-3">
+            <button
+              disabled
+              className="w-full bg-neutral-200 text-neutral-600 font-medium py-3 px-4 rounded-sm text-base cursor-not-allowed flex items-center justify-center border border-neutral-300"
+            >
+              Stok Habis Terjual
+            </button>
+            <WaitlistButton
+              listingId={listing.id}
+              nextRoastDate={listing.nextRoastDate}
+            />
+          </div>
         ) : (
           <>
             {!isGreenBean || confirmedGreenBean ? (

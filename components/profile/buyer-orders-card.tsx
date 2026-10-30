@@ -64,6 +64,7 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
       unit: "kg",
       minOrderQty: 1,
       quantity: ord.quantity || 1,
+      grindSize: ord.items?.[0]?.grindSize || undefined,
       sellerId: ord.sellerId,
       sellerName: ord.sellerName || "Roastery Penjual",
       sellerCity: ord.buyerCity || "Indonesia",

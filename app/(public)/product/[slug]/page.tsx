@@ -35,6 +35,8 @@ import { Star } from "lucide-react";
 import { ProductPurchaseBox } from "@/components/product/product-purchase-box";
 import { getReviewsByListing, computeReviewStats } from "@/lib/data/reviews";
 import { FreshnessBadge } from "@/components/catalog/freshness-badge";
+import { calculateRoastToShipSla } from "@/lib/coffee/shipping-sla";
+import { RoastSlaBadge } from "@/components/catalog/roast-sla-badge";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
@@ -124,6 +126,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
   const reviews = await getReviewsByListing(listing.id);
   const reviewStats = computeReviewStats(reviews);
+  const slaResult = await calculateRoastToShipSla(listing.sellerId);
 
   const primaryImage = listing.images?.[0]?.url;
   const jsonLd = {
@@ -362,15 +365,16 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                 </div>
               </div>
 
-              {/* Lencana Kesegaran Sangrai (COF-1) */}
-              {listing.tasteProfile?.roastDate && listing.category?.slug !== "green-beans" && (
-                <div>
+              {/* Lencana Kesegaran Sangrai (COF-1) & SLA Sangrai-Kirim (COF-13) */}
+              <div className="flex flex-wrap items-center gap-2">
+                {listing.tasteProfile?.roastDate && listing.category?.slug !== "green-beans" && (
                   <FreshnessBadge
                     roastDate={listing.tasteProfile.roastDate}
                     roastLevel={listing.tasteProfile.roastLevel}
                   />
-                </div>
-              )}
+                )}
+                {slaResult.qualifiesForSlaBadge && <RoastSlaBadge />}
+              </div>
 
               {/* Pricing, Grind Selector, Stock & Purchase Box */}
               <ProductPurchaseBox listing={listing} />

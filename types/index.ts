@@ -376,6 +376,7 @@ export interface Order {
   items?: OrderItem[];
   paidAt?: string | null;
   shippedAt?: string | null;
+  roastDateAtShip?: string | null;
   completedAt?: string | null;
   createdAt: string;
   updatedAt: string;

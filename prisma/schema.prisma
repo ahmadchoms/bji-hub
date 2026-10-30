@@ -349,6 +349,7 @@ model Order {
   disputeEvidenceUrl String?       @map("dispute_evidence_url")
   paidAt             DateTime?     @map("paid_at")
   shippedAt          DateTime?     @map("shipped_at")
+  roastDateAtShip    DateTime?     @map("roast_date_at_ship") @db.Date
   completedAt        DateTime?     @map("completed_at")
   createdAt          DateTime      @default(now()) @map("created_at")
   updatedAt          DateTime      @updatedAt @map("updated_at")

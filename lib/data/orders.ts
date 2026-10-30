@@ -318,6 +318,11 @@ export async function getOrderById(idOrNumber: string): Promise<Order | null> {
           disputeEvidenceUrl: row.dispute_evidence_url ?? null,
           paidAt: row.paid_at ? new Date(row.paid_at).toISOString() : null,
           shippedAt: row.shipped_at ? new Date(row.shipped_at).toISOString() : null,
+          roastDateAtShip: row.roast_date_at_ship
+            ? typeof row.roast_date_at_ship === "string"
+              ? row.roast_date_at_ship.slice(0, 10)
+              : new Date(row.roast_date_at_ship).toISOString().slice(0, 10)
+            : null,
           completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
           createdAt: row.created_at,
           updatedAt: row.updated_at,
@@ -383,6 +388,11 @@ export async function getOrdersBySeller(sellerId: string): Promise<Order[]> {
         disputeEvidenceUrl: row.dispute_evidence_url ?? null,
         paidAt: row.paid_at ? new Date(row.paid_at).toISOString() : null,
         shippedAt: row.shipped_at ? new Date(row.shipped_at).toISOString() : null,
+        roastDateAtShip: row.roast_date_at_ship
+          ? typeof row.roast_date_at_ship === "string"
+            ? row.roast_date_at_ship.slice(0, 10)
+            : new Date(row.roast_date_at_ship).toISOString().slice(0, 10)
+          : null,
         completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
@@ -439,6 +449,11 @@ export async function getAllOrders(): Promise<Order[]> {
         disputeEvidenceUrl: row.dispute_evidence_url ?? null,
         paidAt: row.paid_at ? new Date(row.paid_at).toISOString() : null,
         shippedAt: row.shipped_at ? new Date(row.shipped_at).toISOString() : null,
+        roastDateAtShip: row.roast_date_at_ship
+          ? typeof row.roast_date_at_ship === "string"
+            ? row.roast_date_at_ship.slice(0, 10)
+            : new Date(row.roast_date_at_ship).toISOString().slice(0, 10)
+          : null,
         completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
@@ -530,6 +545,11 @@ export async function getOrdersByBuyer(
         disputeEvidenceUrl: row.dispute_evidence_url ?? null,
         paidAt: row.paid_at ? new Date(row.paid_at).toISOString() : null,
         shippedAt: row.shipped_at ? new Date(row.shipped_at).toISOString() : null,
+        roastDateAtShip: row.roast_date_at_ship
+          ? typeof row.roast_date_at_ship === "string"
+            ? row.roast_date_at_ship.slice(0, 10)
+            : new Date(row.roast_date_at_ship).toISOString().slice(0, 10)
+          : null,
         completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
@@ -725,6 +745,38 @@ export async function transitionOrderStatus(
             ? [{ listingId: row.listing_id, quantity: Number(row.quantity || 1) }]
             : [];
 
+      if (to === "shipped") {
+        const listingIds = itemsToUpdate.map((i) => i.listingId);
+        if (listingIds.length > 0) {
+          const roastBatchRes = await client.query(
+            `SELECT roasted_on FROM public.roast_batches
+             WHERE listing_id = ANY($1) AND roasted_on <= $2::date
+             ORDER BY roasted_on ASC LIMIT 1`,
+            [listingIds, now]
+          );
+          let roastDate = roastBatchRes.rows[0]?.roasted_on;
+          if (!roastDate) {
+            const tasteRes = await client.query(
+              `SELECT roast_date FROM public.taste_profiles
+               WHERE listing_id = ANY($1) AND roast_date::date <= $2::date
+               ORDER BY roast_date ASC LIMIT 1`,
+              [listingIds, now]
+            );
+            roastDate = tasteRes.rows[0]?.roast_date;
+          }
+          if (roastDate) {
+            const dateStr =
+              typeof roastDate === "string"
+                ? roastDate.slice(0, 10)
+                : new Date(roastDate).toISOString().slice(0, 10);
+            await client.query(
+              `UPDATE public.orders SET roast_date_at_ship = $1 WHERE id = $2 AND roast_date_at_ship IS NULL`,
+              [dateStr, internalOrderId]
+            );
+          }
+        }
+      }
+
       let lowStockAlert: { sellerId: string; listingTitle: string; remainingStock: number } | null = null;
 
       if (to === "paid") {
@@ -817,8 +869,14 @@ export async function transitionOrderStatus(
   existing.updatedAt = now;
   if (to === "paid" && !existing.paidAt) {
     existing.paidAt = now;
-  } else if (to === "shipped" && !existing.shippedAt) {
-    existing.shippedAt = now;
+  } else if (to === "shipped") {
+    if (!existing.shippedAt) existing.shippedAt = now;
+    if (!existing.roastDateAtShip) {
+      const listing = mockListings.find((l) => l.id === existing.listingId);
+      if (listing?.tasteProfile?.roastDate) {
+        existing.roastDateAtShip = listing.tasteProfile.roastDate.slice(0, 10);
+      }
+    }
   } else if (to === "completed" && !existing.completedAt) {
     existing.completedAt = now;
   }

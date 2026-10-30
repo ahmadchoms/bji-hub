@@ -321,4 +321,32 @@ describe("orders data layer & auto-complete", () => {
 
     listing.status = "active";
   });
+
+  it("snapshots roastDateAtShip when transitioning status to shipped (F4)", async () => {
+    const orderNumber = `ORD-ROAST-SLA-${Date.now()}`;
+    const order = await createOrder({
+      orderNumber,
+      buyerName: "Buyer SLA",
+      buyerEmail: "buyer-sla@test.com",
+      buyerPhone: "08123456789",
+      buyerAddress: "Jl Test No 1",
+      buyerCity: "Jakarta",
+      sellerId: "seller-1",
+      listingId: "list-1",
+      quantity: 1,
+      itemPrice: 50000,
+      subtotal: 50000,
+      shippingCost: 10000,
+      serviceFee: 1500,
+      totalAmount: 61500,
+      shippingCourier: "JNE",
+      midtransOrderId: orderNumber,
+    });
+
+    await transitionOrderStatus(order.id, "paid");
+    const shippedRes = await transitionOrderStatus(order.id, "shipped");
+    expect(shippedRes.applied).toBe(true);
+    expect(shippedRes.order?.roastDateAtShip).toBeDefined();
+    expect(typeof shippedRes.order?.roastDateAtShip).toBe("string");
+  });
 });

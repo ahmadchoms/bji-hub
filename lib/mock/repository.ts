@@ -139,6 +139,25 @@ async function findListings(
     );
   }
 
+  // Flavor notes / Flavor wheel filter (COF-4)
+  if (filters.rasa && filters.rasa !== "all") {
+    const rawRasa = filters.rasa
+      .toLowerCase()
+      .split(/[,+]/)
+      .map((r) => r.trim())
+      .filter(Boolean);
+
+    results = results.filter((item) => {
+      const notes = item.tasteProfile?.flavorNotes?.toLowerCase() || "";
+      const itemTags = (item.flavorTags || []).map((t) => t.toLowerCase());
+      return rawRasa.some(
+        (target) =>
+          notes.includes(target) ||
+          itemTags.includes(target)
+      );
+    });
+  }
+
   // Verified seller only filter
   if (filters.isVerified) {
     results = results.filter((item) => item.seller.isVerified);

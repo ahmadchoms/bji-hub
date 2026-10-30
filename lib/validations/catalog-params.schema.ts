@@ -22,6 +22,7 @@ export const catalogParamsSchema = z.object({
       "price_desc",
     ])
     .default("newest"),
+  rasa: z.string().trim().default(""),
   page: z.coerce.number().int().min(1).default(1),
   cupping_score: z.coerce.number().min(0).max(100).optional(),
   // Backward compatibility aliases
@@ -85,6 +86,7 @@ export function parseCatalogParams(params: Record<string, string | string[] | un
   const cuppingScore = value("cupping_score") || value("min_cupping") || value("skor_cupping");
   const verified = value("verified") === "true";
   const readyStock = value("ready_stock") === "true" || value("stok_tersedia") === "true";
+  const rasa = value("rasa") || value("flavor") || "";
 
   const parsed = catalogParamsSchema.safeParse({
     q: value("q") || "",
@@ -92,6 +94,7 @@ export function parseCatalogParams(params: Record<string, string | string[] | un
     origin,
     process: processMethod,
     roast,
+    rasa,
     min_price: minPrice,
     max_price: maxPrice,
     cupping_score: cuppingScore,

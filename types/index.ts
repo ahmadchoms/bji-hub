@@ -208,12 +208,27 @@ export interface Inquiry {
   createdAt: string;
 }
 
+export interface ListingFlavorTag {
+  listingId: string;
+  tag: string;
+}
+
+export interface UserTastePreference {
+  userId: string;
+  acidityPref?: number | null;
+  bodyPref?: number | null;
+  roastPref: string[];
+  flavorTags: string[];
+  updatedAt: string;
+}
+
 // Composed & Extended Types
 export interface ListingWithRelations extends Listing {
   seller: SellerProfile;
   category: Category;
   tasteProfile?: TasteProfile | null;
   images: ListingImage[];
+  flavorTags?: string[];
   inquiries?: Inquiry[];
   events?: AnalyticsEvent[];
 }
@@ -230,6 +245,7 @@ export interface ListingFilters {
   originRegion?: string;
   processMethod?: string;
   roastLevel?: string;
+  rasa?: string;
   minPrice?: number;
   maxPrice?: number;
   isVerified?: boolean;

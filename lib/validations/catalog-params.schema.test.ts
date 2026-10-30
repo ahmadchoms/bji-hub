@@ -36,6 +36,14 @@ describe("catalog-params.schema", () => {
     expect(id.ready_stock).toBe(true);
   });
 
+  it("parses rasa and flavor parameter correctly", () => {
+    const res = parseCatalogParams({ rasa: "jeruk,madu" });
+    expect(res.rasa).toBe("jeruk,madu");
+
+    const alias = parseCatalogParams({ flavor: "cokelat" });
+    expect(alias.rasa).toBe("cokelat");
+  });
+
   it("supports legacy Indonesian parameters for backward compatibility", () => {
     const params = parseCatalogParams({
       kategori: "robusta",

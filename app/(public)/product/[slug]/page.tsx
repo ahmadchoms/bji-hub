@@ -1,13 +1,26 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
 import { getListingBySlug, getListingFeed } from "@/lib/data";
 import { PageContainer } from "@/components/layout/page-container";
 import { ImageGallery } from "@/components/catalog/image-gallery";
-import { FlavorProfile } from "@/components/catalog/flavor-profile";
 import { TasteSpecList } from "@/components/catalog/taste-spec-list";
 import { TraceabilityBlock } from "@/components/catalog/traceability-block";
+import { findSimilarListings } from "@/lib/coffee/similarity";
+
+const FlavorProfile = dynamic(
+  () => import("@/components/catalog/flavor-profile").then((mod) => mod.FlavorProfile),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-48 rounded-sm border border-neutral-200 bg-neutral-50/50 animate-pulse flex items-center justify-center text-xs text-neutral-600 font-mono">
+        Memuat lembar cupping...
+      </div>
+    ),
+  }
+);
 import { InquiryForm } from "@/components/catalog/inquiry-form";
 import { ListingGrid } from "@/components/catalog/listing-grid";
 import { VerifiedBadge } from "@/components/shared/verified-badge";
@@ -105,10 +118,9 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
   const relatedResult = await getListingFeed({
     categorySlug: listing.category.slug,
+    pageSize: 50,
   });
-  const relatedListings = relatedResult.items
-    .filter((l) => l.id !== listing.id)
-    .slice(0, 3);
+  const similarListings = findSimilarListings(listing, relatedResult.items, 6);
 
   const reviews = await getReviewsByListing(listing.id);
   const reviewStats = computeReviewStats(reviews);
@@ -422,21 +434,26 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           </div>
         </div>
 
-        {/* Related */}
-        {relatedListings.length > 0 && (
+        {/* Similar Listings based on Taste Vector / Category */}
+        {similarListings.length > 0 && (
           <div className="pt-8 border-t border-neutral-300 space-y-6">
             <div className="flex items-baseline justify-between pb-3 border-b border-neutral-300">
-              <h3 className="font-display text-xl text-neutral-900 font-semibold">
-                Sejenis Lainnya
-              </h3>
+              <div>
+                <h3 className="font-display text-xl text-neutral-900 font-semibold">
+                  Mirip dengan Ini
+                </h3>
+                <p className="text-xs text-neutral-600">
+                  Rekomendasi kopi dengan kemiripan profil rasa dan karakter sangrai
+                </p>
+              </div>
               <Link
                 href={`/?category=${listing.category.slug}`}
-                className="text-xs font-medium text-primary-600 hover:underline"
+                className="text-xs font-semibold text-primary-700 hover:underline coarse:min-h-11 inline-flex items-center"
               >
                 Lihat Semua →
               </Link>
             </div>
-            <ListingGrid listings={relatedListings} />
+            <ListingGrid listings={similarListings} />
           </div>
         )}
       </PageContainer>

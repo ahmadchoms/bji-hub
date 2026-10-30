@@ -71,7 +71,8 @@ model User {
   sellerProfile SellerProfile?
   orders        Order[]        @relation("UserOrders")
   reviews       Review[]
-  addresses     UserAddress[]
+  addresses       UserAddress[]
+  tastePreference UserTastePreference?
 
   @@map("users")
 }
@@ -145,7 +146,8 @@ model Listing {
   payments     Payment[]
   orders       Order[]
   orderItems   OrderItem[]
-  reviews      Review[]
+  reviews    Review[]
+  flavorTags ListingFlavorTag[]
 
   @@index([status, createdAt])
   @@index([sellerId])
@@ -480,4 +482,26 @@ model Notification {
   @@index([userId, isRead])
   @@index([userId, createdAt])
   @@map("notifications")
+}
+
+model ListingFlavorTag {
+  listingId String  @map("listing_id")
+  tag       String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@id([listingId, tag])
+  @@index([tag])
+  @@map("listing_flavor_tags")
+}
+
+model UserTastePreference {
+  userId     String   @id @map("user_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  acidityPref Decimal? @map("acidity_pref") @db.Decimal(3, 1)
+  bodyPref    Decimal? @map("body_pref") @db.Decimal(3, 1)
+  roastPref   String[] @default([]) @map("roast_pref")
+  flavorTags  String[] @default([]) @map("flavor_tags")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("user_taste_preferences")
 }

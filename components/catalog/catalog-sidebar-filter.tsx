@@ -72,6 +72,16 @@ const pricePresets = [
   { label: "> Rp150.000", min: "150000", max: "" },
 ];
 
+const flavorWheelPresets = [
+  { label: "Buah (Jeruk, Berry)", tag: "buah" },
+  { label: "Bunga (Floral/Melati)", tag: "bunga" },
+  { label: "Manis (Karamel/Madu)", tag: "manis" },
+  { label: "Cokelat & Kakao", tag: "cokelat" },
+  { label: "Rempah Nusantara", tag: "rempah" },
+  { label: "Kacang (Nutty)", tag: "kacang" },
+  { label: "Herbal & Earthy", tag: "herbal" },
+];
+
 export function CatalogSidebarFilter({
   origins = [],
   processes = [],
@@ -107,6 +117,7 @@ export function CatalogSidebarFilter({
   const isReadyStock =
     searchParams.get("ready_stock") === "true" ||
     searchParams.get("stok_tersedia") === "true";
+  const currentRasa = searchParams.get("rasa") || "";
 
   // Merge default categories with props
   const allCategories = (() => {
@@ -165,6 +176,7 @@ export function CatalogSidebarFilter({
     currentRoast,
     currentCupping,
     currentMinPrice || currentMaxPrice,
+    currentRasa,
     isVerified,
     isReadyStock,
   ].filter(Boolean).length;
@@ -389,6 +401,39 @@ export function CatalogSidebarFilter({
           </div>
         </div>
       )}
+
+      {/* Roda Rasa (Flavor Wheel) */}
+      <div className="space-y-2 pt-4 border-t border-neutral-100">
+        <p className="font-bold text-neutral-900">Karakter Rasa</p>
+        <div className="flex flex-wrap gap-1.5">
+          {flavorWheelPresets.map((preset) => {
+            const active = currentRasa.split(",").includes(preset.tag);
+            return (
+              <button
+                key={preset.tag}
+                type="button"
+                onClick={() => {
+                  let newTags = currentRasa ? currentRasa.split(",").filter(Boolean) : [];
+                  if (active) {
+                    newTags = newTags.filter((t) => t !== preset.tag);
+                  } else {
+                    newTags.push(preset.tag);
+                  }
+                  replaceParam("rasa", newTags.join(","));
+                }}
+                className={cn(
+                  "px-2.5 py-1 rounded border text-xs font-medium transition-colors coarse:min-h-11 inline-flex items-center",
+                  active
+                    ? "border-primary-600 bg-primary-50 text-primary-900 font-bold"
+                    : "border-neutral-200 text-neutral-600 hover:bg-neutral-50",
+                )}
+              >
+                {preset.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* 6. Rentang Harga */}
       <div className="space-y-2 pt-4 border-t border-neutral-100">

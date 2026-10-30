@@ -29,6 +29,14 @@ const AXIS_CONFIGS: {
   { key: "aftertasteScore", label: "Aftertaste", maxScore: 5 },
 ];
 
+function getScoreIntensityLabel(score: number): string {
+  if (score <= 1.5) return "Lembut / Halus";
+  if (score <= 2.5) return "Sedang-Rendah";
+  if (score <= 3.5) return "Seimbang";
+  if (score <= 4.5) return "Dominan";
+  return "Sangat Intens";
+}
+
 function ScoreGauge({ label, score, max }: { label: string; score: number; max: number }) {
   const pct = (score / max) * 100;
   return (
@@ -132,6 +140,42 @@ export function FlavorProfile({ tasteProfile, className }: FlavorProfileProps) {
           ))}
         </div>
       )}
+
+      {/* Alternatif Tabel Teks untuk Pembaca Layar / Aksesibilitas (A11Y-7 / COF-4) */}
+      <div className="sr-only">
+        <table aria-label="Tabel Skor Profil Rasa Kopi (Skala 0 - 5)">
+          <thead>
+            <tr>
+              <th scope="col">Dimensi Rasa</th>
+              <th scope="col">Skor (Maks. 5.0)</th>
+              <th scope="col">Keterangan</th>
+            </tr>
+          </thead>
+          <tbody>
+            {activeAxes.map((axis) => (
+              <tr key={axis.subject}>
+                <td>{axis.subject}</td>
+                <td>{axis.score.toFixed(1)}</td>
+                <td>{getScoreIntensityLabel(axis.score)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Legenda Skala Skor Rasa (0 - 5) */}
+      <div className="flex flex-wrap items-center justify-between gap-1 pt-2 text-xs text-neutral-600 font-mono border-t border-neutral-100">
+        <span className="font-semibold text-neutral-700">Skala Intensitas:</span>
+        <span>1: Halus</span>
+        <span>•</span>
+        <span>2: Sedang</span>
+        <span>•</span>
+        <span>3: Seimbang</span>
+        <span>•</span>
+        <span>4: Dominan</span>
+        <span>•</span>
+        <span>5: Sangat Kuat</span>
+      </div>
 
       {flavorText && (
         <div className="pt-3 border-t border-neutral-300">

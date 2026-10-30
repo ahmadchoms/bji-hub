@@ -21,6 +21,7 @@ export async function CatalogFeed({ params }: { params: CatalogParams }) {
       readyStock: params.ready_stock,
       search: params.q,
       sort: params.sort,
+      rasa: params.rasa || undefined,
       minCuppingScore: params.cupping_score ?? params.min_cupping,
     });
     const feed = await getCatalogFeedCached(
@@ -39,6 +40,7 @@ export async function CatalogFeed({ params }: { params: CatalogParams }) {
       cupping_score: params.cupping_score !== undefined ? String(params.cupping_score) : params.min_cupping !== undefined ? String(params.min_cupping) : undefined,
       verified: params.verified ? "true" : undefined,
       ready_stock: params.ready_stock ? "true" : undefined,
+      rasa: params.rasa || undefined,
       sort: params.sort !== "newest" ? params.sort : undefined,
     };
     const serialized = new URLSearchParams(

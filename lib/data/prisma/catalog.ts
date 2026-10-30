@@ -63,6 +63,22 @@ function buildWhere(filters: ListingFilters): Prisma.ListingWhereInput {
   if (filters.isBoosted) where.isBoosted = true;
   if (filters.readyStock) where.stock = { gt: 0 };
 
+  if (filters.rasa && filters.rasa !== ALL) {
+    const rawTags = filters.rasa
+      .split(/[,+]/)
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean);
+    if (rawTags.length > 0) {
+      where.OR = rawTags.map((t) => ({
+        tasteProfile: {
+          is: {
+            flavorNotes: { contains: t, mode: "insensitive" as const },
+          },
+        },
+      }));
+    }
+  }
+
   const price: Prisma.DecimalFilter = {};
   if (typeof filters.minPrice === "number" && !Number.isNaN(filters.minPrice))
     price.gte = filters.minPrice;

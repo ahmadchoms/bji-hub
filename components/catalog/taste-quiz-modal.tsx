@@ -1,5 +1,7 @@
 "use client";
 
+import { saveTastePreferencesAction } from "@/actions/taste-preference.actions";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -171,6 +173,27 @@ export function TasteQuizModal({
     const params = new URLSearchParams();
     if (answers.process) params.set("process", answers.process);
     if (answers.roast) params.set("roast", answers.roast);
+
+    try {
+      localStorage.setItem(
+        "biji_user_taste_preferences",
+        JSON.stringify({
+          roast: answers.roast,
+          process: answers.process,
+          acidity: answers.acidity,
+          updatedAt: new Date().toISOString(),
+        })
+      );
+    } catch {
+      // ignore: localStorage might be unavailable
+    }
+
+    saveTastePreferencesAction({
+      roastPref: answers.roast ? [answers.roast] : [],
+      flavorTags: answers.process ? [answers.process.toLowerCase()] : [],
+    }).catch(() => {
+      // ignore: background preference sync
+    });
 
     setOpen(false);
     router.push(`/?${params.toString()}`);

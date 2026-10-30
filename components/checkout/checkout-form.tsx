@@ -622,7 +622,7 @@ export function CheckoutForm({
                     }).catch(() => {});
                     toast.success("Alamat pengiriman diperbarui");
                   }}
-                  className="text-xs h-8 gap-1.5"
+                  className="text-xs h-8 coarse:h-11 coarse:min-h-11 gap-1.5"
                 >
                   <Check className="w-3.5 h-3.5" /> Gunakan Alamat Ini
                 </Button>
@@ -785,7 +785,7 @@ export function CheckoutForm({
                 variant="outline"
                 size="sm"
                 onClick={() => setShippingRetryCount((c) => c + 1)}
-                className="text-xs border-rose-300 text-rose-800 hover:bg-rose-100"
+                className="text-xs border-rose-300 text-rose-800 hover:bg-rose-100 coarse:min-h-11"
               >
                 Coba Hitung Ulang
               </Button>
@@ -816,7 +816,7 @@ export function CheckoutForm({
                   key={rate.id}
                   htmlFor={`courier-${rate.id}`}
                   className={cn(
-                    "flex items-start justify-between border p-3 rounded-sm cursor-pointer transition-colors text-xs",
+                    "flex items-start justify-between border p-3 rounded-sm cursor-pointer transition-colors text-xs coarse:min-h-11",
                     selectedCourierId === rate.id
                       ? "border-primary-600 bg-primary-50/40 text-primary-950"
                       : "border-neutral-300 hover:border-neutral-400 text-neutral-800",

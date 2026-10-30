@@ -212,7 +212,7 @@ export function CatalogSidebarFilter({
             type="button"
             onClick={() => replaceParam("category", "")}
             className={cn(
-              "w-full text-left px-2.5 py-1.5 rounded-md font-medium transition-colors flex items-center justify-between",
+              "w-full text-left px-2.5 py-1.5 rounded-md font-medium transition-colors coarse:min-h-11 flex items-center justify-between",
               !currentCategory
                 ? "bg-primary-50 text-primary-900 font-bold"
                 : "text-neutral-600 hover:bg-neutral-100",
@@ -229,7 +229,7 @@ export function CatalogSidebarFilter({
                 type="button"
                 onClick={() => replaceParam("category", active ? "" : c.slug)}
                 className={cn(
-                  "w-full text-left px-2.5 py-1.5 rounded-md font-medium transition-colors flex items-center justify-between",
+                  "w-full text-left px-2.5 py-1.5 rounded-md font-medium transition-colors coarse:min-h-11 flex items-center justify-between",
                   active
                     ? "bg-primary-50 text-primary-900 font-bold"
                     : "text-neutral-600 hover:bg-neutral-100",
@@ -275,7 +275,7 @@ export function CatalogSidebarFilter({
                   type="button"
                   onClick={() => replaceParam("origin", active ? "" : island.slug)}
                   className={cn(
-                    "px-2.5 py-1 rounded border text-xs font-medium transition-colors",
+                    "px-2.5 py-1 rounded border text-xs font-medium transition-colors coarse:min-h-11 inline-flex items-center",
                     active
                       ? "border-primary-600 bg-primary-50 text-primary-900 font-bold"
                       : "border-neutral-200 text-neutral-600 hover:bg-neutral-50",
@@ -303,7 +303,7 @@ export function CatalogSidebarFilter({
                     type="button"
                     onClick={() => replaceParam("origin", active ? "" : orig)}
                     className={cn(
-                      "w-full text-left px-2.5 py-1 rounded text-xs transition-colors flex items-center justify-between",
+                      "w-full text-left px-2.5 py-1 rounded text-xs transition-colors coarse:min-h-11 flex items-center justify-between",
                       active
                         ? "bg-primary-50 text-primary-900 font-bold"
                         : "text-neutral-600 hover:bg-neutral-100",
@@ -334,7 +334,7 @@ export function CatalogSidebarFilter({
                 type="button"
                 onClick={() => replaceParam("roast", active ? "" : roast)}
                 className={cn(
-                  "px-2.5 py-1 rounded border text-xs font-medium transition-colors",
+                  "px-2.5 py-1 rounded border text-xs font-medium transition-colors coarse:min-h-11 inline-flex items-center",
                   active
                     ? "border-primary-600 bg-primary-50 text-primary-900 font-bold"
                     : "border-neutral-200 text-neutral-600 hover:bg-neutral-50",
@@ -362,7 +362,7 @@ export function CatalogSidebarFilter({
                 type="button"
                 onClick={() => replaceParam("cupping_score", active ? "" : score.min)}
                 className={cn(
-                  "px-2.5 py-1 rounded border text-xs font-medium transition-colors",
+                  "px-2.5 py-1 rounded border text-xs font-medium transition-colors coarse:min-h-11 inline-flex items-center",
                   active
                     ? "border-amber-600 bg-amber-50 text-amber-900 font-bold"
                     : "border-neutral-200 text-neutral-600 hover:bg-neutral-50",
@@ -388,7 +388,7 @@ export function CatalogSidebarFilter({
                   type="button"
                   onClick={() => replaceParam("process", active ? "" : proc)}
                   className={cn(
-                    "px-2.5 py-1 rounded border text-xs font-medium transition-colors",
+                    "px-2.5 py-1 rounded border text-xs font-medium transition-colors coarse:min-h-11 inline-flex items-center",
                     active
                       ? "border-primary-600 bg-primary-50 text-primary-900 font-bold"
                       : "border-neutral-200 text-neutral-600 hover:bg-neutral-50",
@@ -462,7 +462,7 @@ export function CatalogSidebarFilter({
                   );
                 }}
                 className={cn(
-                  "w-full text-left px-2.5 py-1 rounded text-xs transition-colors flex items-center justify-between",
+                  "w-full text-left px-2.5 py-1 rounded text-xs transition-colors coarse:min-h-11 flex items-center justify-between",
                   isMatch
                     ? "bg-primary-50 text-primary-900 font-bold"
                     : "text-neutral-600 hover:bg-neutral-100",
@@ -526,7 +526,7 @@ export function CatalogSidebarFilter({
         {FilterContent}
       </aside>
 
-      {/* Mobile Filter Trigger Sheet */}
+      {/* Mobile Filter Trigger Bottom Sheet (RWD-1) */}
       <div className="lg:hidden flex items-center justify-between pb-3">
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger
@@ -534,7 +534,7 @@ export function CatalogSidebarFilter({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-9 gap-1.5 text-xs font-semibold text-neutral-800 border-neutral-300"
+                className="h-10 coarse:min-h-11 gap-1.5 text-xs font-semibold text-neutral-800 border-neutral-300"
               />
             }
           >
@@ -546,11 +546,44 @@ export function CatalogSidebarFilter({
               </span>
             )}
           </SheetTrigger>
-          <SheetContent side="left" className="w-80 p-4 overflow-y-auto">
-            <SheetHeader className="pb-3 border-b border-neutral-200">
-              <SheetTitle className="text-sm font-bold">Filter Kopi</SheetTitle>
+          <SheetContent
+            side="bottom"
+            className="max-h-[85vh] rounded-t-2xl p-0 flex flex-col bg-white border-t border-neutral-300 overflow-hidden"
+          >
+            <SheetHeader className="px-5 py-3.5 border-b border-neutral-200 flex flex-row items-center justify-between space-y-0">
+              <SheetTitle className="text-sm font-bold text-neutral-900 flex items-center gap-1.5">
+                <SlidersHorizontal className="w-4 h-4 text-primary-600" />
+                <span>Filter Kopi</span>
+                {activeFilterCount > 0 && (
+                  <span className="ml-1 px-1.5 py-0.5 rounded-full bg-primary-600 text-white text-xs font-bold">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </SheetTitle>
+              {activeFilterCount > 0 && (
+                <button
+                  type="button"
+                  onClick={resetAllFilters}
+                  className="text-xs font-semibold text-primary-700 hover:text-primary-800 flex items-center gap-1 coarse:min-h-11 px-2 cursor-pointer"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  Reset
+                </button>
+              )}
             </SheetHeader>
-            <div className="pt-4">{FilterContent}</div>
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              {FilterContent}
+            </div>
+            <div className="p-4 border-t border-neutral-200 bg-neutral-50 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+              <Button
+                type="button"
+                variant="primary"
+                className="w-full h-11 coarse:min-h-11 font-semibold text-sm justify-center"
+                onClick={() => setMobileOpen(false)}
+              >
+                Terapkan Filter {activeFilterCount > 0 ? `(${activeFilterCount})` : ""}
+              </Button>
+            </div>
           </SheetContent>
         </Sheet>
       </div>

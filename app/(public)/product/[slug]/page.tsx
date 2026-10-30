@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
 import { getListingBySlug, getListingFeed } from "@/lib/data";
 import { PageContainer } from "@/components/layout/page-container";
@@ -9,18 +8,7 @@ import { ImageGallery } from "@/components/catalog/image-gallery";
 import { TasteSpecList } from "@/components/catalog/taste-spec-list";
 import { TraceabilityBlock } from "@/components/catalog/traceability-block";
 import { findSimilarListings } from "@/lib/coffee/similarity";
-
-const FlavorProfile = dynamic(
-  () => import("@/components/catalog/flavor-profile").then((mod) => mod.FlavorProfile),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="h-48 rounded-sm border border-neutral-200 bg-neutral-50/50 animate-pulse flex items-center justify-center text-xs text-neutral-600 font-mono">
-        Memuat lembar cupping...
-      </div>
-    ),
-  }
-);
+import { DynamicFlavorProfile as FlavorProfile } from "@/components/catalog/dynamic-flavor-profile";
 import { InquiryForm } from "@/components/catalog/inquiry-form";
 import { ListingGrid } from "@/components/catalog/listing-grid";
 import { VerifiedBadge } from "@/components/shared/verified-badge";
@@ -168,14 +156,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
         }}
       />
       <TrackOnMount listingId={listing.id} type="view" />
-      <ProductStickyCTA
-        phoneNumber={listing.seller.whatsappNumber}
-        listingId={listing.id}
-        listingTitle={listing.title}
-        sellerName={listing.seller.businessName}
-        listingSlug={listing.slug}
-        isOutOfStock={listing.stock === 0}
-      />
+      <ProductStickyCTA listing={listing} />
       <PageContainer className="space-y-8">
         {/* Breadcrumb */}
         <nav

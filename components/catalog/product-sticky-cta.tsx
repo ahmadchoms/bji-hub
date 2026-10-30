@@ -1,82 +1,96 @@
 "use client";
 
 import Link from "next/link";
+import { ShieldCheck, MessageCircle } from "lucide-react";
+import { ListingWithRelations } from "@/types";
+import { PriceText } from "@/components/shared/price-text";
+import { AddToCartButton } from "@/components/cart/add-to-cart-button";
+import { WaitlistButton } from "@/components/catalog/waitlist-button";
 import { buildWhatsAppUrl } from "@/components/shared/whatsapp-button";
-import { cn } from "@/lib/utils";
 import { trackEvent } from "@/lib/tracking";
 
-interface Props {
-  phoneNumber: string;
-  listingId: string;
-  listingTitle: string;
-  sellerName: string;
-  listingSlug?: string;
-  isOutOfStock?: boolean;
-  className?: string;
+interface ProductStickyCTAProps {
+  listing: ListingWithRelations;
 }
 
-export function ProductStickyCTA({
-  phoneNumber,
-  listingId,
-  listingTitle,
-  sellerName,
-  listingSlug,
-  isOutOfStock = false,
-  className,
-}: Props) {
-  const whatsappUrl = buildWhatsAppUrl({
-    phoneNumber,
-    listingId,
-    listingTitle,
-    sellerName,
-  });
+export function ProductStickyCTA({ listing }: ProductStickyCTAProps) {
+  const isOutOfStock = listing.stock === 0;
+  const checkoutUrl = `/checkout/${listing.slug}?qty=${listing.minOrderQty || 1}`;
 
-  const scrollToInquiry = () => {
-    document
-      .getElementById("inquiry-form")
-      ?.scrollIntoView({ behavior: "smooth" });
-  };
+  const whatsappUrl = buildWhatsAppUrl({
+    phoneNumber: listing.seller.whatsappNumber || "",
+    listingId: listing.id,
+    listingTitle: listing.title,
+    sellerName: listing.seller.businessName,
+  });
 
   return (
     <div
-      className={cn(
-        "fixed bottom-0 inset-x-0 z-50 border-t border-neutral-300 bg-surface-base md:hidden",
-        className,
-      )}
+      className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-neutral-300 px-3 py-2 shadow-lg pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]"
+      aria-label="Aksi Cepat Pembelian"
     >
-      <div className="flex items-stretch divide-x divide-neutral-300">
-        {isOutOfStock ? (
-          <button
-            disabled
-            className="flex min-h-12 flex-1 items-center justify-center bg-neutral-200 text-neutral-600 text-sm font-medium cursor-not-allowed"
-          >
-            Stok Habis
-          </button>
-        ) : listingSlug ? (
-          <Link
-            href={`/checkout/${listingSlug}`}
-            className="flex min-h-12 flex-1 items-center justify-center bg-primary-600 text-white text-sm font-medium"
-          >
-            Beli Langsung
-          </Link>
-        ) : (
-          <button
-            type="button"
-            onClick={scrollToInquiry}
-            className="flex min-h-12 flex-1 items-center justify-center bg-transparent text-sm font-medium text-primary-700"
-          >
-            Ajukan Penawaran
-          </button>
-        )}
-        <a
-          href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() => trackEvent(listingId, "contact_click")}
-          className="flex min-h-12 flex-1 items-center justify-center bg-emerald-700 text-white text-sm font-medium"
-        >
-          WhatsApp
-        </a>
+      <div className="flex items-center justify-between gap-2 max-w-lg mx-auto">
+        {/* Info Harga Ringkas */}
+        <div className="min-w-0 flex-1">
+          <p className="text-xs text-neutral-600 truncate font-medium">
+            {listing.title}
+          </p>
+          <div className="flex items-baseline gap-1">
+            <PriceText price={listing.price} unit={listing.unit} size="sm" />
+          </div>
+        </div>
+
+        {/* Action CTAs */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {listing.seller.whatsappNumber && (
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackEvent(listing.id, "contact_click")}
+              className="inline-flex items-center justify-center size-10 min-w-[40px] min-h-[40px] coarse:size-11 rounded-sm border border-neutral-300 bg-white text-emerald-700 hover:bg-emerald-50 transition-colors"
+              title="Hubungi Penjual via WhatsApp"
+              aria-label="Hubungi Penjual via WhatsApp"
+            >
+              <MessageCircle className="w-4 h-4" />
+            </a>
+          )}
+
+          {isOutOfStock ? (
+            <div className="w-36">
+              <WaitlistButton
+                listingId={listing.id}
+                nextRoastDate={listing.nextRoastDate}
+              />
+            </div>
+          ) : (
+            <>
+              <AddToCartButton
+                item={{
+                  listingId: listing.id,
+                  slug: listing.slug,
+                  title: listing.title,
+                  price: listing.price,
+                  unit: listing.unit,
+                  minOrderQty: listing.minOrderQty,
+                  quantity: listing.minOrderQty || 1,
+                  imageUrl: listing.images?.[0]?.url,
+                  sellerId: listing.sellerId,
+                  sellerName: listing.seller.businessName,
+                  sellerCity: listing.seller.city,
+                }}
+                className="h-10 min-h-[40px] coarse:h-11 coarse:min-h-11 px-2.5 text-xs"
+              />
+              <Link
+                href={checkoutUrl}
+                className="inline-flex items-center justify-center h-10 min-h-[40px] coarse:h-11 coarse:min-h-11 px-3.5 rounded-sm bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-xs transition-colors"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 mr-1 text-primary-200" />
+                Beli
+              </Link>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

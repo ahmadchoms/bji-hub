@@ -7,8 +7,11 @@ export function Footer() {
         className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-5 gap-y-2 px-4 text-xs text-neutral-600 sm:px-6 lg:px-8"
         aria-label="Footer"
       >
-        <Link href="/about" className="hover:text-primary-900">
+        <Link href="/about" className="hover:text-primary-900 coarse:min-h-11 inline-flex items-center">
           Tentang
+        </Link>
+        <Link href="/asal-kopi" className="hover:text-primary-900 coarse:min-h-11 inline-flex items-center">
+          Asal Kopi
         </Link>
         <Link href="/contact" className="hover:text-primary-900">
           Kontak

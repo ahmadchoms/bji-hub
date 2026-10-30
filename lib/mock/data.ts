@@ -1,3 +1,4 @@
+import { mockProducers } from "../data/producers";
 import {
   Category,
   SellerProfile,
@@ -165,6 +166,13 @@ export const mockListings: ListingWithRelations[] = [
     tasteProfile: {
       id: "tp-1",
       listingId: "list-1",
+      producerId: "prod-gayo-kbqb",
+      producer: mockProducers[0],
+      lotCode: "KBQB-GAYO-2025-04",
+      varieties: ["Ateng", "Typica"],
+      harvestMonth: 10,
+      fermentationHours: 36,
+      dryingDays: 14,
       originRegion: "Gayo",
       processMethod: "Natural",
       roastLevel: "Light",
@@ -215,6 +223,13 @@ export const mockListings: ListingWithRelations[] = [
     tasteProfile: {
       id: "tp-2",
       listingId: "list-2",
+      producerId: "prod-preanger-kencana",
+      producer: mockProducers[2],
+      lotCode: "PTG-WASH-L08",
+      varieties: ["Typica", "Lini S"],
+      harvestMonth: 7,
+      fermentationHours: 24,
+      dryingDays: 12,
       originRegion: "Java Preanger",
       processMethod: "Wash",
       roastLevel: "Medium-Light",
@@ -258,6 +273,13 @@ export const mockListings: ListingWithRelations[] = [
     tasteProfile: {
       id: "tp-3",
       listingId: "list-3",
+      producerId: "prod-toraja-sapan",
+      producer: mockProducers[1],
+      lotCode: "SPN-HNY-25",
+      varieties: ["S795"],
+      harvestMonth: 8,
+      fermentationHours: 18,
+      dryingDays: 16,
       originRegion: "Toraja",
       processMethod: "Honey",
       roastLevel: "Medium",

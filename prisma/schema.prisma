@@ -155,28 +155,59 @@ model Listing {
   @@map("listings")
 }
 
+model Producer {
+  id               String         @id @default(uuid())
+  slug             String         @unique
+  name             String
+  kind             String         // petani | koperasi | estate | processor
+  originId         String?        @map("origin_id")
+  village          String?
+  province         String?
+  altitudeMin      Int?           @map("altitude_min")
+  altitudeMax      Int?           @map("altitude_max")
+  farmersCount     Int?           @map("farmers_count")
+  story            String?
+  certifications   String[]       @default([])
+  claimsVerifiedAt DateTime?      @map("claims_verified_at")
+  photoUrls        String[]       @default([]) @map("photo_urls")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  tasteProfiles    TasteProfile[]
+
+  @@index([slug])
+  @@index([originId])
+  @@map("producers")
+}
+
 model TasteProfile {
-  id              String   @id @default(uuid())
-  listingId       String   @unique
-  listing         Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  originRegion    String
-  cropYear        String?
-  moistureContent Decimal? @db.Decimal(4, 2)
+  id                String    @id @default(uuid())
+  listingId         String    @unique
+  listing           Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  producerId        String?   @map("producer_id")
+  producer          Producer? @relation(fields: [producerId], references: [id], onDelete: SetNull)
+  lotCode           String?   @map("lot_code")
+  varieties         String[]  @default([])
+  harvestMonth      Int?      @map("harvest_month")
+  fermentationHours Int?      @map("fermentation_hours")
+  dryingDays        Int?      @map("drying_days")
+  originRegion      String
+  cropYear          String?
+  moistureContent   Decimal?  @db.Decimal(4, 2)
   /// Wash | Natural | Honey | Wet Hulled | Anaerobic (validated in listingSchema, kept open for new methods)
-  processMethod   String
+  processMethod     String
   /// Light | Medium-Light | Medium | Medium-Dark | Dark
-  roastLevel      String
-  flavorNotes     String
-  acidityScore    Decimal  @db.Decimal(3, 1)
-  bodyScore       Decimal  @db.Decimal(3, 1)
-  sweetnessScore  Decimal? @db.Decimal(3, 1)
-  aromaScore      Decimal? @db.Decimal(3, 1)
-  aftertasteScore Decimal? @db.Decimal(3, 1)
-  cuppingScore    Decimal? @map("cupping_score") @db.Decimal(4, 2)
-  altitude        String?
-  roastDate       DateTime
+  roastLevel        String
+  flavorNotes       String
+  acidityScore      Decimal   @db.Decimal(3, 1)
+  bodyScore         Decimal   @db.Decimal(3, 1)
+  sweetnessScore    Decimal?  @db.Decimal(3, 1)
+  aromaScore        Decimal?  @db.Decimal(3, 1)
+  aftertasteScore   Decimal?  @db.Decimal(3, 1)
+  cuppingScore      Decimal?  @map("cupping_score") @db.Decimal(4, 2)
+  altitude          String?
+  roastDate         DateTime
 
   @@index([originRegion])
+  @@index([producerId])
   @@map("taste_profiles")
 }
 

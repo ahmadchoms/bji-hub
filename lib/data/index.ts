@@ -46,3 +46,17 @@ export const {
 
 // File storage stays on the mock until Supabase Storage is connected.
 export { createImageUploadTarget, storeUploadedImage, readStoredImage } from "@/lib/mock/storage-store";
+
+// Coffee Origins & Traceable Producers (COF-2)
+export {
+  getCoffeeOrigins,
+  getCoffeeOriginBySlug,
+  getCoffeeOriginById,
+  toOriginSlug,
+} from "@/lib/data/origins";
+
+export {
+  getProducers,
+  getProducerBySlug,
+  getProducerById,
+} from "@/lib/data/producers";

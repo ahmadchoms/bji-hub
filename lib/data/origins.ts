@@ -259,6 +259,31 @@ export async function getCoffeeOrigins(options?: {
   return list.sort((a, b) => a.country.localeCompare(b.country) || a.name.localeCompare(b.name));
 }
 
+export function toOriginSlug(origin: { id: string; name: string }): string {
+  if (origin.id.startsWith("origin-")) {
+    return origin.id.replace("origin-", "");
+  }
+  return origin.name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+export async function getCoffeeOriginBySlug(slug: string): Promise<CoffeeOrigin | null> {
+  const all = await getCoffeeOrigins();
+  const normalized = slug.toLowerCase().trim();
+  return (
+    all.find(
+      (o) =>
+        o.id === normalized ||
+        o.id === `origin-${normalized}` ||
+        toOriginSlug(o) === normalized ||
+        o.name.toLowerCase().trim() === normalized
+    ) || null
+  );
+}
+
 export async function getCoffeeOriginById(id: string): Promise<CoffeeOrigin | null> {
   const pool = getPool();
   if (pool) {

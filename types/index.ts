@@ -96,9 +96,36 @@ export interface CoffeeOrigin {
   createdAt: string;
 }
 
+export type ProducerKind = "petani" | "koperasi" | "estate" | "processor";
+
+export interface Producer {
+  id: string;
+  slug: string;
+  name: string;
+  kind: ProducerKind;
+  originId?: string | null;
+  village?: string | null;
+  province?: string | null;
+  altitudeMin?: number | null;
+  altitudeMax?: number | null;
+  farmersCount?: number | null;
+  story?: string | null;
+  certifications: string[];
+  claimsVerifiedAt?: string | null;
+  photoUrls: string[];
+  createdAt: string;
+}
+
 export interface TasteProfile {
   id: string;
   listingId: string;
+  producerId?: string | null;
+  producer?: Producer | null;
+  lotCode?: string | null;
+  varieties?: string[];
+  harvestMonth?: number | null; // 1 - 12
+  fermentationHours?: number | null;
+  dryingDays?: number | null;
   originRegion: string;
   processMethod: "Wash" | "Natural" | "Honey" | "Wet Hulled" | "Anaerobic";
   roastLevel: "Light" | "Medium-Light" | "Medium" | "Medium-Dark" | "Dark";

@@ -253,9 +253,16 @@ export function NavbarInner({
                         </Link>
                       ))}
                       <Link
+                        href="/asal-kopi"
+                        onClick={() => setMobileOpen(false)}
+                        className="flex items-center justify-between px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md coarse:min-h-11"
+                      >
+                        <span>Peta Asal Kopi Nusantara</span>
+                      </Link>
+                      <Link
                         href="/"
                         onClick={() => setMobileOpen(false)}
-                        className="px-3 py-2 text-xs font-semibold text-primary-700 hover:bg-primary-50 rounded-md"
+                        className="px-3 py-2 text-xs font-semibold text-primary-700 hover:bg-primary-50 rounded-md coarse:min-h-11 flex items-center"
                       >
                         Semua Produk Kopi →
                       </Link>

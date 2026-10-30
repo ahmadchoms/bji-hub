@@ -71,6 +71,12 @@ export function toTaste(row: TasteRow): TasteProfile {
     moistureContent: row.moistureContent ? num(row.moistureContent) : undefined,
     cuppingScore: row.cuppingScore ? num(row.cuppingScore) : undefined,
     altitude: row.altitude ?? undefined,
+    producerId: (((row as Record<string, unknown>).producerId || (row as Record<string, unknown>).producer_id) as string) ?? undefined,
+    lotCode: (((row as Record<string, unknown>).lotCode || (row as Record<string, unknown>).lot_code) as string) ?? undefined,
+    varieties: (((row as Record<string, unknown>).varieties as string[]) || []),
+    harvestMonth: (((row as Record<string, unknown>).harvestMonth ?? (row as Record<string, unknown>).harvest_month) as number) ?? undefined,
+    fermentationHours: (((row as Record<string, unknown>).fermentationHours ?? (row as Record<string, unknown>).fermentation_hours) as number) ?? undefined,
+    dryingDays: (((row as Record<string, unknown>).dryingDays ?? (row as Record<string, unknown>).drying_days) as number) ?? undefined,
     roastDate: iso(row.roastDate),
   };
 }

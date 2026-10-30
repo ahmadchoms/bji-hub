@@ -7,6 +7,7 @@ import { PageContainer } from "@/components/layout/page-container";
 import { ImageGallery } from "@/components/catalog/image-gallery";
 import { FlavorProfile } from "@/components/catalog/flavor-profile";
 import { TasteSpecList } from "@/components/catalog/taste-spec-list";
+import { TraceabilityBlock } from "@/components/catalog/traceability-block";
 import { InquiryForm } from "@/components/catalog/inquiry-form";
 import { ListingGrid } from "@/components/catalog/listing-grid";
 import { VerifiedBadge } from "@/components/shared/verified-badge";
@@ -189,6 +190,8 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
             <ImageGallery images={listing.images} title={listing.title} />
 
             <TasteSpecList tasteProfile={listing.tasteProfile} />
+
+            <TraceabilityBlock tasteProfile={listing.tasteProfile} />
 
             <div className="space-y-3">
               <h3 className="font-display text-lg font-semibold text-neutral-900 pb-2 border-b border-neutral-300">

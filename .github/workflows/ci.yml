@@ -14,6 +14,20 @@ jobs:
   test:
     name: Typecheck, Lint & Unit Tests
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgrespassword
+          POSTGRES_DB: biji_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       DATA_SOURCE: mock
       NODE_ENV: test
@@ -42,12 +56,23 @@ jobs:
       - name: UI Accessibility Rules Check
         run: npm run lint:ui
 
+      - name: Codebase Invariants Check
+        run: npm run lint:invariants
+
       - name: Audit Production Dependencies
         run: npm audit --omit=dev --audit-level=high
         continue-on-error: true
 
-      - name: Vitest Suite
+      - name: Deploy Prisma Migrations on Test DB (R2)
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://postgres:postgrespassword@localhost:5432/biji_test
+
+      - name: Vitest Suite (Unit & Postgres Contract Tests)
         run: npm test
+        env:
+          TEST_DATABASE_URL: postgresql://postgres:postgrespassword@localhost:5432/biji_test
+          DATABASE_URL: postgresql://postgres:postgrespassword@localhost:5432/biji_test
 
       - name: Next.js Production Build Test
         run: npm run build

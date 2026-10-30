@@ -11,6 +11,7 @@
     "start": "next start",
     "lint": "eslint",
     "lint:ui": "node scripts/check-ui-rules.mjs",
+    "lint:invariants": "node scripts/check-invariants.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "smoke": "node scripts/smoke.mjs",

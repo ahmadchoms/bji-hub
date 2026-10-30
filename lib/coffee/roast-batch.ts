@@ -3,6 +3,7 @@ import { revalidateListing } from "@/lib/cache/revalidate";
 import { sendWaitlistRestockedEmail } from "@/lib/email";
 import { createNotification } from "@/lib/data/notifications";
 import { getPool } from "@/lib/db/pool";
+import { logger } from "@/lib/logger";
 import type { RoastBatch } from "@/types";
 
 export const mockRoastBatches: RoastBatch[] = [
@@ -17,6 +18,7 @@ export const mockRoastBatches: RoastBatch[] = [
 ];
 
 export async function getRoastBatches(listingId: string): Promise<RoastBatch[]> {
+  const isProd = process.env.NODE_ENV === "production";
   const pool = getPool();
   if (pool) {
     try {
@@ -35,11 +37,15 @@ export async function getRoastBatches(listingId: string): Promise<RoastBatch[]> 
         notes: r.notes || null,
         createdAt: new Date(r.created_at).toISOString(),
       }));
-    } catch {
-      // ignore: fallback to mock store in dev/test
+    } catch (error) {
+      if (isProd) {
+        logger.error("roast_batch.get_failed", error);
+        throw error;
+      }
     }
   }
 
+  if (isProd) return [];
   return mockRoastBatches.filter((b) => b.listingId === listingId);
 }
 
@@ -51,96 +57,149 @@ export async function addRoastBatch(params: {
   listingTitle?: string;
   listingSlug?: string;
 }): Promise<RoastBatch> {
+  const isProd = process.env.NODE_ENV === "production";
   const pool = getPool();
-  const id = `batch-${Date.now()}`;
   const now = new Date().toISOString();
 
-  const newBatch: RoastBatch = {
-    id,
-    listingId: params.listingId,
-    roastedOn: params.roastedOn,
-    quantityKg: params.quantityKg ?? null,
-    notes: params.notes ?? null,
-    createdAt: now,
-  };
+  let createdBatch: RoastBatch;
 
   if (pool) {
+    const client = await pool.connect();
     try {
-      await pool.query(
+      await client.query("BEGIN");
+
+      // Insert without string id, letting DB generate uuid default (F3)
+      const insertRes = await client.query(
         `INSERT INTO public.roast_batches (id, listing_id, roasted_on, quantity_kg, notes, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [id, params.listingId, params.roastedOn, params.quantityKg || null, params.notes || null, now]
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, NOW())
+         RETURNING id, created_at`,
+        [params.listingId, params.roastedOn, params.quantityKg || null, params.notes || null]
       );
 
-      // Derive roast date from latest batch on taste_profiles
-      await pool.query(
+      const row = insertRes.rows[0];
+      const batchId = row.id;
+      const createdAt = new Date(row.created_at).toISOString();
+
+      // Derive roast date on taste_profiles from this batch
+      await client.query(
         `UPDATE public.taste_profiles
          SET roast_date = $1
          WHERE listing_id = $2`,
         [`${params.roastedOn}T00:00:00+07:00`, params.listingId]
       );
-    } catch {
-      // ignore: fallback to mock
+
+      await client.query("COMMIT");
+
+      createdBatch = {
+        id: batchId,
+        listingId: params.listingId,
+        roastedOn: params.roastedOn,
+        quantityKg: params.quantityKg ?? null,
+        notes: params.notes ?? null,
+        createdAt,
+      };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      if (isProd) {
+        logger.error("roast_batch.add_failed", error);
+        throw error;
+      }
+      // Fallback in dev/test when DB is unmigrated
+      createdBatch = {
+        id: `batch-${Date.now()}`,
+        listingId: params.listingId,
+        roastedOn: params.roastedOn,
+        quantityKg: params.quantityKg ?? null,
+        notes: params.notes ?? null,
+        createdAt: now,
+      };
+    } finally {
+      client.release();
     }
+  } else {
+    if (isProd) {
+      throw new Error("Database pool is required in production");
+    }
+    createdBatch = {
+      id: `batch-${Date.now()}`,
+      listingId: params.listingId,
+      roastedOn: params.roastedOn,
+      quantityKg: params.quantityKg ?? null,
+      notes: params.notes ?? null,
+      createdAt: now,
+    };
   }
 
-  mockRoastBatches.unshift(newBatch);
+  mockRoastBatches.unshift(createdBatch);
 
   // Invalidate listing cache immediately (N1)
   revalidateListing(params.listingSlug);
 
-  // Notify waitlist subscribers asynchronously via runAfterResponse (COF-5)
+  // Notify waitlist subscribers asynchronously in pages of 100 with allSettled (F3)
   runAfterResponse(async () => {
     try {
-      let waitlistUsers: Array<{ userId: string; email?: string }> = [];
       if (pool) {
         const waitlistRes = await pool.query(
           `SELECT w.user_id, u.email
            FROM public.listing_waitlist w
            JOIN public.users u ON u.id = w.user_id
-           WHERE w.listing_id = $1 AND w.notified_at IS NULL`,
+           WHERE w.listing_id = $1 AND w.notified_at IS NULL
+           LIMIT 100`,
           [params.listingId]
         );
-        waitlistUsers = waitlistRes.rows.map((r) => ({
+
+        const subscribers = waitlistRes.rows.map((r) => ({
           userId: r.user_id,
           email: r.email,
         }));
 
-        if (waitlistUsers.length > 0) {
-          await pool.query(
-            `UPDATE public.listing_waitlist
-             SET notified_at = NOW()
-             WHERE listing_id = $1 AND notified_at IS NULL`,
-            [params.listingId]
+        if (subscribers.length > 0) {
+          const title = params.listingTitle || "Kopi Favoritmu";
+          const successfulUserIds: string[] = [];
+
+          const results = await Promise.allSettled(
+            subscribers.map(async (sub) => {
+              await createNotification({
+                userId: sub.userId,
+                title: "Batch Sangrai Baru Tersedia! ☕",
+                message: `Batch sangrai baru untuk "${title}" (${params.roastedOn}) kini siap dipesan. Segera amankan stokmu!`,
+                type: "system",
+                link: params.listingSlug ? `/product/${params.listingSlug}` : "/",
+              });
+
+              if (sub.email) {
+                await sendWaitlistRestockedEmail({
+                  to: sub.email,
+                  listingTitle: title,
+                  listingSlug: params.listingSlug,
+                  roastDate: params.roastedOn,
+                });
+              }
+              return sub.userId;
+            })
           );
+
+          for (const res of results) {
+            if (res.status === "fulfilled" && res.value) {
+              successfulUserIds.push(res.value);
+            }
+          }
+
+          // Mark notified_at ONLY for successfully delivered subscribers (F3)
+          if (successfulUserIds.length > 0) {
+            await pool.query(
+              `UPDATE public.listing_waitlist
+               SET notified_at = NOW()
+               WHERE listing_id = $1 AND user_id = ANY($2)`,
+              [params.listingId, successfulUserIds]
+            );
+          }
         }
       }
-
-      const title = params.listingTitle || "Kopi Favoritmu";
-      for (const subscriber of waitlistUsers) {
-        // In-app notification
-        await createNotification({
-          userId: subscriber.userId,
-          title: "Batch Sangrai Baru Tersedia! ☕",
-          message: `Batch sangrai baru untuk "${title}" (${params.roastedOn}) kini siap dipesan. Segera amankan stokmu!`,
-          type: "system",
-          link: params.listingSlug ? `/product/${params.listingSlug}` : "/",
-        });
-
-        // Email notification if email exists
-        if (subscriber.email) {
-          await sendWaitlistRestockedEmail({
-            to: subscriber.email,
-            listingTitle: title,
-            listingSlug: params.listingSlug,
-            roastDate: params.roastedOn,
-          });
-        }
-      }
-    } catch {
-      // ignore: background waitlist notify failure
+    } catch (err) {
+      logger.warn("roast_batch.waitlist_notify_failed", { error: String(err) });
     }
   });
 
-  return newBatch;
+  return createdBatch;
 }

@@ -64,6 +64,8 @@ const listingBaseSchema = z.object({
   fermentationHours: z.number().int().min(0).max(1000).optional().nullable(),
   dryingDays: z.number().int().min(0).max(100).optional().nullable(),
   roastDate: z.string().optional(),
+  nextRoastDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Format tanggal tidak valid").optional().nullable(),
+  flavorTags: z.array(z.string().max(50)).optional(),
   images: z
     .array(listingImageSchema)
     .max(IMAGE_RULES.maxCount, `Maksimal ${IMAGE_RULES.maxCount} foto`),

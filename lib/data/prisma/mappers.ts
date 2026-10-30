@@ -19,6 +19,7 @@ export const listingInclude = {
   category: true,
   images: { orderBy: { sortOrder: "asc" } },
   tasteProfile: true,
+  flavorTags: true,
 } satisfies Prisma.ListingInclude;
 
 export type ListingRow = Prisma.ListingGetPayload<{ include: typeof listingInclude }>;
@@ -108,6 +109,10 @@ export function toListing(row: ListingRow): ListingWithRelations {
       sortOrder: image.sortOrder,
     })),
     tasteProfile: row.tasteProfile ? toTaste(row.tasteProfile) : undefined,
+    nextRoastDate: (row as { nextRoastDate?: Date | string | null }).nextRoastDate
+      ? iso((row as { nextRoastDate?: Date | string | null }).nextRoastDate as Date).slice(0, 10)
+      : undefined,
+    flavorTags: (row as { flavorTags?: Array<{ tag: string }> }).flavorTags?.map((ft) => ft.tag) ?? [],
   };
 }
 

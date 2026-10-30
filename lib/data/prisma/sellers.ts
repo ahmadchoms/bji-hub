@@ -47,6 +47,12 @@ function tasteData(data: ListingFormValues) {
     cuppingScore: data.cuppingScore ?? null,
     altitude: data.altitude ?? null,
     roastDate: data.roastDate ? new Date(data.roastDate) : new Date(),
+    producerId: data.producerId ?? null,
+    lotCode: data.lotCode ?? null,
+    varieties: data.varieties ?? [],
+    harvestMonth: data.harvestMonth ?? null,
+    fermentationHours: data.fermentationHours ?? null,
+    dryingDays: data.dryingDays ?? null,
   };
 }
 
@@ -162,8 +168,12 @@ export const sellers: SellerMethods = {
               minOrderQty: data.minOrderQty,
               stock: data.stock ?? 100,
               status: data.status,
+              nextRoastDate: data.nextRoastDate ? new Date(data.nextRoastDate) : null,
               tasteProfile: hasTasteProfile(data, category.slug) ? { create: tasteData(data) } : undefined,
               images: { create: imageRows(data) },
+              ...(data.flavorTags && data.flavorTags.length > 0
+                ? { flavorTags: { create: data.flavorTags.map((tag) => ({ tag })) } }
+                : {}),
             },
             include: listingInclude,
           });
@@ -188,6 +198,7 @@ export const sellers: SellerMethods = {
     const taste = tasteData(data);
     const row = await prisma.$transaction(async (tx) => {
       await tx.listingImage.deleteMany({ where: { listingId } });
+      await tx.listingFlavorTag.deleteMany({ where: { listingId } });
       return tx.listing.update({
         where: { id: listingId },
         data: {
@@ -197,6 +208,7 @@ export const sellers: SellerMethods = {
           unit: data.unit,
           minOrderQty: data.minOrderQty,
           ...(data.stock !== undefined ? { stock: data.stock } : {}),
+          ...(data.nextRoastDate !== undefined ? { nextRoastDate: data.nextRoastDate ? new Date(data.nextRoastDate) : null } : {}),
           categoryId: category.id,
           // A listing suspended by an admin cannot be reactivated by the seller.
           status: listing.status === "suspended" ? "suspended" : data.status,
@@ -204,6 +216,9 @@ export const sellers: SellerMethods = {
           tasteProfile: hasTasteProfile(data, category.slug)
             ? { upsert: { create: taste, update: taste } }
             : undefined,
+          ...(data.flavorTags && data.flavorTags.length > 0
+            ? { flavorTags: { create: data.flavorTags.map((tag) => ({ tag })) } }
+            : {}),
         },
         include: listingInclude,
       });

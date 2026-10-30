@@ -9,6 +9,17 @@ vi.mock("@/lib/auth/session", () => ({
   getSession: vi.fn(),
 }));
 
+vi.mock("@/lib/data", () => ({
+  getListingById: vi.fn().mockImplementation((id: string) => Promise.resolve({
+    id,
+    title: "Kopi Test",
+    slug: id,
+    status: "active",
+    stock: 0,
+    sellerId: "seller-1",
+  })),
+}));
+
 import { getSession } from "@/lib/auth/session";
 
 describe("Waitlist Actions", () => {

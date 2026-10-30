@@ -26,6 +26,9 @@ import { decideBoostPayment, getBoostCredits } from "@/lib/boost-credits";
 import { runAfterResponse } from "@/lib/after";
 import { recordAuditLog } from "@/lib/data/audit-logs";
 import { revalidateListing, revalidateStore } from "@/lib/cache/revalidate";
+import { addRoastBatch } from "@/lib/coffee/roast-batch";
+import { roastDateSchema } from "@/lib/validations/listing.schema";
+import { logger } from "@/lib/logger";
 
 type FieldErrors = Record<string, string[]>;
 
@@ -331,4 +334,79 @@ export async function toggleListingStatusAction(
   revalidatePath("/dashboard/listing");
   revalidateListing(existing.slug);
   return ok({ status: newStatus });
+}
+
+const addRoastBatchSchema = z.object({
+  listingId: z.string().min(1, "ID listing wajib diisi"),
+  roastedOn: roastDateSchema,
+  quantityKg: z.number().positive("Kuantitas harus positif").max(10_000, "Maksimal 10.000 kg").optional().nullable(),
+  notes: z.string().max(500, "Catatan maksimal 500 karakter").optional().nullable(),
+  nextRoastDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Format tanggal tidak valid").optional().nullable(),
+});
+
+export async function addRoastBatchAction(
+  input: unknown,
+): Promise<ActionResult<{ batchId: string; roastDate: string }>> {
+  const { sellerId, session } = await requireSeller("/dashboard/listing");
+  const parsed = addRoastBatchSchema.safeParse(input);
+  if (!parsed.success) {
+    return fail(
+      "Data batch sangrai tidak valid",
+      parsed.error.flatten().fieldErrors as FieldErrors,
+    );
+  }
+
+  const { listingId, roastedOn, quantityKg, notes, nextRoastDate } = parsed.data;
+  const listing = await getListingById(listingId);
+  if (!listing || listing.sellerId !== sellerId) {
+    return fail("Produk tidak ditemukan atau bukan milik toko Anda.");
+  }
+
+  try {
+    const batch = await addRoastBatch({
+      listingId,
+      roastedOn,
+      quantityKg: quantityKg ?? null,
+      notes: notes ?? null,
+      listingTitle: listing.title,
+      listingSlug: listing.slug,
+    });
+
+    if (nextRoastDate !== undefined) {
+      if (process.env.DATA_SOURCE !== "mock") {
+        const { getPrisma } = await import("@/lib/data/prisma/client");
+        await getPrisma().listing.update({
+          where: { id: listingId },
+          data: { nextRoastDate: nextRoastDate ? new Date(nextRoastDate) : null },
+        });
+      } else {
+        const { mockListings } = await import("@/lib/mock/data");
+        const target = mockListings.find((l) => l.id === listingId);
+        if (target) {
+          target.nextRoastDate = nextRoastDate ?? undefined;
+        }
+      }
+    }
+
+    runAfterResponse(async () => {
+      await recordAuditLog({
+        actorId: session.userId || sellerId,
+        actorRole: "seller",
+        action: "roast_batch_created",
+        targetId: batch.id,
+        details: { listingId, roastedOn, quantityKg },
+      });
+    });
+
+    revalidateListing(listing.slug);
+    try {
+      revalidatePath("/dashboard/listing");
+    } catch {
+      // ignore outside request lifecycle
+    }
+    return ok({ batchId: batch.id, roastDate: batch.roastedOn });
+  } catch (error) {
+    logger.error("seller.add_roast_batch_failed", error);
+    return fail("Gagal menambahkan batch sangrai.");
+  }
 }

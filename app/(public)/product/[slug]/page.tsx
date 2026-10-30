@@ -130,7 +130,10 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
       "@type": "Offer",
       price: listing.price,
       priceCurrency: "IDR",
-      availability: "https://schema.org/InStock",
+      availability:
+        (typeof listing.stock === "number" && listing.stock <= 0) || listing.status !== "active"
+          ? "https://schema.org/OutOfStock"
+          : "https://schema.org/InStock",
       seller: {
         "@type": "Organization",
         name: listing.seller.businessName,

@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
+import { revalidateListing } from "@/lib/cache/revalidate";
 import { cookies } from "next/headers";
 import { randomBytes } from "crypto";
 import { createClient } from "@/lib/supabase/server";
@@ -410,6 +411,10 @@ export async function createCheckoutOrderAction(
     // ignore: optional buyer profile cookie persistence
   }
 
+  for (const it of resolvedItems) {
+    revalidateListing(it.listing.slug);
+  }
+
   return ok({
     orderId: order.id,
     orderNumber: order.orderNumber,
@@ -456,6 +461,7 @@ export async function confirmOrderPaymentAction(
     }
   });
 
+  revalidateListing(order.listingSlug);
   revalidatePath("/orders");
   revalidatePath("/order/success");
   revalidatePath("/dashboard/orders");
@@ -972,6 +978,8 @@ export async function cancelPendingOrderAction(
   }
 
   await updateOrderStatus(order.id, "canceled");
+  revalidateListing(order.listingSlug);
+  revalidateListing(order.listingSlug);
   try {
     revalidatePath("/orders");
     revalidatePath("/profile");
@@ -1069,6 +1077,7 @@ export async function cancelPaidOrderAction(
     });
   });
 
+  revalidateListing(order.listingSlug);
   try {
     revalidatePath("/orders");
     revalidatePath("/profile");

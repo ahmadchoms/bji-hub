@@ -106,20 +106,20 @@ function buildOrderBy(
   if (sort === "price_desc") return [{ price: "desc" }, { id: "asc" }];
   if (sort === "freshest") {
     return [
-      { tasteProfile: { roastDate: "desc" } } as Prisma.ListingOrderByWithRelationInput,
+      { tasteProfile: { roastDate: "desc" } },
       { createdAt: "desc" },
     ];
   }
   if (sort === "cupping_desc") {
     return [
-      { tasteProfile: { cuppingScore: "desc" } } as Prisma.ListingOrderByWithRelationInput,
+      { tasteProfile: { cuppingScore: { sort: "desc", nulls: "last" } } },
       { createdAt: "desc" },
     ];
   }
   if (sort === "rating_desc") {
     return [
-      { ratingAvg: "desc" } as unknown as Prisma.ListingOrderByWithRelationInput,
-      { ratingCount: "desc" } as unknown as Prisma.ListingOrderByWithRelationInput,
+      { ratingAvg: { sort: "desc", nulls: "last" } },
+      { ratingCount: "desc" },
       { createdAt: "desc" },
     ];
   }
@@ -194,9 +194,7 @@ export const catalog: CatalogMethods = {
       orderBy: buildOrderBy(filters.sort),
       select: { id: true, sellerId: true, isBoosted: true, boostUntil: true },
     });
-    const candidates = slim as unknown as Parameters<
-      typeof composeFeedPage
-    >[0]["allFiltered"];
+    const candidates = slim;
 
     const isPriceSort =
       filters.sort === "price_asc" || filters.sort === "price_desc";

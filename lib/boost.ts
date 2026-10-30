@@ -3,7 +3,7 @@ export interface BoostCandidate {
   id: string;
   sellerId: string;
   isBoosted: boolean;
-  boostUntil?: string | null;
+  boostUntil?: string | Date | null;
 }
 
 export interface PlacedItem<T> {

@@ -20,16 +20,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    const [feed, sellers, origins, producers] = await Promise.all([
-      getListings({ pageSize: 100 }),
+    const allListings: Array<{ slug: string; updatedAt?: string; createdAt?: string }> = [];
+    let page = 1;
+    let hasMore = true;
+    while (hasMore) {
+      const res = await getListings({ page, pageSize: 500 });
+      for (const item of res.items) {
+        allListings.push(item);
+      }
+      if (res.items.length < 500 || page >= 20) {
+        hasMore = false;
+      } else {
+        page++;
+      }
+    }
+
+    const [sellers, origins, producers] = await Promise.all([
       getSellers(),
       getCoffeeOrigins({ activeOnly: true }).catch(() => []),
       getProducers().catch(() => []),
     ]);
 
-    const productRoutes: MetadataRoute.Sitemap = feed.items.map((item) => ({
+    const productRoutes: MetadataRoute.Sitemap = allListings.map((item) => ({
       url: `${baseUrl}/product/${item.slug}`,
-      lastModified: item.createdAt ? new Date(item.createdAt) : new Date(),
+      lastModified: item.updatedAt
+        ? new Date(item.updatedAt)
+        : item.createdAt
+          ? new Date(item.createdAt)
+          : new Date(),
       changeFrequency: "weekly",
       priority: 0.8,
     }));

@@ -63,6 +63,7 @@ describe("reorderCompletedItemAction", () => {
     vi.mocked(getOrderById).mockResolvedValue({
       id: "ord-1",
       buyerId: "buyer-owner",
+      status: "completed",
       items: [
         {
           listingId: "list-1",
@@ -89,6 +90,27 @@ describe("reorderCompletedItemAction", () => {
     if (res.success) {
       expect(res.data.listingSlug).toBe("gayo-filter");
       expect(res.data.grindSize).toBe("Medium Fine (V60)");
+    }
+  });
+
+  it("rejects orders that are not in completed status", async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      role: "buyer",
+      sellerId: null,
+      userId: "buyer-owner",
+    });
+
+    vi.mocked(getOrderById).mockResolvedValue({
+      id: "ord-1",
+      buyerId: "buyer-owner",
+      status: "shipped",
+      items: [],
+    } as any);
+
+    const res = await reorderCompletedItemAction("ord-1");
+    expect(res.success).toBe(false);
+    if (!res.success) {
+      expect(res.error).toContain("telah selesai");
     }
   });
 });

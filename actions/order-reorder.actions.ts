@@ -36,6 +36,10 @@ export async function reorderCompletedItemAction(
       return fail("Akses ditolak: Anda tidak memiliki akses ke pesanan ini.");
     }
 
+    if (order.status !== "completed") {
+      return fail("Pemesanan ulang hanya dapat dilakukan untuk pesanan yang telah selesai.");
+    }
+
     const items = order.items || [];
     const item = targetListingId
       ? items.find((i) => i.listingId === targetListingId)

@@ -57,14 +57,14 @@ const listingBaseSchema = z.object({
   moistureContent: z.number().min(0).max(100).optional(),
   cuppingScore: z.number().min(0).max(100, "Skor cupping maksimal 100").optional(),
   altitude: z.string().max(50, "Ketinggian maksimal 50 karakter").optional(),
-  producerId: z.string().uuid("ID produser tidak valid").optional().nullable(),
+  producerId: z.string().max(100).optional().nullable().or(z.literal("")),
   lotCode: z.string().max(50, "Kode lot maksimal 50 karakter").optional().nullable(),
   varieties: z.array(z.string().max(50)).optional(),
   harvestMonth: z.number().int().min(1).max(12, "Bulan panen 1-12").optional().nullable(),
   fermentationHours: z.number().int().min(0).max(1000).optional().nullable(),
   dryingDays: z.number().int().min(0).max(100).optional().nullable(),
   roastDate: z.string().optional(),
-  nextRoastDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Format tanggal tidak valid").optional().nullable(),
+  nextRoastDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Format tanggal tidak valid").optional().nullable().or(z.literal("")),
   flavorTags: z.array(z.string().max(50)).optional(),
   images: z
     .array(listingImageSchema)

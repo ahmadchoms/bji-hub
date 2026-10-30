@@ -1,4 +1,6 @@
 import { getPool } from "@/lib/db/pool";
+import { assertMockAllowed } from "@/lib/data/mock-guard";
+import { logger } from "@/lib/logger";
 import type { Producer, ProducerKind } from "@/types";
 
 export const mockProducers: Producer[] = [
@@ -168,9 +170,12 @@ export async function getProducers(options?: {
         photoUrls: r.photo_urls || [],
         createdAt: new Date(r.created_at).toISOString(),
       }));
-    } catch {
-      // ignore: fallback to mock producers if db table not yet accessible
+    } catch (err) {
+      assertMockAllowed("getProducers");
+      logger.warn("producers.query_failed", { error: (err as Error).message });
     }
+  } else {
+    assertMockAllowed("getProducers:no_pool");
   }
 
   let list = [...mockProducers];
@@ -219,9 +224,13 @@ export async function getProducerBySlug(slug: string): Promise<Producer | null> 
           createdAt: new Date(r.created_at).toISOString(),
         };
       }
-    } catch {
-      // ignore: fallback to mock
+      return null;
+    } catch (err) {
+      assertMockAllowed("getProducerBySlug");
+      logger.warn("producers.query_by_slug_failed", { error: (err as Error).message });
     }
+  } else {
+    assertMockAllowed("getProducerBySlug:no_pool");
   }
 
   return mockProducers.find((p) => p.slug === slug) || null;
@@ -260,10 +269,144 @@ export async function getProducerById(id: string): Promise<Producer | null> {
           createdAt: new Date(r.created_at).toISOString(),
         };
       }
-    } catch {
-      // ignore: fallback to mock
+      return null;
+    } catch (err) {
+      assertMockAllowed("getProducerById");
+      logger.warn("producers.query_by_id_failed", { error: (err as Error).message });
     }
+  } else {
+    assertMockAllowed("getProducerById:no_pool");
   }
 
   return mockProducers.find((p) => p.id === id) || null;
+}
+
+export async function createProducer(data: {
+  name: string;
+  kind: ProducerKind;
+  originId?: string | null;
+  village?: string | null;
+  province?: string | null;
+  altitudeMin?: number | null;
+  altitudeMax?: number | null;
+  farmersCount?: number | null;
+  story?: string | null;
+  certifications?: string[];
+  photoUrls?: string[];
+}): Promise<Producer> {
+  const baseSlug = data.name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  const slug = `${baseSlug}-${Math.random().toString(36).substring(2, 6)}`;
+
+  const pool = getPool();
+  if (pool) {
+    const res = await pool.query(
+      `INSERT INTO public.producers (
+        name, slug, kind, origin_id, village, province,
+        altitude_min, altitude_max, farmers_count, story,
+        certifications, photo_urls, created_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
+      RETURNING id, slug, name, kind, origin_id, village, province,
+                altitude_min, altitude_max, farmers_count, story,
+                certifications, claims_verified_at, photo_urls, created_at`,
+      [
+        data.name,
+        slug,
+        data.kind,
+        data.originId || null,
+        data.village || null,
+        data.province || null,
+        data.altitudeMin ?? null,
+        data.altitudeMax ?? null,
+        data.farmersCount ?? null,
+        data.story || null,
+        data.certifications || [],
+        data.photoUrls || [],
+      ]
+    );
+    const r = res.rows[0];
+    return {
+      id: r.id,
+      slug: r.slug,
+      name: r.name,
+      kind: r.kind as ProducerKind,
+      originId: r.origin_id || null,
+      village: r.village || null,
+      province: r.province || null,
+      altitudeMin: r.altitude_min ?? null,
+      altitudeMax: r.altitude_max ?? null,
+      farmersCount: r.farmers_count ?? null,
+      story: r.story || null,
+      certifications: r.certifications || [],
+      claimsVerifiedAt: r.claims_verified_at ? new Date(r.claims_verified_at).toISOString() : null,
+      photoUrls: r.photo_urls || [],
+      createdAt: new Date(r.created_at).toISOString(),
+    };
+  }
+
+  assertMockAllowed("createProducer:no_pool");
+  const newMock: Producer = {
+    id: `prod-${Date.now()}`,
+    slug,
+    name: data.name,
+    kind: data.kind,
+    originId: data.originId || null,
+    village: data.village || null,
+    province: data.province || null,
+    altitudeMin: data.altitudeMin ?? null,
+    altitudeMax: data.altitudeMax ?? null,
+    farmersCount: data.farmersCount ?? null,
+    story: data.story || null,
+    certifications: data.certifications || [],
+    claimsVerifiedAt: null,
+    photoUrls: data.photoUrls || [],
+    createdAt: new Date().toISOString(),
+  };
+  mockProducers.push(newMock);
+  return newMock;
+}
+
+export async function verifyProducerClaims(id: string): Promise<Producer | null> {
+  const pool = getPool();
+  if (pool) {
+    const res = await pool.query(
+      `UPDATE public.producers
+       SET claims_verified_at = NOW()
+       WHERE id = $1
+       RETURNING id, slug, name, kind, origin_id, village, province,
+                 altitude_min, altitude_max, farmers_count, story,
+                 certifications, claims_verified_at, photo_urls, created_at`,
+      [id]
+    );
+    if (res.rows.length === 0) return null;
+    const r = res.rows[0];
+    return {
+      id: r.id,
+      slug: r.slug,
+      name: r.name,
+      kind: r.kind as ProducerKind,
+      originId: r.origin_id || null,
+      village: r.village || null,
+      province: r.province || null,
+      altitudeMin: r.altitude_min ?? null,
+      altitudeMax: r.altitude_max ?? null,
+      farmersCount: r.farmers_count ?? null,
+      story: r.story || null,
+      certifications: r.certifications || [],
+      claimsVerifiedAt: r.claims_verified_at ? new Date(r.claims_verified_at).toISOString() : null,
+      photoUrls: r.photo_urls || [],
+      createdAt: new Date(r.created_at).toISOString(),
+    };
+  }
+
+  assertMockAllowed("verifyProducerClaims:no_pool");
+  const p = mockProducers.find((item) => item.id === id);
+  if (p) {
+    p.claimsVerifiedAt = new Date().toISOString();
+    return p;
+  }
+  return null;
 }

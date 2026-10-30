@@ -1,4 +1,6 @@
 import { getListingById, getCategories } from "@/lib/data";
+import { getProducers } from "@/lib/data/producers";
+import { getRoastBatchesByListing } from "@/lib/coffee/roast-batch";
 import { SectionHeader } from "@/components/shared/section-header";
 import { ListingForm } from "@/components/dashboard/listing-form";
 import { notFound } from "next/navigation";
@@ -13,9 +15,11 @@ export default async function EditListingPage({
 }: EditListingPageProps) {
   const { id } = await params;
   const { sellerId } = await requireSeller(`/dashboard/listing/${id}`);
-  const [listing, categories] = await Promise.all([
+  const [listing, categories, producers, batches] = await Promise.all([
     getListingById(id),
     getCategories(),
+    getProducers().catch(() => []),
+    getRoastBatchesByListing(id).catch(() => []),
   ]);
 
   if (!listing || listing.sellerId !== sellerId) {
@@ -27,6 +31,8 @@ export default async function EditListingPage({
       <SectionHeader title="Edit Produk" subtitle={listing.title} />
       <ListingForm
         categories={categories}
+        producers={producers}
+        hasRoastBatches={batches.length > 0}
         isEditing
         listingId={listing.id}
         defaultValues={{
@@ -51,6 +57,14 @@ export default async function EditListingPage({
           altitude: listing.tasteProfile?.altitude ?? "",
           cropYear: listing.tasteProfile?.cropYear ?? "",
           moistureContent: listing.tasteProfile?.moistureContent,
+          producerId: listing.tasteProfile?.producerId ?? undefined,
+          lotCode: listing.tasteProfile?.lotCode ?? "",
+          varieties: listing.tasteProfile?.varieties ?? [],
+          harvestMonth: listing.tasteProfile?.harvestMonth ?? undefined,
+          fermentationHours: listing.tasteProfile?.fermentationHours ?? undefined,
+          dryingDays: listing.tasteProfile?.dryingDays ?? undefined,
+          nextRoastDate: listing.nextRoastDate ?? "",
+          flavorTags: listing.flavorTags ?? [],
           images: [...listing.images]
             .sort((a, b) => a.sortOrder - b.sortOrder)
             .map((image) => ({ url: image.url, path: image.id })),

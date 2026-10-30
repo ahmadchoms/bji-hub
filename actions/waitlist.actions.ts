@@ -83,7 +83,7 @@ export async function joinWaitlistAction(
           logger.error("waitlist.join_failed", error);
           return fail("Terjadi kesalahan saat mendaftar antrean.");
         }
-        // In dev/test: fallback to mock store when table is unmigrated
+        // In dev/test: local test store when table is unmigrated
       } finally {
         client.release();
       }

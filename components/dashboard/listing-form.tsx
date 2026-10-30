@@ -6,7 +6,8 @@ import {
   listingSchema,
   type ListingFormValues,
 } from "@/lib/validations/listing.schema";
-import { Category } from "@/types";
+import { Category, Producer } from "@/types";
+import { COFFEE_VARIETIES } from "@/lib/coffee/taxonomy";
 import { FormField } from "@/components/shared/form-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,8 @@ import { ImageUploader } from "./image-uploader";
 
 interface ListingFormProps {
   categories: Category[];
+  producers?: Producer[];
+  hasRoastBatches?: boolean;
   defaultValues?: Partial<ListingFormValues>;
   isEditing?: boolean;
   listingId?: string;
@@ -54,8 +57,46 @@ const STATUS_OPTIONS = [
   { value: "archived", label: "Arsip" },
 ] as const;
 
+const FLAVOR_TAG_OPTIONS = [
+  "Floral",
+  "Melati",
+  "Citrus",
+  "Jeruk",
+  "Berries",
+  "Blackcurrant",
+  "Stone Fruit",
+  "Peach",
+  "Tropical Fruit",
+  "Nangka",
+  "Chocolate",
+  "Caramel",
+  "Gula Aren",
+  "Madu",
+  "Nutty",
+  "Spices",
+  "Rempah",
+  "Herbal",
+] as const;
+
+const MONTH_OPTIONS = [
+  { value: 1, label: "Januari" },
+  { value: 2, label: "Februari" },
+  { value: 3, label: "Maret" },
+  { value: 4, label: "April" },
+  { value: 5, label: "Mei" },
+  { value: 6, label: "Juni" },
+  { value: 7, label: "Juli" },
+  { value: 8, label: "Agustus" },
+  { value: 9, label: "September" },
+  { value: 10, label: "Oktober" },
+  { value: 11, label: "November" },
+  { value: 12, label: "Desember" },
+] as const;
+
 export function ListingForm({
   categories,
+  producers = [],
+  hasRoastBatches = false,
   defaultValues,
   isEditing = false,
   listingId,
@@ -81,6 +122,8 @@ export function ListingForm({
       bodyScore: 0,
       minOrderQty: 1,
       stock: 100,
+      varieties: [],
+      flavorTags: [],
       ...defaultValues,
     },
   });
@@ -404,11 +447,30 @@ export function ListingForm({
             label="Tanggal Sangrai"
             required
             error={errors.roastDate?.message}
+            helperText={
+              hasRoastBatches
+                ? "Tanggal sangrai diturunkan otomatis dari batch pemanggangan Anda."
+                : "Tanggal pemanggangan batch kopi"
+            }
           >
             <Input
               type="date"
               max={new Date().toLocaleDateString("en-CA")}
+              readOnly={hasRoastBatches}
+              className={hasRoastBatches ? "bg-neutral-100 cursor-not-allowed text-neutral-600" : ""}
               {...register("roastDate")}
+            />
+          </FormField>
+
+          <FormField
+            label="Jadwal Sangrai Berikutnya"
+            error={errors.nextRoastDate?.message}
+            helperText="Opsional: Tanggal perkiraan batch berikutnya untuk mengaktifkan antrean waitlist"
+          >
+            <Input
+              type="date"
+              min={new Date().toLocaleDateString("en-CA")}
+              {...register("nextRoastDate")}
             />
           </FormField>
 
@@ -469,8 +531,42 @@ export function ListingForm({
           </FormField>
         </div>
 
+        <div>
+          <label className="text-xs font-semibold text-neutral-900 uppercase tracking-wide block mb-1.5">
+            Tag Roda Rasa Kopi (Flavor Wheel)
+          </label>
+          <p className="text-xs text-neutral-600 mb-2">
+            Pilih tag aroma dan rasa dominan untuk mempermudah pembeli mencari profil kopi serupa.
+          </p>
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {FLAVOR_TAG_OPTIONS.map((tag) => {
+              const currentTags = watch("flavorTags") || [];
+              const isSelected = currentTags.includes(tag);
+              return (
+                <button
+                  type="button"
+                  key={tag}
+                  onClick={() => {
+                    const updated = isSelected
+                      ? currentTags.filter((t) => t !== tag)
+                      : [...currentTags, tag];
+                    setValue("flavorTags", updated, { shouldValidate: true });
+                  }}
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors coarse:min-h-11 ${
+                    isSelected
+                      ? "bg-amber-800 text-white"
+                      : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200 border border-neutral-300"
+                  }`}
+                >
+                  {tag}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <FormField
-          label="Catatan Rasa (Flavor Notes)"
+          label="Catatan Rasa Bebas (Flavor Notes)"
           required
           error={errors.flavorNotes?.message}
           helperText="Pisahkan dengan tanda koma, contoh: Nangka, Madu, Gula Aren, Floral"
@@ -543,6 +639,134 @@ export function ListingForm({
           </div>
         </div>
       </div>
+      )}
+
+      {/* 4. Asal-usul & Ketertelusuran Petani */}
+      {!isEquipment && (
+        <div className="border border-neutral-300 bg-surface-base rounded-sm p-6 space-y-5">
+          <div>
+            <h3 className="font-display text-lg text-neutral-900 font-semibold">
+              Asal-usul & Ketertelusuran (Traceability)
+            </h3>
+            <p className="text-xs text-neutral-600 mt-0.5">
+              Identitas produser, kode lot, varietas tanaman, dan protokol pascapanen kopi untuk transparansi pembeli.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <FormField
+              label="Produser / Mitra Tani"
+              error={errors.producerId?.message}
+              helperText="Pilih mitra petani terdaftar atau kosongkan jika mandiri"
+            >
+              <select
+                {...register("producerId")}
+                className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm bg-white"
+              >
+                <option value="">Tanpa produser terdaftar / Mandiri</option>
+                {producers.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({p.kind}{p.claimsVerifiedAt ? " - Terverifikasi" : ""})
+                  </option>
+                ))}
+              </select>
+            </FormField>
+
+            <FormField
+              label="Identitas Kode Lot"
+              error={errors.lotCode?.message}
+              helperText="Opsional (misal: LOT-GAYO-2025-01)"
+            >
+              <Input {...register("lotCode")} placeholder="LOT-GAYO-2025-01" />
+            </FormField>
+
+            <FormField
+              label="Bulan Panen (Harvest Month)"
+              error={errors.harvestMonth?.message}
+              helperText="Opsional: Bulan pemetikan ceri kopi"
+            >
+              <select
+                {...register("harvestMonth", {
+                  setValueAs: (v) => (v === "" || isNaN(v) ? undefined : Number(v)),
+                })}
+                className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm bg-white"
+              >
+                <option value="">Pilih bulan panen</option>
+                {MONTH_OPTIONS.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+
+            <FormField
+              label="Durasi Fermentasi (Jam)"
+              error={errors.fermentationHours?.message}
+              helperText="Opsional: Jam fermentasi ceri"
+            >
+              <Input
+                type="number"
+                min="0"
+                max="720"
+                {...register("fermentationHours", {
+                  setValueAs: (v) => (v === "" || isNaN(v) ? undefined : Number(v)),
+                })}
+                placeholder="Contoh: 72"
+              />
+            </FormField>
+
+            <FormField
+              label="Durasi Penjemuran (Hari)"
+              error={errors.dryingDays?.message}
+              helperText="Opsional: Hari pengeringan di bed jemur"
+            >
+              <Input
+                type="number"
+                min="0"
+                max="90"
+                {...register("dryingDays", {
+                  setValueAs: (v) => (v === "" || isNaN(v) ? undefined : Number(v)),
+                })}
+                placeholder="Contoh: 14"
+              />
+            </FormField>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-neutral-900 uppercase tracking-wide block mb-1.5">
+              Varietas Tanaman Kopi
+            </label>
+            <p className="text-xs text-neutral-600 mb-2">
+              Pilih satu atau lebih varietas kultivar tanaman kopi pada lot ini.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {COFFEE_VARIETIES.map((v) => {
+                const currentVarieties = watch("varieties") || [];
+                const isSelected = currentVarieties.includes(v.id);
+                return (
+                  <button
+                    type="button"
+                    key={v.id}
+                    onClick={() => {
+                      const updated = isSelected
+                        ? currentVarieties.filter((x) => x !== v.id)
+                        : [...currentVarieties, v.id];
+                      setValue("varieties", updated, { shouldValidate: true });
+                    }}
+                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors coarse:min-h-11 ${
+                      isSelected
+                        ? "bg-primary-800 text-white border-primary-800"
+                        : "bg-neutral-100 text-neutral-700 border-neutral-300 hover:bg-neutral-200"
+                    }`}
+                  >
+                    {v.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Action Buttons */}

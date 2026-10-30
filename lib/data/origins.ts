@@ -1,5 +1,7 @@
 import type { Pool } from "pg";
 import { getPool } from "@/lib/db/pool";
+import { assertMockAllowed } from "@/lib/data/mock-guard";
+import { logger } from "@/lib/logger";
 import type { CoffeeOrigin } from "@/types";
 
 // In-memory mock storage pre-populated with popular domestic & international specialty origins
@@ -224,10 +226,12 @@ export async function getCoffeeOrigins(options?: {
         isActive: Boolean(r.is_active),
         createdAt: new Date(r.created_at).toISOString(),
       }));
-    } catch {
-      // ignore: coffee origins db query fallback to mock store in dev
-      // Fallback to mock
+    } catch (err) {
+      assertMockAllowed("getCoffeeOrigins");
+      logger.warn("origins.query_failed", { error: (err as Error).message });
     }
+  } else {
+    assertMockAllowed("getCoffeeOrigins:no_pool");
   }
 
   let list = [...mockOrigins];
@@ -298,10 +302,13 @@ export async function getCoffeeOriginById(id: string): Promise<CoffeeOrigin | nu
           createdAt: new Date(r.created_at).toISOString(),
         };
       }
-    } catch {
-      // ignore: coffee origins db query fallback to mock store in dev
-      // Fallback
+      return null;
+    } catch (err) {
+      assertMockAllowed("getCoffeeOriginById");
+      logger.warn("origins.query_by_id_failed", { error: (err as Error).message });
     }
+  } else {
+    assertMockAllowed("getCoffeeOriginById:no_pool");
   }
   return mockOrigins.find((o) => o.id === id) || null;
 }
@@ -346,10 +353,12 @@ export async function createCoffeeOrigin(data: {
           newOrigin.isActive,
         ]
       );
-    } catch {
-      // ignore: coffee origins db query fallback to mock store in dev
-      // Fallback
+    } catch (err) {
+      assertMockAllowed("createCoffeeOrigin");
+      logger.warn("origins.insert_failed", { error: (err as Error).message });
     }
+  } else {
+    assertMockAllowed("createCoffeeOrigin:no_pool");
   }
 
   return newOrigin;
@@ -388,10 +397,12 @@ export async function updateCoffeeOrigin(
         );
         return merged;
       }
-    } catch {
-      // ignore: coffee origins db query fallback to mock store in dev
-      // Fallback
+    } catch (err) {
+      assertMockAllowed("updateCoffeeOrigin");
+      logger.warn("origins.update_failed", { error: (err as Error).message });
     }
+  } else {
+    assertMockAllowed("updateCoffeeOrigin:no_pool");
   }
 
   return idx !== -1 ? mockOrigins[idx] : null;

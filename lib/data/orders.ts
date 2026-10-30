@@ -1,6 +1,7 @@
 import { logger } from "@/lib/logger";
 import { randomBytes } from "crypto";
 import { getPool } from "@/lib/db/pool";
+import { assertMockAllowed } from "@/lib/data/mock-guard";
 import { Order, OrderItem, OrderStatus } from "@/types";
 import { mockListings } from "@/lib/mock/data";
 
@@ -328,11 +329,13 @@ export async function getOrderById(idOrNumber: string): Promise<Order | null> {
           updatedAt: row.updated_at,
         };
       }
-    } catch {
-      // ignore: fallback to mock store in dev when DB query fails
-      logger.warn("order.db_query_fallback");
-      // Fall through
+      return null;
+    } catch (err) {
+      assertMockAllowed("getOrderByIdOrNumber");
+      logger.warn("order.db_query_fallback", { error: (err as Error).message });
     }
+  } else {
+    assertMockAllowed("getOrderByIdOrNumber:no_pool");
   }
 
   return (
@@ -397,11 +400,12 @@ export async function getOrdersBySeller(sellerId: string): Promise<Order[]> {
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       }));
-    } catch {
-      // ignore: fallback to mock store in dev when DB query fails
-      logger.warn("order.db_query_fallback");
-      // Fall through
+    } catch (err) {
+      assertMockAllowed("getOrdersBySeller");
+      logger.warn("order.db_query_fallback", { error: (err as Error).message });
     }
+  } else {
+    assertMockAllowed("getOrdersBySeller:no_pool");
   }
 
   return mockOrders.filter((o) => o.sellerId === sellerId);
@@ -458,11 +462,12 @@ export async function getAllOrders(): Promise<Order[]> {
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       }));
-    } catch {
-      // ignore: fallback to mock store in dev when DB query fails
-      logger.warn("order.db_query_fallback");
-      // Fall through
+    } catch (err) {
+      assertMockAllowed("getAllOrders");
+      logger.warn("order.db_query_fallback", { error: (err as Error).message });
     }
+  } else {
+    assertMockAllowed("getAllOrders:no_pool");
   }
 
   return [...mockOrders];
@@ -554,11 +559,12 @@ export async function getOrdersByBuyer(
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       }));
-    } catch {
-      // ignore: fallback to mock store in dev when DB query fails
-      logger.warn("order.db_query_fallback");
-      // Fall through
+    } catch (err) {
+      assertMockAllowed("getOrdersByBuyer");
+      logger.warn("order.db_query_fallback", { error: (err as Error).message });
     }
+  } else {
+    assertMockAllowed("getOrdersByBuyer:no_pool");
   }
 
   return mockOrders.filter((o) => {
@@ -592,11 +598,12 @@ export async function decrementListingStock(
         }
         return { success: true, remainingStock: remaining };
       }
-    } catch {
-      // ignore: fallback to mock store in dev when DB query fails
-      logger.warn("order.db_query_fallback");
-      // Postgres column may not exist yet, fall through to in-memory
+    } catch (err) {
+      assertMockAllowed("decrementListingStock");
+      logger.warn("order.decrement_stock_fallback", { error: (err as Error).message });
     }
+  } else {
+    assertMockAllowed("decrementListingStock:no_pool");
   }
 
   const listing = mockListings.find((l) => l.id === listingId);
@@ -630,11 +637,12 @@ export async function incrementListingStock(
       if (res && res.rows && res.rows.length > 0) {
         return { success: true, newStock: Number(res.rows[0].stock) };
       }
-    } catch {
-      // ignore: fallback to mock store in dev when DB query fails
-      logger.warn("order.db_query_fallback");
-      // Postgres fallback
+    } catch (err) {
+      assertMockAllowed("incrementListingStock");
+      logger.warn("order.increment_stock_fallback", { error: (err as Error).message });
     }
+  } else {
+    assertMockAllowed("incrementListingStock:no_pool");
   }
 
   const listing = mockListings.find((l) => l.id === listingId);

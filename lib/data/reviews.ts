@@ -1,5 +1,6 @@
 import { logger } from "@/lib/logger";
 import { getPool } from "@/lib/db/pool";
+import { assertMockAllowed } from "@/lib/data/mock-guard";
 import type { Review } from "@/types";
 import { mockListings } from "@/lib/mock/data";
 
@@ -139,9 +140,12 @@ export async function getReviewByOrderAndListing(
         };
       }
       return null;
-    } catch {
-      // ignore: fallback to mock store in dev/test
+    } catch (err) {
+      assertMockAllowed("getReviewForOrderListing");
+      logger.warn("reviews.query_failed", { error: (err as Error).message });
     }
+  } else {
+    assertMockAllowed("getReviewForOrderListing:no_pool");
   }
 
   return (
@@ -206,10 +210,12 @@ export async function getReviewsByListing(listingId: string): Promise<Review[]> 
         [listingId],
       );
       return res.rows.map(mapReviewRow);
-    } catch {
-      // ignore: reviews db query fallback to mock store in dev
-      // Fall through
+    } catch (err) {
+      assertMockAllowed("getReviewsByListing");
+      logger.warn("reviews.query_listing_failed", { error: (err as Error).message });
     }
+  } else {
+    assertMockAllowed("getReviewsByListing:no_pool");
   }
 
   return mockReviews.filter(
@@ -229,10 +235,12 @@ export async function getReviewsByListingIds(listingIds: string[]): Promise<Revi
         [listingIds],
       );
       return res.rows.map(mapReviewRow);
-    } catch {
-      // ignore: reviews db query fallback to mock store in dev
-      // Fall through
+    } catch (err) {
+      assertMockAllowed("getReviewsByListingIds");
+      logger.warn("reviews.query_ids_failed", { error: (err as Error).message });
     }
+  } else {
+    assertMockAllowed("getReviewsByListingIds:no_pool");
   }
 
   const idSet = new Set(listingIds);

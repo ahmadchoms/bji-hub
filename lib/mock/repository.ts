@@ -660,6 +660,12 @@ function toTasteProfile(
     altitude: data.altitude,
     cropYear: data.cropYear,
     moistureContent: data.moistureContent,
+    producerId: data.producerId,
+    lotCode: data.lotCode,
+    varieties: data.varieties ?? [],
+    harvestMonth: data.harvestMonth,
+    fermentationHours: data.fermentationHours,
+    dryingDays: data.dryingDays,
     roastDate: data.roastDate
       ? new Date(data.roastDate).toISOString()
       : new Date().toISOString(),
@@ -702,6 +708,8 @@ export async function createListing(
     images: toImages(id, data),
     tasteProfile:
       category.slug === "equipment" ? null : toTasteProfile(id, data, `taste-${id}`),
+    nextRoastDate: data.nextRoastDate,
+    flavorTags: data.flavorTags ?? [],
   };
   mockListings.unshift(listing);
   return listing;
@@ -737,6 +745,8 @@ export async function updateListing(
             data,
             listing.tasteProfile?.id ?? `taste-${listing.id}`,
           ),
+    nextRoastDate: data.nextRoastDate,
+    flavorTags: data.flavorTags ?? listing.flavorTags ?? [],
   });
   return listing;
 }

@@ -1,3 +1,5 @@
+process.env.DATA_SOURCE = "mock";
+
 import { describe, expect, it } from "vitest";
 import {
   getCoffeeOrigins,

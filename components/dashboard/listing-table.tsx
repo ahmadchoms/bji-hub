@@ -27,11 +27,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { EmptyState } from "@/components/shared/empty-state";
-import { Pencil, Eye } from "lucide-react";
+import { Pencil, Eye, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   quickUpdateStockAction,
   toggleListingStatusAction,
+  addRoastBatchAction,
 } from "@/actions/seller.actions";
 import { toast } from "sonner";
 
@@ -221,6 +222,134 @@ function QuickStockDialog({
   );
 }
 
+function RoastBatchDialog({
+  listingId,
+  title,
+  categorySlug,
+}: {
+  listingId: string;
+  title: string;
+  categorySlug?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [roastedOn, setRoastedOn] = useState(new Date().toLocaleDateString("en-CA"));
+  const [quantityKg, setQuantityKg] = useState("10");
+  const [notes, setNotes] = useState("");
+
+  if (categorySlug === "equipment") return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const qty = Number(quantityKg);
+    if (!roastedOn || isNaN(qty) || qty <= 0) {
+      toast.error("Tanggal sangrai dan kuantitas kg valid wajib diisi.");
+      return;
+    }
+
+    setLoading(true);
+    const res = await addRoastBatchAction({
+      listingId,
+      roastedOn,
+      quantityKg: qty,
+      notes: notes.trim() || undefined,
+    });
+    setLoading(false);
+
+    if (res.success) {
+      toast.success("Batch pemanggangan berhasil dicatat!");
+      setOpen(false);
+      setNotes("");
+    } else {
+      toast.error(res.error || "Gagal mencatat batch sangrai");
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            title="Catat Batch Sangrai"
+            aria-label={`Catat batch sangrai untuk ${title}`}
+            className="text-amber-800 hover:text-amber-900 hover:bg-amber-50"
+          />
+        }
+      >
+        <Flame className="w-4 h-4" aria-hidden="true" />
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Catat Batch Pemanggangan</DialogTitle>
+          <DialogDescription>
+            {title} — Tambah batch sangrai terbaru untuk memperbarui tanggal sangrai dan memicu antrean waitlist secara otomatis.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+          <div>
+            <label className="text-xs font-medium text-neutral-800 block mb-1">
+              Tanggal Sangrai (WIB) <span className="text-red-600">*</span>
+            </label>
+            <Input
+              type="date"
+              max={new Date().toLocaleDateString("en-CA")}
+              value={roastedOn}
+              onChange={(e) => setRoastedOn(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-neutral-800 block mb-1">
+              Kuantitas Hasil Sangrai (kg) <span className="text-red-600">*</span>
+            </label>
+            <Input
+              type="number"
+              step="0.5"
+              min="0.1"
+              max="10000"
+              value={quantityKg}
+              onChange={(e) => setQuantityKg(e.target.value)}
+              placeholder="Contoh: 15"
+              required
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-neutral-800 block mb-1">
+              Catatan Batch Pemanggangan (Opsional)
+            </label>
+            <Input
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Profil sangrai, mesin roaster, atau catatan suhu..."
+              maxLength={500}
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setOpen(false)}
+            >
+              Batal
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              disabled={loading}
+            >
+              {loading ? "Menyimpan..." : "Simpan Batch"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function ListingTable({ listings, className }: ListingTableProps) {
   if (listings.length === 0) {
     return (
@@ -327,6 +456,11 @@ export function ListingTable({ listings, className }: ListingTableProps) {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
+                      <RoastBatchDialog
+                        listingId={listing.id}
+                        title={listing.title}
+                        categorySlug={listing.category.slug}
+                      />
                       <Link
                         href={`/product/${listing.slug}`}
                         aria-label="Lihat produk"
@@ -433,6 +567,11 @@ export function ListingTable({ listings, className }: ListingTableProps) {
                   )}
                 </div>
                 <div className="flex items-center gap-1">
+                  <RoastBatchDialog
+                    listingId={listing.id}
+                    title={listing.title}
+                    categorySlug={listing.category.slug}
+                  />
                   <Link href={`/product/${listing.slug}`}>
                     <Button
                       variant="ghost"

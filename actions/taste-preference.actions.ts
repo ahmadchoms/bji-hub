@@ -54,9 +54,14 @@ export async function saveTastePreferencesAction(
           [userId, acidity, body, roastPref, flavorTags]
         );
         return ok({ saved: true });
-      } catch {
-        // ignore: table not yet migrated on remote test DB, fallback to in-memory store
+      } catch (err) {
+        if (process.env.DATA_SOURCE !== "mock") {
+          logger.error("taste_pref.db_write_error", err);
+          return fail("Gagal menyimpan preferensi rasa di database.");
+        }
       }
+    } else if (process.env.DATA_SOURCE !== "mock") {
+      return fail("Layanan database tidak tersedia.");
     }
 
     mockTastePreferences.set(userId, {
@@ -100,9 +105,15 @@ export async function getTastePreferencesAction(): Promise<
             flavorTags: row.flavor_tags || [],
           });
         }
-      } catch {
-        // ignore: fallback to mock store in dev/test when table not yet migrated
+        return ok(null);
+      } catch (err) {
+        if (process.env.DATA_SOURCE !== "mock") {
+          logger.error("taste_pref.db_read_error", err);
+          return fail("Gagal membaca preferensi rasa dari database.");
+        }
       }
+    } else if (process.env.DATA_SOURCE !== "mock") {
+      return fail("Layanan database tidak tersedia.");
     }
 
     const pref = mockTastePreferences.get(userId);

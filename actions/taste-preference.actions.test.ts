@@ -1,3 +1,5 @@
+process.env.DATA_SOURCE = "mock";
+
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   saveTastePreferencesAction,

@@ -49,6 +49,8 @@ export async function getRoastBatches(listingId: string): Promise<RoastBatch[]> 
   return mockRoastBatches.filter((b) => b.listingId === listingId);
 }
 
+export const getRoastBatchesByListing = getRoastBatches;
+
 export async function addRoastBatch(params: {
   listingId: string;
   roastedOn: string;

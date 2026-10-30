@@ -1,3 +1,5 @@
+process.env.DATA_SOURCE = "mock";
+
 import { describe, it, expect } from "vitest";
 import {
   getProducers,

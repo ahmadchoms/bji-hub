@@ -59,6 +59,16 @@ for (const file of sourceFiles) {
   }
 }
 
+// Invariant 4: No disallowed 'fallback to mock' outside mock-guard (Audit #8 Section 5.6)
+for (const file of sourceFiles) {
+  const normalized = file.replace(/\\/g, "/");
+  if (normalized === "lib/data/mock-guard.ts" || normalized === "lib/auth/session.ts") continue;
+  const content = fs.readFileSync(file, "utf8");
+  if (/fallback to mock/i.test(content)) {
+    errors.push(`[Invariant Violation] Disallowed 'fallback to mock' pattern in ${file}`);
+  }
+}
+
 if (errors.length > 0) {
   console.error("Invariant checks failed:\n" + errors.join("\n"));
   process.exit(1);

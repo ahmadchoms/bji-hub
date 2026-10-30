@@ -1,6 +1,7 @@
 import { logger } from "@/lib/logger";
 import { randomBytes } from "crypto";
 import { getPool } from "@/lib/db/pool";
+import { assertMockAllowed } from "@/lib/data/mock-guard";
 import { PayoutRequest, PayoutStatus } from "@/types";
 import { getOrdersBySeller } from "@/lib/data/orders";
 
@@ -56,10 +57,13 @@ export async function getSellerBankDetails(
             : null,
         };
       }
-    } catch {
-      // ignore: seller bank details query fallback to mock store in dev
-      logger.warn("payout.get_bank_details_fallback", { sellerId });
+      return null;
+    } catch (err) {
+      assertMockAllowed("getSellerBankDetails");
+      logger.warn("payout.get_bank_details_fallback", { sellerId, error: (err as Error).message });
     }
+  } else {
+    assertMockAllowed("getSellerBankDetails:no_pool");
   }
 
   return mockBankDetails[sellerId] ?? null;
@@ -130,10 +134,12 @@ export async function getPayoutRequestsBySeller(
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       }));
-    } catch {
-      // ignore: payout requests table fallback to mock store in dev
-      logger.warn("payout.get_by_seller_fallback", { sellerId });
+    } catch (err) {
+      assertMockAllowed("getPayoutRequestsBySeller");
+      logger.warn("payout.get_by_seller_fallback", { sellerId, error: (err as Error).message });
     }
+  } else {
+    assertMockAllowed("getPayoutRequestsBySeller:no_pool");
   }
 
   return mockPayoutRequests.filter((p) => p.sellerId === sellerId);
@@ -333,10 +339,12 @@ export async function getAllPayoutRequests(): Promise<
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       }));
-    } catch {
-      // ignore: payouts db query fallback to mock store in dev
-      // Fall through
+    } catch (err) {
+      assertMockAllowed("getAllPayoutRequests");
+      logger.warn("payout.get_all_fallback", { error: (err as Error).message });
     }
+  } else {
+    assertMockAllowed("getAllPayoutRequests:no_pool");
   }
 
   return mockPayoutRequests.map((p) => ({

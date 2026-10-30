@@ -70,7 +70,7 @@
     "@vitejs/plugin-react": "^6.1.1",
     "dotenv": "^18.0.5",
     "eslint": "^9",
-    "eslint-config-next": "15.5.26",
+    "eslint-config-next": "16.4.2",
     "jsdom": "^29.1.1",
     "prettier": "^3.9.9",
     "prettier-plugin-tailwindcss": "^0.8.1",

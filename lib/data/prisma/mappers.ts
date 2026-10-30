@@ -4,6 +4,7 @@ import type {
   Inquiry,
   ListingWithRelations,
   Payment,
+  Producer,
   SellerProfile,
   Subscription,
   TasteProfile,
@@ -18,20 +19,45 @@ export const listingInclude = {
   seller: true,
   category: true,
   images: { orderBy: { sortOrder: "asc" } },
-  tasteProfile: true,
+  tasteProfile: {
+    include: {
+      producer: true,
+    },
+  },
   flavorTags: true,
 } satisfies Prisma.ListingInclude;
 
 export type ListingRow = Prisma.ListingGetPayload<{ include: typeof listingInclude }>;
 type SellerRow = Prisma.SellerProfileGetPayload<object>;
-type TasteRow = Prisma.TasteProfileGetPayload<object>;
+type TasteRow = Prisma.TasteProfileGetPayload<{ include: { producer: true } }>;
 
 export function toCategory(row: Prisma.CategoryGetPayload<object>): Category {
   return { id: row.id, name: row.name, slug: row.slug, description: row.description ?? undefined };
 }
 
+export function toProducer(row: Prisma.ProducerGetPayload<object>): Producer {
+  const producer: Producer = {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    kind: row.kind as Producer["kind"],
+    certifications: row.certifications,
+    photoUrls: row.photoUrls,
+    createdAt: iso(row.createdAt),
+  };
+  if (row.originId) producer.originId = row.originId;
+  if (row.village) producer.village = row.village;
+  if (row.province) producer.province = row.province;
+  if (row.altitudeMin != null) producer.altitudeMin = row.altitudeMin;
+  if (row.altitudeMax != null) producer.altitudeMax = row.altitudeMax;
+  if (row.farmersCount != null) producer.farmersCount = row.farmersCount;
+  if (row.story) producer.story = row.story;
+  if (row.claimsVerifiedAt) producer.claimsVerifiedAt = iso(row.claimsVerifiedAt);
+  return producer;
+}
+
 export function toSeller(row: SellerRow): SellerProfile {
-  return {
+  const seller: SellerProfile = {
     id: row.id,
     userId: row.userId,
     businessName: row.businessName,
@@ -40,23 +66,28 @@ export function toSeller(row: SellerRow): SellerProfile {
     city: row.city,
     address: row.address,
     whatsappNumber: row.whatsappNumber,
-    bio: row.bio ?? undefined,
-    avatarUrl: row.avatarUrl ?? undefined,
-    bankName: ((row as Record<string, unknown>).bankName || (row as Record<string, unknown>).bank_name) as string | undefined,
-    bankAccountNumber: ((row as Record<string, unknown>).bankAccountNumber || (row as Record<string, unknown>).bank_account_number) as string | undefined,
-    bankAccountHolder: ((row as Record<string, unknown>).bankAccountHolder || (row as Record<string, unknown>).bank_account_holder) as string | undefined,
-    bankUpdatedAt: (row as Record<string, unknown>).bankUpdatedAt ? iso((row as Record<string, unknown>).bankUpdatedAt as Date) : undefined,
-    kycDocumentUrl: ((row as Record<string, unknown>).kycDocumentUrl || (row as Record<string, unknown>).kyc_document_url) as string | undefined,
-    kycSubmittedAt: (row as Record<string, unknown>).kycSubmittedAt ? iso((row as Record<string, unknown>).kycSubmittedAt as Date) : undefined,
     isVerified: row.isVerified,
-    verificationStatus: row.verificationStatus,
     tier: row.tier,
     createdAt: iso(row.createdAt),
   };
+  if (row.bio) seller.bio = row.bio;
+  if (row.avatarUrl) seller.avatarUrl = row.avatarUrl;
+  const raw = row as Record<string, unknown>;
+  const bankName = raw.bankName || raw.bank_name;
+  if (bankName) seller.bankName = bankName as string;
+  const bankAcc = raw.bankAccountNumber || raw.bank_account_number;
+  if (bankAcc) seller.bankAccountNumber = bankAcc as string;
+  const bankHolder = raw.bankAccountHolder || raw.bank_account_holder;
+  if (bankHolder) seller.bankAccountHolder = bankHolder as string;
+  if (raw.bankUpdatedAt) seller.bankUpdatedAt = iso(raw.bankUpdatedAt as Date);
+  const kycDoc = raw.kycDocumentUrl || raw.kyc_document_url;
+  if (kycDoc) seller.kycDocumentUrl = kycDoc as string;
+  if (raw.kycSubmittedAt) seller.kycSubmittedAt = iso(raw.kycSubmittedAt as Date);
+  return seller;
 }
 
 export function toTaste(row: TasteRow): TasteProfile {
-  return {
+  const taste: TasteProfile = {
     id: row.id,
     listingId: row.listingId,
     originRegion: row.originRegion,
@@ -65,25 +96,42 @@ export function toTaste(row: TasteRow): TasteProfile {
     flavorNotes: row.flavorNotes,
     acidityScore: num(row.acidityScore),
     bodyScore: num(row.bodyScore),
-    sweetnessScore: numOrUndef(row.sweetnessScore),
-    aromaScore: numOrUndef(row.aromaScore),
-    aftertasteScore: numOrUndef(row.aftertasteScore),
-    cropYear: row.cropYear ?? undefined,
-    moistureContent: row.moistureContent ? num(row.moistureContent) : undefined,
-    cuppingScore: row.cuppingScore ? num(row.cuppingScore) : undefined,
-    altitude: row.altitude ?? undefined,
-    producerId: (((row as Record<string, unknown>).producerId || (row as Record<string, unknown>).producer_id) as string) ?? undefined,
-    lotCode: (((row as Record<string, unknown>).lotCode || (row as Record<string, unknown>).lot_code) as string) ?? undefined,
-    varieties: (((row as Record<string, unknown>).varieties as string[]) || []),
-    harvestMonth: (((row as Record<string, unknown>).harvestMonth ?? (row as Record<string, unknown>).harvest_month) as number) ?? undefined,
-    fermentationHours: (((row as Record<string, unknown>).fermentationHours ?? (row as Record<string, unknown>).fermentation_hours) as number) ?? undefined,
-    dryingDays: (((row as Record<string, unknown>).dryingDays ?? (row as Record<string, unknown>).drying_days) as number) ?? undefined,
     roastDate: iso(row.roastDate),
   };
+  const sweetness = numOrUndef(row.sweetnessScore);
+  if (sweetness !== undefined) taste.sweetnessScore = sweetness;
+  const aroma = numOrUndef(row.aromaScore);
+  if (aroma !== undefined) taste.aromaScore = aroma;
+  const aftertaste = numOrUndef(row.aftertasteScore);
+  if (aftertaste !== undefined) taste.aftertasteScore = aftertaste;
+  const cupping = numOrUndef(row.cuppingScore);
+  if (cupping !== undefined) taste.cuppingScore = cupping;
+  if (row.cropYear) taste.cropYear = row.cropYear;
+  const moisture = numOrUndef(row.moistureContent);
+  if (moisture !== undefined) taste.moistureContent = moisture;
+  if (row.altitude) taste.altitude = row.altitude;
+
+  const raw = row as Record<string, unknown>;
+  const producer = (row.producer || raw.producer) as Prisma.ProducerGetPayload<object> | null | undefined;
+  if (producer) taste.producer = toProducer(producer);
+  const producerId = (raw.producerId || raw.producer_id) as string | undefined;
+  if (producerId) taste.producerId = producerId;
+  const lotCode = (raw.lotCode || raw.lot_code) as string | undefined;
+  if (lotCode) taste.lotCode = lotCode;
+  const varieties = (row.varieties || raw.varieties) as string[] | undefined;
+  if (varieties && varieties.length > 0) taste.varieties = varieties;
+  const harvestMonth = (raw.harvestMonth ?? raw.harvest_month) as number | undefined;
+  if (harvestMonth != null) taste.harvestMonth = harvestMonth;
+  const fermentationHours = (raw.fermentationHours ?? raw.fermentation_hours) as number | undefined;
+  if (fermentationHours != null) taste.fermentationHours = fermentationHours;
+  const dryingDays = (raw.dryingDays ?? raw.drying_days) as number | undefined;
+  if (dryingDays != null) taste.dryingDays = dryingDays;
+
+  return taste;
 }
 
 export function toListing(row: ListingRow): ListingWithRelations {
-  return {
+  const listing: ListingWithRelations = {
     id: row.id,
     slug: row.slug,
     sellerId: row.sellerId,
@@ -108,12 +156,13 @@ export function toListing(row: ListingRow): ListingWithRelations {
       url: image.url,
       sortOrder: image.sortOrder,
     })),
-    tasteProfile: row.tasteProfile ? toTaste(row.tasteProfile) : undefined,
-    nextRoastDate: (row as { nextRoastDate?: Date | string | null }).nextRoastDate
-      ? iso((row as { nextRoastDate?: Date | string | null }).nextRoastDate as Date).slice(0, 10)
-      : undefined,
-    flavorTags: (row as { flavorTags?: Array<{ tag: string }> }).flavorTags?.map((ft) => ft.tag) ?? [],
   };
+  if (row.tasteProfile) listing.tasteProfile = toTaste(row.tasteProfile);
+  const nextRoastDate = (row as { nextRoastDate?: Date | string | null }).nextRoastDate;
+  if (nextRoastDate) listing.nextRoastDate = iso(nextRoastDate as Date).slice(0, 10);
+  const flavorTags = (row as { flavorTags?: Array<{ tag: string }> }).flavorTags;
+  if (flavorTags && flavorTags.length > 0) listing.flavorTags = flavorTags.map((ft) => ft.tag);
+  return listing;
 }
 
 export function toPayment(row: Prisma.PaymentGetPayload<object>): Payment {

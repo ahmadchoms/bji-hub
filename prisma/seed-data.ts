@@ -8,6 +8,7 @@ import {
   mockSellers,
   mockSubscriptions,
 } from "../lib/mock/data";
+import { mockProducers } from "../lib/data/producers";
 import { generateDemoEvents } from "../lib/mock/analytics-store";
 
 const TABLES = [
@@ -21,6 +22,7 @@ const TABLES = [
   "categories",
   "seller_profiles",
   "users",
+  "producers",
 ];
 
 /** Converts any identifier deterministically to a standard RFC 4122 UUID v4 */
@@ -91,6 +93,26 @@ export async function seedDatabase(
     })),
   });
 
+  await prisma.producer.createMany({
+    data: mockProducers.map((producer) => ({
+      id: getId(producer.id),
+      slug: producer.slug,
+      name: producer.name,
+      kind: producer.kind,
+      originId: producer.originId ?? null,
+      village: producer.village ?? null,
+      province: producer.province ?? null,
+      altitudeMin: producer.altitudeMin ?? null,
+      altitudeMax: producer.altitudeMax ?? null,
+      farmersCount: producer.farmersCount ?? null,
+      story: producer.story ?? null,
+      certifications: producer.certifications ?? [],
+      claimsVerifiedAt: date(producer.claimsVerifiedAt),
+      photoUrls: producer.photoUrls ?? [],
+      createdAt: new Date(producer.createdAt),
+    })),
+  });
+
   await prisma.listing.createMany({
     data: mockListings.map((listing) => ({
       id: getId(listing.id),
@@ -106,6 +128,8 @@ export async function seedDatabase(
       status: listing.status,
       isBoosted: listing.isBoosted,
       boostUntil: date(listing.boostUntil),
+      ratingAvg: listing.ratingAvg ?? null,
+      ratingCount: listing.ratingCount ?? 0,
       createdAt: new Date(listing.createdAt),
     })),
   });
@@ -130,6 +154,12 @@ export async function seedDatabase(
               altitude: listing.tasteProfile.altitude ?? null,
               cropYear: listing.tasteProfile.cropYear ?? null,
               moistureContent: listing.tasteProfile.moistureContent ?? null,
+              producerId: listing.tasteProfile.producerId ? getId(listing.tasteProfile.producerId) : null,
+              lotCode: listing.tasteProfile.lotCode ?? null,
+              varieties: listing.tasteProfile.varieties ?? [],
+              harvestMonth: listing.tasteProfile.harvestMonth ?? null,
+              fermentationHours: listing.tasteProfile.fermentationHours ?? null,
+              dryingDays: listing.tasteProfile.dryingDays ?? null,
               roastDate: new Date(listing.tasteProfile.roastDate),
             },
           ]

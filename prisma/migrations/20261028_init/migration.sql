@@ -331,6 +331,11 @@ CREATE TABLE IF NOT EXISTS "notifications" (
     CONSTRAINT "notifications_pkey" PRIMARY KEY ("id")
 );
 
+-- Ensure optional/added columns on existing tables exist
+ALTER TABLE IF EXISTS "orders"
+  ADD COLUMN IF NOT EXISTS "access_token" TEXT,
+  ADD COLUMN IF NOT EXISTS "idempotency_key" TEXT;
+
 -- Indexes
 CREATE UNIQUE INDEX IF NOT EXISTS "users_email_key" ON "users"("email");
 CREATE UNIQUE INDEX IF NOT EXISTS "seller_profiles_userId_key" ON "seller_profiles"("userId");

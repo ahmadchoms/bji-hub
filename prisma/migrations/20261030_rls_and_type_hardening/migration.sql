@@ -6,8 +6,15 @@ ALTER TABLE IF EXISTS public.user_taste_preferences ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.producers ENABLE ROW LEVEL SECURITY;
 
 -- Drop non-portable auth.uid() policies
-DROP POLICY IF EXISTS "Users can manage their own taste preferences" ON public.user_taste_preferences;
-DROP POLICY IF EXISTS "Users can view and manage their own waitlist" ON public.listing_waitlist;
+DO $$
+BEGIN
+  IF to_regclass('public.user_taste_preferences') IS NOT NULL THEN
+    DROP POLICY IF EXISTS "Users can manage their own taste preferences" ON public.user_taste_preferences;
+  END IF;
+  IF to_regclass('public.listing_waitlist') IS NOT NULL THEN
+    DROP POLICY IF EXISTS "Users can view and manage their own waitlist" ON public.listing_waitlist;
+  END IF;
+END $$;
 
 -- Ensure portable public read policy on producers
 DO $$

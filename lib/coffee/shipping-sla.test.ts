@@ -1,3 +1,4 @@
+process.env.DATA_SOURCE = "mock";
 import { describe, it, expect, vi } from "vitest";
 import { computeMedian, calculateRoastToShipSla } from "./shipping-sla";
 

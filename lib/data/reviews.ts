@@ -1,18 +1,7 @@
-import { Pool } from "pg";
 import { logger } from "@/lib/logger";
+import { getPool } from "@/lib/db/pool";
 import type { Review } from "@/types";
 import { mockListings } from "@/lib/mock/data";
-
-let poolInstance: Pool | null = null;
-function getPool(): Pool | null {
-  if (process.env.DATA_SOURCE === "mock") return null;
-  const conn = process.env.DATABASE_URL || process.env.DIRECT_URL;
-  if (!conn) return null;
-  if (!poolInstance) {
-    poolInstance = new Pool({ connectionString: conn });
-  }
-  return poolInstance;
-}
 
 const mockReviews: Review[] = [];
 
@@ -309,7 +298,7 @@ export async function replyToReview(
          FROM public.listings l
          WHERE r.id = $3
            AND r.listing_id = l.id
-           AND l.seller_id = $4
+           AND l."sellerId" = $4
            AND r.seller_reply IS NULL`,
         [replyText.trim(), now, reviewId, sellerId],
       );
@@ -353,10 +342,10 @@ export async function reportReview(
          r.buyer_id,
          r.listing_id,
          r.admin_approved_at,
-         s.user_id as seller_user_id
+         s."userId" as seller_user_id
        FROM public.reviews r
        JOIN public.listings l ON l.id = r.listing_id
-       JOIN public.sellers s ON s.id = l.seller_id
+       JOIN public.seller_profiles s ON s.id = l."sellerId"
        WHERE r.id = $1 LIMIT 1`,
       [reviewId],
     );
@@ -375,21 +364,22 @@ export async function reportReview(
     // 2. Check reporter account age (>= 7 days) and completed orders (>= 1)
     const reporterRes = await pool.query(
       `SELECT
-         u.created_at,
+         u."createdAt",
          COUNT(o.id) FILTER (WHERE o.status = 'completed') as completed_orders
        FROM public.users u
        LEFT JOIN public.orders o ON o.buyer_id = u.id
        WHERE u.id = $1
-       GROUP BY u.id`,
+       GROUP BY u.id, u."createdAt"`,
       [reporterId],
     );
     if (reporterRes.rows.length > 0) {
-      const u = reporterRes.rows[0];
-      const ageDays = (Date.now() - new Date(u.created_at).getTime()) / (24 * 60 * 60 * 1000);
+      const reporterRow = reporterRes.rows[0];
+      const createdAtVal = reporterRow.createdAt || reporterRow.created_at;
+      const ageDays = (Date.now() - new Date(createdAtVal).getTime()) / (24 * 60 * 60 * 1000);
       if (ageDays < 7) {
         throw new Error("Akun Anda harus berumur minimal 7 hari untuk dapat melaporkan ulasan.");
       }
-      if (Number(u.completed_orders || 0) < 1) {
+      if (Number(reporterRow.completed_orders || 0) < 1) {
         throw new Error("Anda harus memiliki minimal 1 pesanan selesai untuk dapat melaporkan ulasan.");
       }
     }
@@ -426,7 +416,7 @@ export async function reportReview(
        ) co ON co.buyer_id = rr.reporter_id
        WHERE rr.review_id = $1
          AND rr.status = 'open'
-         AND u.created_at <= NOW() - INTERVAL '7 days'
+         AND u."createdAt" <= NOW() - INTERVAL '7 days'
          AND ($2::timestamptz IS NULL OR rr.created_at > $2::timestamptz)`,
       [reviewId, reviewRow.admin_approved_at || null],
     );

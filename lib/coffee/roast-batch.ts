@@ -1,20 +1,9 @@
-import { Pool } from "pg";
 import { runAfterResponse } from "@/lib/after";
 import { revalidateListing } from "@/lib/cache/revalidate";
 import { sendWaitlistRestockedEmail } from "@/lib/email";
 import { createNotification } from "@/lib/data/notifications";
+import { getPool } from "@/lib/db/pool";
 import type { RoastBatch } from "@/types";
-
-let poolInstance: Pool | null = null;
-function getPool(): Pool | null {
-  if (process.env.DATA_SOURCE === "mock") return null;
-  const conn = process.env.DATABASE_URL || process.env.DIRECT_URL;
-  if (!conn) return null;
-  if (!poolInstance) {
-    poolInstance = new Pool({ connectionString: conn });
-  }
-  return poolInstance;
-}
 
 export const mockRoastBatches: RoastBatch[] = [
   {

@@ -1,15 +1,4 @@
-import { Pool } from "pg";
-
-let poolInstance: Pool | null = null;
-function getPool(): Pool | null {
-  if (process.env.DATA_SOURCE === "mock") return null;
-  const conn = process.env.DATABASE_URL || process.env.DIRECT_URL;
-  if (!conn) return null;
-  if (!poolInstance) {
-    poolInstance = new Pool({ connectionString: conn });
-  }
-  return poolInstance;
-}
+import { getPool } from "@/lib/db/pool";
 
 export interface RoastToShipSlaResult {
   medianDays: number | null;
@@ -45,7 +34,7 @@ export async function calculateRoastToShipSla(
          FROM public.orders o
          JOIN public.listings l ON l.id = o.listing_id
          JOIN public.taste_profiles tp ON tp.listing_id = l.id
-         WHERE l.seller_id = $1
+         WHERE o.seller_id = $1
            AND o.shipped_at IS NOT NULL
            AND tp.roast_date IS NOT NULL
            AND o.shipped_at >= tp.roast_date

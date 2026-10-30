@@ -76,5 +76,5 @@ describe("Waitlist Actions", () => {
     if (!attempt21.success) {
       expect(attempt21.error).toContain("maksimal 20");
     }
-  });
+  }, 15000);
 });

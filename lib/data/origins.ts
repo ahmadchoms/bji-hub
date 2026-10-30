@@ -1,16 +1,6 @@
-import { Pool } from "pg";
+import type { Pool } from "pg";
+import { getPool } from "@/lib/db/pool";
 import type { CoffeeOrigin } from "@/types";
-
-let poolInstance: Pool | null = null;
-function getPool(): Pool | null {
-  if (process.env.DATA_SOURCE === "mock") return null;
-  const conn = process.env.DATABASE_URL || process.env.DIRECT_URL;
-  if (!conn) return null;
-  if (!poolInstance) {
-    poolInstance = new Pool({ connectionString: conn });
-  }
-  return poolInstance;
-}
 
 // In-memory mock storage pre-populated with popular domestic & international specialty origins
 const mockOrigins: CoffeeOrigin[] = [

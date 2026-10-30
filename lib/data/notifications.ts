@@ -1,17 +1,6 @@
-import { Pool } from "pg";
 import { logger } from "@/lib/logger";
 import { randomUUID } from "crypto";
-
-let poolInstance: Pool | null = null;
-function getPool(): Pool | null {
-  if (process.env.DATA_SOURCE === "mock") return null;
-  const conn = process.env.DATABASE_URL || process.env.DIRECT_URL;
-  if (!conn) return null;
-  if (!poolInstance) {
-    poolInstance = new Pool({ connectionString: conn });
-  }
-  return poolInstance;
-}
+import { getPool } from "@/lib/db/pool";
 
 export interface NotificationRecord {
   id: string;

@@ -1,19 +1,8 @@
 import { logger } from "@/lib/logger";
-import { Pool } from "pg";
 import { randomBytes } from "crypto";
+import { getPool } from "@/lib/db/pool";
 import { Order, OrderItem, OrderStatus } from "@/types";
 import { mockListings } from "@/lib/mock/data";
-
-let poolInstance: Pool | null = null;
-function getPool(): Pool | null {
-  if (process.env.DATA_SOURCE === "mock") return null;
-  const conn = process.env.DATABASE_URL || process.env.DIRECT_URL;
-  if (!conn) return null;
-  if (!poolInstance) {
-    poolInstance = new Pool({ connectionString: conn });
-  }
-  return poolInstance;
-}
 
 // In-memory mock storage fallback for vitest & offline local development
 export const mockOrders: Order[] = [];

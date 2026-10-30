@@ -1,20 +1,9 @@
 "use server";
 
-import { Pool } from "pg";
 import { getSession } from "@/lib/auth/session";
 import { ok, fail, type ActionResult } from "@/lib/action-result";
 import { logger } from "@/lib/logger";
-
-let poolInstance: Pool | null = null;
-function getPool(): Pool | null {
-  if (process.env.DATA_SOURCE === "mock") return null;
-  const conn = process.env.DATABASE_URL || process.env.DIRECT_URL;
-  if (!conn) return null;
-  if (!poolInstance) {
-    poolInstance = new Pool({ connectionString: conn });
-  }
-  return poolInstance;
-}
+import { getPool } from "@/lib/db/pool";
 
 // In-memory mock storage for waitlist entries
 const mockWaitlistEntries = new Set<string>(); // key: `${userId}:${listingId}`

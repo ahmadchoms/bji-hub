@@ -1,19 +1,7 @@
-import { Pool } from "pg";
 import { logger } from "@/lib/logger";
 import { randomUUID } from "crypto";
+import { getPool } from "@/lib/db/pool";
 import type { BuyerAddress } from "@/types";
-
-let poolInstance: Pool | null = null;
-
-function getPool(): Pool | null {
-  if (process.env.DATA_SOURCE === "mock") return null;
-  const conn = process.env.DATABASE_URL || process.env.DIRECT_URL;
-  if (!conn) return null;
-  if (!poolInstance) {
-    poolInstance = new Pool({ connectionString: conn });
-  }
-  return poolInstance;
-}
 
 export interface UserAddressRecord {
   id: string;

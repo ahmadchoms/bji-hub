@@ -6,6 +6,11 @@ import * as addresses from "./addresses";
 import * as auditLogs from "./audit-logs";
 import * as chat from "./chat";
 import * as consents from "./consents";
+import * as bundles from "../coffee/bundles";
+import * as b2b from "../coffee/b2b";
+import * as recipes from "../coffee/recipes";
+import * as reminders from "../coffee/reminders";
+import * as editorial from "../coffee/editorial";
 import * as notifications from "./notifications";
 import * as orders from "./orders";
 import * as origins from "./origins";
@@ -540,6 +545,202 @@ describe("Real PostgreSQL Behavioral Tests (A2)", () => {
     expect(userConsents.some((c) => c.document === "terms")).toBe(true);
 
     await pool.query("DELETE FROM public.user_consents WHERE user_id = $1", [testBuyerUserId]);
+  });
+
+  it("D2 Tasting Bundle: atomic child reservation and restock on cancel", async () => {
+    const childId1 = "child-listing-1";
+    const childId2 = "child-listing-2";
+    const bundleId = "bundle-tasting-pack";
+
+    // Setup 2 child listings and 1 bundle listing
+    await pool.query(
+      `INSERT INTO public.listings (id, slug, "sellerId", "categoryId", title, price, unit, stock, status, kind, "createdAt", "updatedAt")
+       VALUES 
+       ($1, 'child-1-slug', $3, $4, 'Gayo Washed 50g', 35000, '50g', 10, 'active', 'single', NOW(), NOW()),
+       ($2, 'child-2-slug', $3, $4, 'Toraja Natural 50g', 40000, '50g', 15, 'active', 'single', NOW(), NOW())
+       ON CONFLICT (id) DO UPDATE SET stock = EXCLUDED.stock`,
+      [childId1, childId2, testSellerProfileId, testCategoryId]
+    );
+
+    await pool.query(
+      `INSERT INTO public.listings (id, slug, "sellerId", "categoryId", title, price, unit, stock, status, kind, "createdAt", "updatedAt")
+       VALUES ($1, 'bundle-pack-slug', $2, $3, 'Paket Cicip Nusantara', 100000, 'set', 100, 'active', 'bundle', NOW(), NOW())
+       ON CONFLICT (id) DO NOTHING`,
+      [bundleId, testSellerProfileId, testCategoryId]
+    );
+
+    // Bundle has 1x child1 and 2x child2
+    await pool.query(
+      `INSERT INTO public.bundle_items (bundle_listing_id, child_listing_id, quantity)
+       VALUES ($1, $2, 1), ($1, $3, 2)
+       ON CONFLICT (bundle_listing_id, child_listing_id) DO UPDATE SET quantity = EXCLUDED.quantity`,
+      [bundleId, childId1, childId2]
+    );
+
+    try {
+      // Effective stock should be MIN(floor(10/1), floor(15/2)) = MIN(10, 7) = 7
+      const effective = await bundles.getBundleEffectiveStock(bundleId);
+      expect(effective).toBe(7);
+
+      const items = await bundles.getBundleItems(bundleId);
+      expect(items.length).toBe(2);
+
+      // Order 2 units of bundle
+      const order = await orders.createOrder({
+        buyerId: testBuyerUserId,
+        buyerName: "Buyer Bundle Test",
+        buyerEmail: "buyer-bundle@example.com",
+        buyerPhone: "081234567890",
+        buyerAddress: "Jl. Cicip Kopi",
+        buyerCity: "Bandung",
+        sellerId: testSellerProfileId,
+        listingId: bundleId,
+        quantity: 2,
+        itemPrice: 100000,
+        subtotal: 200000,
+        shippingCost: 15000,
+        serviceFee: 1500,
+        totalAmount: 216500,
+        shippingCourier: "JNE REG",
+      });
+
+      // Child 1 should decrement by 2 * 1 = 2 -> 8
+      const child1Res = await pool.query(`SELECT stock FROM public.listings WHERE id = $1`, [childId1]);
+      expect(Number(child1Res.rows[0].stock)).toBe(8);
+
+      // Child 2 should decrement by 2 * 2 = 4 -> 11
+      const child2Res = await pool.query(`SELECT stock FROM public.listings WHERE id = $1`, [childId2]);
+      expect(Number(child2Res.rows[0].stock)).toBe(11);
+
+      // Effective stock now: MIN(floor(8/1), floor(11/2)) = MIN(8, 5) = 5
+      const newEffective = await bundles.getBundleEffectiveStock(bundleId);
+      expect(newEffective).toBe(5);
+
+      // Canceling order restores both children atomically
+      const cancelRes = await orders.transitionOrderStatus(order.id, "canceled");
+      expect(cancelRes.applied).toBe(true);
+
+      const restored1 = await pool.query(`SELECT stock FROM public.listings WHERE id = $1`, [childId1]);
+      expect(Number(restored1.rows[0].stock)).toBe(10);
+
+      const restored2 = await pool.query(`SELECT stock FROM public.listings WHERE id = $1`, [childId2]);
+      expect(Number(restored2.rows[0].stock)).toBe(15);
+    } finally {
+      await pool.query("DELETE FROM public.bundle_items WHERE bundle_listing_id = $1", [bundleId]);
+      await pool.query("DELETE FROM public.listings WHERE id IN ($1, $2, $3)", [bundleId, childId1, childId2]);
+    }
+  });
+
+  it("D9 B2B: calculates server tiered pricing and enforces seller ownership on green specs", async () => {
+    // 1. Setup price tiers
+    await pool.query(
+      `INSERT INTO public.price_tiers (listing_id, min_qty, unit_price)
+       VALUES ($1, 5, 40000), ($1, 10, 35000)
+       ON CONFLICT (listing_id, min_qty) DO UPDATE SET unit_price = EXCLUDED.unit_price`,
+      [testListingId]
+    );
+
+    try {
+      const p1 = await b2b.getEffectiveTieredPrice(testListingId, 1, 50000);
+      expect(p1).toBe(50000);
+
+      const p5 = await b2b.getEffectiveTieredPrice(testListingId, 5, 50000);
+      expect(p5).toBe(40000);
+
+      const p15 = await b2b.getEffectiveTieredPrice(testListingId, 15, 50000);
+      expect(p15).toBe(35000);
+
+      // 2. Green bean specs ownership check
+      await expect(
+        b2b.saveGreenBeanSpecs(testListingId, "unauthorized-seller-id", {
+          screenSize: "16-18",
+          moisturePct: 11.5,
+        })
+      ).rejects.toThrow("Hanya pemilik toko");
+
+      const saved = await b2b.saveGreenBeanSpecs(testListingId, testSellerProfileId, {
+        screenSize: "16-18",
+        moisturePct: 11.5,
+        waterActivity: 0.58,
+        primaryDefects: 0,
+        secondaryDefects: 2,
+      });
+      expect(saved).toBe(true);
+
+      const retrieved = await b2b.getGreenBeanSpecs(testListingId);
+      expect(retrieved?.screenSize).toBe("16-18");
+      expect(retrieved?.moisturePct).toBe(11.5);
+    } finally {
+      await pool.query("DELETE FROM public.price_tiers WHERE listing_id = $1", [testListingId]);
+      await pool.query("DELETE FROM public.green_bean_specs WHERE listing_id = $1", [testListingId]);
+    }
+  });
+
+  it("D3 Community Brew Recipes: limits to verified buyers and allows voting", async () => {
+    const orderId = "order-for-recipe-test";
+    // Setup completed order
+    await pool.query(
+      `INSERT INTO public.orders (
+         id, order_number, buyer_id, buyer_name, buyer_email, buyer_phone,
+         buyer_address, buyer_city, seller_id, listing_id, quantity, item_price,
+         subtotal, total_amount, status, created_at, updated_at
+       ) VALUES ($1, 'ORD-RECIPE-01', $2, 'Buyer Recipe', 'recipe@example.com', '081234',
+                 'Alamat', 'Kota', $3, $4, 1, 50000, 50000, 50000, 'completed', NOW(), NOW())
+       ON CONFLICT (id) DO NOTHING`,
+      [orderId, testBuyerUserId, testSellerProfileId, testListingId]
+    );
+
+    try {
+      const res = await recipes.createBrewRecipe({
+        listingId: testListingId,
+        userId: testBuyerUserId,
+        method: "V60",
+        doseGrams: 15,
+        waterMl: 250,
+        tempC: 92,
+        brewTimeSeconds: 150,
+        notes: "Tuang merata spiral",
+      });
+
+      expect(res.success).toBe(true);
+      expect(res.recipeId).toBeDefined();
+
+      if (res.recipeId) {
+        // Vote helpful
+        const v1 = await recipes.voteBrewRecipe(res.recipeId, testSellerUserId);
+        expect(v1.success).toBe(true);
+        expect(v1.userVoted).toBe(true);
+        expect(v1.voteCount).toBe(1);
+
+        // Fetch top recipes
+        const top = await recipes.getTopBrewRecipesForListing(testListingId);
+        expect(top.length).toBeGreaterThanOrEqual(1);
+        expect(top[0].votesCount).toBe(1);
+
+        // Toggle vote off
+        const v2 = await recipes.voteBrewRecipe(res.recipeId, testSellerUserId);
+        expect(v2.userVoted).toBe(false);
+        expect(v2.voteCount).toBe(0);
+      }
+    } finally {
+      await pool.query("DELETE FROM public.brew_recipes WHERE listing_id = $1", [testListingId]);
+      await pool.query("DELETE FROM public.orders WHERE id = $1", [orderId]);
+    }
+  });
+
+  it("D6 Smart Reminders: updates user preferences and executes sweep cleanly", async () => {
+    const ok = await reminders.updateUserNotificationPrefs(testBuyerUserId, {
+      reminders: true,
+      emailReminders: false,
+    });
+    expect(ok).toBe(true);
+
+    const prefs = await reminders.getUserNotificationPrefs(testBuyerUserId);
+    expect(prefs.reminders).toBe(true);
+    expect(prefs.emailReminders).toBe(false);
+
+    const sweep = await reminders.sweepSmartReminders();
+    expect(typeof sweep.processed).toBe("number");
   });
 
   it("RLS enforcement: anon role is blocked from inserting into private tables (if role exists)", async () => {

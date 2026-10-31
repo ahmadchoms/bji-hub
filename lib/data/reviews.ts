@@ -602,3 +602,45 @@ export async function adminApproveReview(reviewId: string): Promise<boolean> {
   await syncListingRating(r.listingId);
   return true;
 }
+
+export async function voteReviewHelpful(
+  reviewId: string,
+  userId: string
+): Promise<{ success: boolean; voteCount: number; userVoted: boolean }> {
+  const pool = getPool();
+  if (pool) {
+    try {
+      const existing = await pool.query(
+        `SELECT id FROM public.review_votes WHERE review_id = $1 AND user_id = $2`,
+        [reviewId, userId]
+      );
+
+      let userVoted = false;
+      if (existing.rows.length > 0) {
+        await pool.query(
+          `DELETE FROM public.review_votes WHERE review_id = $1 AND user_id = $2`,
+          [reviewId, userId]
+        );
+        userVoted = false;
+      } else {
+        await pool.query(
+          `INSERT INTO public.review_votes (review_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+          [reviewId, userId]
+        );
+        userVoted = true;
+      }
+
+      const countRes = await pool.query(
+        `SELECT COUNT(*)::int AS count FROM public.review_votes WHERE review_id = $1`,
+        [reviewId]
+      );
+      return { success: true, voteCount: Number(countRes.rows[0]?.count || 0), userVoted };
+    } catch (err) {
+      logger.error("reviews.vote_failed", err instanceof Error ? err : new Error(String(err)));
+      return { success: false, voteCount: 0, userVoted: false };
+    }
+  }
+
+  return { success: true, voteCount: 1, userVoted: true };
+}
+

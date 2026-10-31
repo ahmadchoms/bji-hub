@@ -76,6 +76,11 @@ model User {
   waitlist        ListingWaitlist[]
   conversations   Conversation[]
   consents        UserConsent[]
+  curatedPicks    EditorialPick[]
+  notificationPref NotificationPref?
+  reviewVotes     ReviewVote[]
+  brewRecipes     BrewRecipe[]
+  brewRecipeVotes BrewRecipeVote[]
 
   @@map("users")
 }
@@ -104,6 +109,11 @@ model SellerProfile {
   autoPayout         Boolean            @default(false) @map("auto_payout")
   kycDocumentUrl     String?            @map("kyc_document_url")
   kycSubmittedAt     DateTime?          @map("kyc_submitted_at")
+  roasteryStory         String?            @map("roastery_story")
+  equipment             String?
+  roastPhilosophy       String?            @map("roast_philosophy")
+  photoUrls             String[]           @default([]) @map("photo_urls")
+  directTradeVerifiedAt DateTime?          @map("direct_trade_verified_at") @db.Timestamptz
   createdAt          DateTime           @default(now())
 
   listings      Listing[]
@@ -141,6 +151,7 @@ model Listing {
   titleEn       String?       @map("title_en")
   description   String?
   descriptionEn String?       @map("description_en")
+  kind          String        @default("single")
   price         Decimal       @db.Decimal(14, 2)
   unit        String
   minOrderQty Int           @default(1)
@@ -163,6 +174,12 @@ model Listing {
   orderItems   OrderItem[]
   reviews      Review[]
   flavorTags   ListingFlavorTag[]
+  bundleItems   BundleItem[]    @relation("BundleParent")
+  parentBundles BundleItem[]    @relation("BundleChild")
+  editorialPick EditorialPick?
+  priceTiers    PriceTier[]
+  greenBeanSpec GreenBeanSpec?
+  brewRecipes   BrewRecipe[]
   roastBatches RoastBatch[]
   waitlist     ListingWaitlist[]
 
@@ -317,6 +334,10 @@ model Inquiry {
   buyerContact String
   quantity     String
   message      String
+  kind         String?       @default("inquiry")
+  status       String?       @default("pending")
+  quotedPrice  Decimal?      @map("quoted_price") @db.Decimal(14, 2)
+  quoteValidUntil DateTime?  @map("quote_valid_until") @db.Timestamptz
   createdAt    DateTime @default(now())
 
   @@index([listingId, createdAt])
@@ -331,6 +352,8 @@ model CoffeeOrigin {
   minAltitude   Int?     @map("min_altitude")
   maxAltitude   Int?     @map("max_altitude")
   description   String?
+  harvestMonths     Int[]    @default([]) @map("harvest_months")
+  mainHarvestMonths Int[]    @default([]) @map("main_harvest_months")
   isActive      Boolean  @default(true) @map("is_active")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
@@ -395,6 +418,7 @@ model Order {
   items   OrderItem[]
   reviews Review[]
   refunds Refund[]
+  reminders ReminderLog[]
 
   @@index([sellerId])
   @@index([buyerEmail])
@@ -439,9 +463,14 @@ model Review {
   reportReason    String?   @map("report_reason")
   moderationStatus String?   @default("approved") @map("moderation_status")
   adminApprovedAt  DateTime? @map("admin_approved_at") @db.Timestamptz
+  aromaScore       Int?      @map("aroma_score")
+  flavorScore      Int?      @map("flavor_score")
+  valueScore       Int?      @map("value_score")
+  brewMethod       String?   @map("brew_method")
   createdAt DateTime @default(now()) @map("created_at")
 
   reports ReviewReport[]
+  votes   ReviewVote[]
 
   @@index([listingId])
   @@index([orderId])
@@ -721,4 +750,128 @@ model UserConsent {
 
   @@unique([userId, document, version])
   @@map("user_consents")
+}
+
+model BundleItem {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bundleListingId String   @map("bundle_listing_id")
+  childListingId  String   @map("child_listing_id")
+  quantity        Int      @default(1)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  bundleListing   Listing  @relation("BundleParent", fields: [bundleListingId], references: [id], onDelete: Cascade)
+  childListing    Listing  @relation("BundleChild", fields: [childListingId], references: [id], onDelete: Cascade)
+
+  @@unique([bundleListingId, childListingId])
+  @@map("bundle_items")
+}
+
+model EditorialPick {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  listingId     String    @unique @map("listing_id")
+  curatorUserId String?   @map("curator_user_id")
+  note          String?
+  cuppedOn      DateTime? @map("cupped_on") @db.Date
+  score         Decimal?  @db.Decimal(4, 2)
+  expiresAt     DateTime? @map("expires_at") @db.Timestamptz
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  listing       Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  curator       User?     @relation(fields: [curatorUserId], references: [id], onDelete: SetNull)
+
+  @@map("editorial_picks")
+}
+
+model NotificationPref {
+  userId         String   @id @map("user_id")
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reminders      Boolean  @default(true)
+  emailReminders Boolean  @default(false) @map("email_reminders")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("notification_prefs")
+}
+
+model ReminderLog {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId   String   @map("order_id")
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  kind      String
+  sentAt    DateTime @default(now()) @map("sent_at") @db.Timestamptz
+
+  @@unique([orderId, kind])
+  @@map("reminder_log")
+}
+
+model ReviewVote {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reviewId  String   @map("review_id")
+  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@unique([reviewId, userId])
+  @@map("review_votes")
+}
+
+model BrewRecipe {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  listingId       String           @map("listing_id")
+  listing         Listing          @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  userId          String           @map("user_id")
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  method          String
+  doseGrams       Decimal          @map("dose_grams") @db.Decimal(5, 2)
+  waterMl         Decimal          @map("water_ml") @db.Decimal(6, 2)
+  tempC           Decimal?         @map("temp_c") @db.Decimal(4, 1)
+  brewTimeSeconds Int?             @map("brew_time_seconds")
+  grindSize       String?          @map("grind_size")
+  notes           String?
+  status          String           @default("approved")
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz
+
+  votes           BrewRecipeVote[]
+
+  @@map("brew_recipes")
+}
+
+model BrewRecipeVote {
+  id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recipeId  String     @map("recipe_id") @db.Uuid
+  recipe    BrewRecipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  userId    String     @map("user_id")
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz
+
+  @@unique([recipeId, userId])
+  @@map("brew_recipe_votes")
+}
+
+model PriceTier {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  listingId String   @map("listing_id")
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  minQty    Int      @map("min_qty")
+  unitPrice Decimal  @map("unit_price") @db.Decimal(14, 2)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@unique([listingId, minQty])
+  @@map("price_tiers")
+}
+
+model GreenBeanSpec {
+  listingId        String   @id @map("listing_id")
+  listing          Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  screenSize       String?  @map("screen_size")
+  moisturePct      Decimal? @map("moisture_pct") @db.Decimal(4, 2)
+  densityGl        Decimal? @map("density_gl") @db.Decimal(6, 2)
+  waterActivity    Decimal? @map("water_activity") @db.Decimal(4, 3)
+  primaryDefects   Int?     @map("primary_defects")
+  secondaryDefects Int?     @map("secondary_defects")
+  coaUrl           String?  @map("coa_url")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("green_bean_specs")
 }

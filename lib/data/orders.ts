@@ -227,18 +227,41 @@ export async function createOrder(data: {
         }
       }
 
-      // Reserve stock atomically for each ordered listing (B7)
+      // Reserve stock atomically for each ordered listing (B7) and bundle items (D2)
       for (const item of itemsToReserve) {
-        const stockRes = await client.query(
-          `UPDATE public.listings
-           SET stock = stock - $1,
-               status = CASE WHEN stock - $1 <= 0 THEN 'archived' ELSE status END
-           WHERE id = $2 AND stock >= $1
-           RETURNING stock, title`,
-          [item.quantity, item.listingId],
+        const bundleRes = await client.query(
+          `SELECT child_listing_id, quantity FROM public.bundle_items WHERE bundle_listing_id = $1`,
+          [item.listingId],
         );
-        if (stockRes.rowCount === 0) {
-          throw new Error("Stok produk tidak mencukupi untuk memenuhi pesanan ini");
+
+        if (bundleRes.rows.length > 0) {
+          // It's a bundle: atomically reserve stock for every child listing
+          for (const child of bundleRes.rows) {
+            const childQty = item.quantity * Number(child.quantity);
+            const stockRes = await client.query(
+              `UPDATE public.listings
+               SET stock = stock - $1,
+                   status = CASE WHEN stock - $1 <= 0 THEN 'archived' ELSE status END
+               WHERE id = $2 AND stock >= $1
+               RETURNING stock, title`,
+              [childQty, child.child_listing_id],
+            );
+            if (stockRes.rowCount === 0) {
+              throw new Error("Stok paket cicip tidak mencukupi untuk memenuhi pesanan ini");
+            }
+          }
+        } else {
+          const stockRes = await client.query(
+            `UPDATE public.listings
+             SET stock = stock - $1,
+                 status = CASE WHEN stock - $1 <= 0 THEN 'archived' ELSE status END
+             WHERE id = $2 AND stock >= $1
+             RETURNING stock, title`,
+            [item.quantity, item.listingId],
+          );
+          if (stockRes.rowCount === 0) {
+            throw new Error("Stok produk tidak mencukupi untuk memenuhi pesanan ini");
+          }
         }
       }
 
@@ -958,13 +981,31 @@ export async function transitionOrderStatus(
         }
       } else if (to === "canceled" && RESTOCK_ON_CANCEL_FROM.includes(currentStatus)) {
         for (const item of itemsToUpdate) {
-          await client.query(
-            `UPDATE public.listings
-             SET stock = stock + $1,
-                 status = CASE WHEN status = 'archived' AND stock = 0 THEN 'active' ELSE status END
-             WHERE id = $2 AND stock IS NOT NULL`,
-            [item.quantity, item.listingId],
+          const bundleRes = await client.query(
+            `SELECT child_listing_id, quantity FROM public.bundle_items WHERE bundle_listing_id = $1`,
+            [item.listingId],
           );
+
+          if (bundleRes.rows.length > 0) {
+            for (const child of bundleRes.rows) {
+              const childQty = item.quantity * Number(child.quantity);
+              await client.query(
+                `UPDATE public.listings
+                 SET stock = stock + $1,
+                     status = CASE WHEN status = 'archived' AND stock = 0 THEN 'active' ELSE status END
+                 WHERE id = $2 AND stock IS NOT NULL`,
+                [childQty, child.child_listing_id],
+              );
+            }
+          } else {
+            await client.query(
+              `UPDATE public.listings
+               SET stock = stock + $1,
+                   status = CASE WHEN status = 'archived' AND stock = 0 THEN 'active' ELSE status END
+               WHERE id = $2 AND stock IS NOT NULL`,
+              [item.quantity, item.listingId],
+            );
+          }
         }
 
         // Release voucher quota if a voucher was redeemed for this order (C1)
@@ -1198,13 +1239,31 @@ export async function cancelOrderWithRefund(
             : [];
 
       for (const item of itemsToUpdate) {
-        await client.query(
-          `UPDATE public.listings
-           SET stock = stock + $1,
-               status = CASE WHEN status = 'archived' AND stock = 0 THEN 'active' ELSE status END
-           WHERE id = $2 AND stock IS NOT NULL`,
-          [item.quantity, item.listingId],
+        const bundleRes = await client.query(
+          `SELECT child_listing_id, quantity FROM public.bundle_items WHERE bundle_listing_id = $1`,
+          [item.listingId],
         );
+
+        if (bundleRes.rows.length > 0) {
+          for (const child of bundleRes.rows) {
+            const childQty = item.quantity * Number(child.quantity);
+            await client.query(
+              `UPDATE public.listings
+               SET stock = stock + $1,
+                   status = CASE WHEN status = 'archived' AND stock = 0 THEN 'active' ELSE status END
+               WHERE id = $2 AND stock IS NOT NULL`,
+              [childQty, child.child_listing_id],
+            );
+          }
+        } else {
+          await client.query(
+            `UPDATE public.listings
+             SET stock = stock + $1,
+                 status = CASE WHEN status = 'archived' AND stock = 0 THEN 'active' ELSE status END
+             WHERE id = $2 AND stock IS NOT NULL`,
+            [item.quantity, item.listingId],
+          );
+        }
       }
 
       // Release voucher quota if a voucher was redeemed for this order (C1)

@@ -16,6 +16,15 @@ const KEY_TABLES = [
   "conversations",
   "currency_rates",
   "user_consents",
+  "bundle_items",
+  "editorial_picks",
+  "notification_prefs",
+  "reminder_log",
+  "review_votes",
+  "brew_recipes",
+  "brew_recipe_votes",
+  "price_tiers",
+  "green_bean_specs",
 ];
 
 function parseArgs() {

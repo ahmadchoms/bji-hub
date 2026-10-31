@@ -14,6 +14,11 @@ const PUBLIC_READ_TABLES = new Set([
   "taste_profiles",
   "listing_flavor_tags",
   "currency_rates",
+  "bundle_items",
+  "editorial_picks",
+  "brew_recipes",
+  "price_tiers",
+  "green_bean_specs",
 ]);
 
 function parseArgs() {

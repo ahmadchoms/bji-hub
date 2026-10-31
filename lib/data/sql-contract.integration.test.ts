@@ -77,6 +77,9 @@ describe("SQL Schema Contract Integration Tests (A2)", () => {
     await expectNoSchemaError(() => payouts.getSellerBankDetails(dummyId));
     await expectNoSchemaError(() => payouts.getAllPayoutRequests());
     await expectNoSchemaError(() => payouts.getSellerBalanceSummary(dummyId));
+    await expectNoSchemaError(() => payouts.getAllPayoutBatches());
+    await expectNoSchemaError(() => payouts.getPayoutBatchExportRows());
+    await expectNoSchemaError(() => payouts.getOrCreateOpenPayoutBatch());
   });
 
   it("producers: executes queries without schema errors", async () => {

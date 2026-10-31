@@ -155,11 +155,23 @@ export async function requestPayoutAction(
   });
 }
 
-const updatePayoutSchema = z.object({
-  payoutId: z.string().min(1, "ID penarikan dana wajib diisi"),
-  status: z.enum(["processed", "rejected"]),
-  notes: z.string().max(200).optional(),
-});
+const updatePayoutSchema = z
+  .object({
+    payoutId: z.string().min(1, "ID penarikan dana wajib diisi"),
+    status: z.enum(["processed", "rejected"]),
+    notes: z.string().max(200).optional(),
+    proofUrl: z.string().url("URL bukti transfer tidak valid").optional().or(z.literal("")),
+  })
+  .refine(
+    (data) => {
+      if (data.status === "processed" && !data.proofUrl) return false;
+      return true;
+    },
+    {
+      message: "Bukti transfer (URL) wajib diunggah sebelum menandai pencairan selesai",
+      path: ["proofUrl"],
+    },
+  );
 
 export async function updatePayoutStatusAction(
   input: unknown,
@@ -168,20 +180,28 @@ export async function updatePayoutStatusAction(
 
   const parsed = updatePayoutSchema.safeParse(input);
   if (!parsed.success) {
-    return fail("Data status tidak valid");
+    const fieldErrors = parsed.error.flatten().fieldErrors;
+    const msg =
+      fieldErrors.proofUrl?.[0] ||
+      fieldErrors.payoutId?.[0] ||
+      "Data status tidak valid";
+    return fail(msg, fieldErrors as Record<string, string[]>);
   }
+
+  const session = await getSession();
 
   const success = await updatePayoutStatus(
     parsed.data.payoutId,
     parsed.data.status,
     parsed.data.notes,
+    parsed.data.proofUrl || undefined,
+    session.userId || undefined,
   );
 
   if (!success) {
     return fail("Pengajuan tidak ditemukan atau sudah diproses");
   }
 
-  const session = await getSession();
   const clientIp = await getClientIp();
   await recordAuditLog({
     actorId: session.userId || "admin",
@@ -189,7 +209,7 @@ export async function updatePayoutStatusAction(
     action: parsed.data.status === "processed" ? "approve_payout" : "reject_payout",
     targetId: parsed.data.payoutId,
     targetType: "payout",
-    details: { notes: parsed.data.notes },
+    details: { notes: parsed.data.notes, proofUrl: parsed.data.proofUrl },
     ipAddress: clientIp,
   });
 
@@ -218,5 +238,68 @@ export async function updatePayoutStatusAction(
   }
 
   return ok({ success: true });
+}
+
+export async function exportPayoutBatchCsvAction(
+  input: { batchId?: string } = {},
+): Promise<ActionResult<{ csv: string; count: number }>> {
+  await requireRole(["admin"], "/admin/payouts");
+  const { getPayoutBatchExportRows, generatePayoutBatchCsv } = await import("@/lib/data/payouts");
+  const rows = await getPayoutBatchExportRows(input.batchId);
+  const csv = generatePayoutBatchCsv(rows);
+
+  const session = await getSession();
+  const clientIp = await getClientIp();
+  await recordAuditLog({
+    actorId: session.userId || "admin",
+    actorRole: session.role,
+    action: "export_payout_batch",
+    targetId: input.batchId || "pending-payouts",
+    targetType: "payout_batch",
+    details: { count: rows.length },
+    ipAddress: clientIp,
+  });
+
+  return ok({ csv, count: rows.length });
+}
+
+export async function runAutoPayoutSweepAction(): Promise<
+  ActionResult<{ processedSellers: number; createdPayouts: number; totalAmount: number }>
+> {
+  await requireRole(["admin"], "/admin/payouts");
+  const { runWeeklyAutoPayoutSweep } = await import("@/lib/data/payouts");
+  const result = await runWeeklyAutoPayoutSweep();
+
+  const session = await getSession();
+  const clientIp = await getClientIp();
+  await recordAuditLog({
+    actorId: session.userId || "admin",
+    actorRole: session.role,
+    action: "auto_payout_sweep",
+    targetId: "system",
+    targetType: "payout_batch",
+    details: result,
+    ipAddress: clientIp,
+  });
+
+  revalidatePath("/admin/payouts");
+  return ok(result);
+}
+
+export async function toggleSellerAutoPayoutAction(
+  enabled: boolean,
+): Promise<ActionResult<{ autoPayout: boolean }>> {
+  const { sellerId } = await requireSeller();
+  const { getPool } = await import("@/lib/db/pool");
+  const pool = getPool();
+  if (pool) {
+    await pool.query(
+      `UPDATE public.seller_profiles SET auto_payout = $1 WHERE id = $2`,
+      [enabled, sellerId],
+    );
+  }
+  revalidatePath("/dashboard/orders");
+  revalidatePath("/dashboard/profile");
+  return ok({ autoPayout: enabled });
 }
 

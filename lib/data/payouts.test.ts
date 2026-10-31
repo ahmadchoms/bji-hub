@@ -154,12 +154,25 @@ describe("payouts and balance summary", () => {
     expect(created.ok).toBe(true);
     if (!created.ok) return;
 
-    // First update should succeed
-    const firstUpdate = await updatePayoutStatus(created.payout.id, "processed");
+    // Payout cannot be processed without proof_url (C4)
+    await expect(
+      updatePayoutStatus(created.payout.id, "processed"),
+    ).rejects.toThrow("Bukti transfer wajib diunggah");
+
+    // First update with valid proof should succeed
+    const firstUpdate = await updatePayoutStatus(
+      created.payout.id,
+      "processed",
+      "Catatan transfer",
+      "https://storage.supabase.co/seller-kyc/proof-transfer-1.pdf",
+    );
     expect(firstUpdate).toBe(true);
 
     // Second update should return false because status is already processed, not pending
-    const secondUpdate = await updatePayoutStatus(created.payout.id, "rejected");
+    const secondUpdate = await updatePayoutStatus(
+      created.payout.id,
+      "rejected",
+    );
     expect(secondUpdate).toBe(false);
   });
 

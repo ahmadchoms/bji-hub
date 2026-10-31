@@ -32,8 +32,18 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
-import { updateSellerBankAction, requestPayoutAction } from "./payout.actions";
-import { getSellerBankDetails, updateSellerBankDetails } from "@/lib/data/payouts";
+import {
+  updateSellerBankAction,
+  requestPayoutAction,
+  updatePayoutStatusAction,
+  exportPayoutBatchCsvAction,
+} from "./payout.actions";
+import {
+  getSellerBankDetails,
+  updateSellerBankDetails,
+  createPayoutRequestAtomic,
+} from "@/lib/data/payouts";
+import { createOrder, updateOrderStatus } from "@/lib/data/orders";
 
 describe("payout.actions S9 security cooldown", () => {
   it("records bank update timestamp and triggers cooldown on payout requests within 24 hours", async () => {
@@ -81,5 +91,73 @@ describe("payout.actions S9 security cooldown", () => {
     if (!payoutRes.success) {
       expect(payoutRes.error).not.toContain("penarikan dana dijeda selama 24 jam");
     }
+  });
+
+  describe("C4 Payout scheduled batches and transfer proof", () => {
+    it("rejects marking payout as processed if proofUrl is missing", async () => {
+      const res = await updatePayoutStatusAction({
+        payoutId: "po-test-1",
+        status: "processed",
+      });
+
+      expect(res.success).toBe(false);
+      if (!res.success) {
+        expect(res.error).toContain("Bukti transfer");
+      }
+    });
+
+    it("approves payout when valid proofUrl is supplied", async () => {
+      // Create completed order so seller has sufficient balance
+      const order = await createOrder({
+        buyerName: "Buyer Test",
+        buyerEmail: "buyer@example.com",
+        buyerPhone: "081234567890",
+        buyerAddress: "Jl. Sukajadi",
+        buyerCity: "Bandung",
+        sellerId: currentSellerId,
+        listingId: "list-1",
+        quantity: 1,
+        itemPrice: 100000,
+        subtotal: 100000,
+        shippingCost: 10000,
+        serviceFee: 1500,
+        totalAmount: 111500,
+        shippingCourier: "JNE",
+      });
+      await updateOrderStatus(order.id, "paid");
+      await updateOrderStatus(order.id, "shipped", "RESI123");
+      await updateOrderStatus(order.id, "completed");
+
+      // Create a pending payout in mock data
+      const created = await createPayoutRequestAtomic({
+        sellerId: currentSellerId,
+        amount: 50000,
+        bankDetails: {
+          bankName: "BCA",
+          bankAccountNumber: "1234567890",
+          bankAccountHolder: "Ujang Roaster",
+        },
+      });
+      expect(created.ok).toBe(true);
+      if (!created.ok) return;
+
+      const res = await updatePayoutStatusAction({
+        payoutId: created.payout.id,
+        status: "processed",
+        proofUrl: "https://storage.supabase.co/private/proof-123.pdf",
+        notes: "Transfer via BCA Klik",
+      });
+
+      expect(res.success).toBe(true);
+    });
+
+    it("exports CSV batch with mass transfer columns", async () => {
+      const res = await exportPayoutBatchCsvAction();
+      expect(res.success).toBe(true);
+      if (res.success) {
+        expect(res.data.csv).toBeDefined();
+        expect(res.data.csv).toContain('"ID","Tanggal","Penjual","Nama Bank"');
+      }
+    });
   });
 });

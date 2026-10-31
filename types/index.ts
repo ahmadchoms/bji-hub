@@ -46,6 +46,7 @@ export interface SellerProfile {
   bankAccountNumber?: string;
   bankAccountHolder?: string;
   bankUpdatedAt?: string | null;
+  autoPayout?: boolean;
   kycDocumentUrl?: string | null;
   kycSubmittedAt?: string | null;
   suspendedAt?: string | null;
@@ -63,8 +64,20 @@ export interface PayoutRequest {
   bankAccountHolder: string;
   status: PayoutStatus;
   notes?: string | null;
+  proofUrl?: string | null;
+  processedBy?: string | null;
+  processedAt?: string | null;
+  batchId?: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface PayoutBatch {
+  id: string;
+  scheduledFor: string;
+  status: "open" | "processing" | "done";
+  createdBy?: string | null;
+  createdAt: string;
 }
 
 export interface Category {

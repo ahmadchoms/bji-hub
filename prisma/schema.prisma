@@ -99,6 +99,7 @@ model SellerProfile {
   bankName           String?            @map("bank_name")
   bankAccountNumber  String?            @map("bank_account_number")
   bankAccountHolder  String?            @map("bank_account_holder")
+  autoPayout         Boolean            @default(false) @map("auto_payout")
   kycDocumentUrl     String?            @map("kyc_document_url")
   kycSubmittedAt     DateTime?          @map("kyc_submitted_at")
   createdAt          DateTime           @default(now())
@@ -580,11 +581,29 @@ model PayoutRequest {
   bankAccountHolder String        @map("bank_account_holder")
   status            String        @default("pending")
   notes             String?
+  proofUrl          String?       @map("proof_url")
+  processedBy       String?       @map("processed_by")
+  processedAt       DateTime?     @map("processed_at") @db.Timestamptz
+  batchId           String?       @map("batch_id") @db.Uuid
   createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz
   updatedAt         DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
+  batch             PayoutBatch?  @relation(fields: [batchId], references: [id], onDelete: SetNull)
+
   @@index([sellerId, status], map: "idx_payout_requests_seller_status")
   @@map("payout_requests")
+}
+
+model PayoutBatch {
+  id           String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  scheduledFor DateTime        @map("scheduled_for") @db.Date
+  status       String          @default("open")
+  createdBy    String?         @map("created_by")
+  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz
+
+  payouts      PayoutRequest[]
+
+  @@map("payout_batches")
 }
 
 model ReviewReport {

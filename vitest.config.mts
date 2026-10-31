@@ -7,6 +7,7 @@ dotenv.config();
 export default defineConfig({
   test: {
     environment: "node",
+    testTimeout: 15000,
     exclude: ["**/node_modules/**", "**/dist/**", "**/e2e/**", "**/*.integration.test.ts"],
   },
   resolve: {

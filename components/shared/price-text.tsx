@@ -1,10 +1,14 @@
 import { cn, formatRupiah } from "@/lib/utils";
+import { formatEstimatedPrice } from "@/lib/i18n";
 export { formatRupiah };
 
 interface PriceTextProps {
   price: number;
   unit?: string;
   size?: "sm" | "md" | "lg";
+  showEstimate?: boolean;
+  targetCurrency?: string;
+  rate?: number;
   className?: string;
 }
 
@@ -12,9 +16,13 @@ export function PriceText({
   price,
   unit,
   size = "md",
+  showEstimate = false,
+  targetCurrency = "USD",
+  rate,
   className,
 }: PriceTextProps) {
   const formatted = formatRupiah(price);
+  const estimate = showEstimate ? formatEstimatedPrice(price, targetCurrency, rate) : null;
 
   const sizeClasses = {
     sm: "text-sm",
@@ -30,6 +38,14 @@ export function PriceText({
       {unit && (
         <span className="text-caption text-neutral-600 font-sans font-normal">
           / {unit}
+        </span>
+      )}
+      {estimate && (
+        <span
+          className="text-xs text-neutral-600 font-sans font-normal ml-1"
+          title={estimate.disclaimer}
+        >
+          ({estimate.estimatedText})
         </span>
       )}
     </div>

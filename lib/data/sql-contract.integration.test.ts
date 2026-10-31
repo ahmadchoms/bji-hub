@@ -116,6 +116,16 @@ describe("SQL Schema Contract Integration Tests (A2)", () => {
     await expectNoSchemaError(() => vouchers.getVouchersBySeller(dummyId));
   });
 
+  it("currency_rates: queries table without schema errors", async () => {
+    const p = getPool();
+    if (p) {
+      await expectNoSchemaError(async () => {
+        const res = await p.query("SELECT code, per_idr FROM public.currency_rates LIMIT 5");
+        expect(res.rows.length).toBeGreaterThan(0);
+      });
+    }
+  });
+
   it("webhook-events: executes queries without schema errors", async () => {
     await expectNoSchemaError(() => webhookEvents.isWebhookEventProcessed("test-event-id"));
     await expectNoSchemaError(() => webhookEvents.recordWebhookEvent("test-event-id", "test-order-id"));

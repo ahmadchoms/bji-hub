@@ -29,6 +29,7 @@ import {
   type NavbarAuthState,
 } from "@/components/layout/navbar-auth";
 import type { Category } from "@/types";
+import { LanguageSwitcher } from "@/components/layout/language-switcher";
 
 const TRENDING_SEARCHES = [
   "Gayo Bourbon",
@@ -114,6 +115,7 @@ export function NavbarInner({
             <Link href="/contact" className="hover:text-primary-700 transition-colors">
               Pusat Bantuan
             </Link>
+            <LanguageSwitcher currentLocale="id" />
           </div>
         </div>
       </div>

@@ -136,9 +136,11 @@ model Listing {
   seller      SellerProfile @relation(fields: [sellerId], references: [id], onDelete: Cascade)
   categoryId  String
   category    Category      @relation(fields: [categoryId], references: [id])
-  title       String
-  description String?
-  price       Decimal       @db.Decimal(14, 2)
+  title         String
+  titleEn       String?       @map("title_en")
+  description   String?
+  descriptionEn String?       @map("description_en")
+  price         Decimal       @db.Decimal(14, 2)
   unit        String
   minOrderQty Int           @default(1)
   stock       Int           @default(100)
@@ -697,4 +699,12 @@ model Message {
 
   @@index([conversationId, createdAt], map: "messages_conv_created")
   @@map("messages")
+}
+
+model CurrencyRate {
+  code      String   @id
+  perIdr    Decimal  @map("per_idr") @db.Decimal(18, 8)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("currency_rates")
 }

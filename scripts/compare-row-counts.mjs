@@ -12,6 +12,10 @@ const KEY_TABLES = [
   "reviews",
   "roast_batches",
   "producer_sellers",
+  "vouchers",
+  "conversations",
+  "currency_rates",
+  "user_consents",
 ];
 
 function parseArgs() {

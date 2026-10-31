@@ -13,6 +13,7 @@ const PUBLIC_READ_TABLES = new Set([
   "producers",
   "taste_profiles",
   "listing_flavor_tags",
+  "currency_rates",
 ]);
 
 function parseArgs() {

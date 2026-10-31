@@ -1,4 +1,5 @@
 import { PageContainer } from "@/components/layout/page-container";
+import { CoffeeGuideWizard } from "@/components/catalog/coffee-guide-wizard";
 import { TasteQuizModal } from "@/components/catalog/taste-quiz-modal";
 
 export function HomePromoSection() {
@@ -24,19 +25,20 @@ export function HomePromoSection() {
             </div>
           </div>
 
-          {/* Smart Helper Quiz Card */}
+          {/* Smart Helper Guide Card */}
           <div className="md:col-span-4 rounded-xl border border-neutral-200/90 bg-neutral-50/80 p-5 flex flex-col justify-between text-neutral-800 shadow-xs">
             <div className="space-y-1.5">
               <p className="text-xs font-bold font-display uppercase tracking-wider text-neutral-900">
-                Cari Rasa yang Pas?
+                Bingung Pilih Kopi?
               </p>
               <p className="text-xs text-neutral-600 leading-relaxed">
-                Pilih metode seduhmu (Filter, Espresso, Tubruk) untuk rekomendasi biji kopi dengan karakter rasa yang cocok.
+                Gunakan Pemandu 4 Langkah untuk mencocokkan alat seduh, rasa, kesegaran sangrai, dan anggaranmu secara instan.
               </p>
             </div>
 
-            <div className="pt-3">
-              <TasteQuizModal triggerVariant="banner" className="w-full" />
+            <div className="pt-3 flex flex-col gap-2">
+              <CoffeeGuideWizard className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs" />
+              <TasteQuizModal triggerVariant="banner" className="w-full text-xs" />
             </div>
           </div>
         </div>

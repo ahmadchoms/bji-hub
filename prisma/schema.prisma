@@ -376,6 +376,9 @@ model Order {
   shippedAt          DateTime?     @map("shipped_at")
   roastDateAtShip    DateTime?     @map("roast_date_at_ship") @db.Date
   completedAt        DateTime?     @map("completed_at")
+  invoiceNumber      String?       @unique(map: "orders_invoice_number_uq") @map("invoice_number")
+  invoiceIssuedAt    DateTime?     @map("invoice_issued_at") @db.Timestamptz
+  taxAmount          Decimal       @default(0) @map("tax_amount") @db.Decimal(14, 2)
   createdAt          DateTime      @default(now()) @map("created_at")
   updatedAt          DateTime      @default(now()) @updatedAt @map("updated_at")
 
@@ -596,4 +599,11 @@ model ReviewReport {
   @@unique([reviewId, reporterId])
   @@index([status, createdAt(sort: Desc)], map: "idx_review_reports_status_created")
   @@map("review_reports")
+}
+
+model InvoiceSequence {
+  period  String @id
+  lastSeq Int    @default(0) @map("last_seq")
+
+  @@map("invoice_sequences")
 }

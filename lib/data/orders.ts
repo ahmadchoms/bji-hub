@@ -8,6 +8,7 @@ import { mockListings } from "@/lib/mock/data";
 
 // In-memory mock storage fallback for vitest & offline local development
 export const mockOrders: Order[] = [];
+export const mockInvoiceSequences: Record<string, number> = {};
 
 export function generateOrderNumber(): string {
   const d = new Date();
@@ -326,6 +327,9 @@ export async function getOrderById(idOrNumber: string): Promise<Order | null> {
               : new Date(row.roast_date_at_ship).toISOString().slice(0, 10)
             : null,
           completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
+          invoiceNumber: row.invoice_number ?? null,
+          invoiceIssuedAt: row.invoice_issued_at ? new Date(row.invoice_issued_at).toISOString() : null,
+          taxAmount: Number(row.tax_amount || 0),
           createdAt: row.created_at,
           updatedAt: row.updated_at,
         };
@@ -398,6 +402,9 @@ export async function getOrdersBySeller(sellerId: string): Promise<Order[]> {
             : new Date(row.roast_date_at_ship).toISOString().slice(0, 10)
           : null,
         completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
+        invoiceNumber: row.invoice_number ?? null,
+        invoiceIssuedAt: row.invoice_issued_at ? new Date(row.invoice_issued_at).toISOString() : null,
+        taxAmount: Number(row.tax_amount || 0),
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       }));
@@ -460,6 +467,9 @@ export async function getAllOrders(): Promise<Order[]> {
             : new Date(row.roast_date_at_ship).toISOString().slice(0, 10)
           : null,
         completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
+        invoiceNumber: row.invoice_number ?? null,
+        invoiceIssuedAt: row.invoice_issued_at ? new Date(row.invoice_issued_at).toISOString() : null,
+        taxAmount: Number(row.tax_amount || 0),
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       }));
@@ -557,6 +567,9 @@ export async function getOrdersByBuyer(
             : new Date(row.roast_date_at_ship).toISOString().slice(0, 10)
           : null,
         completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
+        invoiceNumber: row.invoice_number ?? null,
+        invoiceIssuedAt: row.invoice_issued_at ? new Date(row.invoice_issued_at).toISOString() : null,
+        taxAmount: Number(row.tax_amount || 0),
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       }));
@@ -668,6 +681,12 @@ const ALLOWED_FROM: Record<OrderStatus, OrderStatus[]> = {
 };
 const RESTOCK_ON_CANCEL_FROM: OrderStatus[] = ["pending_payment", "paid", "disputed"];
 
+interface LowStockAlertInfo {
+  sellerId: string;
+  listingTitle: string;
+  remainingStock: number;
+}
+
 export interface TransitionExtra {
   trackingNumber?: string;
   disputeReason?: string;
@@ -684,12 +703,14 @@ export async function transitionOrderStatus(
 
   if (pool) {
     const client = await pool.connect();
+    let internalOrderId = "";
+    let lowStockAlert: LowStockAlertInfo | null = null;
     try {
       await client.query("BEGIN");
 
       // 1. Lock the order row
       const selectRes = await client.query(
-        `SELECT id, status, listing_id, quantity, seller_id
+        `SELECT id, status, listing_id, quantity, seller_id, invoice_number, total_amount
          FROM public.orders
          WHERE id = $1 OR order_number = $1 OR midtrans_order_id = $1
          FOR UPDATE`,
@@ -703,7 +724,7 @@ export async function transitionOrderStatus(
 
       const row = selectRes.rows[0];
       const currentStatus = row.status as OrderStatus;
-      const internalOrderId = row.id;
+      internalOrderId = row.id;
 
       // Idempotent: already in destination status
       if (currentStatus === to) {
@@ -792,6 +813,30 @@ export async function transitionOrderStatus(
       let lowStockAlert: { sellerId: string; listingTitle: string; remainingStock: number } | null = null;
 
       if (to === "paid") {
+        if (!row.invoice_number) {
+          const period = now.slice(0, 7).replace("-", "");
+          const seqRes = await client.query(
+            `INSERT INTO public.invoice_sequences (period, last_seq)
+             VALUES ($1, 1)
+             ON CONFLICT (period) DO UPDATE SET last_seq = public.invoice_sequences.last_seq + 1
+             RETURNING last_seq`,
+            [period],
+          );
+          const seq = Number(seqRes.rows[0].last_seq);
+          const invoiceNumber = `INV/BJH/${period}/${String(seq).padStart(6, "0")}`;
+          const taxRate = Number(process.env.INVOICE_TAX_RATE || 0);
+          const taxAmount = taxRate > 0 ? Math.round((Number(row.total_amount) * taxRate) / (1 + taxRate)) : 0;
+
+          await client.query(
+            `UPDATE public.orders
+             SET invoice_number = $1,
+                 invoice_issued_at = $2::timestamp,
+                 tax_amount = $3
+             WHERE id = $4 AND invoice_number IS NULL`,
+            [invoiceNumber, now, taxAmount, internalOrderId],
+          );
+        }
+
         for (const item of itemsToUpdate) {
           const stockRes = await client.query(
             `SELECT stock, title FROM public.listings WHERE id = $1 AND stock IS NOT NULL`,
@@ -821,36 +866,37 @@ export async function transitionOrderStatus(
       }
 
       await client.query("COMMIT");
-
-      // Send low-stock alert email to the actual seller email if applicable (A1)
-      if (lowStockAlert) {
-        import("@/lib/after").then(({ runAfterResponse }) => {
-          runAfterResponse(async () => {
-            const { getSellerById } = await import("@/lib/data");
-            const seller = await getSellerById(lowStockAlert!.sellerId);
-            if (seller?.user?.email) {
-              const { sendLowStockAlertEmail } = await import("@/lib/email");
-              await sendLowStockAlertEmail({
-                sellerEmail: seller.user.email,
-                sellerName: seller.businessName || "Penjual",
-                listingTitle: lowStockAlert!.listingTitle,
-                remainingStock: lowStockAlert!.remainingStock,
-                unit: "unit",
-              }).catch((e) => logger.warn("order.low_stock_email_failed", e));
-            }
-          });
-          // ignore: non-blocking low stock notification failure
-        }).catch(() => {});
-      }
-
-      const updated = await getOrderById(internalOrderId);
-      return { applied: true, order: updated };
     } catch (err) {
       await client.query("ROLLBACK");
       throw err;
     } finally {
       client.release();
     }
+
+    // Post-commit side effects: client is released back to the pool
+    if (lowStockAlert) {
+      const { sellerId, listingTitle, remainingStock } = lowStockAlert;
+      import("@/lib/after").then(({ runAfterResponse }) => {
+        runAfterResponse(async () => {
+          const { getSellerById } = await import("@/lib/data");
+          const seller = await getSellerById(sellerId);
+          if (seller?.user?.email) {
+            const { sendLowStockAlertEmail } = await import("@/lib/email");
+            await sendLowStockAlertEmail({
+              sellerEmail: seller.user.email,
+              sellerName: seller.businessName || "Penjual",
+              listingTitle,
+              remainingStock,
+              unit: "unit",
+            }).catch((e) => logger.warn("order.low_stock_email_failed", e));
+          }
+        });
+        // ignore: non-blocking low stock notification failure
+      }).catch(() => {});
+    }
+
+    const updated = internalOrderId ? await getOrderById(internalOrderId) : null;
+    return { applied: true, order: updated };
   }
 
   // Mock / In-Memory Mode
@@ -879,8 +925,17 @@ export async function transitionOrderStatus(
   if (extra.disputeReason) existing.disputeReason = extra.disputeReason;
   if (extra.disputeEvidenceUrl) existing.disputeEvidenceUrl = extra.disputeEvidenceUrl;
   existing.updatedAt = now;
-  if (to === "paid" && !existing.paidAt) {
-    existing.paidAt = now;
+  if (to === "paid") {
+    if (!existing.paidAt) existing.paidAt = now;
+    if (!existing.invoiceNumber) {
+      const period = now.slice(0, 7).replace("-", "");
+      mockInvoiceSequences[period] = (mockInvoiceSequences[period] || 0) + 1;
+      const seq = mockInvoiceSequences[period];
+      existing.invoiceNumber = `INV/BJH/${period}/${String(seq).padStart(6, "0")}`;
+      existing.invoiceIssuedAt = now;
+      const taxRate = Number(process.env.INVOICE_TAX_RATE || 0);
+      existing.taxAmount = taxRate > 0 ? Math.round((existing.totalAmount * taxRate) / (1 + taxRate)) : 0;
+    }
   } else if (to === "shipped") {
     if (!existing.shippedAt) existing.shippedAt = now;
     if (!existing.roastDateAtShip) {

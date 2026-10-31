@@ -349,4 +349,62 @@ describe("orders data layer & auto-complete", () => {
     expect(shippedRes.order?.roastDateAtShip).toBeDefined();
     expect(typeof shippedRes.order?.roastDateAtShip).toBe("string");
   });
+
+  it("generates sequential official invoice numbers without gaps on transition to paid (C3)", async () => {
+    const period = new Date().toISOString().slice(0, 7).replace("-", "");
+    const order1 = await createOrder({
+      orderNumber: `ORD-INV-SEQ-1-${Date.now()}`,
+      buyerName: "Buyer Inv 1",
+      buyerEmail: "inv1@test.com",
+      buyerPhone: "08123456781",
+      buyerAddress: "Jl Test No 1",
+      buyerCity: "Jakarta",
+      sellerId: "seller-1",
+      listingId: "list-1",
+      quantity: 1,
+      itemPrice: 100000,
+      subtotal: 100000,
+      shippingCost: 10000,
+      serviceFee: 1500,
+      totalAmount: 111500,
+      shippingCourier: "JNE",
+    });
+
+    const order2 = await createOrder({
+      orderNumber: `ORD-INV-SEQ-2-${Date.now()}`,
+      buyerName: "Buyer Inv 2",
+      buyerEmail: "inv2@test.com",
+      buyerPhone: "08123456782",
+      buyerAddress: "Jl Test No 2",
+      buyerCity: "Jakarta",
+      sellerId: "seller-1",
+      listingId: "list-1",
+      quantity: 1,
+      itemPrice: 200000,
+      subtotal: 200000,
+      shippingCost: 10000,
+      serviceFee: 1500,
+      totalAmount: 211500,
+      shippingCourier: "JNE",
+    });
+
+    const res1 = await transitionOrderStatus(order1.id, "paid");
+    expect(res1.applied).toBe(true);
+    expect(res1.order?.invoiceNumber).toMatch(new RegExp(`^INV/BJH/${period}/\\d{6}$`));
+    expect(res1.order?.invoiceIssuedAt).toBeDefined();
+
+    const seq1 = parseInt(res1.order!.invoiceNumber!.split("/")[3], 10);
+
+    const res2 = await transitionOrderStatus(order2.id, "paid");
+    expect(res2.applied).toBe(true);
+    expect(res2.order?.invoiceNumber).toMatch(new RegExp(`^INV/BJH/${period}/\\d{6}$`));
+
+    const seq2 = parseInt(res2.order!.invoiceNumber!.split("/")[3], 10);
+    expect(seq2).toBe(seq1 + 1);
+
+    // Idempotent: re-transitioning order1 to paid does not re-issue or change the invoice number
+    const res1Retry = await transitionOrderStatus(order1.id, "paid");
+    expect(res1Retry.applied).toBe(false);
+    expect(res1Retry.order?.invoiceNumber).toBe(res1.order?.invoiceNumber);
+  });
 });

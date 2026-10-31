@@ -368,6 +368,12 @@ export interface Order {
   shippedAt?: string | null;
   roastDateAtShip?: string | null;
   completedAt?: string | null;
+  invoiceNumber?: string | null;
+  invoiceIssuedAt?: string | null;
+  taxAmount?: number;
+  voucherCode?: string | null;
+  discountAmount?: number;
+  discountFundedBy?: string | null;
   createdAt: string;
   updatedAt: string;
 }

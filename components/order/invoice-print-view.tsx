@@ -343,7 +343,7 @@ export function InvoicePrintView({
                   INVOICE PEMBELIAN
                 </span>
                 <span className="font-mono text-sm font-bold text-neutral-800 block mt-0.5">
-                  INV-{order.orderNumber}
+                  {order.invoiceNumber || `INV-${order.orderNumber}`}
                 </span>
                 <Badge variant="outline" className="mt-2 text-emerald-800 bg-emerald-50 border-emerald-300 font-bold text-xs">
                   PEMBAYARAN LUNAS
@@ -374,6 +374,11 @@ export function InvoicePrintView({
                 <p className="text-neutral-600 text-xs pt-1">
                   Tanggal Pesanan: <strong className="text-neutral-900">{formattedDate}</strong>
                 </p>
+                {order.invoiceIssuedAt && (
+                  <p className="text-neutral-600 text-xs">
+                    Terbit Invoice: <strong className="text-neutral-900">{format(new Date(order.invoiceIssuedAt), "d MMMM yyyy, HH:mm", { locale: idLocale })}</strong>
+                  </p>
+                )}
                 <p className="text-neutral-600 text-xs">
                   Metode Pengiriman: <strong className="text-neutral-900">{order.shippingCourier || "JNE"}</strong>
                 </p>
@@ -464,6 +469,18 @@ export function InvoicePrintView({
                   <span>Biaya Layanan Platform</span>
                   <span className="font-mono text-neutral-900 font-medium">{formatRupiah(order.serviceFee)}</span>
                 </div>
+                {order.discountAmount && order.discountAmount > 0 ? (
+                  <div className="flex justify-between text-emerald-700 font-medium">
+                    <span>Diskon Voucher {order.voucherCode ? `(${order.voucherCode})` : ""}</span>
+                    <span className="font-mono">- {formatRupiah(order.discountAmount)}</span>
+                  </div>
+                ) : null}
+                {order.taxAmount && order.taxAmount > 0 ? (
+                  <div className="flex justify-between text-neutral-600">
+                    <span>PPN / Pajak Termasuk</span>
+                    <span className="font-mono text-neutral-900 font-medium">{formatRupiah(order.taxAmount)}</span>
+                  </div>
+                ) : null}
                 <div className="flex justify-between items-baseline pt-2 border-t-2 border-neutral-900 font-bold text-sm">
                   <span className="text-neutral-900">Total Pembayaran</span>
                   <span className="font-mono text-primary-950 text-lg">

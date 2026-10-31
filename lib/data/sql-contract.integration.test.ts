@@ -320,6 +320,55 @@ describe("Real PostgreSQL Behavioral Tests (A2)", () => {
     await pool.query("DELETE FROM public.roast_batches WHERE listing_id = $1", [testListingId]);
   });
 
+  it("C3 Sequential Invoice Numbers: concurrent payments yield unique sequential invoice numbers without gaps", async () => {
+    const period = new Date().toISOString().slice(0, 7).replace("-", "");
+    const count = 5;
+    const testOrderIds: string[] = [];
+
+    try {
+      for (let i = 0; i < count; i++) {
+        const oid = `test-c3-order-${Date.now()}-${i}`;
+        const onum = `ORD-C3-${Date.now()}-${i}`;
+        testOrderIds.push(oid);
+        await pool.query(
+          `INSERT INTO public.orders (
+            id, order_number, buyer_name, buyer_email, buyer_phone, buyer_address, buyer_city,
+            seller_id, listing_id, quantity, item_price, subtotal, total_amount, status, created_at, updated_at
+          ) VALUES (
+            $1, $2, 'Buyer C3', 'c3@example.com', '0812', 'Jl. C3', 'Jakarta',
+            $3, $4, 1, 50000, 50000, 50000, 'pending_payment', NOW(), NOW()
+          )`,
+          [oid, onum, testSellerProfileId, testListingId]
+        );
+      }
+
+      // Transition all orders to paid concurrently
+      const results = await Promise.all(
+        testOrderIds.map((id) => orders.transitionOrderStatus(id, "paid"))
+      );
+
+      for (const res of results) {
+        expect(res.applied).toBe(true);
+        expect(res.order?.invoiceNumber).toMatch(new RegExp(`^INV/BJH/${period}/\\d{6}$`));
+        expect(res.order?.invoiceIssuedAt).toBeDefined();
+      }
+
+      const invoiceNumbers = results.map((r) => r.order!.invoiceNumber!);
+      const uniqueNumbers = new Set(invoiceNumbers);
+      expect(uniqueNumbers.size).toBe(count);
+
+      // Parse seq numbers and sort
+      const seqs = invoiceNumbers.map((inv) => parseInt(inv.split("/")[3], 10)).sort((a, b) => a - b);
+      for (let i = 1; i < seqs.length; i++) {
+        expect(seqs[i]).toBe(seqs[i - 1] + 1);
+      }
+    } finally {
+      if (testOrderIds.length > 0) {
+        await pool.query("DELETE FROM public.orders WHERE id = ANY($1)", [testOrderIds]);
+      }
+    }
+  });
+
   it("RLS enforcement: anon role is blocked from inserting into private tables (if role exists)", async () => {
     const client = await pool.connect();
     try {

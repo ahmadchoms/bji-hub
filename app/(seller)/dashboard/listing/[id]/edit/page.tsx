@@ -1,5 +1,5 @@
 import { getListingById, getCategories } from "@/lib/data";
-import { getProducers } from "@/lib/data/producers";
+import { getApprovedProducersForSeller } from "@/lib/data/producers";
 import { getRoastBatchesByListing } from "@/lib/coffee/roast-batch";
 import { SectionHeader } from "@/components/shared/section-header";
 import { ListingForm } from "@/components/dashboard/listing-form";
@@ -18,7 +18,7 @@ export default async function EditListingPage({
   const [listing, categories, producers, batches] = await Promise.all([
     getListingById(id),
     getCategories(),
-    getProducers().catch(() => []),
+    getApprovedProducersForSeller(sellerId).catch(() => []),
     getRoastBatchesByListing(id).catch(() => []),
   ]);
 

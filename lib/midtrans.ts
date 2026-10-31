@@ -191,7 +191,7 @@ export async function requestMidtransRefund(params: {
       }),
     });
 
-    const data = await res.json().catch(() => null);
+    const data = await res.json().catch(() => null); // ignore: fallback to null if response is not JSON
     if (!data) return null;
 
     return {

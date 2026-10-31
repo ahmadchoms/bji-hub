@@ -27,7 +27,7 @@ describe("payouts and balance summary", () => {
     const bank = await getSellerBankDetails(testSellerId);
     expect(bank).not.toBeNull();
     expect(bank?.bankName).toBe("BCA");
-    expect(bank?.bankAccountNumber).toBe("1234567890");
+    expect(bank?.bankAccountNumber).toBe("••••7890");
     expect(bank?.bankAccountHolder).toBe("Ujang Roaster");
   });
 

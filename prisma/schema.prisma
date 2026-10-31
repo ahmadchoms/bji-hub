@@ -108,6 +108,7 @@ model SellerProfile {
   payments      Payment[]
   orders        Order[]
   payoutRequests PayoutRequest[]
+  producerSellers ProducerSeller[]
 
   @@index([businessName(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_seller_profiles_business_name_trgm")
   @@map("seller_profiles")
@@ -184,10 +185,28 @@ model Producer {
   photoUrls        String[]       @default([]) @map("photo_urls")
   createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz
   tasteProfiles    TasteProfile[]
+  producerSellers  ProducerSeller[]
 
   @@index([slug], map: "idx_producers_slug")
   @@index([originId], map: "idx_producers_origin_id")
   @@map("producers")
+}
+
+model ProducerSeller {
+  producerId  String         @map("producer_id")
+  sellerId    String         @map("seller_id")
+  status      String         @default("pending")
+  evidenceUrl String?        @map("evidence_url")
+  approvedBy  String?        @map("approved_by")
+  approvedAt  DateTime?      @map("approved_at") @db.Timestamptz
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz
+
+  producer    Producer       @relation(fields: [producerId], references: [id], onDelete: Cascade)
+  seller      SellerProfile  @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@id([producerId, sellerId])
+  @@index([sellerId, status], map: "idx_producer_sellers_seller_status")
+  @@map("producer_sellers")
 }
 
 model TasteProfile {

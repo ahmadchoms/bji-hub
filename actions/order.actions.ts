@@ -542,7 +542,7 @@ export async function completeOrderAction(
         message: `Pesanan ${order.orderNumber} telah dikonfirmasi selesai oleh pembeli.`,
         type: "order_status",
         link: "/dashboard/orders",
-      }).catch(() => {});
+      }).catch(() => {}); // ignore: non-blocking seller notification failure
     }
   });
 

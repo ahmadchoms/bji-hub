@@ -2,12 +2,17 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { requireRole } from "@/lib/auth/session";
+import { requireRole, requireSeller } from "@/lib/auth/session";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 import {
   createProducer,
   verifyProducerClaims,
   getProducers,
+  requestProducerAttribution,
+  approveProducerAttribution,
+  rejectProducerAttribution,
+  getProducerAttributions,
+  type ProducerAttribution,
 } from "@/lib/data/producers";
 import { recordAuditLog } from "@/lib/data/audit-logs";
 import { getClientIp } from "@/lib/client-ip";
@@ -106,5 +111,100 @@ export async function getVerifiedProducersAction(): Promise<ActionResult<Produce
     return ok(list);
   } catch (error) {
     return fail("Gagal mengambil data produser: " + (error as Error).message);
+  }
+}
+
+export async function requestProducerAttributionAction(
+  producerId: string,
+  evidenceUrl?: string | null
+): Promise<ActionResult<{ success: boolean }>> {
+  try {
+    const { sellerId } = await requireSeller("/dashboard/listing");
+    if (!producerId) return fail("ID produser wajib diisi");
+
+    await requestProducerAttribution(producerId, sellerId, evidenceUrl);
+    const ip = await getClientIp();
+    await recordAuditLog({
+      actorId: sellerId,
+      actorRole: "seller",
+      action: "producer.attribution_requested",
+      targetId: producerId,
+      targetType: "producer",
+      ipAddress: ip,
+      details: { sellerId, evidenceUrl },
+    });
+
+    revalidatePath("/admin/producers");
+    return ok({ success: true });
+  } catch (error) {
+    return fail("Gagal mengajukan atribusi produser: " + (error as Error).message);
+  }
+}
+
+export async function approveProducerAttributionAction(
+  producerId: string,
+  sellerId: string
+): Promise<ActionResult<{ success: boolean }>> {
+  try {
+    const session = await requireRole(["admin"], "/admin/producers");
+    if (!producerId || !sellerId) return fail("Data atribusi tidak lengkap");
+
+    await approveProducerAttribution(producerId, sellerId, session.userId || "admin");
+    const ip = await getClientIp();
+    await recordAuditLog({
+      actorId: session.userId || "admin",
+      actorRole: "admin",
+      action: "producer.attribution_approved",
+      targetId: producerId,
+      targetType: "producer",
+      ipAddress: ip,
+      details: { sellerId, approvedBy: session.userId },
+    });
+
+    revalidatePath("/admin/producers");
+    revalidatePath("/dashboard/listing");
+    return ok({ success: true });
+  } catch (error) {
+    return fail("Gagal menyetujui atribusi produser: " + (error as Error).message);
+  }
+}
+
+export async function rejectProducerAttributionAction(
+  producerId: string,
+  sellerId: string
+): Promise<ActionResult<{ success: boolean }>> {
+  try {
+    const session = await requireRole(["admin"], "/admin/producers");
+    if (!producerId || !sellerId) return fail("Data atribusi tidak lengkap");
+
+    await rejectProducerAttribution(producerId, sellerId, session.userId || "admin");
+    const ip = await getClientIp();
+    await recordAuditLog({
+      actorId: session.userId || "admin",
+      actorRole: "admin",
+      action: "producer.attribution_rejected",
+      targetId: producerId,
+      targetType: "producer",
+      ipAddress: ip,
+      details: { sellerId, rejectedBy: session.userId },
+    });
+
+    revalidatePath("/admin/producers");
+    return ok({ success: true });
+  } catch (error) {
+    return fail("Gagal menolak atribusi produser: " + (error as Error).message);
+  }
+}
+
+export async function getProducerAttributionsAction(options?: {
+  producerId?: string;
+  sellerId?: string;
+}): Promise<ActionResult<ProducerAttribution[]>> {
+  try {
+    await requireRole(["admin", "seller"], "/admin/producers");
+    const list = await getProducerAttributions(options);
+    return ok(list);
+  } catch (error) {
+    return fail("Gagal mengambil data atribusi: " + (error as Error).message);
   }
 }

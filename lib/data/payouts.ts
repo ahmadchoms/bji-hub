@@ -2,6 +2,10 @@ import { logger } from "@/lib/logger";
 import { randomBytes } from "crypto";
 import { getPool } from "@/lib/db/pool";
 import { assertMockAllowed } from "@/lib/data/mock-guard";
+import {
+  encryptField,
+  maskAccountNumber,
+} from "@/lib/crypto/field-encryption";
 import { PayoutRequest, PayoutStatus } from "@/types";
 import { getOrdersBySeller } from "@/lib/data/orders";
 
@@ -50,7 +54,7 @@ export async function getSellerBankDetails(
       if (res.rows.length > 0 && res.rows[0].bank_name) {
         return {
           bankName: res.rows[0].bank_name,
-          bankAccountNumber: res.rows[0].bank_account_number,
+          bankAccountNumber: maskAccountNumber(res.rows[0].bank_account_number),
           bankAccountHolder: res.rows[0].bank_account_holder,
           bankUpdatedAt: res.rows[0].bank_updated_at
             ? new Date(res.rows[0].bank_updated_at).toISOString()
@@ -66,7 +70,12 @@ export async function getSellerBankDetails(
     assertMockAllowed("getSellerBankDetails:no_pool");
   }
 
-  return mockBankDetails[sellerId] ?? null;
+  const mock = mockBankDetails[sellerId];
+  if (!mock) return null;
+  return {
+    ...mock,
+    bankAccountNumber: maskAccountNumber(mock.bankAccountNumber),
+  };
 }
 
 export async function updateSellerBankDetails(
@@ -78,6 +87,7 @@ export async function updateSellerBankDetails(
     details.bankUpdatedAt !== undefined
       ? details.bankUpdatedAt
       : new Date().toISOString();
+  const encryptedAcc = encryptField(details.bankAccountNumber.trim());
   if (pool) {
     try {
       await pool.query(
@@ -86,7 +96,7 @@ export async function updateSellerBankDetails(
          WHERE id = $4`,
         [
           details.bankName.trim(),
-          details.bankAccountNumber.trim(),
+          encryptedAcc,
           details.bankAccountHolder.trim(),
           sellerId,
           bankUpdatedAt,
@@ -94,6 +104,7 @@ export async function updateSellerBankDetails(
       );
       mockBankDetails[sellerId] = {
         ...details,
+        bankAccountNumber: encryptedAcc,
         bankUpdatedAt,
       };
       return true;
@@ -127,7 +138,7 @@ export async function getPayoutRequestsBySeller(
         sellerId: row.seller_id,
         amount: Number(row.amount),
         bankName: row.bank_name,
-        bankAccountNumber: row.bank_account_number,
+        bankAccountNumber: maskAccountNumber(row.bank_account_number),
         bankAccountHolder: row.bank_account_holder,
         status: row.status as PayoutStatus,
         notes: row.notes,
@@ -205,7 +216,7 @@ export async function createPayoutRequestAtomic(data: {
           data.sellerId,
           data.amount,
           data.bankDetails.bankName,
-          data.bankDetails.bankAccountNumber,
+          encryptField(data.bankDetails.bankAccountNumber),
           data.bankDetails.bankAccountHolder,
           "pending",
           data.notes ?? null,
@@ -332,7 +343,7 @@ export async function getAllPayoutRequests(): Promise<
         whatsappNumber: row.whatsapp_number,
         amount: Number(row.amount),
         bankName: row.bank_name,
-        bankAccountNumber: row.bank_account_number,
+        bankAccountNumber: maskAccountNumber(row.bank_account_number),
         bankAccountHolder: row.bank_account_holder,
         status: row.status as PayoutStatus,
         notes: row.notes,

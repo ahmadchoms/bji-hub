@@ -5,12 +5,21 @@ import {
   createProducerAction,
   verifyProducerClaimsAction,
   getVerifiedProducersAction,
+  requestProducerAttributionAction,
+  approveProducerAttributionAction,
+  rejectProducerAttributionAction,
+  getProducerAttributionsAction,
 } from "./producer.actions";
 
 vi.mock("@/lib/auth/session", () => ({
   requireRole: vi.fn().mockResolvedValue({
     userId: "admin-1",
     role: "admin",
+  }),
+  requireSeller: vi.fn().mockResolvedValue({
+    userId: "seller-1",
+    sellerId: "seller-1",
+    role: "seller",
   }),
 }));
 
@@ -75,5 +84,26 @@ describe("Producer Actions", () => {
     if (res.success) {
       expect(Array.isArray(res.data)).toBe(true);
     }
+  });
+
+  it("handles producer attribution lifecycle: request, list, approve, reject", async () => {
+    // 1. Seller requests attribution
+    const reqRes = await requestProducerAttributionAction("prod-gayo-kbqb", "https://example.com/invoice.pdf");
+    expect(reqRes.success).toBe(true);
+
+    // 2. Admin retrieves attributions
+    const listRes = await getProducerAttributionsAction({ producerId: "prod-gayo-kbqb" });
+    expect(listRes.success).toBe(true);
+    if (listRes.success) {
+      expect(listRes.data.length).toBeGreaterThan(0);
+    }
+
+    // 3. Admin approves attribution
+    const approveRes = await approveProducerAttributionAction("prod-gayo-kbqb", "seller-1");
+    expect(approveRes.success).toBe(true);
+
+    // 4. Admin rejects attribution
+    const rejectRes = await rejectProducerAttributionAction("prod-gayo-kbqb", "seller-1");
+    expect(rejectRes.success).toBe(true);
   });
 });

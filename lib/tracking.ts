@@ -54,6 +54,6 @@ export function trackEvent(listingId: string, type: TrackEventType): void {
       headers: { "Content-Type": "application/json" },
       body,
       keepalive: true,
-    }).catch(() => undefined);
+    }).catch(() => undefined); // ignore: non-blocking analytics beacon
   }
 }

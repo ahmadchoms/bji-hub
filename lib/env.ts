@@ -87,9 +87,9 @@ export function validateEnv(): boolean {
               message: `Variabel operasional berikut belum diatur: ${missingKeys.join(", ")}. Beberapa fitur admin/cron akan berjalan terbatas.`,
               type: "system",
               link: "/admin/maintenance",
-            }).catch(() => {});
+            }).catch(() => {}); // ignore: non-blocking degradation alert
           })
-          .catch(() => {});
+          .catch(() => {}); // ignore: non-blocking dynamic import failure
       }
     }
   }

@@ -5,6 +5,7 @@ import { getListingById } from "@/lib/data";
 import { ok, fail, type ActionResult } from "@/lib/action-result";
 import { logger } from "@/lib/logger";
 import { getPool } from "@/lib/db/pool";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 // In-memory mock storage for waitlist entries
 const mockWaitlistEntries = new Set<string>(); // key: `${userId}:${listingId}`
@@ -21,6 +22,11 @@ export async function joinWaitlistAction(
     }
 
     const userId = session.userId;
+    const rateCheck = await checkRateLimit("waitlist:" + userId, 30, 60_000);
+    if (!rateCheck.success) {
+      return fail("Terlalu banyak permintaan mendaftar antrean. Silakan coba lagi beberapa saat.");
+    }
+
     const isProd = process.env.NODE_ENV === "production";
 
     // Validate listing eligibility (F3)

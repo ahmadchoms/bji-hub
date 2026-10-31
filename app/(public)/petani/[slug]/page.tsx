@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { getProducerBySlug } from "@/lib/data/producers";
+import { getProducerBySlug, getApprovedSellerIdsForProducer } from "@/lib/data/producers";
 import { getCoffeeOriginById, toOriginSlug } from "@/lib/data/origins";
 import { getListingFeed } from "@/lib/data";
 import { PageContainer } from "@/components/layout/page-container";
@@ -51,12 +51,14 @@ export default async function ProducerDetailPage({ params }: ProducerPageProps) 
     notFound();
   }
 
-  const origin = producer.originId
-    ? await getCoffeeOriginById(producer.originId)
-    : null;
+  const [origin, { items: allListings }, approvedSellerIds] = await Promise.all([
+    producer.originId ? getCoffeeOriginById(producer.originId) : null,
+    getListingFeed({ pageSize: 50 }),
+    getApprovedSellerIdsForProducer(producer.id).catch(() => new Set<string>()),
+  ]);
 
-  const { items: allListings } = await getListingFeed({ pageSize: 50 });
   const producerListings = allListings.filter((l) => {
+    if (!approvedSellerIds.has(l.sellerId)) return false;
     const tp = l.tasteProfile;
     if (!tp) return false;
     return (

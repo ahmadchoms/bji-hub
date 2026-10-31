@@ -28,19 +28,16 @@ export async function GET() {
     // Parallel fetch: seller profile, active orders count, and notifications
     const [seller, activeOrdersCount, unreadCount] = await Promise.all([
       session.sellerId
-        ? getSellerById(session.sellerId).catch((err) => {
-            // ignore: seller profile may not exist yet or connection timed out
+        ? getSellerById(session.sellerId).catch((err) => { // ignore: seller profile lookup failure
             logger.warn("me.get_seller_failed", { sellerId: session.sellerId, error: err });
             return null;
           })
         : Promise.resolve(null),
-      countActiveOrdersByBuyer(session.userId).catch((err) => {
-        // ignore: non-blocking order count calculation failure
+      countActiveOrdersByBuyer(session.userId).catch((err) => { // ignore: non-blocking order count
         logger.warn("me.count_orders_failed", { userId: session.userId, error: err });
         return 0;
       }),
-      getUnreadNotificationCount(session.userId).catch((err) => {
-        // ignore: non-blocking notification count calculation failure
+      getUnreadNotificationCount(session.userId).catch((err) => { // ignore: non-blocking notification count
         logger.warn("me.count_notifications_failed", { userId: session.userId, error: err });
         return 0;
       }),

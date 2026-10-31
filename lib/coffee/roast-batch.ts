@@ -83,12 +83,27 @@ export async function addRoastBatch(params: {
       const createdAt = new Date(row.created_at).toISOString();
 
       // Derive roast date on taste_profiles from this batch
-      await client.query(
+      const updateRes = await client.query(
         `UPDATE public.taste_profiles
          SET "roastDate" = $1
          WHERE "listingId" = $2`,
         [`${params.roastedOn}T00:00:00+07:00`, params.listingId]
       );
+
+      if (updateRes.rowCount === 0) {
+        // Fallback: insert default taste profile if none exists for this listing
+        await client.query(
+          `INSERT INTO public.taste_profiles (
+             id, "listingId", "roastDate", "originRegion", "processMethod", "roastLevel",
+             "flavorNotes", "acidityScore", "bodyScore"
+           ) VALUES (
+             gen_random_uuid(), $1, $2, 'Indonesia', 'Wash', 'Medium', 'Specialty', 3.0, 3.0
+           )
+           ON CONFLICT ("listingId") DO UPDATE
+           SET "roastDate" = EXCLUDED."roastDate"`,
+          [params.listingId, `${params.roastedOn}T00:00:00+07:00`]
+        );
+      }
 
       await client.query("COMMIT");
 

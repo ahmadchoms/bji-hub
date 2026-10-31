@@ -14,7 +14,7 @@ export function getClientAuth(): Promise<boolean> {
     return Promise.resolve(false);
   }
   if (!cachedAuthPromise) {
-    cachedAuthPromise = checkAuthAction().catch(() => false);
+    cachedAuthPromise = checkAuthAction().catch(() => false); // ignore: fallback to false on network failure
   }
   return cachedAuthPromise;
 }

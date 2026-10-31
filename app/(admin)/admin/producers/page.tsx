@@ -1,6 +1,7 @@
 import { SectionHeader } from "@/components/shared/section-header";
-import { getProducers } from "@/lib/data/producers";
+import { getProducers, getProducerAttributions } from "@/lib/data/producers";
 import { AdminProducersTable } from "@/components/admin/admin-producers-table";
+import { AdminProducerAttributions } from "@/components/admin/admin-producer-attributions";
 import { Badge } from "@/components/ui/badge";
 
 export const metadata = {
@@ -8,7 +9,10 @@ export const metadata = {
 };
 
 export default async function AdminProducersPage() {
-  const producers = await getProducers();
+  const [producers, attributions] = await Promise.all([
+    getProducers(),
+    getProducerAttributions().catch(() => []),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -21,6 +25,8 @@ export default async function AdminProducersPage() {
           {producers.length} Terdaftar
         </Badge>
       </div>
+
+      <AdminProducerAttributions attributions={attributions} />
 
       <AdminProducersTable producers={producers} />
     </div>

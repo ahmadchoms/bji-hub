@@ -1,12 +1,14 @@
 import { getCategories } from "@/lib/data";
-import { getProducers } from "@/lib/data/producers";
+import { getApprovedProducersForSeller } from "@/lib/data/producers";
 import { SectionHeader } from "@/components/shared/section-header";
 import { ListingForm } from "@/components/dashboard/listing-form";
+import { requireSeller } from "@/lib/auth/session";
 
 export default async function CreateListingPage() {
+  const { sellerId } = await requireSeller("/dashboard/listing/create");
   const [categories, producers] = await Promise.all([
     getCategories(),
-    getProducers().catch(() => []),
+    getApprovedProducersForSeller(sellerId).catch(() => []),
   ]);
 
   return (

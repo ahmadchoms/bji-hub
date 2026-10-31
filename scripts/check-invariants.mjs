@@ -5,7 +5,7 @@ function walk(dir, fileList = []) {
   if (!fs.existsSync(dir)) return fileList;
   const files = fs.readdirSync(dir);
   for (const file of files) {
-    if (file === "node_modules" || file === ".next" || file === "dist" || file === ".git") continue;
+    if (file === "node_modules" || file === ".next" || file === "dist" || file === ".git" || file === "generated") continue;
     const filePath = path.join(dir, file);
     const stat = fs.statSync(filePath);
     if (stat.isDirectory()) {
@@ -89,6 +89,44 @@ for (const file of sourceFiles) {
     const tableName = match[1];
     if (!validMappedTables.has(tableName)) {
       errors.push(`[Invariant Violation] Table 'public.${tableName}' in ${file} is not defined as an @@map in schema.prisma`);
+    }
+  }
+}
+
+// Invariant 6: Every .catch( in actions/, app/api/, lib/ must be inside runAfterResponse( or have '// ignore: <alasan>' on the same line (A6)
+for (const file of sourceFiles) {
+  if (isTestFile(file)) continue;
+  const normalized = file.replace(/\\/g, "/");
+  if (!normalized.startsWith("actions/") && !normalized.startsWith("app/api/") && !normalized.startsWith("lib/")) {
+    continue;
+  }
+  const lines = fs.readFileSync(file, "utf8").split("\n");
+  let inRunAfter = false;
+  let runAfterBraces = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.includes("runAfterResponse(")) {
+      inRunAfter = true;
+      runAfterBraces = 0;
+    }
+    if (inRunAfter) {
+      for (const ch of line) {
+        if (ch === "{") runAfterBraces++;
+        if (ch === "}") {
+          runAfterBraces--;
+          if (runAfterBraces <= 0) {
+            inRunAfter = false;
+          }
+        }
+      }
+    }
+    if (line.includes(".catch(")) {
+      const hasIgnoreComment = line.includes("// ignore:") || (i > 0 && lines[i - 1].includes("// ignore:"));
+      if (!hasIgnoreComment && !inRunAfter) {
+        errors.push(
+          `[Invariant Violation] Unannotated .catch( without runAfterResponse or '// ignore: <alasan>' in ${normalized}:${i + 1}`
+        );
+      }
     }
   }
 }

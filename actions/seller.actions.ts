@@ -29,6 +29,10 @@ import { revalidateListing, revalidateStore } from "@/lib/cache/revalidate";
 import { addRoastBatch } from "@/lib/coffee/roast-batch";
 import { roastDateSchema } from "@/lib/validations/listing.schema";
 import { logger } from "@/lib/logger";
+import {
+  isProducerApprovedForSeller,
+  isLotCodeUsedBySeller,
+} from "@/lib/data/producers";
 
 type FieldErrors = Record<string, string[]>;
 
@@ -77,6 +81,30 @@ export async function saveListingAction(
     return fail("Foto tidak valid", {
       images: ["Gunakan foto yang diunggah lewat form ini"],
     });
+  }
+
+  if (parsed.data.producerId) {
+    const isApproved = await isProducerApprovedForSeller(parsed.data.producerId, sellerId);
+    if (!isApproved) {
+      return fail(
+        "Produser belum disetujui untuk toko Anda. Silakan ajukan atribusi produser terlebih dahulu.",
+        {
+          producerId: ["Produser ini belum disetujui untuk toko Anda"],
+        }
+      );
+    }
+  }
+
+  if (parsed.data.lotCode && parsed.data.lotCode.trim().length > 0) {
+    const isUsed = await isLotCodeUsedBySeller(sellerId, parsed.data.lotCode, listingId);
+    if (isUsed) {
+      return fail(
+        `Kode lot '${parsed.data.lotCode}' sudah digunakan pada produk Anda yang lain`,
+        {
+          lotCode: ["Kode lot harus unik untuk setiap produk di toko Anda"],
+        }
+      );
+    }
   }
 
   if (listingId) {

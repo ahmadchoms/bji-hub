@@ -83,6 +83,11 @@ describe("SQL Schema Contract Integration Tests (A2)", () => {
     await expectNoSchemaError(() => producers.getProducers());
     await expectNoSchemaError(() => producers.getProducerById(dummyId));
     await expectNoSchemaError(() => producers.getProducerBySlug("koperasi-baburrayyan-gayo"));
+    await expectNoSchemaError(() => producers.getApprovedProducersForSeller(dummyId));
+    await expectNoSchemaError(() => producers.isProducerApprovedForSeller(dummyId, dummyId2));
+    await expectNoSchemaError(() => producers.getApprovedSellerIdsForProducer(dummyId));
+    await expectNoSchemaError(() => producers.getProducerAttributions({ sellerId: dummyId }));
+    await expectNoSchemaError(() => producers.isLotCodeUsedBySeller(dummyId, "LOT-TEST-001"));
   });
 
   it("refunds: executes queries without schema errors", async () => {

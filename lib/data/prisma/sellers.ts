@@ -62,6 +62,7 @@ type SellerMethods = Pick<
   DataRepository,
   | "getSellerBySlug"
   | "getSellerById"
+  | "getSellerByUserId"
   | "getSellers"
   | "getInquiries"
   | "createInquiry"
@@ -79,6 +80,11 @@ export const sellers: SellerMethods = {
 
   async getSellerById(id) {
     const row = await getPrisma().sellerProfile.findUnique({ where: { id }, include: sellerInclude });
+    return row ? toSellerWithRelations(row) : null;
+  },
+
+  async getSellerByUserId(userId) {
+    const row = await getPrisma().sellerProfile.findUnique({ where: { userId }, include: sellerInclude });
     return row ? toSellerWithRelations(row) : null;
   },
 

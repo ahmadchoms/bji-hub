@@ -7,6 +7,7 @@ vi.mock("@/lib/auth/session", () => ({
 }));
 
 import { getSession, requireRole } from "@/lib/auth/session";
+import { asUserId } from "@/types/ids";
 
 describe("Admin MFA Actions (E4)", () => {
   beforeEach(() => {
@@ -16,7 +17,7 @@ describe("Admin MFA Actions (E4)", () => {
   it("rejects non-admin users for verifyMfaAction", async () => {
     vi.mocked(getSession).mockResolvedValue({
       role: "buyer",
-      userId: "buyer-1",
+      userId: asUserId("buyer-1"),
       sellerId: null,
     });
 
@@ -30,7 +31,7 @@ describe("Admin MFA Actions (E4)", () => {
   it("validates 6-digit code format", async () => {
     vi.mocked(getSession).mockResolvedValue({
       role: "admin",
-      userId: "admin-1",
+      userId: asUserId("admin-1"),
       sellerId: null,
     });
 
@@ -44,12 +45,12 @@ describe("Admin MFA Actions (E4)", () => {
   it("allows admin to enroll and verify in mock mode", async () => {
     vi.mocked(requireRole).mockResolvedValue({
       role: "admin",
-      userId: "admin-1",
+      userId: asUserId("admin-1"),
       sellerId: null,
     });
     vi.mocked(getSession).mockResolvedValue({
       role: "admin",
-      userId: "admin-1",
+      userId: asUserId("admin-1"),
       sellerId: null,
     });
 

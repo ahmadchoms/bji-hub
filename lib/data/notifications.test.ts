@@ -12,6 +12,7 @@ import {
   getUnreadNotificationCount,
   _resetMockNotificationsForTest,
 } from "./notifications";
+import { asUserId, asSellerProfileId } from "@/types/ids";
 
 describe("notifications data module (F1)", () => {
   beforeEach(() => {
@@ -20,7 +21,7 @@ describe("notifications data module (F1)", () => {
 
   it("creates and retrieves notifications for a user", async () => {
     await createNotification({
-      userId: "user-1",
+      userId: asUserId("user-1"),
       title: "Pesanan Dibayar",
       message: "Pesanan ORD-123 telah dibayar pembeli.",
       type: "order_status",
@@ -38,7 +39,7 @@ describe("notifications data module (F1)", () => {
 
   it("marks a notification as read", async () => {
     const notif = await createNotification({
-      userId: "user-1",
+      userId: asUserId("user-1"),
       title: "Resi Diperbarui",
       message: "Paket sedang dikirim oleh kurir.",
     });
@@ -51,8 +52,8 @@ describe("notifications data module (F1)", () => {
   });
 
   it("marks all notifications as read in batch", async () => {
-    await createNotification({ userId: "user-2", title: "N1", message: "M1" });
-    await createNotification({ userId: "user-2", title: "N2", message: "M2" });
+    await createNotification({ userId: asUserId("user-2"), title: "N1", message: "M1" });
+    await createNotification({ userId: asUserId("user-2"), title: "N2", message: "M2" });
 
     const initialCount = await getUnreadNotificationCount("user-2");
     expect(initialCount).toBe(2);
@@ -65,7 +66,7 @@ describe("notifications data module (F1)", () => {
   });
 
   it("resolves seller.userId correctly when using notifySeller (M5)", async () => {
-    const res = await notifySeller("seller-1", {
+    const res = await notifySeller(asSellerProfileId("seller-1"), {
       title: "Pesanan Baru Masuk",
       message: "Ada pesanan baru ORD-SELLER-1.",
       type: "order_status",

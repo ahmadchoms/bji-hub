@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { POST } from "./route";
 import { NextRequest } from "next/server";
 import crypto from "crypto";
+import { asUserId, asSellerProfileId } from "@/types/ids";
 
 const TEST_KEY = "test-midtrans-server-key";
 
@@ -128,8 +129,8 @@ describe("POST /api/webhooks/midtrans", () => {
     mockOrders.push({
       id: orderId,
       orderNumber: orderId,
-      buyerId: "user-buyer-late",
-      sellerId: "seller-1",
+      buyerId: asUserId("user-buyer-late"),
+      sellerId: asSellerProfileId("seller-1"),
       listingId: "listing-1",
       listingTitle: "Kopi Arabika",
       listingSlug: "kopi-arabika",

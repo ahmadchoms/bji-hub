@@ -15,6 +15,7 @@ import {
   Payment,
   Subscription,
 } from "@/types";
+import { asSellerProfileId } from "@/types/ids";
 import {
   mockCategories,
   mockListings,
@@ -414,6 +415,18 @@ export async function getSellerById(
 }
 
 /**
+ * Fetch seller profile by userId
+ */
+export async function getSellerByUserId(
+  userId: string,
+): Promise<SellerWithRelations | null> {
+  await simulateDelay();
+  const seller = mockSellers.find((s) => s.userId === userId);
+  if (!seller) return null;
+  return getSellerById(seller.id);
+}
+
+/**
  * Fetch analytics metrics and overview for seller dashboard
  */
 export const STATS_WINDOW_DAYS = 30;
@@ -691,7 +704,7 @@ export async function createListing(
   const listing: ListingWithRelations = {
     id,
     slug: uniqueSlug(data.title, new Set(mockListings.map((l) => l.slug))),
-    sellerId,
+    sellerId: asSellerProfileId(sellerId),
     categoryId: category.id,
     title: data.title,
     description: data.description,

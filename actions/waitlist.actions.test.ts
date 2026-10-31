@@ -22,6 +22,7 @@ vi.mock("@/lib/data", () => ({
 }));
 
 import { getSession } from "@/lib/auth/session";
+import { asUserId } from "@/types/ids";
 
 describe("Waitlist Actions", () => {
   beforeEach(() => {
@@ -46,7 +47,7 @@ describe("Waitlist Actions", () => {
     vi.mocked(getSession).mockResolvedValue({
       role: "buyer",
       sellerId: null,
-      userId: "buyer-waitlist-1",
+      userId: asUserId("buyer-waitlist-1"),
       email: "buyer@example.com",
     });
 
@@ -72,7 +73,7 @@ describe("Waitlist Actions", () => {
     vi.mocked(getSession).mockResolvedValue({
       role: "buyer",
       sellerId: null,
-      userId: "buyer-heavy-collector",
+      userId: asUserId("buyer-heavy-collector"),
       email: "heavy@example.com",
     });
 

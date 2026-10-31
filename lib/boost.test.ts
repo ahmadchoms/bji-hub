@@ -2,13 +2,14 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { isActiveBoost, seededShuffle, composeFeedPage } from "@/lib/boost";
 import { configureMock, resetMockConfig, getCatalogFeed } from "@/lib/mock/repository";
 import type { ListingWithRelations } from "@/types";
+import { asSellerProfileId } from "@/types/ids";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function makeListing(
   overrides: Partial<ListingWithRelations> & { id: string },
 ): ListingWithRelations {
-  const sellerId = overrides.sellerId ?? `seller-${overrides.id}`;
+  const sellerId = overrides.sellerId ?? asSellerProfileId(`seller-${overrides.id}`);
   const base: ListingWithRelations = {
     slug: `slug-${overrides.id}`,
     sellerId,
@@ -115,7 +116,7 @@ function makeOrganic(n: number, startId = 100): ListingWithRelations[] {
   return Array.from({ length: n }, (_, i) =>
     makeListing({
       id: `org-${startId + i}`,
-      sellerId: `org-seller-${startId + i}`,
+      sellerId: asSellerProfileId(`org-seller-${startId + i}`),
     }),
   );
 }
@@ -125,7 +126,7 @@ function makePool(n: number): ListingWithRelations[] {
   return Array.from({ length: n }, (_, i) =>
     makeListing({
       id: `boost-${i + 1}`,
-      sellerId: `boost-seller-${i + 1}`,
+      sellerId: asSellerProfileId(`boost-seller-${i + 1}`),
       isBoosted: true,
       boostUntil: FUTURE,
     }),
@@ -208,31 +209,31 @@ describe("composeFeedPage", () => {
     const allFiltered = [
       makeListing({
         id: "b1",
-        sellerId: "s1",
+        sellerId: asSellerProfileId("s1"),
         isBoosted: true,
         boostUntil: FUTURE,
       }),
       makeListing({
         id: "b2",
-        sellerId: "s1",
+        sellerId: asSellerProfileId("s1"),
         isBoosted: true,
         boostUntil: FUTURE,
       }),
       makeListing({
         id: "b3",
-        sellerId: "s1",
+        sellerId: asSellerProfileId("s1"),
         isBoosted: true,
         boostUntil: FUTURE,
       }),
       makeListing({
         id: "b4",
-        sellerId: "s1",
+        sellerId: asSellerProfileId("s1"),
         isBoosted: true,
         boostUntil: FUTURE,
       }),
       makeListing({
         id: "b5",
-        sellerId: "s1",
+        sellerId: asSellerProfileId("s1"),
         isBoosted: true,
         boostUntil: FUTURE,
       }),
@@ -286,13 +287,13 @@ describe("composeFeedPage", () => {
     const allFiltered = [
       makeListing({
         id: "b1",
-        sellerId: "s1",
+        sellerId: asSellerProfileId("s1"),
         isBoosted: true,
         boostUntil: FUTURE,
       }),
       makeListing({
         id: "b2",
-        sellerId: "s1",
+        sellerId: asSellerProfileId("s1"),
         isBoosted: true,
         boostUntil: FUTURE,
       }),

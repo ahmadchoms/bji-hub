@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { GET } from "./route";
+import { asUserId, asSellerProfileId } from "@/types/ids";
 
 describe("GET /api/me (PERF-1)", () => {
   it("returns unauthenticated guest payload with private, no-store headers when no session exists", async () => {
@@ -32,15 +33,15 @@ describe("GET /api/me (PERF-1)", () => {
     const sessionModule = await import("@/lib/auth/session");
     const spySession = vi.spyOn(sessionModule, "getSession").mockResolvedValue({
       role: "seller",
-      userId: "user-123",
+      userId: asUserId("user-123"),
       email: "budi@roastery.com",
-      sellerId: "seller-456",
+      sellerId: asSellerProfileId("seller-456"),
     });
 
     const dataModule = await import("@/lib/data");
     const spySeller = vi.spyOn(dataModule, "getSellerById").mockResolvedValue({
-      id: "seller-456",
-      userId: "user-123",
+      id: asSellerProfileId("seller-456"),
+      userId: asUserId("user-123"),
       businessName: "Kopi Budi Jaya",
       slug: "kopi-budi-jaya",
       bio: "Roastery",

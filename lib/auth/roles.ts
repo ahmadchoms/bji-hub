@@ -1,10 +1,12 @@
+import type { UserId, SellerProfileId } from "@/types/ids";
+
 export const ROLES = ["guest", "buyer", "seller", "admin"] as const;
 export type Role = (typeof ROLES)[number];
 
 export interface Session {
   role: Role;
-  sellerId: string | null;
-  userId?: string | null;
+  sellerId: SellerProfileId | null;
+  userId?: UserId | null;
   email?: string | null;
   name?: string | null;
   isSuspended?: boolean;

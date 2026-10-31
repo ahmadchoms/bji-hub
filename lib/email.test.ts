@@ -6,17 +6,18 @@ import {
   sendNewOrderSellerEmail,
 } from "./email";
 import type { Order } from "@/types";
+import { asUserId, asSellerProfileId } from "@/types/ids";
 
 const mockOrder: Order = {
   id: "ord-1",
   orderNumber: "ORD-TEST-001",
-  buyerId: "user-1",
+  buyerId: asUserId("user-1"),
   buyerName: "Ahmad Buyer",
   buyerEmail: "ahmad@example.com",
   buyerPhone: "08123456789",
   buyerAddress: "Jl. Braga No. 10",
   buyerCity: "Bandung",
-  sellerId: "seller-1",
+  sellerId: asSellerProfileId("seller-1"),
   sellerName: "Preanger Roastery",
   listingId: "listing-1",
   listingTitle: "Arabika Puntang",

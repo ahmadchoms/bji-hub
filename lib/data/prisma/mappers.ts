@@ -56,10 +56,12 @@ export function toProducer(row: Prisma.ProducerGetPayload<object>): Producer {
   return producer;
 }
 
+import { asSellerProfileId, asUserId } from "@/types/ids";
+
 export function toSeller(row: SellerRow): SellerProfile {
   const seller: SellerProfile = {
-    id: row.id,
-    userId: row.userId,
+    id: asSellerProfileId(row.id),
+    userId: asUserId(row.userId),
     businessName: row.businessName,
     slug: row.slug,
     province: row.province,
@@ -134,7 +136,7 @@ export function toListing(row: ListingRow): ListingWithRelations {
   const listing: ListingWithRelations = {
     id: row.id,
     slug: row.slug,
-    sellerId: row.sellerId,
+    sellerId: asSellerProfileId(row.sellerId),
     categoryId: row.categoryId,
     title: row.title,
     description: row.description ?? "",

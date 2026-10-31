@@ -3,6 +3,7 @@ import { randomBytes } from "crypto";
 import { getPool } from "@/lib/db/pool";
 import { assertMockAllowed } from "@/lib/data/mock-guard";
 import { Order, OrderItem, OrderStatus } from "@/types";
+import { asUserId, asSellerProfileId } from "@/types/ids";
 import { mockListings } from "@/lib/mock/data";
 
 // In-memory mock storage fallback for vitest & offline local development
@@ -57,13 +58,13 @@ export async function createOrder(data: {
   const newOrder: Order = {
     id,
     orderNumber,
-    buyerId: data.buyerId ?? null,
+    buyerId: data.buyerId ? asUserId(data.buyerId) : null,
     buyerName: data.buyerName,
     buyerEmail: data.buyerEmail,
     buyerPhone: data.buyerPhone,
     buyerAddress: data.buyerAddress,
     buyerCity: data.buyerCity,
-    sellerId: data.sellerId,
+    sellerId: asSellerProfileId(data.sellerId),
     listingId: data.listingId,
     quantity: data.quantity,
     itemPrice: data.itemPrice,

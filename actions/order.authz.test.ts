@@ -1,45 +1,46 @@
 import { describe, it, expect } from "vitest";
 import { canAccessOrder, type AccessibleOrder } from "@/lib/auth/order-access";
 import type { Session } from "@/lib/auth/roles";
+import { asUserId, asSellerProfileId } from "@/types/ids";
 
 describe("Order Authorization Matrix (AuthZ)", () => {
   const sampleOrder: AccessibleOrder = {
-    buyerId: "user-buyer-a",
-    sellerId: "seller-toko-a",
+    buyerId: asUserId("user-buyer-a"),
+    sellerId: asSellerProfileId("seller-toko-a"),
     accessToken: "valid-secret-token-12345",
   };
 
   const buyerASession: Session = {
     role: "buyer",
-    userId: "user-buyer-a",
+    userId: asUserId("user-buyer-a"),
     sellerId: null,
     email: "buyer.a@example.com",
   };
 
   const buyerBSession: Session = {
     role: "buyer",
-    userId: "user-buyer-b",
+    userId: asUserId("user-buyer-b"),
     sellerId: null,
     email: "buyer.b@example.com",
   };
 
   const sellerASession: Session = {
     role: "seller",
-    userId: "user-seller-a",
-    sellerId: "seller-toko-a",
+    userId: asUserId("user-seller-a"),
+    sellerId: asSellerProfileId("seller-toko-a"),
     email: "seller.a@example.com",
   };
 
   const sellerBSession: Session = {
     role: "seller",
-    userId: "user-seller-b",
-    sellerId: "seller-toko-b",
+    userId: asUserId("user-seller-b"),
+    sellerId: asSellerProfileId("seller-toko-b"),
     email: "seller.b@example.com",
   };
 
   const adminSession: Session = {
     role: "admin",
-    userId: "user-admin",
+    userId: asUserId("user-admin"),
     sellerId: null,
     email: "admin@bijihub.com",
   };

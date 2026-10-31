@@ -13,6 +13,8 @@ import type {
   SellerStats,
   SellerWithRelations,
   Subscription,
+  SellerProfileId,
+  UserId,
 } from "@/types";
 import type { PlanTier } from "@/lib/plans";
 import type { PlanState } from "@/lib/subscription";
@@ -54,7 +56,8 @@ export interface DataRepository {
 
   // sellers
   getSellerBySlug(slug: string): Promise<SellerWithRelations | null>;
-  getSellerById(id: string): Promise<SellerWithRelations | null>;
+  getSellerById(id: SellerProfileId | string): Promise<SellerWithRelations | null>;
+  getSellerByUserId(userId: UserId | string): Promise<SellerWithRelations | null>;
   getSellers(): Promise<SellerProfile[]>;
   getSellerStats(sellerId: string): Promise<SellerStats>;
   getSellerListingPerformance(sellerId: string): Promise<ListingPerformance[]>;

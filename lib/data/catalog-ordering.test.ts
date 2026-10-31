@@ -5,6 +5,7 @@ process.env.DATA_SOURCE = "mock";
 import { getListings } from "@/lib/mock/repository";
 import { createReview } from "@/lib/data/reviews";
 import { mockListings } from "@/lib/mock/data";
+import { asSellerProfileId } from "@/types/ids";
 
 describe("Catalog Ordering & Rating Denormalization (N4)", () => {
   it("sorts by cupping_desc with NULLs last", async () => {
@@ -69,7 +70,7 @@ describe("Catalog Ordering & Rating Denormalization (N4)", () => {
     mockListings.push({
       id: testListingId,
       slug: "test-rating-coffee",
-      sellerId: "seller-1",
+      sellerId: asSellerProfileId("seller-1"),
       categoryId: "cat-2",
       title: "Test Rating Coffee 200g",
       price: 100000,

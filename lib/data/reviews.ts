@@ -542,8 +542,9 @@ export async function reportReview(
     if (r.buyerId) {
       try {
         const { createNotification } = await import("@/lib/data/notifications");
+        const { asUserId } = await import("@/types/ids");
         await createNotification({
-          userId: r.buyerId,
+          userId: asUserId(r.buyerId),
           title: "Ulasan Anda Sedang Ditinjau",
           message: "Ulasan Anda pada produk sedang ditinjau oleh tim moderasi karena adanya laporan.",
           type: "system",

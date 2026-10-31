@@ -12,6 +12,7 @@ import {
   getPendingOrFailedRefunds,
   _resetMockRefundsForTest,
 } from "./refunds";
+import { asUserId, asSellerProfileId } from "@/types/ids";
 
 describe("Refund System (B6)", () => {
   beforeEach(() => {
@@ -188,8 +189,8 @@ describe("Refund System (B6)", () => {
       mockOrders.push({
         id: orderId,
         orderNumber: orderId,
-        buyerId: "user-buyer-1",
-        sellerId: "seller-1",
+        buyerId: asUserId("user-buyer-1"),
+        sellerId: asSellerProfileId("seller-1"),
         listingId: "listing-1",
         listingTitle: "Kopi Gayo",
         listingSlug: "kopi-gayo",
@@ -230,8 +231,8 @@ describe("Refund System (B6)", () => {
       mockOrders.push({
         id: orderId,
         orderNumber: orderId,
-        buyerId: "user-buyer-1",
-        sellerId: "seller-1",
+        buyerId: asUserId("user-buyer-1"),
+        sellerId: asSellerProfileId("seller-1"),
         listingId: "listing-1",
         listingTitle: "Kopi Gayo",
         listingSlug: "kopi-gayo",

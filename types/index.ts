@@ -2,18 +2,8 @@
 export type Role = "BUYER" | "SELLER" | "ADMIN";
 
 // Branded ID types to prevent accidental ID swapping (IDOR / Bug prevention)
-declare const __brand: unique symbol;
-export type Brand<T, B> = T & { readonly [__brand]: B };
-
-export type UserId = Brand<string, "UserId">;
-export type SellerProfileId = Brand<string, "SellerProfileId">;
-export type ListingId = Brand<string, "ListingId">;
-export type OrderId = Brand<string, "OrderId">;
-
-export const asUserId = (id: string): UserId => id as UserId;
-export const asSellerProfileId = (id: string): SellerProfileId => id as SellerProfileId;
-export const asListingId = (id: string): ListingId => id as ListingId;
-export const asOrderId = (id: string): OrderId => id as OrderId;
+import type { UserId, SellerProfileId, ListingId, OrderId } from "./ids";
+export * from "./ids";
 
 export interface BuyerAddress {
   id: string;
@@ -169,7 +159,7 @@ export interface ListingWaitlist {
 export interface Listing {
   id: string;
   slug: string;
-  sellerId: string;
+  sellerId: SellerProfileId;
   categoryId: string;
   title: string;
   description?: string;
@@ -345,13 +335,13 @@ export type OrderStatus =
 export interface Order {
   id: string;
   orderNumber: string;
-  buyerId?: string | null;
+  buyerId?: UserId | null;
   buyerName: string;
   buyerEmail: string;
   buyerPhone: string;
   buyerAddress: string;
   buyerCity: string;
-  sellerId: string;
+  sellerId: SellerProfileId;
   sellerName?: string;
   listingId: string;
   listingTitle?: string;

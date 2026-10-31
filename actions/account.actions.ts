@@ -14,6 +14,7 @@ import { validatePasswordStrength } from "@/lib/auth/password-rules";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { runAfterResponse } from "@/lib/after";
 import type { Order } from "@/types";
+import { asSellerProfileId } from "@/types/ids";
 
 export async function deleteAccountAction(
   confirmation: string,
@@ -82,7 +83,7 @@ export async function deleteAccountAction(
           where: { userId },
           select: { id: true },
         });
-        sellerId = profile?.id ?? null;
+        sellerId = profile ? asSellerProfileId(profile.id) : null;
       }
 
       if (sellerId) {

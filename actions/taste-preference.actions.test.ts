@@ -11,6 +11,7 @@ vi.mock("@/lib/auth/session", () => ({
 }));
 
 import { getSession } from "@/lib/auth/session";
+import { asUserId } from "@/types/ids";
 
 describe("Taste Preference Actions", () => {
   beforeEach(() => {
@@ -39,7 +40,7 @@ describe("Taste Preference Actions", () => {
     vi.mocked(getSession).mockResolvedValue({
       role: "buyer",
       sellerId: null,
-      userId: "test-user-pref-1",
+      userId: asUserId("test-user-pref-1"),
       email: "test@example.com",
     });
 

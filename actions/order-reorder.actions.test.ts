@@ -16,6 +16,7 @@ vi.mock("@/lib/data", () => ({
 import { getSession } from "@/lib/auth/session";
 import { getOrderById } from "@/lib/data/orders";
 import { getListingById } from "@/lib/data";
+import { asUserId } from "@/types/ids";
 
 describe("reorderCompletedItemAction", () => {
   beforeEach(() => {
@@ -37,12 +38,12 @@ describe("reorderCompletedItemAction", () => {
     vi.mocked(getSession).mockResolvedValue({
       role: "buyer",
       sellerId: null,
-      userId: "buyer-original",
+      userId: asUserId("buyer-original"),
     });
 
     vi.mocked(getOrderById).mockResolvedValue({
       id: "ord-1",
-      buyerId: "buyer-different",
+      buyerId: asUserId("buyer-different"),
       listingId: "list-1",
     } as any);
 
@@ -57,7 +58,7 @@ describe("reorderCompletedItemAction", () => {
     vi.mocked(getSession).mockResolvedValue({
       role: "buyer",
       sellerId: null,
-      userId: "buyer-owner",
+      userId: asUserId("buyer-owner"),
     });
 
     vi.mocked(getOrderById).mockResolvedValue({
@@ -97,12 +98,12 @@ describe("reorderCompletedItemAction", () => {
     vi.mocked(getSession).mockResolvedValue({
       role: "buyer",
       sellerId: null,
-      userId: "buyer-owner",
+      userId: asUserId("buyer-owner"),
     });
 
     vi.mocked(getOrderById).mockResolvedValue({
       id: "ord-1",
-      buyerId: "buyer-owner",
+      buyerId: asUserId("buyer-owner"),
       status: "shipped",
       items: [],
     } as any);

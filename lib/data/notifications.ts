@@ -1,6 +1,7 @@
 import { logger } from "@/lib/logger";
 import { randomUUID } from "crypto";
 import { getPool } from "@/lib/db/pool";
+import { asUserId, type UserId, type SellerProfileId } from "@/types/ids";
 
 export interface NotificationRecord {
   id: string;
@@ -52,7 +53,7 @@ export async function getUserNotifications(
 }
 
 export async function notifySeller(
-  sellerProfileId: string,
+  sellerProfileId: SellerProfileId,
   payload: {
     title: string;
     message: string;
@@ -90,7 +91,7 @@ export async function notifySeller(
     logger.warn("notification.seller_user_not_found", { sellerProfileId });
     return null;
   }
-  return createNotification({ ...payload, userId });
+  return createNotification({ ...payload, userId: asUserId(userId) });
 }
 
 export async function notifyAdmins(payload: {
@@ -125,7 +126,7 @@ export async function notifyAdmins(payload: {
   for (const adminId of adminIds) {
     const notif = await createNotification({
       ...payload,
-      userId: adminId,
+      userId: asUserId(adminId),
     });
     results.push(notif);
   }
@@ -133,7 +134,7 @@ export async function notifyAdmins(payload: {
 }
 
 export async function createNotification(data: {
-  userId: string;
+  userId: UserId;
   title: string;
   message: string;
   type?: string;

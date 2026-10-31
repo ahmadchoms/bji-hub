@@ -22,6 +22,7 @@ export const {
   getListingById,
   getSellerBySlug,
   getSellerById,
+  getSellerByUserId,
   getSellers,
   getSellerStats,
   getSellerListingPerformance,

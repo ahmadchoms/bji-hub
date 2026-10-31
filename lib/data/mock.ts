@@ -13,6 +13,7 @@ export const mockRepository: DataRepository = {
   getListingById: repo.getListingById,
   getSellerBySlug: repo.getSellerBySlug,
   getSellerById: repo.getSellerById,
+  getSellerByUserId: repo.getSellerByUserId,
   getSellers: repo.getSellers,
   getSellerStats: repo.getSellerStats,
   getSellerListingPerformance: repo.getSellerListingPerformance,

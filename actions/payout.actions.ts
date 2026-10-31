@@ -202,7 +202,8 @@ export async function updatePayoutStatusAction(
     const req = all.find((p) => p.id === parsed.data.payoutId);
     if (req) {
       const { notifySeller } = await import("@/lib/data/notifications");
-      notifySeller(req.sellerId, {
+      const { asSellerProfileId } = await import("@/types/ids");
+      notifySeller(asSellerProfileId(req.sellerId), {
         title: parsed.data.status === "processed" ? "Pencairan Saldo Berhasil" : "Pengajuan Pencairan Ditolak",
         message: parsed.data.status === "processed"
           ? `Pencairan dana sebesar Rp ${Number(req.amount).toLocaleString("id-ID")} telah diproses ke rekening ${req.bankName}.`

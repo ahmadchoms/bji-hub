@@ -18,6 +18,7 @@ import {
 } from "./order.actions";
 import { getOrderById, createOrder, updateOrderStatus } from "@/lib/data/orders";
 import { getRefundByOrderId } from "@/lib/data/refunds";
+import { asUserId, asSellerProfileId } from "@/types/ids";
 
 describe("createCheckoutOrderAction", () => {
   beforeAll(() => {
@@ -272,8 +273,8 @@ describe("createCheckoutOrderAction", () => {
     const authSession = await import("@/lib/auth/session");
     const spy = vi.spyOn(authSession, "getSession").mockResolvedValueOnce({
       role: "seller",
-      sellerId: "seller-1",
-      userId: "user-seller-1",
+      sellerId: asSellerProfileId("seller-1"),
+      userId: asUserId("user-seller-1"),
       email: "seller@bijihub.com",
     });
 
@@ -343,7 +344,7 @@ describe("createCheckoutOrderAction", () => {
 });
 
 describe("submitReviewAction (B1 verification & uniqueness)", () => {
-  const buyerUserId = "user-buyer-101";
+  const buyerUserId = asUserId("user-buyer-101");
 
   it("rejects review if orderId is missing", async () => {
     const authSession = await import("@/lib/auth/session");
@@ -623,7 +624,7 @@ describe("submitReviewAction (B1 verification & uniqueness)", () => {
       const authSession = await import("@/lib/auth/session");
       const spy = vi.spyOn(authSession, "getSession").mockResolvedValue({
         role: "buyer",
-        userId: buyerId,
+        userId: asUserId(buyerId),
         sellerId: null,
         email: "refund@example.com",
       });
@@ -679,7 +680,7 @@ describe("submitReviewAction (B1 verification & uniqueness)", () => {
       const authSession = await import("@/lib/auth/session");
       const spy = vi.spyOn(authSession, "getSession").mockResolvedValue({
         role: "buyer",
-        userId: buyerId,
+        userId: asUserId(buyerId),
         sellerId: null,
         email: "window@example.com",
       });

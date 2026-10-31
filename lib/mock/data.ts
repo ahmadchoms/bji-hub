@@ -1,4 +1,5 @@
 import { mockProducers } from "../data/producers";
+import { asSellerProfileId, asUserId } from "@/types/ids";
 import {
   Category,
   SellerProfile,
@@ -7,6 +8,13 @@ import {
   Payment,
   Inquiry,
 } from "@/types";
+
+const s1 = asSellerProfileId("seller-1");
+const s2 = asSellerProfileId("seller-2");
+const s3 = asSellerProfileId("seller-3");
+const s4 = asSellerProfileId("seller-4");
+const s5 = asSellerProfileId("seller-5");
+const s6 = asSellerProfileId("seller-6");
 
 /** Returns an ISO string N days from the current moment. Negative N = past. */
 function daysFromNow(n: number): string {
@@ -146,7 +154,7 @@ export const mockListings: ListingWithRelations[] = [
   {
     id: "list-1",
     slug: "gayo-bourbon-natural-anaerobic-specialty",
-    sellerId: "seller-1",
+    sellerId: s1,
     categoryId: "cat-2",
     title: "Aceh Gayo Bourbon Natural Anaerobic 200g",
     description:
@@ -203,7 +211,7 @@ export const mockListings: ListingWithRelations[] = [
   {
     id: "list-2",
     slug: "gunung-puntang-java-preanger-washed-microlot",
-    sellerId: "seller-2",
+    sellerId: s2,
     categoryId: "cat-2",
     title: "Gunung Puntang Java Preanger Washed Microlot 250g",
     description:
@@ -254,7 +262,7 @@ export const mockListings: ListingWithRelations[] = [
   {
     id: "list-3",
     slug: "toraja-sapan-white-honey-process",
-    sellerId: "seller-3",
+    sellerId: s3,
     categoryId: "cat-2",
     title: "Toraja Sapan White Honey Process 200g",
     description:
@@ -304,7 +312,7 @@ export const mockListings: ListingWithRelations[] = [
   {
     id: "list-4",
     slug: "kintamani-bali-natural-citrus-bomb",
-    sellerId: "seller-4",
+    sellerId: s4,
     categoryId: "cat-2",
     title: "Bali Kintamani Natural Citrus Burst 250g",
     description:
@@ -344,7 +352,7 @@ export const mockListings: ListingWithRelations[] = [
   {
     id: "list-5",
     slug: "flores-bajawa-kartika-full-wash-single-origin",
-    sellerId: "seller-5",
+    sellerId: s5,
     categoryId: "cat-2",
     title: "Flores Bajawa Fully Washed 250g",
     description:
@@ -385,7 +393,7 @@ export const mockListings: ListingWithRelations[] = [
   {
     id: "list-6",
     slug: "green-beans-gayo-grade-1-tp-wholesale",
-    sellerId: "seller-1",
+    sellerId: s1,
     categoryId: "cat-1",
     title: "Green Beans Aceh Gayo Grade 1 TP (Triple Picked) 1kg",
     description:
@@ -423,7 +431,7 @@ export const mockListings: ListingWithRelations[] = [
   {
     id: "list-7",
     slug: "green-beans-java-preanger-puntang-honey-lot",
-    sellerId: "seller-2",
+    sellerId: s2,
     categoryId: "cat-1",
     title: "Green Beans Java Preanger Yellow Honey 1kg",
     description:
@@ -463,7 +471,7 @@ export const mockListings: ListingWithRelations[] = [
   {
     id: "list-8",
     slug: "green-beans-toraja-pulu-pulu-specialty",
-    sellerId: "seller-3",
+    sellerId: s3,
     categoryId: "cat-1",
     title: "Green Beans Toraja Pulu-Pulu High Elevation 1kg",
     description:
@@ -502,7 +510,7 @@ export const mockListings: ListingWithRelations[] = [
   {
     id: "list-9",
     slug: "drip-bag-nusantara-specialty-box-isi-5",
-    sellerId: "seller-1",
+    sellerId: s1,
     categoryId: "cat-3",
     title: "Drip Bag Coffee Nusantara Series (Isi 5 Sachet)",
     description:
@@ -544,7 +552,7 @@ export const mockListings: ListingWithRelations[] = [
   {
     id: "list-10",
     slug: "drip-bag-kintamani-fresh-filter-box-isi-10",
-    sellerId: "seller-4",
+    sellerId: s4,
     categoryId: "cat-3",
     title: "Drip Bag Kintamani Morning Citrus (Isi 10 Sachet)",
     description:
@@ -583,7 +591,7 @@ export const mockListings: ListingWithRelations[] = [
   {
     id: "list-11",
     slug: "timemore-chestnut-c3s-manual-hand-grinder",
-    sellerId: "seller-6",
+    sellerId: s6,
     categoryId: "cat-4",
     title: "Timemore Chestnut C3S Pro Hand Coffee Grinder",
     description:
@@ -610,7 +618,7 @@ export const mockListings: ListingWithRelations[] = [
   {
     id: "list-12",
     slug: "origami-dripper-m-matte-ceramic-with-wood-collar",
-    sellerId: "seller-6",
+    sellerId: s6,
     categoryId: "cat-4",
     title: "ORIGAMI Dripper M Matte Ceramic  Wooden Ring Base",
     description:
@@ -639,7 +647,7 @@ export const mockListings: ListingWithRelations[] = [
   {
     id: "list-13",
     slug: "flores-manggarai-yellow-caturra-anaerobic-honey",
-    sellerId: "seller-5",
+    sellerId: s5,
     categoryId: "cat-2",
     title: "Flores Manggarai Yellow Caturra Anaerobic 200g",
     description:
@@ -681,7 +689,7 @@ export const mockListings: ListingWithRelations[] = [
   {
     id: "list-14",
     slug: "green-beans-bali-kintamani-organik-rainforest-1kg",
-    sellerId: "seller-4",
+    sellerId: s4,
     categoryId: "cat-1",
     title: "Green Beans Bali Kintamani Organik 1kg",
     description:
@@ -722,7 +730,7 @@ export const mockListings: ListingWithRelations[] = [
 export const mockSubscriptions: Subscription[] = [
   {
     id: "sub-1",
-    sellerId: "seller-1",
+    sellerId: s1,
     tier: "business",
     status: "active",
     startedAt: daysFromNow(-200),
@@ -730,7 +738,7 @@ export const mockSubscriptions: Subscription[] = [
   },
   {
     id: "sub-2",
-    sellerId: "seller-2",
+    sellerId: s2,
     tier: "growth",
     status: "active",
     startedAt: daysFromNow(-150),
@@ -738,7 +746,7 @@ export const mockSubscriptions: Subscription[] = [
   },
   {
     id: "sub-3",
-    sellerId: "seller-3",
+    sellerId: s3,
     tier: "business",
     status: "active",
     startedAt: daysFromNow(-120),
@@ -746,7 +754,7 @@ export const mockSubscriptions: Subscription[] = [
   },
   {
     id: "sub-4",
-    sellerId: "seller-5",
+    sellerId: s5,
     tier: "growth",
     status: "active",
     startedAt: daysFromNow(-100),
@@ -754,7 +762,7 @@ export const mockSubscriptions: Subscription[] = [
   },
   {
     id: "sub-5",
-    sellerId: "seller-6",
+    sellerId: s6,
     tier: "growth",
     status: "active",
     startedAt: daysFromNow(-60),
@@ -765,7 +773,7 @@ export const mockSubscriptions: Subscription[] = [
 export const mockPayments: Payment[] = [
   {
     id: "pay-1",
-    sellerId: "seller-1",
+    sellerId: s1,
     subscriptionId: "sub-1",
     type: "subscription",
     amount: 1490000,
@@ -776,7 +784,7 @@ export const mockPayments: Payment[] = [
   },
   {
     id: "pay-2",
-    sellerId: "seller-1",
+    sellerId: s1,
     listingId: "list-1",
     type: "boost",
     amount: 50000,
@@ -787,7 +795,7 @@ export const mockPayments: Payment[] = [
   },
   {
     id: "pay-3",
-    sellerId: "seller-2",
+    sellerId: s2,
     subscriptionId: "sub-2",
     type: "subscription",
     amount: 790000,
@@ -798,7 +806,7 @@ export const mockPayments: Payment[] = [
   },
   {
     id: "pay-4",
-    sellerId: "seller-1",
+    sellerId: s1,
     listingId: "list-6",
     type: "boost",
     amount: 50000,

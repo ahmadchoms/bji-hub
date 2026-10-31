@@ -8,6 +8,7 @@ import {
   type Role,
   type Session,
 } from "@/lib/auth/roles";
+import { asUserId, asSellerProfileId } from "@/types/ids";
 import { createClient } from "@/lib/supabase/server";
 import { sanitizeDisplayName } from "@/lib/auth/display-name";
 import { getPrisma } from "@/lib/data/prisma/client";
@@ -71,8 +72,10 @@ export const getSession = cache(async (): Promise<Session> => {
           );
           return {
             role,
-            sellerId: dbUser.sellerProfile?.id ?? null,
-            userId: dbUser.id,
+            sellerId: dbUser.sellerProfile?.id
+              ? asSellerProfileId(dbUser.sellerProfile.id)
+              : null,
+            userId: asUserId(dbUser.id),
             email: dbUser.email,
             name: cleanName,
             isSuspended,
@@ -93,13 +96,13 @@ export const getSession = cache(async (): Promise<Session> => {
   if (!isRole(raw) || raw === "guest") return GUEST_SESSION;
   return {
     role: raw,
-    sellerId: raw === "seller" ? MOCK_SELLER_ID : null,
+    sellerId: raw === "seller" ? asSellerProfileId(MOCK_SELLER_ID) : null,
     userId:
       raw === "seller"
-        ? "user-seller-1"
+        ? asUserId("user-seller-1")
         : raw === "admin"
-          ? "user-admin-1"
-          : "user-buyer-1",
+          ? asUserId("user-admin-1")
+          : asUserId("user-buyer-1"),
     email:
       raw === "seller"
         ? "seller@bijihub.com"

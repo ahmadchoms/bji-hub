@@ -16,6 +16,7 @@ const cspDirectives = [
   "form-action 'self'",
   "object-src 'none'",
   "base-uri 'self'",
+  "report-uri /api/csp-report",
 ].join("; ");
 
 const securityHeaders = [

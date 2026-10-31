@@ -120,6 +120,27 @@ export async function requireRole(
   if (!allowed.includes(session.role)) {
     redirect(`/login?next=${encodeURIComponent(returnTo)}`);
   }
+
+  // Admin MFA Enforcement (Audit #26 / E4)
+  if (allowed.includes("admin") && session.role === "admin") {
+    const isMock = process.env.DATA_SOURCE === "mock" || process.env.NODE_ENV === "test";
+    const mfaRequired = process.env.ADMIN_MFA_REQUIRED !== "false";
+    if (!isMock && mfaRequired && !returnTo.startsWith("/admin/mfa")) {
+      try {
+        const { createClient } = await import("@/lib/supabase/server");
+        const supabase = await createClient();
+        const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        if (aal && aal.currentLevel !== "aal2") {
+          redirect(aal.nextLevel === "aal2" ? "/admin/mfa/verify" : "/admin/mfa/enroll");
+        }
+      } catch (err) {
+        if ((err as Error)?.message?.includes("NEXT_REDIRECT")) {
+          throw err;
+        }
+      }
+    }
+  }
+
   return session;
 }
 

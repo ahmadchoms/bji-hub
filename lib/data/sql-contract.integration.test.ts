@@ -5,6 +5,7 @@ import { getPool } from "@/lib/db/pool";
 import * as addresses from "./addresses";
 import * as auditLogs from "./audit-logs";
 import * as chat from "./chat";
+import * as consents from "./consents";
 import * as notifications from "./notifications";
 import * as orders from "./orders";
 import * as origins from "./origins";
@@ -61,6 +62,11 @@ describe("SQL Schema Contract Integration Tests (A2)", () => {
     await expectNoSchemaError(() => chat.getConversationById(dummyId));
     await expectNoSchemaError(() => chat.getConversationsForUser(dummyId, "buyer"));
     await expectNoSchemaError(() => chat.getMessagesByConversation(dummyId));
+  });
+
+  it("consents: executes queries without schema errors", async () => {
+    await expectNoSchemaError(() => consents.hasUserAcceptedLatest(dummyId, "terms"));
+    await expectNoSchemaError(() => consents.getUserConsents(dummyId));
   });
 
   it("notifications: executes queries without schema errors", async () => {
@@ -516,6 +522,24 @@ describe("Real PostgreSQL Behavioral Tests (A2)", () => {
     } finally {
       await pool.query("DELETE FROM public.conversations WHERE id = $1", [conv.id]);
     }
+  });
+
+  it("F1 User Consents: records consent and confirms latest acceptance", async () => {
+    const record = await consents.recordUserConsent({
+      userId: testBuyerUserId,
+      document: "terms",
+      ipHash: "salt-ip-hash-test",
+    });
+    expect(record.userId).toBe(testBuyerUserId);
+    expect(record.document).toBe("terms");
+
+    const accepted = await consents.hasUserAcceptedLatest(testBuyerUserId, "terms");
+    expect(accepted).toBe(true);
+
+    const userConsents = await consents.getUserConsents(testBuyerUserId);
+    expect(userConsents.some((c) => c.document === "terms")).toBe(true);
+
+    await pool.query("DELETE FROM public.user_consents WHERE user_id = $1", [testBuyerUserId]);
   });
 
   it("RLS enforcement: anon role is blocked from inserting into private tables (if role exists)", async () => {

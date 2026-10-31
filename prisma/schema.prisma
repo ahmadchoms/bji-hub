@@ -75,6 +75,7 @@ model User {
   tastePreference UserTastePreference?
   waitlist        ListingWaitlist[]
   conversations   Conversation[]
+  consents        UserConsent[]
 
   @@map("users")
 }
@@ -707,4 +708,17 @@ model CurrencyRate {
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("currency_rates")
+}
+
+model UserConsent {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String   @map("user_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document   String
+  version    String
+  acceptedAt DateTime @default(now()) @map("accepted_at") @db.Timestamptz
+  ipHash     String?  @map("ip_hash")
+
+  @@unique([userId, document, version])
+  @@map("user_consents")
 }

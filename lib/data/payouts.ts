@@ -7,7 +7,7 @@ import {
   decryptField,
   maskAccountNumber,
 } from "@/lib/crypto/field-encryption";
-import { PayoutRequest, PayoutBatch, PayoutStatus } from "@/types";
+import { PayoutRequest, PayoutBatch, PayoutStatus, Order } from "@/types";
 import { getOrdersBySeller } from "@/lib/data/orders";
 
 // In-memory mock storage fallback for vitest & offline development
@@ -197,7 +197,11 @@ export async function createPayoutRequestAtomic(data: {
 
       const aggRes = await client.query(
         `SELECT
-          COALESCE((SELECT SUM(subtotal) FROM public.orders WHERE seller_id = $1 AND status = 'completed'), 0) AS earned,
+          COALESCE((
+            SELECT SUM(subtotal - CASE WHEN discount_funded_by = 'seller' THEN discount_amount ELSE 0 END)
+            FROM public.orders
+            WHERE seller_id = $1 AND status = 'completed'
+          ), 0) AS earned,
           COALESCE((SELECT SUM(amount) FROM public.payout_requests WHERE seller_id = $1 AND status IN ('pending', 'processed')), 0) AS withdrawn`,
         [data.sellerId],
       );
@@ -281,8 +285,16 @@ export async function getSellerBalanceSummary(sellerId: string): Promise<{
     try {
       const aggRes = await pool.query(
         `SELECT
-          COALESCE((SELECT SUM(subtotal) FROM public.orders WHERE seller_id = $1 AND status = 'completed'), 0) AS earned,
-          COALESCE((SELECT SUM(subtotal) FROM public.orders WHERE seller_id = $1 AND status IN ('paid', 'shipped')), 0) AS pending,
+          COALESCE((
+            SELECT SUM(subtotal - CASE WHEN discount_funded_by = 'seller' THEN discount_amount ELSE 0 END)
+            FROM public.orders
+            WHERE seller_id = $1 AND status = 'completed'
+          ), 0) AS earned,
+          COALESCE((
+            SELECT SUM(subtotal - CASE WHEN discount_funded_by = 'seller' THEN discount_amount ELSE 0 END)
+            FROM public.orders
+            WHERE seller_id = $1 AND status IN ('paid', 'shipped')
+          ), 0) AS pending,
           COALESCE((SELECT SUM(amount) FROM public.payout_requests WHERE seller_id = $1 AND status IN ('pending', 'processed')), 0) AS withdrawn`,
         [sellerId],
       );
@@ -307,15 +319,18 @@ export async function getSellerBalanceSummary(sellerId: string): Promise<{
   const orders = await getOrdersBySeller(sellerId);
   const payouts = await getPayoutRequestsBySeller(sellerId);
 
+  const orderNetRevenue = (o: Order) =>
+    Number(o.subtotal) - (o.discountFundedBy === "seller" ? Number(o.discountAmount || 0) : 0);
+
   // Pending balance: orders paid or in transit
   const pendingBalance = orders
     .filter((o) => o.status === "paid" || o.status === "shipped")
-    .reduce((sum, o) => sum + Number(o.subtotal), 0);
+    .reduce((sum, o) => sum + orderNetRevenue(o), 0);
 
   // Total completed orders earnings
   const totalEarned = orders
     .filter((o) => o.status === "completed")
-    .reduce((sum, o) => sum + Number(o.subtotal), 0);
+    .reduce((sum, o) => sum + orderNetRevenue(o), 0);
 
   // Withdrawn or in progress
   const totalWithdrawn = payouts

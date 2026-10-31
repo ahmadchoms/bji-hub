@@ -43,6 +43,10 @@ export async function createOrder(data: {
   idempotencyKey?: string | null;
   accessToken?: string | null;
   items?: OrderItem[];
+  voucherCode?: string | null;
+  discountAmount?: number;
+  discountFundedBy?: "platform" | "seller" | null;
+  userKey?: string | null;
 }): Promise<Order> {
   const pool = getPool();
   const id = `ord-${Date.now()}-${randomBytes(3).toString("hex")}`;
@@ -83,6 +87,9 @@ export async function createOrder(data: {
     accessToken,
     idempotencyKey: data.idempotencyKey ?? null,
     items: data.items,
+    voucherCode: data.voucherCode ?? null,
+    discountAmount: data.discountAmount ?? 0,
+    discountFundedBy: data.discountFundedBy ?? null,
     createdAt: now,
     updatedAt: now,
   };
@@ -91,14 +98,67 @@ export async function createOrder(data: {
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
+
+      // Atomic voucher redemption inside transaction (C1)
+      if (data.voucherCode && data.discountAmount && data.discountAmount > 0) {
+        const vRes = await client.query(
+          `SELECT id, per_user_limit, seller_id FROM public.vouchers WHERE UPPER(code) = UPPER($1) FOR UPDATE`,
+          [data.voucherCode.trim()],
+        );
+        if (vRes.rowCount === 0) {
+          throw new Error("Voucher tidak valid atau tidak ditemukan");
+        }
+        const voucherId = vRes.rows[0].id;
+        const userKey = data.userKey || data.buyerId || data.buyerEmail.toLowerCase();
+
+        // Advisory xact lock on voucher_id : user_key to prevent concurrent over-redemption
+        await client.query(
+          `SELECT pg_advisory_xact_lock(hashtext($1 || ':' || $2))`,
+          [voucherId, userKey],
+        );
+
+        // Atomically increment voucher used_count
+        const updateVRes = await client.query(
+          `UPDATE public.vouchers
+           SET used_count = used_count + 1
+           WHERE id = $1 AND active AND NOW() BETWEEN starts_at AND ends_at
+             AND (usage_limit IS NULL OR used_count < usage_limit)
+           RETURNING id, per_user_limit`,
+          [voucherId],
+        );
+        if (updateVRes.rowCount === 0) {
+          throw new Error("Voucher sudah tidak aktif, kedaluwarsa, atau kuota telah habis");
+        }
+
+        // Check user redemptions count
+        const redRes = await client.query(
+          `SELECT COUNT(*)::int AS count
+           FROM public.voucher_redemptions
+           WHERE voucher_id = $1 AND user_key = $2 AND released_at IS NULL`,
+          [voucherId, userKey],
+        );
+        const userCount = Number(redRes.rows[0]?.count || 0);
+        if (userCount >= Number(updateVRes.rows[0].per_user_limit)) {
+          throw new Error("Batas penggunaan voucher untuk akun Anda telah tercapai");
+        }
+
+        // Insert redemption record
+        await client.query(
+          `INSERT INTO public.voucher_redemptions (voucher_id, user_key, order_id, amount)
+           VALUES ($1, $2, $3, $4)`,
+          [voucherId, userKey, id, data.discountAmount],
+        );
+      }
+
       const insertRes = await client.query(
         `INSERT INTO public.orders (
           id, order_number, buyer_id, buyer_name, buyer_email, buyer_phone,
           buyer_address, buyer_city, seller_id, listing_id, quantity, item_price,
           subtotal, shipping_cost, service_fee, total_amount, shipping_courier,
-          status, snap_token, midtrans_order_id, notes, access_token, idempotency_key, payment_provider, created_at, updated_at
+          status, snap_token, midtrans_order_id, notes, access_token, idempotency_key, payment_provider,
+          voucher_code, discount_amount, discount_funded_by, created_at, updated_at
         ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29
         )
         ON CONFLICT (idempotency_key) WHERE idempotency_key IS NOT NULL
         DO NOTHING
@@ -128,6 +188,9 @@ export async function createOrder(data: {
           accessToken,
           data.idempotencyKey ?? null,
           data.paymentProvider ?? "midtrans",
+          data.voucherCode ?? null,
+          data.discountAmount ?? 0,
+          data.discountFundedBy ?? null,
           now,
           now,
         ],
@@ -217,6 +280,34 @@ export async function createOrder(data: {
       if (listing.stock <= 0) {
         listing.status = "archived";
       }
+    }
+  }
+
+  // Mock voucher redemption tracking (C1)
+  if (data.voucherCode && data.discountAmount && data.discountAmount > 0) {
+    const { mockVouchers, mockVoucherRedemptions } = await import("@/lib/data/vouchers");
+    const v = mockVouchers.find((it) => it.code.toUpperCase() === data.voucherCode?.trim().toUpperCase());
+    if (v) {
+      const userKey = data.userKey || data.buyerId || data.buyerEmail.toLowerCase();
+      const userCount = mockVoucherRedemptions.filter(
+        (r) => r.voucherId === v.id && r.userKey === userKey && !r.releasedAt,
+      ).length;
+      if (userCount >= v.perUserLimit) {
+        throw new Error("Batas penggunaan voucher untuk akun Anda telah tercapai");
+      }
+      if (v.usageLimit !== null && v.usageLimit !== undefined && v.usedCount >= v.usageLimit) {
+        throw new Error("Kuota penggunaan voucher telah habis");
+      }
+      v.usedCount += 1;
+      mockVoucherRedemptions.push({
+        id: `vr-${Date.now()}`,
+        voucherId: v.id,
+        userKey,
+        orderId: id,
+        amount: data.discountAmount,
+        releasedAt: null,
+        createdAt: now,
+      });
     }
   }
 
@@ -330,6 +421,9 @@ export async function getOrderById(idOrNumber: string): Promise<Order | null> {
           invoiceNumber: row.invoice_number ?? null,
           invoiceIssuedAt: row.invoice_issued_at ? new Date(row.invoice_issued_at).toISOString() : null,
           taxAmount: Number(row.tax_amount || 0),
+          voucherCode: row.voucher_code ?? null,
+          discountAmount: Number(row.discount_amount || 0),
+          discountFundedBy: row.discount_funded_by ?? null,
           createdAt: row.created_at,
           updatedAt: row.updated_at,
         };
@@ -405,6 +499,9 @@ export async function getOrdersBySeller(sellerId: string): Promise<Order[]> {
         invoiceNumber: row.invoice_number ?? null,
         invoiceIssuedAt: row.invoice_issued_at ? new Date(row.invoice_issued_at).toISOString() : null,
         taxAmount: Number(row.tax_amount || 0),
+        voucherCode: row.voucher_code ?? null,
+        discountAmount: Number(row.discount_amount || 0),
+        discountFundedBy: row.discount_funded_by ?? null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       }));
@@ -470,6 +567,9 @@ export async function getAllOrders(): Promise<Order[]> {
         invoiceNumber: row.invoice_number ?? null,
         invoiceIssuedAt: row.invoice_issued_at ? new Date(row.invoice_issued_at).toISOString() : null,
         taxAmount: Number(row.tax_amount || 0),
+        voucherCode: row.voucher_code ?? null,
+        discountAmount: Number(row.discount_amount || 0),
+        discountFundedBy: row.discount_funded_by ?? null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       }));
@@ -570,6 +670,9 @@ export async function getOrdersByBuyer(
         invoiceNumber: row.invoice_number ?? null,
         invoiceIssuedAt: row.invoice_issued_at ? new Date(row.invoice_issued_at).toISOString() : null,
         taxAmount: Number(row.tax_amount || 0),
+        voucherCode: row.voucher_code ?? null,
+        discountAmount: Number(row.discount_amount || 0),
+        discountFundedBy: row.discount_funded_by ?? null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       }));
@@ -863,6 +966,24 @@ export async function transitionOrderStatus(
             [item.quantity, item.listingId],
           );
         }
+
+        // Release voucher quota if a voucher was redeemed for this order (C1)
+        const releaseRes = await client.query(
+          `UPDATE public.voucher_redemptions
+           SET released_at = $1::timestamptz
+           WHERE order_id = $2 AND released_at IS NULL
+           RETURNING voucher_id`,
+          [now, internalOrderId],
+        );
+        if (releaseRes.rowCount && releaseRes.rowCount > 0) {
+          const vId = releaseRes.rows[0].voucher_id;
+          await client.query(
+            `UPDATE public.vouchers
+             SET used_count = GREATEST(0, used_count - 1)
+             WHERE id = $1`,
+            [vId],
+          );
+        }
       }
 
       await client.query("COMMIT");
@@ -972,6 +1093,14 @@ export async function transitionOrderStatus(
       listing.stock = listing.stock + (existing.quantity || 1);
       if (listing.status === "archived" && wasZero) listing.status = "active";
     }
+
+    const { mockVouchers, mockVoucherRedemptions } = await import("@/lib/data/vouchers");
+    const red = mockVoucherRedemptions.find((r) => r.orderId === existing.id && !r.releasedAt);
+    if (red) {
+      red.releasedAt = now;
+      const v = mockVouchers.find((it) => it.id === red.voucherId);
+      if (v) v.usedCount = Math.max(0, v.usedCount - 1);
+    }
   }
 
   return { applied: true, order: existing };
@@ -1078,6 +1207,24 @@ export async function cancelOrderWithRefund(
         );
       }
 
+      // Release voucher quota if a voucher was redeemed for this order (C1)
+      const releaseRes = await client.query(
+        `UPDATE public.voucher_redemptions
+         SET released_at = $1::timestamptz
+         WHERE order_id = $2 AND released_at IS NULL
+         RETURNING voucher_id`,
+        [now, internalOrderId],
+      );
+      if (releaseRes.rowCount && releaseRes.rowCount > 0) {
+        const vId = releaseRes.rows[0].voucher_id;
+        await client.query(
+          `UPDATE public.vouchers
+           SET used_count = GREATEST(0, used_count - 1)
+           WHERE id = $1`,
+          [vId],
+        );
+      }
+
       // 4. Create refund record atomically
       const refundId = `ref-${internalOrderId}`;
       const refundAmount = Number(row.total_amount);
@@ -1140,6 +1287,13 @@ export async function cancelOrderWithRefund(
   }
 
   const { mockRefunds } = await import("@/lib/data/refunds");
+  const { mockVouchers, mockVoucherRedemptions } = await import("@/lib/data/vouchers");
+  const red = mockVoucherRedemptions.find((r) => r.orderId === existing.id && !r.releasedAt);
+  if (red) {
+    red.releasedAt = now;
+    const v = mockVouchers.find((it) => it.id === red.voucherId);
+    if (v) v.usedCount = Math.max(0, v.usedCount - 1);
+  }
   let refundRecord = mockRefunds.find((r) => r.orderId === existing.id);
   if (!refundRecord) {
     refundRecord = {

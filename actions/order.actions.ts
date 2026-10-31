@@ -71,6 +71,7 @@ const checkoutSchema = z.object({
   shippingCourier: z.string().optional(), // ignored in favor of server calculation
   grindSize: z.string().optional(),
   notes: z.string().max(500).optional(),
+  voucherCode: z.string().trim().max(50).optional(),
   items: z.array(checkoutItemSchema).optional(),
 });
 
@@ -287,7 +288,31 @@ export async function createCheckoutOrderAction(
   const serverShippingCourier = `${matchedRate.courierName} ${matchedRate.service}`;
 
   const serviceFee = 1500;
-  const totalAmount = subtotal + serverShippingCost + serviceFee;
+
+  // 5b. Voucher validation (C1)
+  let voucherCode: string | null = null;
+  let discountAmount = 0;
+  let discountFundedBy: "platform" | "seller" | null = null;
+
+  if (parsed.data.voucherCode && parsed.data.voucherCode.trim()) {
+    const { validateVoucher } = await import("@/lib/data/vouchers");
+    const userKey = session.userId || `guest:${clientIp}`;
+    const vRes = await validateVoucher({
+      code: parsed.data.voucherCode,
+      subtotal,
+      shippingCost: serverShippingCost,
+      userKey,
+      sellerId: targetSellerId,
+    });
+    if (!vRes.valid || !vRes.voucher || vRes.discountAmount === undefined) {
+      return fail(vRes.reason || "Voucher tidak valid untuk pesanan ini");
+    }
+    voucherCode = vRes.voucher.code;
+    discountAmount = vRes.discountAmount;
+    discountFundedBy = vRes.discountFundedBy || "platform";
+  }
+
+  const totalAmount = Math.max(0, subtotal + serverShippingCost + serviceFee - discountAmount);
   const multiItemSummary =
     summaryList.length > 1 ? `[Paket Pesanan: ${summaryList.join(", ")}]` : "";
   const singleItemGrind =
@@ -326,6 +351,10 @@ export async function createCheckoutOrderAction(
     idempotencyKey,
     accessToken,
     items: orderItemsData,
+    voucherCode,
+    discountAmount,
+    discountFundedBy,
+    userKey: buyerId || normalizedEmail,
   });
 
   // 7. Request Payment Token via provider
@@ -333,6 +362,36 @@ export async function createCheckoutOrderAction(
   let snapToken: string | null = null;
   let paymentToken: string | null = null;
   try {
+    const paymentItems = [
+      ...orderItemsData.map((item) => ({
+        id: item.listingId,
+        name: item.title,
+        price: item.unitPrice,
+        quantity: item.quantity,
+      })),
+      {
+        id: "SHIPPING",
+        name: "Ongkos Kirim",
+        price: serverShippingCost,
+        quantity: 1,
+      },
+      {
+        id: "SERVICE_FEE",
+        name: "Biaya Layanan",
+        price: serviceFee,
+        quantity: 1,
+      },
+    ];
+
+    if (discountAmount > 0 && voucherCode) {
+      paymentItems.push({
+        id: "VOUCHER",
+        name: `Diskon Voucher (${voucherCode})`,
+        price: -discountAmount,
+        quantity: 1,
+      });
+    }
+
     const paymentResult = await provider.createPayment({
       orderRef: order.midtransOrderId || order.orderNumber,
       amount: order.totalAmount,
@@ -341,12 +400,7 @@ export async function createCheckoutOrderAction(
         email: buyerEmail,
         phone: buyerPhone,
       },
-      items: orderItemsData.map((item) => ({
-        id: item.listingId,
-        name: item.title,
-        price: item.unitPrice,
-        quantity: item.quantity,
-      })),
+      items: paymentItems,
     });
     if (paymentResult) {
       paymentToken = paymentResult.clientToken;

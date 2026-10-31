@@ -37,6 +37,7 @@ import {
   createCheckoutOrderAction,
   getShippingRatesAction,
 } from "@/actions/order.actions";
+import { validateVoucherAction } from "@/actions/voucher.actions";
 import { updateBuyerProfileAction } from "@/actions/auth.actions";
 import { useCart } from "@/lib/cart";
 import { computeTotalWeightGrams } from "@/lib/shipping-weight";
@@ -140,7 +141,57 @@ export function CheckoutForm({
   const totalWeightGrams = computeTotalWeightGrams(weightItems, activeQuantity);
   const shippingCost = selectedCourier?.cost || 0;
   const serviceFee = 1500;
-  const totalAmount = subtotal + shippingCost + serviceFee;
+  const [voucherCodeInput, setVoucherCodeInput] = useState("");
+  const [appliedVoucher, setAppliedVoucher] = useState<{
+    code: string;
+    discountAmount: number;
+    discountFundedBy: string;
+  } | null>(null);
+  const [isValidatingVoucher, setIsValidatingVoucher] = useState(false);
+  const [voucherError, setVoucherError] = useState<string | null>(null);
+
+  const discountAmount = appliedVoucher?.discountAmount || 0;
+  const totalAmount = Math.max(0, subtotal + shippingCost + serviceFee - discountAmount);
+
+  const handleApplyVoucher = async () => {
+    if (!voucherCodeInput.trim()) {
+      setVoucherError("Masukkan kode voucher");
+      return;
+    }
+    setIsValidatingVoucher(true);
+    setVoucherError(null);
+    try {
+      const res = await validateVoucherAction({
+        code: voucherCodeInput.trim(),
+        subtotal,
+        shippingCost,
+        sellerId: listing.sellerId,
+      });
+      if (!res.success) {
+        setVoucherError(res.error || "Voucher tidak valid");
+        setAppliedVoucher(null);
+        toast.error("Voucher tidak valid", { description: res.error });
+      } else {
+        setAppliedVoucher({
+          code: res.data.voucher.code,
+          discountAmount: res.data.discountAmount,
+          discountFundedBy: res.data.discountFundedBy,
+        });
+        setVoucherError(null);
+        toast.success(`Voucher ${res.data.voucher.code} berhasil diterapkan!`);
+      }
+    } catch {
+      setVoucherError("Gagal memeriksa voucher");
+    } finally {
+      setIsValidatingVoucher(false);
+    }
+  };
+
+  const handleRemoveVoucher = () => {
+    setAppliedVoucher(null);
+    setVoucherCodeInput("");
+    setVoucherError(null);
+  };
 
   const midtransClientKey =
     process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY ||
@@ -257,6 +308,7 @@ export function CheckoutForm({
           idempotencyKey: idempotencyKeyRef.current,
           grindSize: grindParam,
           notes: notes.trim(),
+          voucherCode: appliedVoucher?.code,
           ...(activeItems && activeItems.length > 0
             ? {
                 items: activeItems.map((i) => ({
@@ -892,6 +944,68 @@ export function CheckoutForm({
                 {formatRupiah(serviceFee)}
               </span>
             </div>
+
+            {/* Voucher input & applied status (C1) */}
+            <div className="pt-2 pb-1 border-t border-neutral-200">
+              <label className="block text-xs font-medium text-neutral-800 mb-1.5">
+                Punya Kode Voucher?
+              </label>
+              {appliedVoucher ? (
+                <div className="flex items-center justify-between p-2.5 bg-emerald-50 border border-emerald-200 rounded">
+                  <div className="flex items-center gap-1.5 text-xs text-emerald-900 font-medium">
+                    <Check className="w-3.5 h-3.5 text-emerald-700" />
+                    <span>{appliedVoucher.code}</span>
+                    <span className="font-mono text-emerald-700 font-semibold">
+                      (-{formatRupiah(appliedVoucher.discountAmount)})
+                    </span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRemoveVoucher}
+                    className="h-6 px-2 text-xs text-neutral-600 hover:text-neutral-900"
+                  >
+                    Hapus
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    type="text"
+                    placeholder="Contoh: BIJIBARU10"
+                    value={voucherCodeInput}
+                    onChange={(e) => {
+                      setVoucherCodeInput(e.target.value.toUpperCase());
+                      if (voucherError) setVoucherError(null);
+                    }}
+                    className="h-8 text-xs font-mono uppercase bg-surface-base"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleApplyVoucher}
+                    disabled={isValidatingVoucher || !voucherCodeInput.trim()}
+                    className="h-8 px-3 text-xs shrink-0"
+                  >
+                    {isValidatingVoucher ? <Loader2 className="w-3 h-3 animate-spin" /> : "Pakai"}
+                  </Button>
+                </div>
+              )}
+              {voucherError && (
+                <p className="text-xs text-rose-600 mt-1">{voucherError}</p>
+              )}
+            </div>
+
+            {appliedVoucher && (
+              <div className="flex justify-between text-xs text-emerald-700 font-medium">
+                <span>Diskon Voucher ({appliedVoucher.code}):</span>
+                <span className="font-mono tabular-nums font-semibold">
+                  -{formatRupiah(appliedVoucher.discountAmount)}
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="pt-3 border-t border-neutral-200 flex items-baseline justify-between">

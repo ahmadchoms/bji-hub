@@ -110,6 +110,7 @@ model SellerProfile {
   orders        Order[]
   payoutRequests PayoutRequest[]
   producerSellers ProducerSeller[]
+  vouchers      Voucher[]
 
   @@index([businessName(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_seller_profiles_business_name_trgm")
   @@map("seller_profiles")
@@ -380,6 +381,9 @@ model Order {
   invoiceNumber      String?       @unique(map: "orders_invoice_number_uq") @map("invoice_number")
   invoiceIssuedAt    DateTime?     @map("invoice_issued_at") @db.Timestamptz
   taxAmount          Decimal       @default(0) @map("tax_amount") @db.Decimal(14, 2)
+  voucherCode        String?       @map("voucher_code")
+  discountAmount     Decimal       @default(0) @map("discount_amount") @db.Decimal(14, 2)
+  discountFundedBy   String?       @map("discount_funded_by")
   createdAt          DateTime      @default(now()) @map("created_at")
   updatedAt          DateTime      @default(now()) @updatedAt @map("updated_at")
 
@@ -625,4 +629,41 @@ model InvoiceSequence {
   lastSeq Int    @default(0) @map("last_seq")
 
   @@map("invoice_sequences")
+}
+
+model Voucher {
+  id           String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code         String
+  sellerId     String?             @map("seller_id")
+  type         String
+  value        Decimal             @db.Decimal(14, 2)
+  minSubtotal  Decimal             @default(0) @map("min_subtotal") @db.Decimal(14, 2)
+  maxDiscount  Decimal?            @map("max_discount") @db.Decimal(14, 2)
+  startsAt     DateTime            @map("starts_at") @db.Timestamptz
+  endsAt       DateTime            @map("ends_at") @db.Timestamptz
+  usageLimit   Int?                @map("usage_limit")
+  perUserLimit Int                 @default(1) @map("per_user_limit")
+  usedCount    Int                 @default(0) @map("used_count")
+  active       Boolean             @default(true)
+  createdAt    DateTime            @default(now()) @map("created_at") @db.Timestamptz
+
+  seller       SellerProfile?      @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  redemptions  VoucherRedemption[]
+
+  @@map("vouchers")
+}
+
+model VoucherRedemption {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  voucherId  String    @map("voucher_id") @db.Uuid
+  userKey    String    @map("user_key")
+  orderId    String    @map("order_id")
+  amount     Decimal   @db.Decimal(14, 2)
+  releasedAt DateTime? @map("released_at") @db.Timestamptz
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  voucher    Voucher   @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+
+  @@unique([voucherId, orderId], map: "voucher_redemptions_voucher_id_order_id_key")
+  @@map("voucher_redemptions")
 }

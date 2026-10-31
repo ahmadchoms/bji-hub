@@ -11,6 +11,7 @@ import * as payouts from "./payouts";
 import * as producers from "./producers";
 import * as refunds from "./refunds";
 import * as reviews from "./reviews";
+import * as vouchers from "./vouchers";
 import * as webhookEvents from "./webhook-events";
 import * as roastBatch from "../coffee/roast-batch";
 import * as shippingSla from "../coffee/shipping-sla";
@@ -100,6 +101,12 @@ describe("SQL Schema Contract Integration Tests (A2)", () => {
 
   it("reviews: executes queries without schema errors", async () => {
     await expectNoSchemaError(() => reviews.getReviewsByListing(dummyId));
+  });
+
+  it("vouchers: executes queries without schema errors", async () => {
+    await expectNoSchemaError(() => vouchers.getAllVouchers());
+    await expectNoSchemaError(() => vouchers.getVoucherByCode("DUMMY"));
+    await expectNoSchemaError(() => vouchers.getVouchersBySeller(dummyId));
   });
 
   it("webhook-events: executes queries without schema errors", async () => {
@@ -369,6 +376,103 @@ describe("Real PostgreSQL Behavioral Tests (A2)", () => {
       if (testOrderIds.length > 0) {
         await pool.query("DELETE FROM public.orders WHERE id = ANY($1)", [testOrderIds]);
       }
+    }
+  });
+
+  it("C1 Vouchers: 10 parallel redemptions on usage_limit=3 result in exactly 3 successes", async () => {
+    // Ensure sufficient listing stock for 10 concurrent orders
+    await pool.query("UPDATE public.listings SET stock = 100, status = 'active' WHERE id = $1", [testListingId]);
+
+    const voucherCode = `CONCUR-${Date.now()}`;
+    const v = await vouchers.createVoucher({
+      code: voucherCode,
+      type: "fixed",
+      value: 10000,
+      minSubtotal: 20000,
+      startsAt: new Date(Date.now() - 3600000).toISOString(),
+      endsAt: new Date(Date.now() + 86400000).toISOString(),
+      usageLimit: 3,
+      perUserLimit: 1,
+    });
+
+    const createdOrders: string[] = [];
+    try {
+      // Run 10 parallel order creations with different user keys
+      const attempts = await Promise.allSettled(
+        Array.from({ length: 10 }).map((_, i) =>
+          orders.createOrder({
+            buyerName: `Buyer ${i}`,
+            buyerEmail: `buyer${i}@example.com`,
+            buyerPhone: "08123456789",
+            buyerAddress: "Jl. Kopi No. 1",
+            buyerCity: "Jakarta",
+            sellerId: testSellerProfileId,
+            listingId: testListingId,
+            quantity: 1,
+            itemPrice: 50000,
+            subtotal: 50000,
+            shippingCost: 10000,
+            serviceFee: 1500,
+            totalAmount: 51500,
+            shippingCourier: "JNE REG",
+            voucherCode: voucherCode,
+            discountAmount: 10000,
+            discountFundedBy: "platform",
+            userKey: `user-${i}`,
+          })
+        )
+      );
+
+      const succeeded = attempts.filter((r) => r.status === "fulfilled");
+      const failed = attempts.filter((r) => r.status === "rejected");
+
+      expect(succeeded.length).toBe(3);
+      expect(failed.length).toBe(7);
+
+      for (const s of succeeded) {
+        if (s.status === "fulfilled") {
+          createdOrders.push(s.value.id);
+          expect(s.value.voucherCode).toBe(voucherCode);
+          expect(s.value.discountAmount).toBe(10000);
+        }
+      }
+
+      // Canceling 1 successful order should release quota and decrement used_count
+      const orderToCancel = createdOrders[0];
+      const cancelRes = await orders.transitionOrderStatus(orderToCancel, "canceled");
+      expect(cancelRes.applied).toBe(true);
+
+      const updatedVoucher = await vouchers.getVoucherByCode(voucherCode);
+      expect(updatedVoucher?.usedCount).toBe(2);
+
+      // Now another user can redeem
+      const retryOrder = await orders.createOrder({
+        buyerName: "Buyer Retry",
+        buyerEmail: "retry@example.com",
+        buyerPhone: "08123456789",
+        buyerAddress: "Jl. Kopi No. 1",
+        buyerCity: "Jakarta",
+        sellerId: testSellerProfileId,
+        listingId: testListingId,
+        quantity: 1,
+        itemPrice: 50000,
+        subtotal: 50000,
+        shippingCost: 10000,
+        serviceFee: 1500,
+        totalAmount: 51500,
+        shippingCourier: "JNE REG",
+        voucherCode: voucherCode,
+        discountAmount: 10000,
+        discountFundedBy: "platform",
+        userKey: "user-retry",
+      });
+      expect(retryOrder.id).toBeDefined();
+      createdOrders.push(retryOrder.id);
+    } finally {
+      if (createdOrders.length > 0) {
+        await pool.query("DELETE FROM public.orders WHERE id = ANY($1)", [createdOrders]);
+      }
+      await pool.query("DELETE FROM public.vouchers WHERE id = $1", [v.id]);
     }
   });
 

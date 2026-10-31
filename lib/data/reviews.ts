@@ -380,16 +380,17 @@ export async function reportReview(
        GROUP BY u.id, u."createdAt"`,
       [reporterId],
     );
-    if (reporterRes.rows.length > 0) {
-      const reporterRow = reporterRes.rows[0];
-      const createdAtVal = reporterRow.createdAt || reporterRow.created_at;
-      const ageDays = (Date.now() - new Date(createdAtVal).getTime()) / (24 * 60 * 60 * 1000);
-      if (ageDays < 7) {
-        throw new Error("Akun Anda harus berumur minimal 7 hari untuk dapat melaporkan ulasan.");
-      }
-      if (Number(reporterRow.completed_orders || 0) < 1) {
-        throw new Error("Anda harus memiliki minimal 1 pesanan selesai untuk dapat melaporkan ulasan.");
-      }
+    const reporterRow = reporterRes.rows[0];
+    if (!reporterRow) {
+      throw new Error("Akun pelapor tidak ditemukan.");
+    }
+    const createdAtVal = reporterRow.createdAt || reporterRow.created_at;
+    const ageDays = (Date.now() - new Date(createdAtVal).getTime()) / (24 * 60 * 60 * 1000);
+    if (ageDays < 7) {
+      throw new Error("Akun Anda harus berumur minimal 7 hari untuk dapat melaporkan ulasan.");
+    }
+    if (Number(reporterRow.completed_orders || 0) < 1) {
+      throw new Error("Anda harus memiliki minimal 1 pesanan selesai untuk dapat melaporkan ulasan.");
     }
 
     // 3. Check existing report status (do not reopen dismissed/actioned reports)

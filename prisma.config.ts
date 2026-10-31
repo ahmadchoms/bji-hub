@@ -3,7 +3,10 @@ import { defineConfig } from "@prisma/config";
 
 config({ path: [".env.local", ".env"], quiet: true });
 
-const url = process.env["DIRECT_URL"] ?? process.env["DATABASE_URL"];
+const url =
+  process.env["TEST_DATABASE_URL"] ??
+  process.env["DIRECT_URL"] ??
+  process.env["DATABASE_URL"];
 const shadowDatabaseUrl = process.env["SHADOW_DATABASE_URL"];
 
 if (!url && process.argv.some((arg) => arg === "migrate" || arg === "db")) {

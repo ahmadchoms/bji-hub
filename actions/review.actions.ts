@@ -81,6 +81,13 @@ export async function reportReviewAction(
     }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Gagal melaporkan ulasan.";
+    if (
+      msg.includes("Akun Anda harus berumur") ||
+      msg.includes("minimal 1 pesanan selesai") ||
+      msg.includes("Akun pelapor tidak ditemukan")
+    ) {
+      return fail("Akun Anda belum memenuhi syarat melaporkan ulasan.");
+    }
     return fail(msg);
   }
 

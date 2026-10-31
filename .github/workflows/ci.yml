@@ -82,6 +82,17 @@ jobs:
         env:
           SHADOW_DATABASE_URL: postgresql://postgres:postgrespassword@localhost:5432/biji_shadow
 
+      - name: Verify Contract Coverage of Raw SQL Modules (A2)
+        run: node scripts/check-contract-coverage.mjs
+
+      - name: Integration tests (real Postgres) (A2)
+        run: npm run test:integration
+        env:
+          DATA_SOURCE: prisma
+          DATABASE_URL: postgresql://postgres:postgrespassword@localhost:5432/biji_test
+          TEST_DATABASE_URL: postgresql://postgres:postgrespassword@localhost:5432/biji_test
+          DIRECT_URL: postgresql://postgres:postgrespassword@localhost:5432/biji_test
+
       - name: Vitest Suite (Unit & Postgres Contract Tests)
         run: npm test
         env:

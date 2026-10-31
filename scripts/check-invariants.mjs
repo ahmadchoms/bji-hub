@@ -24,8 +24,14 @@ const sourceFiles = [
   ...walk("app"),
 ];
 
+function isTestFile(filePath) {
+  const norm = filePath.replace(/\\/g, "/");
+  return norm.includes(".test.") || norm.includes(".spec.") || norm.startsWith("lib/test/");
+}
+
 // Invariant 1: Single pg.Pool instance (only in lib/db/pool.ts and lib/data/prisma/client.ts)
 for (const file of sourceFiles) {
+  if (isTestFile(file)) continue;
   const normalized = file.replace(/\\/g, "/");
   if (normalized === "lib/db/pool.ts" || normalized === "lib/data/prisma/client.ts") continue;
   const content = fs.readFileSync(file, "utf8");
@@ -76,7 +82,7 @@ const validMappedTables = new Set(
 );
 
 for (const file of sourceFiles) {
-  if (file.includes(".test.") || file.includes(".spec.")) continue;
+  if (isTestFile(file)) continue;
   const content = fs.readFileSync(file, "utf8");
   const publicTableMatches = content.matchAll(/\bpublic\.([a-zA-Z0-9_]+)\b/g);
   for (const match of publicTableMatches) {

@@ -85,8 +85,8 @@ export async function addRoastBatch(params: {
       // Derive roast date on taste_profiles from this batch
       await client.query(
         `UPDATE public.taste_profiles
-         SET roast_date = $1
-         WHERE listing_id = $2`,
+         SET "roastDate" = $1
+         WHERE "listingId" = $2`,
         [`${params.roastedOn}T00:00:00+07:00`, params.listingId]
       );
 

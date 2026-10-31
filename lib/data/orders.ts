@@ -722,14 +722,14 @@ export async function transitionOrderStatus(
       // 2. Update status and extra fields
       await client.query(
         `UPDATE public.orders
-         SET status = $1,
-             updated_at = $2,
+         SET status = $1::"OrderStatus",
+             updated_at = $2::timestamp,
              tracking_number = COALESCE($3, tracking_number),
              dispute_reason = COALESCE($4, dispute_reason),
              dispute_evidence_url = COALESCE($5, dispute_evidence_url),
-             paid_at = CASE WHEN $1 = 'paid' AND paid_at IS NULL THEN $2::timestamptz ELSE paid_at END,
-             shipped_at = CASE WHEN $1 = 'shipped' AND shipped_at IS NULL THEN $2::timestamptz ELSE shipped_at END,
-             completed_at = CASE WHEN $1 = 'completed' AND completed_at IS NULL THEN $2::timestamptz ELSE completed_at END
+             paid_at = CASE WHEN $1::text = 'paid' AND paid_at IS NULL THEN $2::timestamp ELSE paid_at END,
+             shipped_at = CASE WHEN $1::text = 'shipped' AND shipped_at IS NULL THEN $2::timestamp ELSE shipped_at END,
+             completed_at = CASE WHEN $1::text = 'completed' AND completed_at IS NULL THEN $2::timestamp ELSE completed_at END
          WHERE id = $6`,
         [
           to,
@@ -757,17 +757,20 @@ export async function transitionOrderStatus(
         const listingIds = itemsToUpdate.map((i) => i.listingId);
         if (listingIds.length > 0) {
           const roastBatchRes = await client.query(
-            `SELECT roasted_on FROM public.roast_batches
-             WHERE listing_id = ANY($1) AND roasted_on <= $2::date
-             ORDER BY roasted_on ASC LIMIT 1`,
+            `SELECT MIN(latest.roasted_on)::text AS roasted_on
+             FROM (
+               SELECT listing_id, MAX(roasted_on) AS roasted_on
+               FROM public.roast_batches
+               WHERE listing_id = ANY($1) AND roasted_on <= $2::date
+               GROUP BY listing_id
+             ) latest`,
             [listingIds, now]
           );
           let roastDate = roastBatchRes.rows[0]?.roasted_on;
           if (!roastDate) {
             const tasteRes = await client.query(
-              `SELECT roast_date FROM public.taste_profiles
-               WHERE listing_id = ANY($1) AND roast_date::date <= $2::date
-               ORDER BY roast_date ASC LIMIT 1`,
+              `SELECT MIN("roastDate"::date)::text AS roast_date FROM public.taste_profiles
+               WHERE "listingId" = ANY($1) AND "roastDate"::date <= $2::date`,
               [listingIds, now]
             );
             roastDate = tasteRes.rows[0]?.roast_date;

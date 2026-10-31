@@ -23,6 +23,7 @@ import {
   Package,
   CreditCard,
   Search,
+  MessageSquare,
 } from "lucide-react";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
@@ -457,7 +458,15 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
 
                 {/* 4. Baris Bawah Kanan: Lihat Detail Transaksi + Beli Lagi + Menu Aksi */}
                 <div className="flex flex-wrap items-center justify-end gap-2.5 pt-2 border-t border-neutral-100">
-                  {/* Tombol Lihat Detail Transaksi */}
+                  {/* Tombol Lihat Detail Transaksi & Chat Penjual (C2) */}
+                  <Link
+                    href={`/orders/${ord.id}/chat`}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-700 hover:text-neutral-900 px-2.5 py-1 border border-neutral-300 rounded hover:bg-neutral-50 transition-colors"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5 text-primary-700" />
+                    Chat Penjual
+                  </Link>
+
                   <OrderDetailDialog
                     order={ord}
                     productImage={productImg}

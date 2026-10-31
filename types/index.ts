@@ -429,3 +429,29 @@ export interface ReviewReport {
   createdAt: string;
 }
 
+export interface Conversation {
+  id: string;
+  buyerId: string;
+  sellerId: string;
+  orderId?: string | null;
+  listingId?: string | null;
+  createdAt: string;
+  lastMessageAt: string;
+  buyerName?: string;
+  sellerName?: string;
+  listingTitle?: string;
+  unreadCount?: number;
+  lastMessage?: string | null;
+}
+
+export interface ChatMessage {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  body: string;
+  createdAt: string;
+  readAt?: string | null;
+  senderName?: string;
+}
+
+

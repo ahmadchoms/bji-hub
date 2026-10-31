@@ -4,6 +4,7 @@ import { getPool } from "@/lib/db/pool";
 // The 14 raw SQL modules required by A2
 import * as addresses from "./addresses";
 import * as auditLogs from "./audit-logs";
+import * as chat from "./chat";
 import * as notifications from "./notifications";
 import * as orders from "./orders";
 import * as origins from "./origins";
@@ -54,6 +55,12 @@ describe("SQL Schema Contract Integration Tests (A2)", () => {
         action: "contract_test",
       })
     );
+  });
+
+  it("chat: executes queries without schema errors", async () => {
+    await expectNoSchemaError(() => chat.getConversationById(dummyId));
+    await expectNoSchemaError(() => chat.getConversationsForUser(dummyId, "buyer"));
+    await expectNoSchemaError(() => chat.getMessagesByConversation(dummyId));
   });
 
   it("notifications: executes queries without schema errors", async () => {
@@ -473,6 +480,31 @@ describe("Real PostgreSQL Behavioral Tests (A2)", () => {
         await pool.query("DELETE FROM public.orders WHERE id = ANY($1)", [createdOrders]);
       }
       await pool.query("DELETE FROM public.vouchers WHERE id = $1", [v.id]);
+    }
+  });
+
+  it("C2 Chat: stores conversations and messages with read tracking and context index", async () => {
+    const conv = await chat.getOrCreateConversation(testBuyerUserId, testSellerProfileId, {
+      listingId: testListingId,
+    });
+    expect(conv.id).toBeDefined();
+
+    try {
+      const msg = await chat.sendMessage({
+        conversationId: conv.id,
+        senderId: testBuyerUserId,
+        body: "Halo dari uji integrasi chat!",
+      });
+      expect(msg.id).toBeDefined();
+      expect(msg.body).toBe("Halo dari uji integrasi chat!");
+
+      const messages = await chat.getMessagesByConversation(conv.id);
+      expect(messages.some((m) => m.id === msg.id)).toBe(true);
+
+      const marked = await chat.markMessagesAsRead(conv.id, testSellerUserId);
+      expect(marked).toBeGreaterThanOrEqual(1);
+    } finally {
+      await pool.query("DELETE FROM public.conversations WHERE id = $1", [conv.id]);
     }
   });
 

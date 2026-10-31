@@ -74,6 +74,7 @@ model User {
   addresses       UserAddress[]
   tastePreference UserTastePreference?
   waitlist        ListingWaitlist[]
+  conversations   Conversation[]
 
   @@map("users")
 }
@@ -111,6 +112,7 @@ model SellerProfile {
   payoutRequests PayoutRequest[]
   producerSellers ProducerSeller[]
   vouchers      Voucher[]
+  conversations Conversation[]
 
   @@index([businessName(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_seller_profiles_business_name_trgm")
   @@map("seller_profiles")
@@ -666,4 +668,33 @@ model VoucherRedemption {
 
   @@unique([voucherId, orderId], map: "voucher_redemptions_voucher_id_order_id_key")
   @@map("voucher_redemptions")
+}
+
+model Conversation {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  buyerId       String    @map("buyer_id")
+  buyer         User      @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  sellerId      String    @map("seller_id")
+  seller        SellerProfile @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  orderId       String?   @map("order_id")
+  listingId     String?   @map("listing_id")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  lastMessageAt DateTime  @default(now()) @map("last_message_at") @db.Timestamptz
+
+  messages      Message[]
+
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId String       @map("conversation_id") @db.Uuid
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String       @map("sender_id")
+  body           String
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  readAt         DateTime?    @map("read_at") @db.Timestamptz
+
+  @@index([conversationId, createdAt], map: "messages_conv_created")
+  @@map("messages")
 }

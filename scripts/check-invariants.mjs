@@ -69,6 +69,24 @@ for (const file of sourceFiles) {
   }
 }
 
+// Invariant 5: Raw SQL public.<table_name> must match @@map in schema.prisma (A1)
+const schemaContent = fs.readFileSync("prisma/schema.prisma", "utf8");
+const validMappedTables = new Set(
+  Array.from(schemaContent.matchAll(/@@map\("([^"]+)"\)/g)).map((m) => m[1])
+);
+
+for (const file of sourceFiles) {
+  if (file.includes(".test.") || file.includes(".spec.")) continue;
+  const content = fs.readFileSync(file, "utf8");
+  const publicTableMatches = content.matchAll(/\bpublic\.([a-zA-Z0-9_]+)\b/g);
+  for (const match of publicTableMatches) {
+    const tableName = match[1];
+    if (!validMappedTables.has(tableName)) {
+      errors.push(`[Invariant Violation] Table 'public.${tableName}' in ${file} is not defined as an @@map in schema.prisma`);
+    }
+  }
+}
+
 if (errors.length > 0) {
   console.error("Invariant checks failed:\n" + errors.join("\n"));
   process.exit(1);

@@ -96,6 +96,9 @@ model SellerProfile {
   tier               Tier               @default(free)
   suspendedAt        DateTime?          @map("suspended_at")
   bankUpdatedAt      DateTime?          @map("bank_updated_at")
+  bankName           String?            @map("bank_name")
+  bankAccountNumber  String?            @map("bank_account_number")
+  bankAccountHolder  String?            @map("bank_account_holder")
   kycDocumentUrl     String?            @map("kyc_document_url")
   kycSubmittedAt     DateTime?          @map("kyc_submitted_at")
   createdAt          DateTime           @default(now())
@@ -104,7 +107,9 @@ model SellerProfile {
   subscriptions Subscription[]
   payments      Payment[]
   orders        Order[]
+  payoutRequests PayoutRequest[]
 
+  @@index([businessName(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_seller_profiles_business_name_trgm")
   @@map("seller_profiles")
 }
 
@@ -137,9 +142,9 @@ model Listing {
   boostUntil  DateTime?
   ratingAvg   Decimal?      @map("rating_avg") @db.Decimal(3, 2)
   ratingCount   Int           @default(0) @map("rating_count")
-  nextRoastDate DateTime?     @map("next_roast_date")
+  nextRoastDate DateTime?     @map("next_roast_date") @db.Date
   createdAt     DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  updatedAt     DateTime      @default(now()) @updatedAt
 
   tasteProfile TasteProfile?
   images       ListingImage[]
@@ -157,12 +162,13 @@ model Listing {
   @@index([sellerId])
   @@index([categoryId])
   @@index([isBoosted, boostUntil])
-  @@index([ratingAvg(sort: Desc), ratingCount(sort: Desc)])
+  @@index([ratingAvg(sort: Desc), ratingCount(sort: Desc)], map: "idx_listings_rating_avg_count")
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_listings_title_trgm")
   @@map("listings")
 }
 
 model Producer {
-  id               String         @id @default(uuid())
+  id               String         @id @default(dbgenerated("(gen_random_uuid())::text"))
   slug             String         @unique
   name             String
   kind             String         // petani | koperasi | estate | processor
@@ -174,13 +180,13 @@ model Producer {
   farmersCount     Int?           @map("farmers_count")
   story            String?
   certifications   String[]       @default([])
-  claimsVerifiedAt DateTime?      @map("claims_verified_at")
+  claimsVerifiedAt DateTime?      @map("claims_verified_at") @db.Timestamptz
   photoUrls        String[]       @default([]) @map("photo_urls")
-  createdAt        DateTime       @default(now()) @map("created_at")
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz
   tasteProfiles    TasteProfile[]
 
-  @@index([slug])
-  @@index([originId])
+  @@index([slug], map: "idx_producers_slug")
+  @@index([originId], map: "idx_producers_origin_id")
   @@map("producers")
 }
 
@@ -192,7 +198,7 @@ model TasteProfile {
   producer          Producer? @relation(fields: [producerId], references: [id], onDelete: SetNull)
   lotCode           String?   @map("lot_code")
   varieties         String[]  @default([])
-  harvestMonth      Int?      @map("harvest_month")
+  harvestMonth      Int?      @map("harvest_month") @db.SmallInt
   fermentationHours Int?      @map("fermentation_hours")
   dryingDays        Int?      @map("drying_days")
   originRegion      String
@@ -213,7 +219,7 @@ model TasteProfile {
   roastDate         DateTime
 
   @@index([originRegion])
-  @@index([producerId])
+  @@index([producerId], map: "idx_taste_profiles_producer_id")
   @@map("taste_profiles")
 }
 
@@ -301,7 +307,7 @@ model CoffeeOrigin {
   description   String?
   isActive      Boolean  @default(true) @map("is_active")
   createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@index([country])
   @@map("coffee_origins")
@@ -352,7 +358,7 @@ model Order {
   roastDateAtShip    DateTime?     @map("roast_date_at_ship") @db.Date
   completedAt        DateTime?     @map("completed_at")
   createdAt          DateTime      @default(now()) @map("created_at")
-  updatedAt          DateTime      @updatedAt @map("updated_at")
+  updatedAt          DateTime      @default(now()) @updatedAt @map("updated_at")
 
   items   OrderItem[]
   reviews Review[]
@@ -399,12 +405,15 @@ model Review {
   sellerRepliedAt DateTime? @map("seller_replied_at")
   isReported      Boolean   @default(false) @map("is_reported")
   reportReason    String?   @map("report_reason")
-  moderationStatus String?   @map("moderation_status")
-  adminApprovedAt  DateTime? @map("admin_approved_at")
+  moderationStatus String?   @default("approved") @map("moderation_status")
+  adminApprovedAt  DateTime? @map("admin_approved_at") @db.Timestamptz
   createdAt DateTime @default(now()) @map("created_at")
+
+  reports ReviewReport[]
 
   @@index([listingId])
   @@index([orderId])
+  @@index([moderationStatus], map: "idx_reviews_moderation_status")
   @@unique([orderId, listingId])
   @@map("reviews")
 }
@@ -422,7 +431,7 @@ model UserAddress {
   postalCode    String?  @map("postal_code")
   isDefault     Boolean  @default(false) @map("is_default")
   createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@index([userId])
   @@map("user_addresses")
@@ -441,7 +450,7 @@ model Refund {
   failureReason String?  @map("failure_reason")
   resolvedBy    String?  @map("resolved_by")
   createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("refunds")
 }
@@ -495,7 +504,7 @@ model ListingFlavorTag {
   listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
 
   @@id([listingId, tag])
-  @@index([tag])
+  @@index([tag], map: "idx_listing_flavor_tags_tag")
   @@map("listing_flavor_tags")
 }
 
@@ -506,35 +515,66 @@ model UserTastePreference {
   bodyPref    Decimal? @map("body_pref") @db.Decimal(3, 1)
   roastPref   String[] @default([]) @map("roast_pref")
   flavorTags  String[] @default([]) @map("flavor_tags")
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("user_taste_preferences")
 }
 
 model RoastBatch {
-  id         String   @id @default(uuid())
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   listingId  String   @map("listing_id")
   listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  roastedOn  DateTime @map("roasted_on")
+  roastedOn  DateTime @map("roasted_on") @db.Date
   quantityKg Decimal? @map("quantity_kg") @db.Decimal(6, 2)
   notes      String?
-  createdAt  DateTime @default(now()) @map("created_at")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  @@index([listingId, roastedOn(sort: Desc)])
+  @@index([listingId, roastedOn(sort: Desc)], map: "idx_roast_batches_listing_date")
   @@map("roast_batches")
 }
 
 model ListingWaitlist {
-  id         String    @id @default(uuid())
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   listingId  String    @map("listing_id")
   listing    Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
   userId     String    @map("user_id")
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  notifiedAt DateTime? @map("notified_at")
-  createdAt  DateTime  @default(now()) @map("created_at")
+  notifiedAt DateTime? @map("notified_at") @db.Timestamptz
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
 
   @@unique([listingId, userId])
-  @@index([userId])
-  @@index([listingId])
+  @@index([userId], map: "idx_listing_waitlist_user")
+  @@index([listingId], map: "idx_listing_waitlist_listing")
   @@map("listing_waitlist")
+}
+
+model PayoutRequest {
+  id                String        @id
+  sellerId          String        @map("seller_id")
+  seller            SellerProfile @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  amount            Decimal       @db.Decimal(14, 2)
+  bankName          String        @map("bank_name")
+  bankAccountNumber String        @map("bank_account_number")
+  bankAccountHolder String        @map("bank_account_holder")
+  status            String        @default("pending")
+  notes             String?
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([sellerId, status], map: "idx_payout_requests_seller_status")
+  @@map("payout_requests")
+}
+
+model ReviewReport {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reviewId   String   @map("review_id")
+  review     Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  reporterId String   @map("reporter_id")
+  reason     String
+  status     String   @default("open")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@unique([reviewId, reporterId])
+  @@index([status, createdAt(sort: Desc)], map: "idx_review_reports_status_created")
+  @@map("review_reports")
 }

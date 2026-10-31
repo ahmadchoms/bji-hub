@@ -42,6 +42,7 @@ export function CompareDrawer() {
                     src={item.images[0].url}
                     alt={item.title}
                     fill
+                    sizes="28px"
                     className="object-cover"
                   />
                 ) : (

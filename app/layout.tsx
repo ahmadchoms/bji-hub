@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/components/shared/providers";
 import { PageProgressBar } from "@/components/shared/page-progress-bar";
 import { Toaster } from "@/components/ui/sonner";
+import { WebVitalsReporter } from "@/components/shared/web-vitals-reporter";
 
 const fraunces = localFont({
   src: [
@@ -94,6 +95,7 @@ export default function RootLayout({
     <html lang="id" className={`${fraunces.variable} ${jakarta.variable}`}>
       <body className="font-sans bg-background text-foreground antialiased min-h-screen">
         <Providers>
+          <WebVitalsReporter />
           <PageProgressBar />
           {children}
           <Toaster position="top-right" />

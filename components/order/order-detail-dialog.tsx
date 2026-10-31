@@ -354,6 +354,7 @@ export function OrderDetailDialog({
                   src={productImage}
                   alt={order.listingTitle || "Produk Kopi"}
                   fill
+                  sizes="56px"
                   className="object-cover"
                 />
               </div>

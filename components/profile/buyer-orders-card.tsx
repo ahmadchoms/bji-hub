@@ -415,6 +415,7 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
                         src={productImg}
                         alt={ord.listingTitle || "Produk Kopi"}
                         fill
+                        sizes="72px"
                         className="object-cover"
                       />
                     </div>

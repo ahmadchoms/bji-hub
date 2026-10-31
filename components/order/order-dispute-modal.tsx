@@ -125,6 +125,7 @@ export function OrderDisputeModal({ orderId, orderNumber }: OrderDisputeModalPro
                     src={evidenceUrl}
                     alt="Bukti komplain"
                     fill
+                    sizes="96px"
                     className="object-cover"
                     unoptimized
                   />

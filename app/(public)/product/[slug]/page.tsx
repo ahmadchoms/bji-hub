@@ -266,6 +266,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                               src={r.imageUrl}
                               alt={`Foto ulasan oleh ${r.buyerName}`}
                               fill
+                              sizes="64px"
                               className="object-cover"
                               unoptimized
                             />

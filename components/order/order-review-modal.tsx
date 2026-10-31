@@ -178,6 +178,7 @@ export function OrderReviewModal({
                     src={imageUrl}
                     alt="Foto ulasan"
                     fill
+                    sizes="80px"
                     className="object-cover"
                     unoptimized
                   />

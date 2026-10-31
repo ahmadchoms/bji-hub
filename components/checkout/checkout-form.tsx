@@ -392,6 +392,7 @@ export function CheckoutForm({
                           src={item.imageUrl}
                           alt={item.title}
                           fill
+                          sizes="48px"
                           className="object-cover"
                           unoptimized
                         />
@@ -430,6 +431,7 @@ export function CheckoutForm({
                       src={firstImage}
                       alt={listing.title}
                       fill
+                      sizes="64px"
                       className="object-cover"
                     />
                   )}

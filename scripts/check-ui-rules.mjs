@@ -44,6 +44,15 @@ for (const file of files) {
       failed = true;
     }
   }
+
+  // Rule 4: <Image fill> must include sizes prop for optimal responsive loading
+  const imageMatches = content.match(/<Image\b[^>]*>/gs) || [];
+  for (const img of imageMatches) {
+    if (/\bfill\b/.test(img) && !/\bsizes=/.test(img)) {
+      console.error(`❌ Found <Image fill> without sizes prop in ${file}:\n   ${img.replace(/\s+/g, " ").slice(0, 80)}`);
+      failed = true;
+    }
+  }
 }
 
 // Rule 4: CI check for legacy logger.error("...", { pattern

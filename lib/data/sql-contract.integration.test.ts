@@ -25,6 +25,8 @@ import * as shippingSla from "../coffee/shipping-sla";
 import * as tastePreferenceActions from "@/actions/taste-preference.actions";
 import * as waitlistActions from "@/actions/waitlist.actions";
 import * as payoutActions from "@/actions/payout.actions";
+import * as reviewActions from "@/actions/review.actions";
+import * as currencyActions from "@/actions/currency.actions";
 import * as lots from "./lots";
 
 /**
@@ -758,6 +760,21 @@ describe("Real PostgreSQL Behavioral Tests (A2)", () => {
   it("lots: validates getLotCuppingData execution against taste_profiles schema", async () => {
     await expectNoSchemaError(() => lots.getLotCuppingData("KBQB-GAYO-2025-04"));
     await expectNoSchemaError(() => lots.getLotCuppingData("NONEXISTENT-LOT-999"));
+  });
+
+  it("currency.actions: validates currency_rates table and actions", async () => {
+    await expectNoSchemaError(async () => {
+      await pool.query("SELECT code, per_idr, updated_at FROM public.currency_rates LIMIT 1");
+    });
+    expect(currencyActions.getCurrencyRatesAction).toBeDefined();
+    expect(currencyActions.updateCurrencyRateAction).toBeDefined();
+  });
+
+  it("review.actions: validates review actions schema", async () => {
+    expect(reviewActions.replyToReviewAction).toBeDefined();
+    expect(reviewActions.reportReviewAction).toBeDefined();
+    expect(reviewActions.voteReviewHelpfulAction).toBeDefined();
+    expect(reviewActions.adminApproveReviewAction).toBeDefined();
   });
 
   it("RLS enforcement: anon role is blocked from inserting into private tables (if role exists)", async () => {

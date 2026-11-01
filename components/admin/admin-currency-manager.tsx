@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useCallback, useTransition } from "react";
 import {
   getCurrencyRatesAction,
   updateCurrencyRateAction,
@@ -26,7 +26,7 @@ export function AdminCurrencyManager() {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const fetchRates = async () => {
+  const fetchRates = useCallback(async () => {
     setLoading(true);
     const res = await getCurrencyRatesAction();
     if (res.success) {
@@ -37,11 +37,11 @@ export function AdminCurrencyManager() {
       setError(res.error || "Gagal memuat kurs mata uang");
     }
     setLoading(false);
-  };
+  }, [selectedCode]);
 
   useEffect(() => {
     fetchRates();
-  }, []);
+  }, [fetchRates]);
 
   const handleSelectCode = (code: string) => {
     setSelectedCode(code);

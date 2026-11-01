@@ -19,7 +19,9 @@ import {
   HelpCircle,
   MessageCircle,
   AlertTriangle,
+  Coffee,
 } from "lucide-react";
+import { BrewTimer } from "@/components/coffee/brew-timer";
 import { ConfirmOrderButton } from "@/components/order/confirm-order-button";
 import { OrderDisputeModal } from "@/components/order/order-dispute-modal";
 import { OrderReviewModal } from "@/components/order/order-review-modal";
@@ -356,6 +358,26 @@ export default async function OrderSuccessPage({
             </li>
           </ol>
         </div>
+
+        {/* Panduan & Pengatur Waktu Seduh Presisi (H5) */}
+        {(order.status === "shipped" || order.status === "completed") && (
+          <div className="bg-white border border-neutral-300 rounded-lg p-5 space-y-4 shadow-2xs">
+            <div className="flex items-center gap-2 border-b border-neutral-200 pb-2">
+              <Coffee className="w-4 h-4 text-primary-700" />
+              <h2 className="text-sm font-bold uppercase tracking-wider text-neutral-900">
+                Pengatur Waktu Seduh Presisi (Brew Timer)
+              </h2>
+            </div>
+            <p className="text-xs text-neutral-600">
+              Kopi Anda siap diseduh. Gunakan timer interaktif ini untuk memandu rasio dan tuangan air yang optimal.
+            </p>
+            <BrewTimer
+              methodName="V60 Pour Over"
+              coffeeGrams={15}
+              totalWaterMl={250}
+            />
+          </div>
+        )}
 
         {/* Navigation Action Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">

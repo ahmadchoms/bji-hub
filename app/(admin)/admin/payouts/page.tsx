@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { requireRole } from "@/lib/auth/session";
-import { getAllPayoutRequests } from "@/lib/data/payouts";
+import { getAllPayoutRequests, getAllPayoutBatches } from "@/lib/data/payouts";
 import { SectionHeader } from "@/components/shared/section-header";
 import { AdminPayoutList } from "@/components/admin/admin-payout-list";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatRupiah } from "@/components/shared/price-text";
-import { Clock, CheckCircle2, XCircle } from "lucide-react";
+import { Clock, CheckCircle2, XCircle, Layers } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Pencairan Dana Penjual - Admin Biji Hub",
@@ -14,7 +14,10 @@ export const metadata: Metadata = {
 
 export default async function AdminPayoutsPage() {
   await requireRole(["admin"], "/admin/payouts");
-  const payouts = await getAllPayoutRequests();
+  const [payouts, batches] = await Promise.all([
+    getAllPayoutRequests(),
+    getAllPayoutBatches(),
+  ]);
 
   const pendingPayouts = payouts.filter((p) => p.status === "pending");
   const processedPayouts = payouts.filter((p) => p.status === "processed");
@@ -83,6 +86,48 @@ export default async function AdminPayoutsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {batches.length > 0 && (
+        <Card className="rounded-xl border border-neutral-300 bg-white p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Layers className="w-4 h-4 text-primary-700" />
+              <h3 className="text-sm font-bold text-neutral-900">
+                Batch Transfer Mingguan ({batches.length})
+              </h3>
+            </div>
+            <span className="text-xs text-neutral-600">Jadwal berkala otomatis</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {batches.slice(0, 3).map((b) => (
+              <div
+                key={b.id}
+                className="p-3 rounded-lg border border-neutral-200 bg-neutral-50/70 text-xs space-y-1"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-mono font-bold text-neutral-800">
+                    {b.scheduledFor}
+                  </span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded text-xs font-semibold uppercase ${
+                      b.status === "done"
+                        ? "bg-emerald-100 text-emerald-800"
+                        : b.status === "processing"
+                        ? "bg-blue-100 text-blue-800"
+                        : "bg-amber-100 text-amber-800"
+                    }`}
+                  >
+                    {b.status}
+                  </span>
+                </div>
+                <p className="text-neutral-600">
+                  {b.payoutCount} penarikan • {formatRupiah(b.totalAmount)}
+                </p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <AdminPayoutList payouts={payouts} />
     </div>

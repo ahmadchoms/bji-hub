@@ -12,6 +12,7 @@ import { logoutAction } from "@/actions/auth.actions";
 
 import { createClient } from "@/lib/supabase/server";
 import { BuyerProfileForm } from "@/components/profile/buyer-profile-form";
+import { AccountSecurityCard } from "@/components/profile/account-security-card";
 import { AccountPrivacyCard } from "@/components/profile/account-privacy-card";
 import type { BuyerAddress } from "@/types";
 import { getUserAddresses, toBuyerAddress } from "@/lib/data/addresses";
@@ -223,6 +224,9 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Keamanan Akun & Kredensial */}
+      <AccountSecurityCard />
 
       {/* UU PDP Hak Portabilitas & Penghapusan Akun */}
       <AccountPrivacyCard />

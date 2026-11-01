@@ -36,7 +36,7 @@ function RegisterForm() {
       name: "",
       email: "",
       password: "",
-      termsAccepted: true,
+      termsAccepted: false,
     },
   });
 

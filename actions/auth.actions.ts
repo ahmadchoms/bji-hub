@@ -220,6 +220,16 @@ export async function registerAction(
             },
           });
         }
+        if (parsed.data.termsAccepted) {
+          try {
+            const { recordUserConsent } = await import("@/lib/data/consents");
+            const { CURRENT_VERSIONS } = await import("@/lib/legal/versions");
+            await recordUserConsent({ userId, document: "terms", version: CURRENT_VERSIONS.terms });
+            await recordUserConsent({ userId, document: "privacy", version: CURRENT_VERSIONS.privacy });
+          } catch {
+            // non-fatal
+          }
+        }
         return ok({ redirectTo: "/login?verify=1" });
       }
     } catch (err) {
@@ -235,6 +245,17 @@ export async function registerAction(
   if (isMockAuthAllowed()) {
     const role = "buyer";
     await setMockSession(role);
+    const mockSession = await getSession();
+    if (mockSession?.userId && parsed.data.termsAccepted) {
+      try {
+        const { recordUserConsent } = await import("@/lib/data/consents");
+        const { CURRENT_VERSIONS } = await import("@/lib/legal/versions");
+        await recordUserConsent({ userId: mockSession.userId, document: "terms", version: CURRENT_VERSIONS.terms });
+        await recordUserConsent({ userId: mockSession.userId, document: "privacy", version: CURRENT_VERSIONS.privacy });
+      } catch {
+        // non-fatal
+      }
+    }
     return ok({ redirectTo: "/" });
   }
 
@@ -311,6 +332,14 @@ export async function becomeSellerAction(
           }),
         ]);
 
+        try {
+          const { recordUserConsent } = await import("@/lib/data/consents");
+          const { CURRENT_VERSIONS } = await import("@/lib/legal/versions");
+          await recordUserConsent({ userId: user.id, document: "seller_agreement", version: CURRENT_VERSIONS.seller_agreement });
+        } catch {
+          // non-fatal
+        }
+
         return ok({ redirectTo: "/dashboard" });
       }
     } catch (err) {
@@ -327,6 +356,16 @@ export async function becomeSellerAction(
   }
 
   await setMockSession("seller");
+  const sellerSession = await getSession();
+  if (sellerSession?.userId) {
+    try {
+      const { recordUserConsent } = await import("@/lib/data/consents");
+      const { CURRENT_VERSIONS } = await import("@/lib/legal/versions");
+      await recordUserConsent({ userId: sellerSession.userId, document: "seller_agreement", version: CURRENT_VERSIONS.seller_agreement });
+    } catch {
+      // non-fatal
+    }
+  }
   return ok({ redirectTo: "/dashboard" });
 }
 

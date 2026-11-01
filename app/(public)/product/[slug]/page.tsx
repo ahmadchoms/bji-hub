@@ -27,6 +27,10 @@ import { calculateRoastToShipSla } from "@/lib/coffee/shipping-sla";
 import { RoastSlaBadge } from "@/components/catalog/roast-sla-badge";
 import { getSession } from "@/lib/auth/session";
 import { ReviewItemActions } from "@/components/catalog/review-item-actions";
+import { getTopBrewRecipesForListing } from "@/lib/coffee/recipes";
+import { getActiveEditorialPickForListing } from "@/lib/coffee/editorial";
+import { CommunityBrewRecipes } from "@/components/catalog/community-brew-recipes";
+import { Award } from "lucide-react";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
@@ -117,7 +121,11 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   const session = await getSession();
   const isSellerOwner = Boolean(session.sellerId && session.sellerId === listing.sellerId);
 
-  const reviews = await getReviewsByListing(listing.id);
+  const [reviews, brewRecipes, editorialPick] = await Promise.all([
+    getReviewsByListing(listing.id),
+    getTopBrewRecipesForListing(listing.id).catch(() => []),
+    getActiveEditorialPickForListing(listing.id).catch(() => null),
+  ]);
   const reviewStats = computeReviewStats(reviews);
   const slaResult = await calculateRoastToShipSla(listing.sellerId);
 
@@ -207,6 +215,9 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
               </p>
             </div>
             <FlavorProfile tasteProfile={listing.tasteProfile} />
+
+            {/* Resep Seduh Komunitas (H5) */}
+            <CommunityBrewRecipes listingId={listing.id} initialRecipes={brewRecipes} />
 
             {/* Ulasan Pembeli */}
             <div className="space-y-4 pt-4 border-t border-neutral-300">
@@ -361,8 +372,14 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                 </div>
               </div>
 
-              {/* Lencana Kesegaran Sangrai (COF-1) & SLA Sangrai-Kirim (COF-13) */}
+              {/* Lencana Kesegaran Sangrai (COF-1), SLA Sangrai-Kirim & Pilihan Redaksi */}
               <div className="flex flex-wrap items-center gap-2">
+                {editorialPick && (
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-900 border border-amber-300 text-xs font-semibold">
+                    <Award className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Pilihan Redaksi {editorialPick.score ? `(Skor ${editorialPick.score})` : ""}</span>
+                  </div>
+                )}
                 {listing.tasteProfile?.roastDate && listing.category?.slug !== "green-beans" && (
                   <FreshnessBadge
                     roastDate={listing.tasteProfile.roastDate}

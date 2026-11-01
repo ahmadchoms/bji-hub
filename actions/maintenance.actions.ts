@@ -6,12 +6,14 @@ import {
   autoCancelExpiredPendingOrders,
   autoCompleteExpiredShippedOrders,
 } from "@/lib/data/orders";
+import { sweepSmartReminders } from "@/lib/coffee/reminders";
 import { recordAuditLog } from "@/lib/data/audit-logs";
 import { logger } from "@/lib/logger";
 
 export interface MaintenanceRunResult {
   canceledOrdersCount: number;
   completedOrdersCount: number;
+  remindersSentCount?: number;
   timestamp: string;
 }
 
@@ -21,14 +23,17 @@ export async function runManualMaintenanceAction(): Promise<
   const session = await requireRole(["admin"], "/admin/maintenance");
 
   try {
-    const [cancelRes, completeRes] = await Promise.all([
+    const [cancelRes, completeRes, reminderRes] = await Promise.all([
       autoCancelExpiredPendingOrders(1.25),
       autoCompleteExpiredShippedOrders(2),
+      // ignore: non-blocking reminder sweep failure
+      sweepSmartReminders().catch(() => ({ processed: 0, peakSent: 0, reorderSent: 0 })),
     ]);
 
     const result: MaintenanceRunResult = {
       canceledOrdersCount: cancelRes.canceledCount,
       completedOrdersCount: completeRes.completedCount,
+      remindersSentCount: reminderRes.peakSent + reminderRes.reorderSent,
       timestamp: new Date().toISOString(),
     };
 

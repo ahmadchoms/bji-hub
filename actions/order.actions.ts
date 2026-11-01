@@ -246,7 +246,9 @@ export async function createCheckoutOrderAction(
 
   for (const it of resolvedItems) {
     const { listing: l, quantity: q, grindSize: gs } = it;
-    const itemSubtotal = Number(l.price) * q;
+    const { getEffectiveTieredPrice } = await import("@/lib/coffee/b2b");
+    const unitPrice = await getEffectiveTieredPrice(l.id, q, Number(l.price));
+    const itemSubtotal = unitPrice * q;
     subtotal += itemSubtotal;
     totalQuantity += q;
     weightItems.push({ quantity: q, unit: l.unit });
@@ -255,7 +257,7 @@ export async function createCheckoutOrderAction(
     orderItemsData.push({
       listingId: l.id,
       title: l.title,
-      unitPrice: Number(l.price),
+      unitPrice,
       quantity: q,
       unit: l.unit || "250g",
       grindSize: gs || null,

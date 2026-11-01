@@ -60,6 +60,11 @@ export function AdminMaintenanceControl() {
             <p>
               • Pesanan diselesaikan otomatis: <strong>{result.completedOrdersCount}</strong>
             </p>
+            {result.remindersSentCount !== undefined && (
+              <p>
+                • Pengingat seduh & beli ulang terkirim: <strong>{result.remindersSentCount}</strong>
+              </p>
+            )}
             <p className="text-xs opacity-75">
               Waktu eksekusi: {new Date(result.timestamp).toLocaleString("id-ID")}
             </p>

@@ -109,6 +109,12 @@ export function NavbarInner({
             <Link href="/about" className="hover:text-primary-700 transition-colors">
               Tentang Biji Hub
             </Link>
+            <Link href="/peta-rasa" className="hover:text-primary-700 transition-colors">
+              Peta Rasa
+            </Link>
+            <Link href="/belajar" className="hover:text-primary-700 transition-colors">
+              Pusat Belajar
+            </Link>
             <Link href="/pricing" className="hover:text-primary-700 transition-colors">
               Paket Penjual
             </Link>
@@ -260,6 +266,20 @@ export function NavbarInner({
                         className="flex items-center justify-between px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md coarse:min-h-11"
                       >
                         <span>Peta Asal Kopi Nusantara</span>
+                      </Link>
+                      <Link
+                        href="/peta-rasa"
+                        onClick={() => setMobileOpen(false)}
+                        className="flex items-center justify-between px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md coarse:min-h-11"
+                      >
+                        <span>Peta Sebaran Rasa (Taste Map)</span>
+                      </Link>
+                      <Link
+                        href="/belajar"
+                        onClick={() => setMobileOpen(false)}
+                        className="flex items-center justify-between px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md coarse:min-h-11"
+                      >
+                        <span>Pusat Belajar Kopi</span>
                       </Link>
                       <Link
                         href="/"

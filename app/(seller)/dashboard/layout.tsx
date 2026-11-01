@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { AlertCircle, ArrowRight } from "lucide-react";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { requireSeller } from "@/lib/auth/session";
 import { getSellerBankDetails } from "@/lib/data/payouts";
+import { checkPendingConsentsAction } from "@/actions/consent.actions";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +14,12 @@ export default async function SellerDashboardLayout({
   children: React.ReactNode;
 }) {
   const { sellerId } = await requireSeller();
+
+  const pending = await checkPendingConsentsAction();
+  if (pending.success && !pending.data.allAccepted) {
+    redirect(`/consent?next=/dashboard`);
+  }
+
   const bankDetails = await getSellerBankDetails(sellerId);
   const isBankMissing = !bankDetails || !bankDetails.bankAccountNumber;
 

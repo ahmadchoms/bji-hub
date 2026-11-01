@@ -107,6 +107,33 @@ export async function saveListingAction(
     }
   }
 
+  // H6: Evaluate listing claims on title, description, and flavor notes
+  const { evaluateListingClaims } = await import("@/lib/moderation/claims");
+  const claimsResult = evaluateListingClaims(
+    parsed.data.title,
+    `${parsed.data.description || ""} ${parsed.data.flavorNotes || ""}`,
+    [],
+  );
+
+  const prohibitedFlag = claimsResult.flags.find((f) => f.kind === "prohibited");
+  if (prohibitedFlag) {
+    return fail(`Produk tidak dapat disimpan: ${prohibitedFlag.message}`);
+  }
+
+  if (claimsResult.needsReview) {
+    parsed.data.status = "draft";
+    const evidenceFlag = claimsResult.flags.find((f) => f.kind === "requires_evidence");
+    runAfterResponse(async () => {
+      const { notifySeller } = await import("@/lib/data/notifications");
+      const { asSellerProfileId } = await import("@/types/ids");
+      await notifySeller(asSellerProfileId(sellerId), {
+        title: "Klaim Produk Perlu Bukti",
+        message: `Produk "${parsed.data.title}" disimpan sebagai Draf (Perlu Bukti). ${evidenceFlag?.message || "Klaim sertifikasi memerlukan bukti verifikasi sebelum dapat ditayangkan."}`,
+        link: "/dashboard/listing",
+      });
+    });
+  }
+
   if (listingId) {
     if (
       existing &&

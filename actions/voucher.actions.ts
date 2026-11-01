@@ -3,14 +3,12 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
-import { getSession, requireRole, requireSeller } from "@/lib/auth/session";
+import { getSession } from "@/lib/auth/session";
 import { recordAuditLog } from "@/lib/data/audit-logs";
 import { getClientIp } from "@/lib/client-ip";
 import {
   validateVoucher,
   createVoucher,
-  getVouchersBySeller,
-  getAllVouchers,
   toggleVoucherActive,
   getVoucherByCode,
   type VoucherData,

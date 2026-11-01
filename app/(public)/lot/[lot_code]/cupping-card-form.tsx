@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Coffee, Check, Save, Sparkles } from "lucide-react";
+import { Coffee, Check, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
 interface Props {
   lotCode: string;
@@ -20,6 +19,7 @@ interface Props {
 
 export function CuppingCardForm({
   lotCode,
+  listingId,
   officialNotes,
   officialScores,
 }: Props) {
@@ -54,6 +54,7 @@ export function CuppingCardForm({
   const handleSaveDraft = () => {
     const draft = {
       lotCode,
+      listingId,
       aroma,
       acidity,
       sweetness,

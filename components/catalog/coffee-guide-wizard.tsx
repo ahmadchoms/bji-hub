@@ -341,7 +341,7 @@ export function CoffeeGuideWizard({ className, triggerVariant = "default" }: Pro
                 <button
                   key={opt.id}
                   type="button"
-                  onClick={() => setFreshness(opt.id as any)}
+                  onClick={() => setFreshness(opt.id as "ultra_fresh" | "optimal" | "any")}
                   className={`w-full p-3.5 rounded-xl border text-left transition focus:outline-none focus:ring-2 focus:ring-amber-500 ${
                     freshness === opt.id
                       ? "border-amber-600 bg-amber-50/50 dark:bg-amber-950/20 shadow-sm"

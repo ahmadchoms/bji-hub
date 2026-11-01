@@ -6,10 +6,7 @@ import { Button } from "@/components/ui/button";
 import {
   BookOpen,
   Coffee,
-  Sparkles,
-  HelpCircle,
   MapPin,
-  Clock,
   Compass,
   ArrowRight,
 } from "lucide-react";

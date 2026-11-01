@@ -1,7 +1,3 @@
-import { cookies } from "next/headers";
-import { getPool } from "@/lib/db/pool";
-import { logger } from "@/lib/logger";
-
 export type Locale = "id" | "en";
 export const COOKIE_LOCALE = "NEXT_LOCALE";
 
@@ -169,17 +165,6 @@ export function t(key: TranslationKey, locale: Locale = "id"): string {
   return dict[key] || DICTIONARIES.id[key] || key;
 }
 
-export async function getServerLocale(): Promise<Locale> {
-  try {
-    const cookieStore = await cookies();
-    const val = cookieStore.get(COOKIE_LOCALE)?.value;
-    if (val === "en" || val === "id") return val;
-  } catch {
-    // outside request lifecycle
-  }
-  return "id";
-}
-
 export interface CurrencyRateData {
   code: string;
   perIdr: number;
@@ -192,25 +177,6 @@ export const DEFAULT_CURRENCY_RATES: Record<string, number> = {
   JPY: 0.0095,   // 1 JPY ≈ Rp 105
   AUD: 0.000097, // 1 AUD ≈ Rp 10,309
 };
-
-export async function getCurrencyRate(targetCurrency = "USD"): Promise<number> {
-  const target = targetCurrency.toUpperCase();
-  const pool = getPool();
-  if (pool) {
-    try {
-      const res = await pool.query(
-        `SELECT per_idr FROM public.currency_rates WHERE code = $1`,
-        [target],
-      );
-      if (res.rows.length > 0) {
-        return Number(res.rows[0].per_idr);
-      }
-    } catch (e) {
-      logger.warn("currency.rate_query_fallback", { error: (e as Error).message, target });
-    }
-  }
-  return DEFAULT_CURRENCY_RATES[target] || DEFAULT_CURRENCY_RATES.USD;
-}
 
 export function formatEstimatedPrice(
   amountIdr: number,

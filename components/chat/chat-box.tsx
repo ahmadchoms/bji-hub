@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useTransition } from "react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
-import { Send, Loader2, Flag, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Send, Loader2, Flag, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

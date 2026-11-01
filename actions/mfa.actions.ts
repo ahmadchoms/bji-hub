@@ -105,7 +105,7 @@ export async function verifyMfaAction(
 
     logger.info("mfa.verified_successfully", { userId: session.userId });
     return ok({ verified: true });
-  } catch (err) {
+  } catch {
     return fail("Gagal memverifikasi kode autentikasi");
   }
 }

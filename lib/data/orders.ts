@@ -936,8 +936,6 @@ export async function transitionOrderStatus(
         }
       }
 
-      let lowStockAlert: { sellerId: string; listingTitle: string; remainingStock: number } | null = null;
-
       if (to === "paid") {
         if (!row.invoice_number) {
           const period = now.slice(0, 7).replace("-", "");

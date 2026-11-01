@@ -1,14 +1,37 @@
-import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getPool } from "@/lib/db/pool";
 import { PageContainer } from "@/components/layout/page-container";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Coffee, ShieldCheck, MapPin, Sparkles, ArrowLeft, ExternalLink } from "lucide-react";
+import { MapPin, Sparkles, ArrowLeft, ExternalLink } from "lucide-react";
 import { CuppingCardForm } from "./cupping-card-form";
 
 interface PageProps {
   params: Promise<{ lot_code: string }>;
+}
+
+interface LotData {
+  lot_code: string;
+  origin_region: string;
+  process_method: string;
+  roast_level: string;
+  flavor_notes?: string | null;
+  acidity_score?: number | string | null;
+  body_score?: number | string | null;
+  sweetness_score?: number | string | null;
+  aroma_score?: number | string | null;
+  aftertaste_score?: number | string | null;
+  cupping_score?: number | string | null;
+  crop_year?: string | null;
+  altitude?: string | null;
+  varieties?: string[] | null;
+  listing_id: string;
+  listing_title: string;
+  listing_slug?: string | null;
+  price: number;
+  producer_name?: string | null;
+  producer_village?: string | null;
+  producer_kind?: string | null;
 }
 
 export default async function LotCuppingCardPage({ params }: PageProps) {
@@ -16,7 +39,7 @@ export default async function LotCuppingCardPage({ params }: PageProps) {
   const decodedLot = decodeURIComponent(lot_code);
 
   const pool = getPool();
-  let lotData: any = null;
+  let lotData: LotData | null = null;
 
   if (pool) {
     try {
@@ -141,7 +164,7 @@ export default async function LotCuppingCardPage({ params }: PageProps) {
           <CuppingCardForm
             lotCode={lotData.lot_code}
             listingId={lotData.listing_id}
-            officialNotes={lotData.flavor_notes}
+            officialNotes={lotData.flavor_notes || undefined}
             officialScores={{
               acidity: Number(lotData.acidity_score || 4),
               body: Number(lotData.body_score || 3.5),

@@ -1,9 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Play, Pause, RotateCcw, SkipForward, Coffee, Volume2, Shield } from "lucide-react";
+import { Play, Pause, RotateCcw, SkipForward, Coffee, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+
+interface WakeLockSentinelLike extends EventTarget {
+  release(): Promise<void>;
+}
 
 export interface BrewStep {
   name: string;
@@ -55,7 +59,7 @@ export function BrewTimer({
   const [isRunning, setIsRunning] = useState(false);
   const [wakeLockActive, setWakeLockActive] = useState(false);
 
-  const wakeLockRef = useRef<any>(null);
+  const wakeLockRef = useRef<WakeLockSentinelLike | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const currentStep = steps[currentStepIdx] || steps[0];
@@ -64,11 +68,17 @@ export function BrewTimer({
   const requestWakeLock = async () => {
     if (typeof window !== "undefined" && "wakeLock" in navigator) {
       try {
-        wakeLockRef.current = await (navigator as any).wakeLock.request("screen");
-        setWakeLockActive(true);
-        wakeLockRef.current.addEventListener("release", () => {
-          setWakeLockActive(false);
-        });
+        const nav = navigator as Navigator & {
+          wakeLock?: { request(type: string): Promise<WakeLockSentinelLike> };
+        };
+        const sentinel = await nav.wakeLock?.request("screen");
+        if (sentinel) {
+          wakeLockRef.current = sentinel;
+          setWakeLockActive(true);
+          sentinel.addEventListener("release", () => {
+            setWakeLockActive(false);
+          });
+        }
       } catch {
         // WakeLock request failed (e.g. low battery)
       }

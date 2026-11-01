@@ -2,7 +2,7 @@
 export type Role = "BUYER" | "SELLER" | "ADMIN";
 
 // Branded ID types to prevent accidental ID swapping (IDOR / Bug prevention)
-import type { UserId, SellerProfileId, ListingId, OrderId } from "./ids";
+import type { UserId, SellerProfileId } from "./ids";
 export * from "./ids";
 
 export interface BuyerAddress {

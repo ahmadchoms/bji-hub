@@ -8,7 +8,6 @@ import { getClientIp } from "@/lib/client-ip";
 import {
   recordUserConsent,
   hasUserAcceptedLatest,
-  getUserConsents,
   type UserConsentRecord,
 } from "@/lib/data/consents";
 import { ConsentDocument, CURRENT_VERSIONS } from "@/lib/legal/versions";

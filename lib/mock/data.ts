@@ -1,5 +1,5 @@
 import { mockProducers } from "../data/producers";
-import { asSellerProfileId, asUserId } from "@/types/ids";
+import { asSellerProfileId } from "@/types/ids";
 import {
   Category,
   SellerProfile,

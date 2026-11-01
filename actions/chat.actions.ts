@@ -10,8 +10,6 @@ import { logger } from "@/lib/logger";
 import {
   getConversationById,
   getOrCreateConversation,
-  getConversationsForUser,
-  getMessagesByConversation,
   sendMessage,
   markMessagesAsRead,
   canUserAccessConversation,

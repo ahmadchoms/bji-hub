@@ -24,6 +24,7 @@ import * as roastBatch from "../coffee/roast-batch";
 import * as shippingSla from "../coffee/shipping-sla";
 import * as tastePreferenceActions from "@/actions/taste-preference.actions";
 import * as waitlistActions from "@/actions/waitlist.actions";
+import * as payoutActions from "@/actions/payout.actions";
 
 /**
  * Asserts that executing a database function does NOT fail with PostgreSQL schema errors:
@@ -741,6 +742,16 @@ describe("Real PostgreSQL Behavioral Tests (A2)", () => {
 
     const sweep = await reminders.sweepSmartReminders();
     expect(typeof sweep.processed).toBe("number");
+  });
+
+  it("payout.actions: validates auto_payout column and toggleSellerAutoPayoutAction", async () => {
+    await expectNoSchemaError(async () => {
+      await pool.query(
+        `UPDATE public.seller_profiles SET auto_payout = $1 WHERE id = $2`,
+        [false, testSellerProfileId],
+      );
+    });
+    expect(payoutActions.toggleSellerAutoPayoutAction).toBeDefined();
   });
 
   it("RLS enforcement: anon role is blocked from inserting into private tables (if role exists)", async () => {

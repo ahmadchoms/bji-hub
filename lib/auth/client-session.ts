@@ -70,7 +70,7 @@ export function clearCachedAuth(): void {
 export function useNavbarAuth(): NavbarAuthState {
   const [state, setState] = useState<NavbarAuthState>(() => {
     if (typeof window === "undefined") {
-      return { ...GUEST_NAVBAR_STATE, isLoading: true };
+      return GUEST_NAVBAR_STATE;
     }
     if (!hasSessionCookie()) {
       return GUEST_NAVBAR_STATE;

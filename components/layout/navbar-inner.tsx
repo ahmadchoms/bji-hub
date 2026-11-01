@@ -95,17 +95,17 @@ export function NavbarInner({
   return (
     <>
       {/* Tokopedia-Style Top Sub-Navbar (Desktop) */}
-      <div className="hidden md:block border-b border-neutral-200/70 bg-neutral-50/90 text-xs text-neutral-600 py-1 px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1 text-neutral-600 font-medium">
+      <div className="hidden lg:block border-b border-neutral-200/70 bg-neutral-50/90 text-xs text-neutral-600 py-1 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 truncate min-w-0">
+            <span className="flex items-center gap-1 text-neutral-600 font-medium shrink-0">
               <MapPin className="w-3 h-3 text-primary-600" />
               Dikirim ke: <strong className="text-neutral-800">Seluruh Indonesia</strong>
             </span>
             <span className="text-neutral-300">|</span>
-            <span className="text-neutral-600">Transaksi Belanja Kopi 100% Terverifikasi & Terjamin Aman</span>
+            <span className="text-neutral-600 truncate">Transaksi Belanja Kopi 100% Terverifikasi & Terjamin Aman</span>
           </div>
-          <div className="flex items-center gap-4 text-neutral-600">
+          <div className="flex items-center gap-4 text-neutral-600 shrink-0">
             <Link href="/about" className="hover:text-primary-700 transition-colors">
               Tentang Biji Hub
             </Link>
@@ -121,7 +121,7 @@ export function NavbarInner({
       </div>
 
       {/* Main Desktop Header */}
-      <header className="sticky top-0 z-40 hidden border-b border-neutral-200/80 bg-surface-base/95 backdrop-blur-md transition-all md:block">
+      <header className="sticky top-0 z-40 hidden border-b border-neutral-200/80 bg-surface-base/95 backdrop-blur-md transition-all lg:block">
         <div className="mx-auto flex h-[70px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 gap-5">
           {/* Sisi Kiri: Logo */}
           <div className="shrink-0 flex items-center">
@@ -129,7 +129,7 @@ export function NavbarInner({
           </div>
 
           {/* Sisi Tengah: Input Search + Trending Chips */}
-          <div className="flex-1 max-w-2xl mx-2 flex flex-col justify-center gap-1">
+          <div className="flex-1 min-w-0 max-w-2xl mx-2 flex flex-col justify-center gap-1">
             <div className="flex items-center w-full">
               {/* Input Search Form */}
               <form
@@ -196,7 +196,7 @@ export function NavbarInner({
       </header>
 
       {/* Mobile Header */}
-      <header className="sticky top-0 z-40 border-b border-neutral-200/80 bg-surface-base/95 backdrop-blur-md md:hidden">
+      <header className="sticky top-0 z-40 border-b border-neutral-200/80 bg-surface-base/95 backdrop-blur-md lg:hidden">
         <div className="flex h-14 items-center justify-between px-4 gap-2">
           <Logo size="md" />
 

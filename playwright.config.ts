@@ -18,9 +18,17 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run dev",
+    command: process.env.CI ? "npm run start" : "npm run dev",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
+    env: {
+      DATA_SOURCE: process.env.DATA_SOURCE || "mock",
+      ALLOW_MOCK_AUTH: "true",
+      NEXT_PUBLIC_SUPABASE_URL:
+        process.env.NEXT_PUBLIC_SUPABASE_URL || "https://mock-project.supabase.co",
+      NEXT_PUBLIC_SUPABASE_ANON_KEY:
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "mock-anon-key-for-ci-build",
+    },
   },
 });

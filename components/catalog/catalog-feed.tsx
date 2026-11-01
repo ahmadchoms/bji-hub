@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { logger } from "@/lib/logger";
 import { getCatalogFeedCached, normalizeFilters } from "@/lib/data/cached-catalog";
 import {
   parseCatalogParams,
@@ -114,8 +115,8 @@ export async function CatalogFeed({ params }: { params: CatalogParams }) {
         )}
       </div>
     );
-  } catch {
-    // ignore: localStorage filter write fallback
+  } catch (err) {
+    logger.error("catalog.feed_render_failed", err as Error);
     return (
       <div className="py-10">
         <p className="font-display text-xl text-neutral-900">

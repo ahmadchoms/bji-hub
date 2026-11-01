@@ -21,7 +21,12 @@ export function normalizeFilters(filters: Record<string, unknown> = {}): Record<
 
 export const getCatalogCached = unstable_cache(
   async (filtersKey: string) => {
-    const filters: ListingFilters = filtersKey ? JSON.parse(filtersKey) : {};
+    let filters: ListingFilters = {};
+    try {
+      filters = filtersKey ? JSON.parse(filtersKey) : {};
+    } catch {
+      filters = {};
+    }
     return getListings(filters);
   },
   ["catalog-listings"],
@@ -30,7 +35,12 @@ export const getCatalogCached = unstable_cache(
 
 export const getCatalogFeedCached = unstable_cache(
   async (filtersKey: string, upToPage: number = 1): Promise<CatalogFeedResult> => {
-    const filters: ListingFilters = filtersKey ? JSON.parse(filtersKey) : {};
+    let filters: ListingFilters = {};
+    try {
+      filters = filtersKey ? JSON.parse(filtersKey) : {};
+    } catch {
+      filters = {};
+    }
     return getCatalogFeed(filters, upToPage);
   },
   ["catalog-feed"],

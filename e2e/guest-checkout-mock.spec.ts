@@ -5,14 +5,15 @@ test.describe("Guest Checkout Flow (guest-checkout-mock)", () => {
     await page.goto("/catalog");
     await page.waitForLoadState("domcontentloaded");
 
-    // Product cards should be visible
-    const productLinks = page.locator('a[href^="/product/"]');
-    const count = await productLinks.count();
-    expect(count).toBeGreaterThan(0);
+    // Wait for product cards to stream in and become visible
+    const firstProduct = page.locator('a[href^="/product/"]').first();
+    await expect(firstProduct).toBeVisible({ timeout: 15000 });
 
-    // Click the first product
-    await productLinks.first().click();
-    await page.waitForLoadState("domcontentloaded");
+    // Click the product title or link and verify product page URL
+    await Promise.all([
+      page.waitForURL(/\/product\//, { timeout: 15000 }),
+      firstProduct.locator("h2").click(),
+    ]);
     await expect(page).toHaveURL(/\/product\//);
   });
 });

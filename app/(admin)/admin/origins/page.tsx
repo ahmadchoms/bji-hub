@@ -1,5 +1,5 @@
 import { SectionHeader } from "@/components/shared/section-header";
-import { getCoffeeOrigins } from "@/lib/data/origins";
+import { getCoffeeOriginsAction } from "@/actions/origin.actions";
 import { AdminOriginsTable } from "@/components/admin/admin-origins-table";
 import { Badge } from "@/components/ui/badge";
 
@@ -8,7 +8,8 @@ export const metadata = {
 };
 
 export default async function AdminOriginsPage() {
-  const origins = await getCoffeeOrigins();
+  const res = await getCoffeeOriginsAction();
+  const origins = res.success ? res.data : [];
 
   return (
     <div className="space-y-6">

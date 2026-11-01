@@ -110,7 +110,7 @@ export async function retryRefundAction(
       revalidatePath("/admin/refunds");
       revalidatePath("/admin/transactions");
     } catch {
-      // ignore
+      // ignore: revalidation outside request lifecycle
     }
 
     return ok({
@@ -162,7 +162,7 @@ export async function resolveManualRefundAction(
       revalidatePath("/admin/refunds");
       revalidatePath("/admin/transactions");
     } catch {
-      // ignore
+      // ignore: revalidation outside request lifecycle
     }
 
     return ok({ success: true });

@@ -12,6 +12,7 @@
     "lint": "eslint",
     "lint:ui": "node scripts/check-ui-rules.mjs",
     "lint:invariants": "node scripts/check-invariants.mjs",
+    "lint:exports": "node scripts/check-uncalled-exports.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:integration": "vitest run --config vitest.integration.config.mts",

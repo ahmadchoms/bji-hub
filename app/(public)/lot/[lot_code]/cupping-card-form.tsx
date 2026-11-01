@@ -47,7 +47,7 @@ export function CuppingCardForm({
         if (parsed.userNotes) setUserNotes(parsed.userNotes);
       }
     } catch {
-      // ignore
+      // ignore: localStorage parsing error
     }
   }, [storageKey]);
 
@@ -68,7 +68,7 @@ export function CuppingCardForm({
       setSavedMessage(true);
       setTimeout(() => setSavedMessage(false), 3000);
     } catch {
-      // ignore
+      // ignore: localStorage parsing error
     }
   };
 

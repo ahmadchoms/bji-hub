@@ -13,7 +13,11 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Coffee, ThumbsUp, Plus, AlertCircle } from "lucide-react";
-import { createBrewRecipeAction, voteBrewRecipeAction } from "@/actions/recipe.actions";
+import {
+  createBrewRecipeAction,
+  voteBrewRecipeAction,
+  getTopBrewRecipesAction,
+} from "@/actions/recipe.actions";
 import { toast } from "sonner";
 import type { BrewRecipeDetail } from "@/lib/coffee/recipes";
 
@@ -75,6 +79,11 @@ export function CommunityBrewRecipes({
         toast.success("Resep seduh Anda berhasil dibagikan ke komunitas!");
         setShowDialog(false);
         setNotes("");
+        const fresh = await getTopBrewRecipesAction(listingId);
+        if (fresh.success && fresh.data.length > 0) {
+          setRecipes(fresh.data);
+          return;
+        }
         // Optimistically add to state
         const newRecipe: BrewRecipeDetail = {
           id: res.data.recipeId,

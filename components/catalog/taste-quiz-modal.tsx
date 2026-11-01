@@ -1,8 +1,11 @@
 "use client";
 
-import { saveTastePreferencesAction } from "@/actions/taste-preference.actions";
+import {
+  saveTastePreferencesAction,
+  getTastePreferencesAction,
+} from "@/actions/taste-preference.actions";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Sparkles,
@@ -152,6 +155,20 @@ export function TasteQuizModal({
   }>({});
 
   const isCompleted = currentStep >= STEPS.length;
+
+  useEffect(() => {
+    if (open) {
+      getTastePreferencesAction().then((res) => {
+        if (res.success && res.data) {
+          setAnswers({
+            roast: res.data.roastPref?.[0] || undefined,
+            process: res.data.flavorTags?.[0] || undefined,
+            acidity: res.data.acidityPref != null ? String(res.data.acidityPref) : undefined,
+          });
+        }
+      });
+    }
+  }, [open]);
 
   const handleSelect = (key: QuizKey, value: string) => {
     setAnswers((prev) => ({ ...prev, [key]: value }));

@@ -8,8 +8,8 @@ import { getSellerById } from "@/lib/data";
 import {
   getOrCreateConversation,
   getMessagesByConversation,
-  markMessagesAsRead,
 } from "@/lib/data/chat";
+import { markMessagesAsReadAction } from "@/actions/chat.actions";
 import { ChatBox } from "@/components/chat/chat-box";
 
 interface OrderChatPageProps {
@@ -49,7 +49,7 @@ export default async function OrderChatPage({ params }: OrderChatPageProps) {
   );
 
   const initialMessages = await getMessagesByConversation(conversation.id, 50);
-  await markMessagesAsRead(conversation.id, session.userId);
+  await markMessagesAsReadAction(conversation.id);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { requireSeller } from "@/lib/auth/session";
-import { getProducers, getProducerAttributions } from "@/lib/data/producers";
+import { getVerifiedProducersAction, getProducerAttributionsAction } from "@/actions/producer.actions";
 import { SectionHeader } from "@/components/shared/section-header";
 import { SellerProducerManager } from "@/components/dashboard/seller-producer-manager";
 
@@ -14,10 +14,13 @@ export const dynamic = "force-dynamic";
 export default async function SellerProducersPage() {
   const { sellerId } = await requireSeller("/dashboard/producers");
 
-  const [producers, attributions] = await Promise.all([
-    getProducers(),
-    getProducerAttributions({ sellerId }).catch(() => []),
+  const [producersRes, attributionsRes] = await Promise.all([
+    getVerifiedProducersAction(),
+    getProducerAttributionsAction({ sellerId }),
   ]);
+
+  const producers = producersRes.success ? producersRes.data : [];
+  const attributions = attributionsRes.success ? attributionsRes.data : [];
 
   return (
     <div className="space-y-6">

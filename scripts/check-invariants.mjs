@@ -144,6 +144,17 @@ for (const file of sourceFiles) {
   }
 }
 
+// Invariant 6b: Disallow bare '// ignore' without reason (H10)
+for (const file of sourceFiles) {
+  if (isTestFile(file)) continue;
+  const lines = fs.readFileSync(file, "utf8").split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    if (/\/\/\s*ignore\s*$/.test(lines[i])) {
+      errors.push(`[Invariant Violation] Bare '// ignore' without reason at ${file}:${i + 1}. Must be '// ignore: <alasan>'`);
+    }
+  }
+}
+
 // Invariant 7: Direct session.role === "admin" / !== "admin" checks must only be in lib/auth/ (H2)
 for (const file of sourceFiles) {
   if (isTestFile(file)) continue;

@@ -514,7 +514,7 @@ export async function confirmOrderPaymentAction(
         );
       }
     } catch {
-      // ignore
+      // ignore: non-blocking email notification failure
     }
   });
 
@@ -961,7 +961,7 @@ export async function submitReviewAction(
           revalidatePath(`/product/${listing.slug}`);
         }
       } catch {
-        // ignore
+        // ignore: non-blocking review product revalidation failure
       }
     });
   } catch {

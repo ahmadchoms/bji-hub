@@ -57,7 +57,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
         userAddresses = dbAddresses.map(toBuyerAddress);
       }
     } catch {
-      // ignore
+      // ignore: optional database address lookup fallback
     }
   }
 
@@ -88,7 +88,6 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
       }
     } catch {
       // ignore: optional profile cookie read fallback
-      // ignore
     }
   }
 

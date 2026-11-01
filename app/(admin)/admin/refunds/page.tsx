@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { requireRole } from "@/lib/auth/session";
-import { getAllRefunds } from "@/lib/data/refunds";
+import { getAdminRefundsAction } from "@/actions/refund.actions";
 import { SectionHeader } from "@/components/shared/section-header";
 import { AdminRefundQueue } from "@/components/admin/admin-refund-queue";
 
@@ -13,7 +13,8 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminRefundsPage() {
   await requireRole(["admin"], "/admin/refunds");
-  const refunds = await getAllRefunds();
+  const res = await getAdminRefundsAction();
+  const refunds = res.success ? res.data : [];
 
   return (
     <div className="space-y-6">

@@ -92,7 +92,7 @@ export function BrewTimer({
         await wakeLockRef.current.release();
         wakeLockRef.current = null;
       } catch {
-        // ignore
+        // ignore: wake lock release error
       }
       setWakeLockActive(false);
     }
@@ -104,7 +104,7 @@ export function BrewTimer({
       try {
         navigator.vibrate([200, 100, 200]);
       } catch {
-        // ignore
+        // ignore: wake lock release error
       }
     }
   };

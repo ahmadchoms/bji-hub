@@ -130,7 +130,7 @@ export async function leaveWaitlistAction(
           [listingId, userId]
         );
       } catch {
-        // ignore
+        // ignore: database error fallback to memory map
       }
     }
 
@@ -161,7 +161,7 @@ export async function checkWaitlistStatusAction(
         );
         return ok({ inWaitlist: res.rows.length > 0 });
       } catch {
-        // ignore
+        // ignore: database error fallback to memory map
       }
     }
 

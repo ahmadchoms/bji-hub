@@ -42,7 +42,7 @@ export async function runManualMaintenanceAction(): Promise<
         const { revalidateListing } = await import("@/lib/cache/revalidate");
         revalidateListing(null);
       } catch {
-        // ignore
+        // ignore: revalidation outside request lifecycle
       }
     }
 

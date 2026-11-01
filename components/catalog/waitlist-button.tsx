@@ -1,9 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { Bell, Check, Calendar, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { joinWaitlistAction, leaveWaitlistAction } from "@/actions/waitlist.actions";
+import {
+  joinWaitlistAction,
+  leaveWaitlistAction,
+  checkWaitlistStatusAction,
+} from "@/actions/waitlist.actions";
 
 interface WaitlistButtonProps {
   listingId: string;
@@ -21,6 +25,14 @@ export function WaitlistButton({
   const [inWaitlist, setInWaitlist] = useState(initialInWaitlist);
   const [message, setMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    checkWaitlistStatusAction(listingId).then((res) => {
+      if (res.success) {
+        setInWaitlist(res.data.inWaitlist);
+      }
+    });
+  }, [listingId]);
 
   const handleToggle = () => {
     setMessage(null);

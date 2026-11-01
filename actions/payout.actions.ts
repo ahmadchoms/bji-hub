@@ -243,7 +243,7 @@ export async function updatePayoutStatusAction(
       }).catch(() => {});
     }
   } catch {
-    // ignore
+    // ignore: non-blocking payout alert processing failure
   }
 
   return ok({ success: true });

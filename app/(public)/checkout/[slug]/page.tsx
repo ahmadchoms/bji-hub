@@ -76,7 +76,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
         }
       }
     } catch {
-      // ignore
+      // ignore: fallback to empty user metadata
     }
   }
 
@@ -114,7 +114,6 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
       }
     } catch {
       // ignore: optional user metadata / cookie fallback
-      // ignore
     }
   }
 
@@ -147,7 +146,6 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
       }
     } catch {
       // ignore: optional user metadata / cookie fallback
-      // ignore
     }
   }
 
@@ -164,8 +162,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
           userAddress = userAddress || latest.buyerAddress;
         }
       } catch {
-        // ignore: optional user metadata / cookie fallback
-        // ignore
+        // ignore: optional past orders lookup fallback
       }
     }
   }

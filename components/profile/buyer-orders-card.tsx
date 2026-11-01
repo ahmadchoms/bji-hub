@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { reorderCompletedItemAction } from "@/actions/order-reorder.actions";
 import { Order } from "@/types";
 import { formatRupiah } from "@/components/shared/price-text";
 import { Badge } from "@/components/ui/badge";
@@ -56,7 +57,32 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
   const [payingId, setPayingId] = useState<string | null>(null);
   const [cancelingId, setCancelingId] = useState<string | null>(null);
 
-  const handleReorder = (ord: Order) => {
+  const handleReorder = async (ord: Order) => {
+    if (ord.status === "completed") {
+      const res = await reorderCompletedItemAction(ord.id);
+      if (res.success) {
+        const item = res.data;
+        addToCart({
+          listingId: item.listingId,
+          slug: item.listingSlug,
+          title: item.title,
+          price: item.unitPrice,
+          unit: item.unit || "kg",
+          minOrderQty: 1,
+          quantity: item.quantity || 1,
+          grindSize: item.grindSize || undefined,
+          sellerId: ord.sellerId,
+          sellerName: ord.sellerName || "Roastery Penjual",
+          sellerCity: ord.buyerCity || "Indonesia",
+        });
+        toast.success(
+          `"${item.title}" berhasil ditambahkan ke keranjang belanja!`,
+        );
+        router.push("/cart");
+        return;
+      }
+    }
+
     addToCart({
       listingId: ord.listingId,
       slug: ord.listingSlug || ord.listingId,

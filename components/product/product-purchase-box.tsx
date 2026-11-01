@@ -10,6 +10,7 @@ import { ProductShippingEstimator } from "@/components/product/product-shipping-
 import { GRIND_OPTIONS } from "@/lib/coffee/brew-methods";
 import { BrewCalculator } from "@/components/catalog/brew-calculator";
 import { WaitlistButton } from "@/components/catalog/waitlist-button";
+import { StartChatButton } from "@/components/chat/start-chat-button";
 
 interface ProductPurchaseBoxProps {
   listing: ListingWithRelations;
@@ -250,6 +251,12 @@ export function ProductPurchaseBox({ listing }: ProductPurchaseBoxProps) {
               }}
               disabled={isGreenBean && !confirmedGreenBean}
               className="w-full justify-center h-11 text-sm font-medium"
+            />
+
+            <StartChatButton
+              sellerId={listing.sellerId}
+              listingId={listing.id}
+              className="w-full justify-center h-10 border-neutral-300 hover:bg-neutral-100"
             />
 
             {isGreenBean && !confirmedGreenBean && (

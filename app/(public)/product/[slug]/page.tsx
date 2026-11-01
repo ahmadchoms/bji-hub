@@ -25,6 +25,8 @@ import { getReviewsByListing, computeReviewStats } from "@/lib/data/reviews";
 import { FreshnessBadge } from "@/components/catalog/freshness-badge";
 import { calculateRoastToShipSla } from "@/lib/coffee/shipping-sla";
 import { RoastSlaBadge } from "@/components/catalog/roast-sla-badge";
+import { getSession } from "@/lib/auth/session";
+import { ReviewItemActions } from "@/components/catalog/review-item-actions";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
@@ -111,6 +113,9 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     pageSize: 50,
   });
   const similarListings = findSimilarListings(listing, relatedResult.items, 6);
+
+  const session = await getSession();
+  const isSellerOwner = Boolean(session.sellerId && session.sellerId === listing.sellerId);
 
   const reviews = await getReviewsByListing(listing.id);
   const reviewStats = computeReviewStats(reviews);
@@ -297,6 +302,12 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                           </span>
                         </div>
                       )}
+
+                      <ReviewItemActions
+                        reviewId={r.id}
+                        isSellerOwner={isSellerOwner}
+                        hasSellerReply={Boolean(r.sellerReply)}
+                      />
                     </div>
                   ))}
                 </div>

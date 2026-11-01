@@ -603,6 +603,28 @@ export async function adminApproveReview(reviewId: string): Promise<boolean> {
   return true;
 }
 
+export async function getReportedReviews(): Promise<Review[]> {
+  const pool = getPool();
+  if (pool) {
+    try {
+      const res = await pool.query(
+        `SELECT r.*
+         FROM public.reviews r
+         WHERE r.is_reported = true OR r.moderation_status = 'hidden_pending_review'
+         ORDER BY r.created_at DESC`
+      );
+      return res.rows.map(mapReviewRow);
+    } catch (err) {
+      assertMockAllowed("getReportedReviews");
+      logger.warn("reviews.get_reported_failed", { error: (err as Error).message });
+    }
+  } else {
+    assertMockAllowed("getReportedReviews:no_pool");
+  }
+
+  return mockReviews.filter((r) => r.isReported || r.moderationStatus === "hidden_pending_review");
+}
+
 export async function voteReviewHelpful(
   reviewId: string,
   userId: string

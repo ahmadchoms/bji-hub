@@ -4,7 +4,8 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 import { getSession, requireSeller } from "@/lib/auth/session";
-import { replyToReview, reportReview } from "@/lib/data/reviews";
+import { isAdminAllowed } from "@/lib/auth/admin-guard";
+import { replyToReview, reportReview, voteReviewHelpful, adminApproveReview } from "@/lib/data/reviews";
 import { recordAuditLog } from "@/lib/data/audit-logs";
 import { getClientIp } from "@/lib/client-ip";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -40,6 +41,62 @@ export async function replyToReviewAction(
   revalidatePath("/product");
   revalidateListing(null);
   revalidateListing(null);
+  return ok({ success: true });
+}
+
+export async function voteReviewHelpfulAction(
+  reviewId: string,
+): Promise<ActionResult<{ voteCount: number; userVoted: boolean }>> {
+  const session = await getSession();
+  if (session.role === "guest" || !session.userId) {
+    return fail("Silakan masuk akun terlebih dahulu untuk menyukai ulasan.");
+  }
+
+  const res = await voteReviewHelpful(reviewId, session.userId);
+  if (!res.success) {
+    return fail("Gagal mencatat dukungan ulasan");
+  }
+
+  return ok({ voteCount: res.voteCount, userVoted: res.userVoted });
+}
+
+export async function adminApproveReviewAction(
+  reviewId: string,
+): Promise<ActionResult<{ success: boolean }>> {
+  const session = await getSession();
+  if (!(await isAdminAllowed(session))) {
+    return fail("Hanya admin terverifikasi MFA yang dapat memoderasi ulasan.");
+  }
+
+  const success = await adminApproveReview(reviewId);
+  if (!success) {
+    return fail("Gagal menyetujui ulasan atau ulasan tidak ditemukan");
+  }
+
+  revalidateListing(null);
+  revalidatePath("/admin/reviews");
+  return ok({ success: true });
+}
+
+export async function adminHideReviewAction(
+  reviewId: string,
+): Promise<ActionResult<{ success: boolean }>> {
+  const session = await getSession();
+  if (!(await isAdminAllowed(session))) {
+    return fail("Hanya admin terverifikasi MFA yang dapat memoderasi ulasan.");
+  }
+
+  const { getPool } = await import("@/lib/db/pool");
+  const pool = getPool();
+  if (pool) {
+    await pool.query(
+      `UPDATE public.reviews SET moderation_status = 'rejected', is_reported = true WHERE id = $1`,
+      [reviewId],
+    );
+  }
+
+  revalidateListing(null);
+  revalidatePath("/admin/reviews");
   return ok({ success: true });
 }
 

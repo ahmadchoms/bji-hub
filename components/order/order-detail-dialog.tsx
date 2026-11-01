@@ -32,6 +32,7 @@ import {
   Check,
   ExternalLink,
   MessageCircle,
+  MessageSquare,
   CreditCard,
   XCircle,
   RotateCcw,
@@ -331,20 +332,30 @@ export function OrderDetailDialog({
               <Store className="w-3.5 h-3.5 text-primary-700" />
               <span>{order.sellerName || "Roastery Biji Hub"}</span>
             </div>
-            {order.buyerPhone && (
-              <a
-                href={`https://wa.me/6281234567890?text=${encodeURIComponent(
-                  `Halo ${order.sellerName || "Roastery"}, saya pembeli untuk pesanan #${order.orderNumber} (${order.listingTitle || "Kopi"}). Ingin menanyakan pesanan saya.`,
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-emerald-700 hover:text-emerald-800 flex items-center gap-1 font-medium bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200 transition-colors"
-                title="Hubungi penjual via WhatsApp"
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/orders/${order.id}/chat`}
+                className="text-xs text-primary-700 hover:text-primary-800 flex items-center gap-1 font-medium bg-primary-50 hover:bg-primary-100 px-2 py-0.5 rounded border border-primary-200 transition-colors"
+                title="Tanya penjual tentang pesanan ini"
               >
-                <MessageCircle className="w-3 h-3 text-emerald-600" />
-                Chat Penjual
-              </a>
-            )}
+                <MessageSquare className="w-3 h-3 text-primary-600" />
+                Tanya Penjual
+              </Link>
+              {order.buyerPhone && (
+                <a
+                  href={`https://wa.me/6281234567890?text=${encodeURIComponent(
+                    `Halo ${order.sellerName || "Roastery"}, saya pembeli untuk pesanan #${order.orderNumber} (${order.listingTitle || "Kopi"}). Ingin menanyakan pesanan saya.`,
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-emerald-700 hover:text-emerald-800 flex items-center gap-1 font-medium bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200 transition-colors"
+                  title="Hubungi penjual via WhatsApp"
+                >
+                  <MessageCircle className="w-3 h-3 text-emerald-600" />
+                  WA
+                </a>
+              )}
+            </div>
           </div>
 
           <div className="flex items-start gap-3">

@@ -7,6 +7,8 @@ const ADMIN_NAV: readonly DashboardNavItem[] = [
   { href: "/admin", label: "Ringkasan" },
   { href: "/admin/verification", label: "Antrean Verifikasi" },
   { href: "/admin/moderation", label: "Moderasi Produk" },
+  { href: "/admin/vouchers", label: "Kelola Voucher" },
+  { href: "/admin/reviews", label: "Moderasi Ulasan" },
   { href: "/admin/transactions", label: "Riwayat Transaksi" },
   { href: "/admin/refunds", label: "Antrean Refund" },
   { href: "/admin/payouts", label: "Pencairan Dana" },

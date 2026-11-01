@@ -12,6 +12,7 @@ import {
   getPayoutRequestsBySeller,
   getAllPayoutRequests,
   updatePayoutStatus,
+  generatePayoutBatchCsv,
 } from "./payouts";
 import { createOrder, updateOrderStatus } from "@/lib/data/orders";
 
@@ -174,6 +175,32 @@ describe("payouts and balance summary", () => {
       "rejected",
     );
     expect(secondUpdate).toBe(false);
+  });
+
+  it("neutralizes potential formula injection in exported CSV cells (H3)", () => {
+    const maliciousRows = [
+      {
+        id: "pay-1",
+        createdAt: "2026-11-01",
+        sellerName: "=HYPERLINK('http://evil.com','Click Me')",
+        bankName: "+cmd|' /C calc'!A0",
+        accountNumber: "1234567890",
+        accountHolder: "-@DDE('cmd','/C calc')",
+        amount: 50000,
+        notes: "@SUM(A1:A10)",
+        status: "pending",
+      },
+    ];
+
+    const csv = generatePayoutBatchCsv(maliciousRows);
+    const lines = csv.split("\r\n");
+    expect(lines.length).toBe(2);
+
+    // Cells starting with =, +, -, @ must be prepended with a single quote '
+    expect(lines[1]).toContain("\"'=HYPERLINK('http://evil.com','Click Me')\"");
+    expect(lines[1]).toContain("\"'+cmd|' /C calc'!A0\"");
+    expect(lines[1]).toContain("\"'-@DDE('cmd','/C calc')\"");
+    expect(lines[1]).toContain("\"'@SUM(A1:A10)\"");
   });
 
   describe.skipIf(!process.env.TEST_DATABASE_URL)("database concurrency tests", () => {

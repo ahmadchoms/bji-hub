@@ -19,6 +19,7 @@
     "test:roles": "node scripts/e2e-roles-test.mjs",
     "deploy:check": "node scripts/deploy-check.mjs",
     "verify:rls": "node scripts/verify-rls.mjs",
+    "validate:sql": "node scripts/validate-sql-statements.mjs",
     "test:e2e": "playwright test",
     "format": "prettier --write .",
     "postinstall": "prisma generate",

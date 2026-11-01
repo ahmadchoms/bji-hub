@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole, getSession } from "@/lib/auth/session";
+import { hasAdminRole } from "@/lib/auth/admin-guard";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 import { logger } from "@/lib/logger";
@@ -56,7 +57,7 @@ export async function verifyMfaAction(
 ): Promise<ActionResult<{ verified: boolean }>> {
   try {
     const session = await getSession();
-    if (!session || session.role !== "admin" || !session.userId) {
+    if (!session || !hasAdminRole(session) || !session.userId) {
       return fail("Akses tidak diizinkan");
     }
 

@@ -25,6 +25,7 @@ import { createReview, getReviewByOrderAndListing } from "@/lib/data/reviews";
 import { getPaymentProvider } from "@/lib/payments";
 import { getSession, requireRole } from "@/lib/auth/session";
 import { canAccessOrder } from "@/lib/auth/order-access";
+import { isAdminAllowed } from "@/lib/auth/admin-guard";
 import { logger } from "@/lib/logger";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/client-ip";
@@ -486,8 +487,8 @@ export async function confirmOrderPaymentAction(
   orderIdOrNumber: string,
 ): Promise<ActionResult<{ success: boolean }>> {
   const session = await getSession();
-  if (session.role !== "admin") {
-    return fail("Hanya admin yang dapat mengonfirmasi pembayaran secara manual.");
+  if (!(await isAdminAllowed(session))) {
+    return fail("Hanya admin terverifikasi MFA yang dapat mengonfirmasi pembayaran secara manual.");
   }
 
   const order = await getOrderById(orderIdOrNumber);
@@ -535,7 +536,7 @@ export async function updateShipmentTrackingAction(
   if (!order) return fail("Pesanan tidak ditemukan");
 
   const isSeller = Boolean(session.sellerId && order.sellerId === session.sellerId);
-  const isAdmin = session.role === "admin";
+  const isAdmin = await isAdminAllowed(session);
   if (!isSeller && !isAdmin) {
     return fail("Anda tidak memiliki akses untuk memperbarui resi pesanan ini");
   }
@@ -572,7 +573,7 @@ export async function completeOrderAction(
   if (!order) return fail("Pesanan tidak ditemukan");
 
   const isBuyer = Boolean(session.userId && order.buyerId === session.userId);
-  const isAdmin = session.role === "admin";
+  const isAdmin = await isAdminAllowed(session);
   if (!isBuyer && !isAdmin) {
     return fail("Hanya pembeli yang bersangkutan yang dapat mengonfirmasi pesanan diterima");
   }
@@ -631,7 +632,7 @@ export async function disputeOrderAction(
   if (!order) return fail("Pesanan tidak ditemukan");
 
   const isBuyer = Boolean(session.userId && order.buyerId === session.userId);
-  const isAdmin = session.role === "admin";
+  const isAdmin = await isAdminAllowed(session);
   if (!isBuyer && !isAdmin) {
     return fail("Hanya pembeli yang bersangkutan yang dapat mengajukan komplain");
   }
@@ -787,7 +788,8 @@ export async function sellerResolveDisputeAction(
   const order = await getOrderById(orderId);
   if (!order) return fail("Pesanan tidak ditemukan");
 
-  if (session.role !== "admin" && (!sellerId || order.sellerId !== sellerId)) {
+  const isAdmin = await isAdminAllowed(session);
+  if (!isAdmin && (!sellerId || order.sellerId !== sellerId)) {
     return fail("Anda tidak memiliki akses untuk menyelesaikan komplain pesanan ini");
   }
 
@@ -1059,7 +1061,7 @@ export async function cancelPaidOrderAction(
 
   const isBuyer = canAccessOrder(order, session, accessToken);
   const isSeller = session.sellerId && session.sellerId === order.sellerId;
-  const isAdmin = session.role === "admin";
+  const isAdmin = await isAdminAllowed(session);
 
   if (!isBuyer && !isSeller && !isAdmin) {
     return fail("Anda tidak memiliki akses untuk membatalkan pesanan ini");

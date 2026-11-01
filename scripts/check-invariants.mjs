@@ -47,6 +47,7 @@ const invalidSqlPatterns = [
   { pattern: /public\.sellers\b/g, name: 'public.sellers (must be public.seller_profiles)' },
   { pattern: /u\.created_at\b/g, name: 'u.created_at (must be u."createdAt")' },
   { pattern: /s\.user_id\b/g, name: 's.user_id (must be s."userId")' },
+  { pattern: /SELECT\s+user_id\s+(as\s+"userId"\s+)?FROM\s+public\.seller_profiles/i, name: 'user_id on seller_profiles (must be "userId")' },
 ];
 
 for (const file of sourceFiles) {
@@ -140,6 +141,22 @@ for (const file of sourceFiles) {
         );
       }
     }
+  }
+}
+
+// Invariant 7: Direct session.role === "admin" / !== "admin" checks must only be in lib/auth/ (H2)
+for (const file of sourceFiles) {
+  if (isTestFile(file)) continue;
+  const normalized = file.replace(/\\/g, "/");
+  if (normalized.startsWith("lib/auth/") || normalized === "lib/data/chat.ts") continue;
+  const content = fs.readFileSync(file, "utf8");
+  if (
+    /role\s*===\s*["']admin["']/.test(content) ||
+    /role\s*!==\s*["']admin["']/.test(content)
+  ) {
+    errors.push(
+      `[Invariant Violation] Disallowed direct admin role check in ${normalized}. Use 'await isAdminAllowed(session)' instead.`
+    );
   }
 }
 

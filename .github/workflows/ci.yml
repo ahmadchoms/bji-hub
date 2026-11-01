@@ -85,6 +85,11 @@ jobs:
       - name: Verify Contract Coverage of Raw SQL Modules (A2)
         run: node scripts/check-contract-coverage.mjs
 
+      - name: Validate Raw SQL Statements via PREPARE (H8)
+        run: npm run validate:sql
+        env:
+          DATABASE_URL: postgresql://postgres:postgrespassword@localhost:5432/biji_test
+
       - name: Integration tests (real Postgres) (A2)
         run: npm run test:integration
         env:

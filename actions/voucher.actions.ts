@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 import { getSession } from "@/lib/auth/session";
+import { isAdminAllowed } from "@/lib/auth/admin-guard";
 import { recordAuditLog } from "@/lib/data/audit-logs";
 import { getClientIp } from "@/lib/client-ip";
 import {
@@ -98,8 +99,9 @@ export async function createVoucherAction(
 
   const data = parsed.data;
   let targetSellerId: string | null = null;
+  const isAdmin = await isAdminAllowed(session);
 
-  if (session.role === "admin") {
+  if (isAdmin) {
     targetSellerId = data.sellerId || null;
   } else if (session.role === "seller" && session.sellerId) {
     targetSellerId = session.sellerId;

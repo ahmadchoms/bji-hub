@@ -5,6 +5,7 @@ import { logger } from "@/lib/logger";
 import { z } from "zod";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 import { getSession } from "@/lib/auth/session";
+import { isAdminAllowed } from "@/lib/auth/admin-guard";
 import { createImageUploadTarget } from "@/lib/data";
 import {
   IMAGE_RULES,
@@ -192,7 +193,7 @@ export async function getKycDocumentSignedUrlAction(
   sellerId: string,
 ): Promise<ActionResult<{ signedUrl: string; expiresAt: number }>> {
   const session = await getSession();
-  const isAdmin = session.role === "admin";
+  const isAdmin = await isAdminAllowed(session);
   const isOwner = session.role === "seller" && session.sellerId === sellerId;
 
   if (!isAdmin && !isOwner) {

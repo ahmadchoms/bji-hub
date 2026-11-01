@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, MessageSquare } from "lucide-react";
 import { getSession } from "@/lib/auth/session";
+import { isAdminAllowed } from "@/lib/auth/admin-guard";
 import { getOrderById } from "@/lib/data/orders";
 import { getSellerById } from "@/lib/data";
 import {
@@ -31,7 +32,7 @@ export default async function OrderChatPage({ params }: OrderChatPageProps) {
   // Authorization: buyer of order, seller of order, or admin
   const isBuyer = order.buyerId === session.userId;
   const isSeller = session.sellerId === order.sellerId;
-  const isAdmin = session.role === "admin";
+  const isAdmin = await isAdminAllowed(session);
 
   if (!isBuyer && !isSeller && !isAdmin) {
     notFound();

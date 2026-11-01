@@ -124,22 +124,27 @@ export async function requireRole(
     redirect(`/login?next=${encodeURIComponent(returnTo)}`);
   }
 
-  // Admin MFA Enforcement (Audit #26 / E4)
+  // Admin MFA Enforcement (H2: fail-closed)
   if (allowed.includes("admin") && session.role === "admin") {
     const isMock = process.env.DATA_SOURCE === "mock" || process.env.NODE_ENV === "test";
     const mfaRequired = process.env.ADMIN_MFA_REQUIRED !== "false";
     if (!isMock && mfaRequired && !returnTo.startsWith("/admin/mfa")) {
-      try {
-        const { createClient } = await import("@/lib/supabase/server");
-        const supabase = await createClient();
-        const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-        if (aal && aal.currentLevel !== "aal2") {
-          redirect(aal.nextLevel === "aal2" ? "/admin/mfa/verify" : "/admin/mfa/enroll");
+      const { isAdminMfaSatisfied } = await import("@/lib/auth/admin-guard");
+      const satisfied = await isAdminMfaSatisfied();
+      if (!satisfied) {
+        try {
+          const { createClient } = await import("@/lib/supabase/server");
+          const supabase = await createClient();
+          const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+          if (aal && aal.nextLevel === "aal2" && aal.currentLevel !== "aal2") {
+            redirect("/admin/mfa/verify");
+          }
+        } catch (err) {
+          if ((err as Error)?.message?.includes("NEXT_REDIRECT")) {
+            throw err;
+          }
         }
-      } catch (err) {
-        if ((err as Error)?.message?.includes("NEXT_REDIRECT")) {
-          throw err;
-        }
+        redirect("/admin/mfa/enroll");
       }
     }
   }

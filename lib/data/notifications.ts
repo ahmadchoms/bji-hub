@@ -72,7 +72,7 @@ export async function notifySeller(
     if (pool) {
       try {
         const res = await pool.query(
-          `SELECT user_id as "userId" FROM public.seller_profiles WHERE id = $1 LIMIT 1`,
+          `SELECT "userId" AS "userId" FROM public.seller_profiles WHERE id = $1 LIMIT 1`,
           [sellerProfileId],
         );
         userId = res.rows[0]?.userId;

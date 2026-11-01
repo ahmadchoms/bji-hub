@@ -28,6 +28,13 @@ test.describe("Content Security Policy (csp-no-violations)", () => {
     await page.goto("/login");
     await page.waitForLoadState("domcontentloaded");
 
-    expect(violations).toEqual([]);
+    // In local development, Next.js dev server uses eval for source-maps/HMR.
+    // In CI production build (npm run start), eval is completely forbidden and zero violations must exist.
+    const isDev = !process.env.CI;
+    const unexpectedViolations = isDev
+      ? violations.filter((v) => (v as { blockedURI?: string })?.blockedURI !== "eval")
+      : violations;
+
+    expect(unexpectedViolations).toEqual([]);
   });
 });

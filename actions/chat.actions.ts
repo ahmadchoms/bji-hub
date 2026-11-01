@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 import { getSession } from "@/lib/auth/session";
+import { isAdminAllowed, hasAdminRole } from "@/lib/auth/admin-guard";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { runAfterResponse } from "@/lib/after";
 import { logger } from "@/lib/logger";
@@ -59,21 +60,42 @@ export async function startConversationAction(
     return fail("Batas harian memulai percakapan baru telah tercapai (maks. 5 percakapan/hari)");
   }
 
-  // Verify context existence & authorization
+  let buyerUserId = session.userId;
+  let targetSellerId: string;
+
+  // Verify context existence & authorization (H4)
   if (orderId) {
     const order = await getOrderById(orderId);
     if (!order) return fail("Pesanan tidak ditemukan");
-    if (session.role !== "admin" && order.buyerId !== session.userId && order.sellerId !== session.sellerId) {
+    const isBuyer = order.buyerId === session.userId;
+    const isSeller = Boolean(session.sellerId && order.sellerId === session.sellerId);
+    const isAdmin = await isAdminAllowed(session);
+    if (!isBuyer && !isSeller && !isAdmin) {
       return fail("Anda tidak berwenang memulai obrolan untuk pesanan ini");
     }
-  }
-
-  if (listingId) {
+    if (!order.buyerId) return fail("Pesanan tamu tidak mendukung obrolan");
+    buyerUserId = order.buyerId;
+    targetSellerId = order.sellerId;
+  } else if (listingId) {
     const listing = await getListingById(listingId);
     if (!listing) return fail("Produk tidak ditemukan");
+    if (session.sellerId && listing.sellerId === session.sellerId) {
+      return fail("Anda tidak dapat mengirim pesan ke toko Anda sendiri");
+    }
+    targetSellerId = listing.sellerId;
+  } else {
+    if (!sellerId) return fail("Konteks obrolan tidak valid");
+    if (session.sellerId && sellerId === session.sellerId) {
+      return fail("Anda tidak dapat mengirim pesan ke toko Anda sendiri");
+    }
+    targetSellerId = sellerId;
   }
 
-  const conversation = await getOrCreateConversation(session.userId, sellerId, {
+  if (sellerId && sellerId !== targetSellerId) {
+    return fail("ID penjual tidak sesuai dengan konteks pesanan/produk");
+  }
+
+  const conversation = await getOrCreateConversation(buyerUserId, targetSellerId, {
     orderId,
     listingId,
   });
@@ -89,7 +111,9 @@ export async function startConversationAction(
     }
   }
 
-  revalidatePath(`/orders/${orderId}/chat`);
+  if (orderId) {
+    revalidatePath(`/orders/${orderId}/chat`);
+  }
   revalidatePath("/dashboard/messages");
 
   return ok(conversation);
@@ -133,14 +157,25 @@ export async function sendMessageAction(
     return fail("Percakapan tidak ditemukan");
   }
 
+  const isAdmin = await isAdminAllowed(session);
   const hasAccess = canUserAccessConversation(
     session.userId,
     session.role,
     session.sellerId,
     conversation,
   );
-  if (!hasAccess) {
+  if (!hasAccess || (hasAdminRole(session) && !isAdmin)) {
     return fail("Anda tidak memiliki akses ke percakapan ini");
+  }
+
+  if (isAdmin) {
+    await recordAuditLog({
+      actorId: session.userId,
+      actorRole: session.role,
+      action: "chat.admin_access_conversation",
+      targetType: "conversation",
+      targetId: conversationId,
+    });
   }
 
   const sanitized = sanitizeMessageText(body);

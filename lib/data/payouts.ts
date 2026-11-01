@@ -636,6 +636,14 @@ export async function getPayoutBatchExportRows(batchId?: string): Promise<Payout
   }));
 }
 
+function csvCell(value: unknown): string {
+  let text = String(value ?? "");
+  if (/^[=+\-@\t\r]/.test(text)) {
+    text = `'${text}`; // netralkan rumus (H3 Formula Injection Prevention)
+  }
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
 export function generatePayoutBatchCsv(rows: PayoutExportRow[]): string {
   const header = [
     "ID",
@@ -648,7 +656,7 @@ export function generatePayoutBatchCsv(rows: PayoutExportRow[]): string {
     "Catatan",
     "Status",
   ];
-  const csvLines = [header.map((h) => `"${h.replace(/"/g, '""')}"`).join(",")];
+  const csvLines = [header.map(csvCell).join(",")];
 
   for (const r of rows) {
     const line = [
@@ -661,7 +669,7 @@ export function generatePayoutBatchCsv(rows: PayoutExportRow[]): string {
       String(r.amount),
       r.notes,
       r.status,
-    ].map((val) => `"${String(val).replace(/"/g, '""')}"`).join(",");
+    ].map(csvCell).join(",");
     csvLines.push(line);
   }
 

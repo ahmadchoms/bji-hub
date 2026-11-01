@@ -26,8 +26,9 @@ const bankDetailsSchema = z.object({
   bankAccountHolder: z
     .string()
     .trim()
-    .min(3, "Nama pemilik rekening minimal 3 karakter")
-    .max(100, "Nama pemilik rekening maksimal 100 karakter"),
+    .min(2, "Nama pemilik rekening minimal 2 karakter")
+    .max(100, "Nama pemilik rekening maksimal 100 karakter")
+    .regex(/^[\p{L}\p{N} .,'-]{2,100}$/u, "Nama pemilik rekening hanya boleh berisi huruf, angka, dan tanda baca umum"),
 });
 
 export type BankDetailsFormValues = z.infer<typeof bankDetailsSchema>;
@@ -81,7 +82,11 @@ export async function updateSellerBankAction(
 
 const payoutSchema = z.object({
   amount: z.number().int().min(10000, "Minimal penarikan dana adalah Rp 10.000"),
-  notes: z.string().max(200).optional(),
+  notes: z
+    .string()
+    .max(200)
+    .regex(/^[^\x00-\x1F\x7F]*$/, "Catatan tidak boleh mengandung karakter kontrol")
+    .optional(),
 });
 
 export async function requestPayoutAction(
@@ -159,7 +164,11 @@ const updatePayoutSchema = z
   .object({
     payoutId: z.string().min(1, "ID penarikan dana wajib diisi"),
     status: z.enum(["processed", "rejected"]),
-    notes: z.string().max(200).optional(),
+    notes: z
+    .string()
+    .max(200)
+    .regex(/^[^\x00-\x1F\x7F]*$/, "Catatan tidak boleh mengandung karakter kontrol")
+    .optional(),
     proofUrl: z.string().url("URL bukti transfer tidak valid").optional().or(z.literal("")),
   })
   .refine(

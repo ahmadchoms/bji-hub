@@ -7,7 +7,8 @@ import { getListingFeed } from "@/lib/data";
 import { PageContainer } from "@/components/layout/page-container";
 import { ListingCard } from "@/components/catalog/listing-card";
 import { formatAltitude, getVerifiedCertifications, COFFEE_CERTIFICATIONS } from "@/lib/coffee/taxonomy";
-import { MapPin, Mountain, Users, ShieldCheck, ArrowLeft, Award, Coffee } from "lucide-react";
+import { getHarvestSeasonInfo } from "@/lib/coffee/harvest";
+import { MapPin, Mountain, Users, ShieldCheck, ArrowLeft, Award, Coffee, Sprout } from "lucide-react";
 
 interface OriginDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -55,6 +56,10 @@ export default async function OriginDetailPage({
   });
 
   const altitudeStr = formatAltitude(origin.minAltitude, origin.maxAltitude);
+  const harvestInfo = getHarvestSeasonInfo(
+    origin.harvestMonths || [5, 6, 7, 8, 9, 10],
+    origin.mainHarvestMonths || [6, 7, 8]
+  );
 
   return (
     <div className="py-8 md:py-12 space-y-10">
@@ -97,6 +102,12 @@ export default async function OriginDetailPage({
                 <span className="inline-flex items-center gap-1 text-xs font-mono font-semibold text-primary-900 bg-primary-100 border border-primary-200 px-2.5 py-1 rounded-full">
                   <Mountain className="h-3.5 w-3.5 text-primary-700" aria-hidden="true" />
                   {altitudeStr}
+                </span>
+              )}
+              {harvestInfo.badgeText && (
+                <span className="inline-flex items-center gap-1 text-xs font-mono font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+                  <Sprout className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" />
+                  {harvestInfo.badgeText}
                 </span>
               )}
             </div>

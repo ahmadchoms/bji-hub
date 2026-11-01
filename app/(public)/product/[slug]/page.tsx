@@ -30,6 +30,9 @@ import { ReviewItemActions } from "@/components/catalog/review-item-actions";
 import { getTopBrewRecipesForListing } from "@/lib/coffee/recipes";
 import { getActiveEditorialPickForListing } from "@/lib/coffee/editorial";
 import { CommunityBrewRecipes } from "@/components/catalog/community-brew-recipes";
+import { getBundleItems } from "@/lib/coffee/bundles";
+import { getPriceTiers, getGreenBeanSpecs } from "@/lib/coffee/b2b";
+import { getCropFreshnessLabel } from "@/lib/coffee/harvest";
 import { Award } from "lucide-react";
 
 interface ProductPageProps {
@@ -121,13 +124,17 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   const session = await getSession();
   const isSellerOwner = Boolean(session.sellerId && session.sellerId === listing.sellerId);
 
-  const [reviews, brewRecipes, editorialPick] = await Promise.all([
+  const [reviews, brewRecipes, editorialPick, bundleItems, priceTiers, greenBeanSpecs] = await Promise.all([
     getReviewsByListing(listing.id),
     getTopBrewRecipesForListing(listing.id).catch(() => []),
     getActiveEditorialPickForListing(listing.id).catch(() => null),
+    getBundleItems(listing.id).catch(() => []),
+    getPriceTiers(listing.id).catch(() => []),
+    getGreenBeanSpecs(listing.id).catch(() => null),
   ]);
   const reviewStats = computeReviewStats(reviews);
   const slaResult = await calculateRoastToShipSla(listing.sellerId);
+  const cropFreshness = getCropFreshnessLabel(listing.tasteProfile?.cropYear);
 
   const primaryImage = listing.images?.[0]?.url;
   const jsonLd = {
@@ -215,6 +222,82 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
               </p>
             </div>
             <FlavorProfile tasteProfile={listing.tasteProfile} />
+
+            {/* Isi Paket Tasting / Bundle (H5) */}
+            {bundleItems.length > 0 && (
+              <div className="space-y-3 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
+                <h3 className="font-display text-sm font-semibold text-neutral-900">
+                  Isi Paket Cicip / Bundle ({bundleItems.length} Varian)
+                </h3>
+                <ul className="divide-y divide-neutral-200 text-xs text-neutral-700">
+                  {bundleItems.map((item) => (
+                    <li key={item.id} className="py-2 flex items-center justify-between">
+                      <span className="font-medium text-neutral-800">{item.childTitle || item.childListingId}</span>
+                      <span className="font-mono text-neutral-600 font-semibold">x{item.quantity}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Spesifikasi Green Bean Fisik (H5) */}
+            {greenBeanSpecs && (
+              <div className="space-y-3 p-4 bg-neutral-50 rounded-lg border border-neutral-200 text-xs">
+                <h3 className="font-display text-sm font-semibold text-neutral-900">
+                  Spesifikasi Fisik Green Bean
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-neutral-700">
+                  {greenBeanSpecs.screenSize && (
+                    <div>
+                      <span className="text-neutral-600 block">Screen Size</span>
+                      <span className="font-mono font-medium text-neutral-900">{greenBeanSpecs.screenSize}</span>
+                    </div>
+                  )}
+                  {greenBeanSpecs.moisturePct != null && (
+                    <div>
+                      <span className="text-neutral-600 block">Kadar Air (Moisture)</span>
+                      <span className="font-mono font-medium text-neutral-900">{greenBeanSpecs.moisturePct}%</span>
+                    </div>
+                  )}
+                  {greenBeanSpecs.densityGl != null && (
+                    <div>
+                      <span className="text-neutral-600 block">Kepadatan (Density)</span>
+                      <span className="font-mono font-medium text-neutral-900">{greenBeanSpecs.densityGl} g/L</span>
+                    </div>
+                  )}
+                  {greenBeanSpecs.waterActivity != null && (
+                    <div>
+                      <span className="text-neutral-600 block">Water Activity (aW)</span>
+                      <span className="font-mono font-medium text-neutral-900">{greenBeanSpecs.waterActivity}</span>
+                    </div>
+                  )}
+                  {greenBeanSpecs.primaryDefects != null && (
+                    <div>
+                      <span className="text-neutral-600 block">Primary Defects</span>
+                      <span className="font-mono font-medium text-neutral-900">{greenBeanSpecs.primaryDefects}</span>
+                    </div>
+                  )}
+                  {greenBeanSpecs.secondaryDefects != null && (
+                    <div>
+                      <span className="text-neutral-600 block">Secondary Defects</span>
+                      <span className="font-mono font-medium text-neutral-900">{greenBeanSpecs.secondaryDefects}</span>
+                    </div>
+                  )}
+                </div>
+                {greenBeanSpecs.coaUrl && (
+                  <div className="pt-1">
+                    <a
+                      href={greenBeanSpecs.coaUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary-700 hover:underline font-medium inline-flex items-center gap-1"
+                    >
+                      Lihat Sertifikat Analisis (COA) ↗
+                    </a>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Resep Seduh Komunitas (H5) */}
             <CommunityBrewRecipes listingId={listing.id} initialRecipes={brewRecipes} />
@@ -374,6 +457,17 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
               {/* Lencana Kesegaran Sangrai (COF-1), SLA Sangrai-Kirim & Pilihan Redaksi */}
               <div className="flex flex-wrap items-center gap-2">
+                {cropFreshness.label && (
+                  <span
+                    className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+                      cropFreshness.variant === "new_crop"
+                        ? "bg-emerald-50 text-emerald-800 border border-emerald-300"
+                        : "bg-neutral-100 text-neutral-700 border border-neutral-300"
+                    }`}
+                  >
+                    {cropFreshness.label}
+                  </span>
+                )}
                 {editorialPick && (
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-900 border border-amber-300 text-xs font-semibold">
                     <Award className="w-3.5 h-3.5 text-amber-600" />
@@ -388,6 +482,23 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                 )}
                 {slaResult.qualifiesForSlaBadge && <RoastSlaBadge />}
               </div>
+
+              {/* Harga Grosir Bertingkat B2B (H5) */}
+              {priceTiers.length > 0 && (
+                <div className="space-y-2 p-3.5 bg-neutral-50 rounded-lg border border-neutral-200 text-xs">
+                  <p className="font-semibold text-neutral-900">Harga Grosir / Bertingkat (B2B):</p>
+                  <div className="grid grid-cols-2 gap-2 text-neutral-700">
+                    {priceTiers.map((tier) => (
+                      <div key={tier.id} className="flex justify-between p-2 bg-white rounded border border-neutral-200">
+                        <span>≥ {tier.minQty} {listing.unit}</span>
+                        <span className="font-mono font-semibold text-primary-800">
+                          {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(tier.unitPrice)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Pricing, Grind Selector, Stock & Purchase Box */}
               <ProductPurchaseBox listing={listing} />

@@ -41,6 +41,7 @@ const TRENDING_SEARCHES = [
 
 interface NavbarInnerProps {
   categories: Category[];
+  locale?: "id" | "en";
   role?: Role;
   user?: {
     firstName: string;
@@ -52,6 +53,7 @@ interface NavbarInnerProps {
 
 export function NavbarInner({
   categories = [],
+  locale = "id",
   role: initialRole,
   user: initialUser,
   storeName: initialStoreName,
@@ -121,7 +123,7 @@ export function NavbarInner({
             <Link href="/contact" className="hover:text-primary-700 transition-colors">
               Pusat Bantuan
             </Link>
-            <LanguageSwitcher currentLocale="id" />
+            <LanguageSwitcher currentLocale={locale} />
           </div>
         </div>
       </div>

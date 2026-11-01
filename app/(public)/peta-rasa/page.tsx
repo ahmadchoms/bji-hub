@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getListings } from "@/lib/data";
+import { getCatalogCached, normalizeFilters } from "@/lib/data/cached-catalog";
 import { PageContainer } from "@/components/layout/page-container";
 import { SectionHeader } from "@/components/shared/section-header";
 import { TasteMap, type TasteMapItem } from "@/components/coffee/taste-map";
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export const revalidate = 120;
 
 export default async function TasteMapPage() {
-  const result = await getListings({ pageSize: 100 });
+  const result = await getCatalogCached(JSON.stringify(normalizeFilters({ pageSize: 100 })));
   const items: TasteMapItem[] = result.items
     .filter((l) => Boolean(l.tasteProfile))
     .map((l) => ({

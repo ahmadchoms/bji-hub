@@ -95,6 +95,8 @@ export interface CoffeeOrigin {
   minAltitude?: number;
   maxAltitude?: number;
   description?: string;
+  harvestMonths?: number[];
+  mainHarvestMonths?: number[];
   isActive: boolean;
   createdAt: string;
 }

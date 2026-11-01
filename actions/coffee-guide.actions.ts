@@ -1,6 +1,6 @@
 "use server";
 
-import { getListings } from "@/lib/data";
+import { getCatalogCached, normalizeFilters } from "@/lib/data/cached-catalog";
 import {
   recommendCoffeeForGuide,
   type CoffeeGuideCriteria,
@@ -13,7 +13,7 @@ export async function getGuideRecommendationsAction(
   criteria: CoffeeGuideCriteria
 ): Promise<ActionResult<{ recommendations: CoffeeGuideRecommendation[] }>> {
   try {
-    const { items } = await getListings({ pageSize: 100 });
+    const { items } = await getCatalogCached(JSON.stringify(normalizeFilters({ pageSize: 100 })));
     const recommendations = recommendCoffeeForGuide(items, criteria, 3);
     return ok({ recommendations });
   } catch (err: unknown) {

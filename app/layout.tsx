@@ -5,6 +5,7 @@ import { Providers } from "@/components/shared/providers";
 import { PageProgressBar } from "@/components/shared/page-progress-bar";
 import { Toaster } from "@/components/ui/sonner";
 import { WebVitalsReporter } from "@/components/shared/web-vitals-reporter";
+import { getServerLocale } from "@/lib/i18n/server";
 
 const fraunces = localFont({
   src: [
@@ -86,13 +87,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getServerLocale();
   return (
-    <html lang="id" className={`${fraunces.variable} ${jakarta.variable}`}>
+    <html lang={locale} className={`${fraunces.variable} ${jakarta.variable}`}>
       <body className="font-sans bg-background text-foreground antialiased min-h-screen">
         <Providers>
           <WebVitalsReporter />

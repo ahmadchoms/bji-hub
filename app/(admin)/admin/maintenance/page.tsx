@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { requireRole } from "@/lib/auth/session";
 import { SectionHeader } from "@/components/shared/section-header";
 import { AdminMaintenanceControl } from "@/components/admin/admin-maintenance-control";
+import { AdminCurrencyManager } from "@/components/admin/admin-currency-manager";
 
 export const metadata: Metadata = {
   title: "Pemeliharaan Sistem - Admin Biji Hub",
@@ -21,6 +22,8 @@ export default async function AdminMaintenancePage() {
       />
 
       <AdminMaintenanceControl />
+
+      <AdminCurrencyManager />
     </div>
   );
 }

@@ -1,95 +1,29 @@
 import Link from "next/link";
-import { getPool } from "@/lib/db/pool";
+import { notFound } from "next/navigation";
 import { PageContainer } from "@/components/layout/page-container";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Sparkles, ArrowLeft, ExternalLink } from "lucide-react";
 import { CuppingCardForm } from "./cupping-card-form";
+import { getLotCuppingData } from "@/lib/data/lots";
 
 interface PageProps {
   params: Promise<{ lot_code: string }>;
 }
 
-interface LotData {
-  lot_code: string;
-  origin_region: string;
-  process_method: string;
-  roast_level: string;
-  flavor_notes?: string | null;
-  acidity_score?: number | string | null;
-  body_score?: number | string | null;
-  sweetness_score?: number | string | null;
-  aroma_score?: number | string | null;
-  aftertaste_score?: number | string | null;
-  cupping_score?: number | string | null;
-  crop_year?: string | null;
-  altitude?: string | null;
-  varieties?: string[] | null;
-  listing_id: string;
-  listing_title: string;
-  listing_slug?: string | null;
-  price: number;
-  producer_name?: string | null;
-  producer_village?: string | null;
-  producer_kind?: string | null;
-}
-
 export default async function LotCuppingCardPage({ params }: PageProps) {
   const { lot_code } = await params;
-  const decodedLot = decodeURIComponent(lot_code);
+  const decodedLot = decodeURIComponent(lot_code).trim();
 
-  const pool = getPool();
-  let lotData: LotData | null = null;
-
-  if (pool) {
-    try {
-      const res = await pool.query(
-        `SELECT tp.lot_code, tp.origin_region, tp.process_method, tp.roast_level,
-                tp.flavor_notes, tp.acidity_score, tp.body_score, tp.sweetness_score,
-                tp.aroma_score, tp.aftertaste_score, tp.cupping_score, tp.crop_year,
-                tp.altitude, tp.varieties,
-                l.id AS listing_id, l.title AS listing_title, l.slug AS listing_slug, l.price,
-                p.name AS producer_name, p.village AS producer_village, p.kind AS producer_kind
-         FROM public.taste_profiles tp
-         JOIN public.listings l ON tp.listing_id = l.id
-         LEFT JOIN public.producers p ON tp.producer_id = p.id
-         WHERE LOWER(tp.lot_code) = LOWER($1)
-         LIMIT 1`,
-        [decodedLot]
-      );
-      if (res.rows.length > 0) {
-        lotData = res.rows[0];
-      }
-    } catch {
-      // ignore
-    }
+  // Validate lot_code format: alphanumeric and hyphens only, 3-40 chars
+  if (!/^[A-Za-z0-9-]{3,40}$/.test(decodedLot)) {
+    notFound();
   }
 
-  // Fallback demo lot if testing or database empty
+  const lotData = await getLotCuppingData(decodedLot);
+
   if (!lotData) {
-    lotData = {
-      lot_code: decodedLot,
-      origin_region: "Gayo, Aceh",
-      process_method: "Natural Anaerobic",
-      roast_level: "Light",
-      flavor_notes: "Blackberry, Peach, Jasmine",
-      acidity_score: 4.5,
-      body_score: 3.5,
-      sweetness_score: 4.5,
-      aroma_score: 4.5,
-      aftertaste_score: 4.0,
-      cupping_score: 87.5,
-      crop_year: "2026",
-      altitude: "1500 - 1700 mdpl",
-      varieties: ["Bourbon", "Ateng Super"],
-      listing_id: "lst-demo",
-      listing_title: "Gayo Bourbon Anaerobic Specialty",
-      listing_slug: "gayo-bourbon-anaerobic",
-      price: 135000,
-      producer_name: "Koperasi Baitul Qiradh Baburrayyan",
-      producer_village: "Takengon",
-      producer_kind: "koperasi",
-    };
+    notFound();
   }
 
   return (

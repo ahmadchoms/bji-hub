@@ -25,6 +25,7 @@ import * as shippingSla from "../coffee/shipping-sla";
 import * as tastePreferenceActions from "@/actions/taste-preference.actions";
 import * as waitlistActions from "@/actions/waitlist.actions";
 import * as payoutActions from "@/actions/payout.actions";
+import * as lots from "./lots";
 
 /**
  * Asserts that executing a database function does NOT fail with PostgreSQL schema errors:
@@ -752,6 +753,11 @@ describe("Real PostgreSQL Behavioral Tests (A2)", () => {
       );
     });
     expect(payoutActions.toggleSellerAutoPayoutAction).toBeDefined();
+  });
+
+  it("lots: validates getLotCuppingData execution against taste_profiles schema", async () => {
+    await expectNoSchemaError(() => lots.getLotCuppingData("KBQB-GAYO-2025-04"));
+    await expectNoSchemaError(() => lots.getLotCuppingData("NONEXISTENT-LOT-999"));
   });
 
   it("RLS enforcement: anon role is blocked from inserting into private tables (if role exists)", async () => {

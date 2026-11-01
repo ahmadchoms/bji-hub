@@ -43,6 +43,7 @@ for (const file of sourceFiles) {
 // Invariant 2: No invalid raw SQL identifiers
 const invalidSqlPatterns = [
   { pattern: /l\.seller_id/g, name: 'l.seller_id (must be l."sellerId" or o.seller_id)' },
+  { pattern: /tp\.listing_id/g, name: 'tp.listing_id (must be tp."listingId")' },
   { pattern: /public\.sellers\b/g, name: 'public.sellers (must be public.seller_profiles)' },
   { pattern: /u\.created_at\b/g, name: 'u.created_at (must be u."createdAt")' },
   { pattern: /s\.user_id\b/g, name: 's.user_id (must be s."userId")' },
@@ -72,6 +73,17 @@ for (const file of sourceFiles) {
   const content = fs.readFileSync(file, "utf8");
   if (/fallback to mock/i.test(content)) {
     errors.push(`[Invariant Violation] Disallowed 'fallback to mock' pattern in ${file}`);
+  }
+}
+
+// Invariant 4b: No demo lot origin fallback fixtures in production code (H1)
+for (const file of sourceFiles) {
+  if (isTestFile(file)) continue;
+  const normalized = file.replace(/\\/g, "/");
+  if (normalized.includes("mock/") || normalized.includes("mock-data")) continue;
+  const content = fs.readFileSync(file, "utf8");
+  if (content.includes("Blackberry, Peach, Jasmine") || content.includes("Gayo Natural Anaerobic")) {
+    errors.push(`[Invariant Violation] Disallowed demo lot fixture in ${file}`);
   }
 }
 

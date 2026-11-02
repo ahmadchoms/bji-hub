@@ -58,6 +58,7 @@ describe("validateEnv", () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
     vi.stubEnv("MIDTRANS_SERVER_KEY", "server-key");
     vi.stubEnv("MIDTRANS_CLIENT_KEY", "client-key");
+    vi.stubEnv("COOKIE_SECRET", "super-secret-cookie-key-min-32-chars");
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://bji-hub.vercel.app");
     vi.stubEnv("RESEND_API_KEY", "re_123");
     vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", ""); // Missing
@@ -76,6 +77,7 @@ describe("validateEnv", () => {
     vi.stubEnv("CRON_SECRET", "cron-secret");
     vi.stubEnv("MIDTRANS_SERVER_KEY", "server-key");
     vi.stubEnv("MIDTRANS_CLIENT_KEY", "client-key");
+    vi.stubEnv("COOKIE_SECRET", "super-secret-cookie-key-min-32-chars");
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://bji-hub.vercel.app");
     vi.stubEnv("RESEND_API_KEY", ""); // Missing
     vi.stubEnv("EMAIL_MODE", "enabled");
@@ -93,6 +95,7 @@ describe("validateEnv", () => {
     vi.stubEnv("CRON_SECRET", "cron-secret");
     vi.stubEnv("MIDTRANS_SERVER_KEY", "server-key");
     vi.stubEnv("MIDTRANS_CLIENT_KEY", "client-key");
+    vi.stubEnv("COOKIE_SECRET", "super-secret-cookie-key-min-32-chars");
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://bji-hub.vercel.app");
     vi.stubEnv("EMAIL_MODE", "disabled");
     vi.stubEnv("RESEND_API_KEY", "");
@@ -108,6 +111,7 @@ describe("validateEnv", () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
     vi.stubEnv("MIDTRANS_SERVER_KEY", "server-key");
     vi.stubEnv("MIDTRANS_CLIENT_KEY", "client-key");
+    vi.stubEnv("COOKIE_SECRET", "super-secret-cookie-key-min-32-chars");
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://bji-hub.vercel.app");
     vi.stubEnv("NEXT_PUBLIC_GOOGLE_CLIENT_ID", "test-client-id.apps.googleusercontent.com");
     vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service-role-secret");

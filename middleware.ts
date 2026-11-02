@@ -10,6 +10,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", pathname);
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const isProtected =
@@ -26,16 +29,16 @@ export async function middleware(request: NextRequest) {
         new URL(`/login?next=${encodeURIComponent(pathname)}`, request.url),
       );
     }
-    return NextResponse.next();
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
-  let response = NextResponse.next({ request });
+  let response = NextResponse.next({ request: { headers: requestHeaders } });
   const supabase = createServerClient(url, key, {
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll: (list) => {
         list.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request });
+        response = NextResponse.next({ request: { headers: requestHeaders } });
         list.forEach(({ name, value, options }) =>
           response.cookies.set(name, value, options),
         );
@@ -43,30 +46,25 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const hasMock =
-    isMockAuthAllowed() && request.cookies.has(MOCK_SESSION_COOKIE);
+  if (isProtected) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const hasMock =
+      isMockAuthAllowed() && request.cookies.has(MOCK_SESSION_COOKIE);
 
-  if (isProtected && !user && !hasMock) {
-    return NextResponse.redirect(
-      new URL(`/login?next=${encodeURIComponent(pathname)}`, request.url),
-    );
+    if (!user && !hasMock) {
+      return NextResponse.redirect(
+        new URL(`/login?next=${encodeURIComponent(pathname)}`, request.url),
+      );
+    }
   }
+
   return response;
 }
 
 export const config = {
   matcher: [
-    "/admin/:path*",
-    "/dashboard/:path*",
-    "/orders/:path*",
-    "/profile/:path*",
-    "/checkout/:path*",
-    "/auth/:path*",
-    "/login",
-    "/register",
-    "/reset-password",
+    "/((?!_next/static|_next/image|favicon.ico|monitoring).*)",
   ],
 };

@@ -88,4 +88,34 @@ describe("actions/consent.actions (H6)", () => {
     const res = await recordConsentAction("seller_agreement");
     expect(res.success).toBe(true);
   });
+
+  it("rejects invalid document name at runtime (J1)", async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      role: "buyer",
+      userId: asUserId("buyer-consent-123"),
+      email: "buyer@biji.test",
+      sellerId: null,
+    });
+
+    const res = await recordConsentAction("invalid_doc" as unknown as "terms");
+    expect(res.success).toBe(false);
+    if (!res.success) {
+      expect(res.error).toContain("tidak valid");
+    }
+  });
+
+  it("rejects seller_agreement when attempted by a buyer (J1)", async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      role: "buyer",
+      userId: asUserId("buyer-consent-123"),
+      email: "buyer@biji.test",
+      sellerId: null,
+    });
+
+    const res = await recordConsentAction("seller_agreement");
+    expect(res.success).toBe(false);
+    if (!res.success) {
+      expect(res.error).toContain("Perjanjian Penjual");
+    }
+  });
 });

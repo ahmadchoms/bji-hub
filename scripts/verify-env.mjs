@@ -14,6 +14,7 @@ const REQUIRED_VARS = [
   "CRON_SECRET",
   "HEALTH_CHECK_TOKEN",
   "PAYOUT_ENC_KEY",
+  "COOKIE_SECRET",
 ];
 
 function parseEnvFile(filePath) {

@@ -144,6 +144,16 @@ export async function createCheckoutOrderAction(
 
   // Stock-hold protection: check active pending orders for buyer/email
   const session = await getSession();
+
+  // Enforce latest legal consents before purchase (J1)
+  if (session.role !== "guest" && session.userId) {
+    const { checkPendingConsentsAction } = await import("@/actions/consent.actions");
+    const consentRes = await checkPendingConsentsAction();
+    if (consentRes.success && !consentRes.data.allAccepted) {
+      return fail("Silakan setujui Syarat & Ketentuan dan Kebijakan Privasi terbaru sebelum melanjutkan transaksi");
+    }
+  }
+
   const normalizedEmail = buyerEmail.trim().toLowerCase();
   const buyerOrders = await getOrdersByBuyer(session.userId || undefined, normalizedEmail);
   const pendingOrders = buyerOrders.filter((o) => o.status === "pending_payment");

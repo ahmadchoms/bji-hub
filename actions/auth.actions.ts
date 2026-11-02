@@ -415,6 +415,13 @@ export async function updateBuyerProfileAction(input: {
   const resolvedPostal = input.postalCode?.trim() || primaryAddr?.postalCode || existingData.postalCode || null;
   const resolvedAddress = input.address?.trim() || primaryAddr?.address || existingData.address || null;
 
+  // Enforce latest legal consents before updating profile (J1)
+  const { checkPendingConsentsAction } = await import("@/actions/consent.actions");
+  const consentRes = await checkPendingConsentsAction();
+  if (consentRes.success && !consentRes.data.allAccepted) {
+    return fail("Silakan setujui Syarat & Ketentuan dan Kebijakan Privasi terbaru sebelum memperbarui profil");
+  }
+
   if (
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -494,6 +501,14 @@ export async function updateBuyerAddressesAction(
   const primary = validAddresses.find((a) => a.isPrimary) || validAddresses[0];
 
   const session = await getSession();
+
+  // Enforce latest legal consents before updating addresses (J1)
+  const { checkPendingConsentsAction } = await import("@/actions/consent.actions");
+  const consentRes = await checkPendingConsentsAction();
+  if (consentRes.success && !consentRes.data.allAccepted) {
+    return fail("Silakan setujui Syarat & Ketentuan dan Kebijakan Privasi terbaru sebelum memperbarui alamat");
+  }
+
   const userId = session.userId;
 
   if (userId) {

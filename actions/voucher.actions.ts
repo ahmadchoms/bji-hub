@@ -40,6 +40,7 @@ export async function validateVoucherAction(input: unknown): Promise<
 
   const session = await getSession();
   const clientIp = await getClientIp();
+  // Note (J8): Guest vouchers use guest:${clientIp}. This is an intentional lightweight constraint; shared NATs share quota and dynamic IPs bypass it. High-value one-time promotional vouchers should require authenticated user accounts.
   const userKey = session.userId || `guest:${clientIp}`;
 
   const res = await validateVoucher({

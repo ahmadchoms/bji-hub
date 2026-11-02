@@ -82,6 +82,7 @@ export async function startConversationAction(
     if (session.sellerId && sellerId === session.sellerId) {
       return fail("Anda tidak dapat mengirim pesan ke toko Anda sendiri");
     }
+    // Note (J8): General inquiries without order/listing are deliberately permitted for pre-purchase questions
     targetSellerId = sellerId;
   }
 

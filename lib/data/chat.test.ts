@@ -10,15 +10,18 @@ import {
   sendMessage,
   markMessagesAsRead,
   canUserAccessConversation,
+  hasReportedMessages,
   mockConversations,
   mockMessages,
 } from "./chat";
+import { mockAuditLogs } from "@/lib/data/audit-logs";
 import { Conversation } from "@/types";
 
 describe("lib/data/chat (C2)", () => {
   beforeEach(() => {
     mockConversations.length = 0;
     mockMessages.length = 0;
+    mockAuditLogs.length = 0;
   });
 
   it("creates and retrieves a conversation idempotently", async () => {
@@ -38,7 +41,7 @@ describe("lib/data/chat (C2)", () => {
     expect(conv2.id).toBe(conv1.id);
   });
 
-  it("strictly enforces authorization across roles", () => {
+  it("strictly enforces authorization across roles (J2)", async () => {
     const conv: Conversation = {
       id: "conv-auth-test",
       buyerId: "buyer-owner",
@@ -50,19 +53,34 @@ describe("lib/data/chat (C2)", () => {
     };
 
     // Buyer owner has access
-    expect(canUserAccessConversation("buyer-owner", "buyer", null, conv)).toBe(true);
+    expect(await canUserAccessConversation("buyer-owner", null, conv)).toBe(true);
 
     // Store owner seller has access
-    expect(canUserAccessConversation("seller-user-id", "seller", "seller-owner-profile", conv)).toBe(true);
+    expect(await canUserAccessConversation("seller-user-id", "seller-owner-profile", conv)).toBe(true);
 
-    // Admin has access
-    expect(canUserAccessConversation("admin-user-id", "admin", null, conv)).toBe(true);
+    // Admin WITHOUT reported messages is blocked (J2: reported only)
+    expect(await canUserAccessConversation("admin-user-id", null, conv, true)).toBe(false);
+
+    // Once a message or conversation is reported, admin gets access
+    mockAuditLogs.push({
+      id: "al-1",
+      actorId: "buyer-owner",
+      actorRole: "buyer",
+      action: "chat.message_reported",
+      targetId: conv.id,
+      targetType: "conversation",
+      details: null,
+      ipAddress: null,
+      createdAt: new Date().toISOString(),
+    });
+    expect(await hasReportedMessages(conv.id)).toBe(true);
+    expect(await canUserAccessConversation("admin-user-id", null, conv, true)).toBe(true);
 
     // Unrelated buyer is blocked
-    expect(canUserAccessConversation("buyer-stranger", "buyer", null, conv)).toBe(false);
+    expect(await canUserAccessConversation("buyer-stranger", null, conv)).toBe(false);
 
     // Unrelated seller is blocked
-    expect(canUserAccessConversation("other-seller-user", "seller", "seller-other-profile", conv)).toBe(false);
+    expect(await canUserAccessConversation("other-seller-user", "seller-other-profile", conv)).toBe(false);
   });
 
   it("sends message and updates conversation lastMessageAt", async () => {
@@ -112,21 +130,41 @@ describe("lib/data/chat (C2)", () => {
     expect(messages[0].readAt).not.toBeNull();
   });
 
-  it("filters conversations list for buyer vs seller", async () => {
-    await getOrCreateConversation("buyer-1", "seller-1");
-    await getOrCreateConversation("buyer-2", "seller-1");
-    await getOrCreateConversation("buyer-1", "seller-2");
+  it("filters conversations list for buyer vs seller vs admin (J2)", async () => {
+    const c1 = await getOrCreateConversation("buyer-1", "seller-1");
+    const c2 = await getOrCreateConversation("buyer-2", "seller-1");
+    const c3 = await getOrCreateConversation("buyer-1", "seller-2");
 
     // buyer-1 sees 2 conversations
-    const buyer1Convs = await getConversationsForUser("buyer-1", "buyer");
+    const buyer1Convs = await getConversationsForUser("buyer-1");
     expect(buyer1Convs.length).toBe(2);
 
     // seller-1 sees 2 conversations
-    const seller1Convs = await getConversationsForUser("seller-1-user", "seller", "seller-1");
+    const seller1Convs = await getConversationsForUser("seller-1-user", "seller-1");
     expect(seller1Convs.length).toBe(2);
 
     // seller-2 sees 1 conversation
-    const seller2Convs = await getConversationsForUser("seller-2-user", "seller", "seller-2");
+    const seller2Convs = await getConversationsForUser("seller-2-user", "seller-2");
     expect(seller2Convs.length).toBe(1);
+
+    // admin sees 0 when nothing is reported
+    const adminConvsEmpty = await getConversationsForUser("admin-user", null, { isAdmin: true });
+    expect(adminConvsEmpty.length).toBe(0);
+
+    // report c1, admin sees exactly 1
+    mockAuditLogs.push({
+      id: "al-rep-1",
+      actorId: "buyer-1",
+      actorRole: "buyer",
+      action: "chat.message_reported",
+      targetId: c1.id,
+      targetType: "conversation",
+      details: null,
+      ipAddress: null,
+      createdAt: new Date().toISOString(),
+    });
+    const adminConvsReported = await getConversationsForUser("admin-user", null, { isAdmin: true });
+    expect(adminConvsReported.length).toBe(1);
+    expect(adminConvsReported[0].id).toBe(c1.id);
   });
 });

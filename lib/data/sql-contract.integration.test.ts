@@ -69,7 +69,10 @@ describe("SQL Schema Contract Integration Tests (A2)", () => {
 
   it("chat: executes queries without schema errors", async () => {
     await expectNoSchemaError(() => chat.getConversationById(dummyId));
-    await expectNoSchemaError(() => chat.getConversationsForUser(dummyId, "buyer"));
+    await expectNoSchemaError(() => chat.getConversationsForUser(dummyId));
+    await expectNoSchemaError(() => chat.getConversationsForUser(dummyId, dummyId));
+    await expectNoSchemaError(() => chat.getConversationsForUser(dummyId, null, { isAdmin: true }));
+    await expectNoSchemaError(() => chat.hasReportedMessages(dummyId));
     await expectNoSchemaError(() => chat.getMessagesByConversation(dummyId));
   });
 

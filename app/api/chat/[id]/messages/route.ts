@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
+import { isAdminAllowed } from "@/lib/auth/admin-guard";
+import { recordAuditLog } from "@/lib/data/audit-logs";
 import {
   getConversationById,
   getMessagesByConversation,
@@ -23,14 +25,25 @@ export async function GET(
     return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
   }
 
-  const hasAccess = canUserAccessConversation(
+  const isAdmin = await isAdminAllowed(session);
+  const hasAccess = await canUserAccessConversation(
     session.userId,
-    session.role,
     session.sellerId,
     conversation,
+    isAdmin,
   );
   if (!hasAccess) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  if (isAdmin) {
+    await recordAuditLog({
+      actorId: session.userId,
+      actorRole: session.role,
+      action: "view_conversation",
+      targetType: "conversation",
+      targetId: id,
+    });
   }
 
   // Mark incoming messages as read asynchronously

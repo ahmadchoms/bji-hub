@@ -155,11 +155,11 @@ for (const file of sourceFiles) {
   }
 }
 
-// Invariant 7: Direct session.role === "admin" / !== "admin" checks must only be in lib/auth/ (H2)
+// Invariant 7: Direct session.role === "admin" / !== "admin" checks must only be in lib/auth/ (H2, J2)
 for (const file of sourceFiles) {
   if (isTestFile(file)) continue;
   const normalized = file.replace(/\\/g, "/");
-  if (normalized.startsWith("lib/auth/") || normalized === "lib/data/chat.ts") continue;
+  if (normalized.startsWith("lib/auth/")) continue;
   const content = fs.readFileSync(file, "utf8");
   if (
     /role\s*===\s*["']admin["']/.test(content) ||

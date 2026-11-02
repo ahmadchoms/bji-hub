@@ -1,18 +1,51 @@
 import { getPool } from "@/lib/db/pool";
 import { logger } from "@/lib/logger";
 import { assertMockAllowed } from "@/lib/data/mock-guard";
+import { mockAuditLogs } from "@/lib/data/audit-logs";
 import { Conversation, ChatMessage } from "@/types";
 
 export const mockConversations: Conversation[] = [];
 export const mockMessages: ChatMessage[] = [];
 
-export function canUserAccessConversation(
+export async function hasReportedMessages(conversationId: string): Promise<boolean> {
+  const pool = getPool();
+  if (pool) {
+    try {
+      const res = await pool.query(
+        `SELECT 1 FROM public.audit_logs al
+         WHERE (al.action = 'chat.message_reported' AND al.target_id = $1)
+            OR (al.action = 'chat.message_reported' AND EXISTS (
+                 SELECT 1 FROM public.messages m WHERE m.id::text = al.target_id AND m.conversation_id = $1
+               ))
+         LIMIT 1`,
+        [conversationId],
+      );
+      return (res.rowCount ?? 0) > 0;
+    } catch (err) {
+      assertMockAllowed("hasReportedMessages");
+      logger.warn("chat.has_reported_fallback", { error: (err as Error).message });
+    }
+  } else {
+    assertMockAllowed("hasReportedMessages:no_pool");
+  }
+
+  return mockAuditLogs.some(
+    (al) =>
+      al.action === "chat.message_reported" &&
+      (al.targetId === conversationId ||
+        mockMessages.some((m) => m.id === al.targetId && m.conversationId === conversationId)),
+  );
+}
+
+export async function canUserAccessConversation(
   userId: string,
-  role: string,
-  sellerProfileId: string | null,
+  sellerProfileId: string | null | undefined,
   conversation: Conversation,
-): boolean {
-  if (role === "admin") return true;
+  isAdmin = false,
+): Promise<boolean> {
+  if (isAdmin) {
+    return hasReportedMessages(conversation.id);
+  }
   if (conversation.buyerId === userId) return true;
   if (sellerProfileId && conversation.sellerId === sellerProfileId) return true;
   return false;
@@ -60,7 +93,7 @@ export async function getOrCreateConversation(
   );
   if (existing) return { ...existing };
 
-  const id = `conv-${Date.now()}`;
+  const id = `conv-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   const newConv: Conversation = {
     id,
     buyerId,
@@ -111,39 +144,60 @@ export async function getConversationById(id: string): Promise<Conversation | nu
   return found ? { ...found } : null;
 }
 
+export interface GetConversationsOptions {
+  isAdmin?: boolean;
+  limit?: number;
+  offset?: number;
+}
+
 export async function getConversationsForUser(
   userId: string,
-  role: string,
   sellerProfileId?: string | null,
+  options: GetConversationsOptions = {},
 ): Promise<Conversation[]> {
   const pool = getPool();
+  const limit = Math.min(Math.max(1, options.limit ?? 50), 50);
+  const offset = Math.max(0, options.offset ?? 0);
+  const isAdmin = options.isAdmin ?? false;
+
   if (pool) {
     try {
       let query = "";
       let params: unknown[] = [];
 
-      if (role === "admin") {
+      if (isAdmin) {
         query = `SELECT c.*, s."businessName" as seller_name, l.title as listing_title
                  FROM public.conversations c
                  LEFT JOIN public.seller_profiles s ON c.seller_id = s.id
                  LEFT JOIN public.listings l ON c.listing_id = l.id
-                 ORDER BY c.last_message_at DESC`;
-      } else if (role === "seller" && sellerProfileId) {
+                 WHERE EXISTS (
+                   SELECT 1 FROM public.audit_logs al
+                   WHERE (al.action = 'chat.message_reported' AND al.target_id = c.id::text)
+                      OR (al.action = 'chat.message_reported' AND EXISTS (
+                           SELECT 1 FROM public.messages m WHERE m.id::text = al.target_id AND m.conversation_id = c.id
+                         ))
+                 )
+                 ORDER BY c.last_message_at DESC
+                 LIMIT $1 OFFSET $2`;
+        params = [limit, offset];
+      } else if (sellerProfileId) {
         query = `SELECT c.*, s."businessName" as seller_name, l.title as listing_title
                  FROM public.conversations c
                  LEFT JOIN public.seller_profiles s ON c.seller_id = s.id
                  LEFT JOIN public.listings l ON c.listing_id = l.id
                  WHERE c.seller_id = $1
-                 ORDER BY c.last_message_at DESC`;
-        params = [sellerProfileId];
+                 ORDER BY c.last_message_at DESC
+                 LIMIT $2 OFFSET $3`;
+        params = [sellerProfileId, limit, offset];
       } else {
         query = `SELECT c.*, s."businessName" as seller_name, l.title as listing_title
                  FROM public.conversations c
                  LEFT JOIN public.seller_profiles s ON c.seller_id = s.id
                  LEFT JOIN public.listings l ON c.listing_id = l.id
                  WHERE c.buyer_id = $1
-                 ORDER BY c.last_message_at DESC`;
-        params = [userId];
+                 ORDER BY c.last_message_at DESC
+                 LIMIT $2 OFFSET $3`;
+        params = [userId, limit, offset];
       }
 
       const res = await pool.query(query, params);
@@ -166,12 +220,24 @@ export async function getConversationsForUser(
     assertMockAllowed("getConversationsForUser:no_pool");
   }
 
-  return mockConversations.filter((c) => {
-    if (role === "admin") return true;
-    if (c.buyerId === userId) return true;
+  if (isAdmin) {
+    const reported = mockConversations.filter((c) =>
+      mockAuditLogs.some(
+        (al) =>
+          al.action === "chat.message_reported" &&
+          (al.targetId === c.id ||
+            mockMessages.some((m) => m.id === al.targetId && m.conversationId === c.id)),
+      ),
+    );
+    return reported.slice(offset, offset + limit);
+  }
+
+  const userConvs = mockConversations.filter((c) => {
     if (sellerProfileId && c.sellerId === sellerProfileId) return true;
+    if (!sellerProfileId && c.buyerId === userId) return true;
     return false;
   });
+  return userConvs.slice(offset, offset + limit);
 }
 
 export async function getMessagesByConversation(
@@ -257,7 +323,7 @@ export async function sendMessage(data: {
     }
   }
 
-  const id = `msg-${Date.now()}`;
+  const id = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   const newMsg: ChatMessage = {
     id,
     conversationId: data.conversationId,

@@ -54,12 +54,6 @@ export async function startConversationAction(
 
   const { sellerId, orderId, listingId, initialMessage } = parsed.data;
 
-  // Rate limit: max 5 new conversations / day per user
-  const convRl = await checkRateLimit(`chat:conv:${session.userId}`, 5, 86_400_000);
-  if (!convRl.success) {
-    return fail("Batas harian memulai percakapan baru telah tercapai (maks. 5 percakapan/hari)");
-  }
-
   let buyerUserId = session.userId;
   let targetSellerId: string;
 
@@ -93,6 +87,12 @@ export async function startConversationAction(
 
   if (sellerId && sellerId !== targetSellerId) {
     return fail("ID penjual tidak sesuai dengan konteks pesanan/produk");
+  }
+
+  // Rate limit: max 5 new conversations / day per user (checked AFTER context validation - J8)
+  const convRl = await checkRateLimit(`chat:conv:${session.userId}`, 5, 86_400_000);
+  if (!convRl.success) {
+    return fail("Batas harian memulai percakapan baru telah tercapai (maks. 5 percakapan/hari)");
   }
 
   const conversation = await getOrCreateConversation(buyerUserId, targetSellerId, {
@@ -158,11 +158,11 @@ export async function sendMessageAction(
   }
 
   const isAdmin = await isAdminAllowed(session);
-  const hasAccess = canUserAccessConversation(
+  const hasAccess = await canUserAccessConversation(
     session.userId,
-    session.role,
     session.sellerId,
     conversation,
+    isAdmin,
   );
   if (!hasAccess || (hasAdminRole(session) && !isAdmin)) {
     return fail("Anda tidak memiliki akses ke percakapan ini");
@@ -172,7 +172,7 @@ export async function sendMessageAction(
     await recordAuditLog({
       actorId: session.userId,
       actorRole: session.role,
-      action: "chat.admin_access_conversation",
+      action: "view_conversation",
       targetType: "conversation",
       targetId: conversationId,
     });
@@ -220,7 +220,9 @@ export async function sendMessageAction(
     }
   });
 
-  revalidatePath(`/orders/${conversation.orderId}/chat`);
+  if (conversation.orderId) {
+    revalidatePath(`/orders/${conversation.orderId}/chat`);
+  }
   revalidatePath("/dashboard/messages");
 
   return ok(msg);
@@ -239,11 +241,12 @@ export async function markMessagesAsReadAction(
     return fail("Percakapan tidak ditemukan");
   }
 
-  const hasAccess = canUserAccessConversation(
+  const isAdmin = await isAdminAllowed(session);
+  const hasAccess = await canUserAccessConversation(
     session.userId,
-    session.role,
     session.sellerId,
     conversation,
+    isAdmin,
   );
   if (!hasAccess) {
     return fail("Akses ditolak");

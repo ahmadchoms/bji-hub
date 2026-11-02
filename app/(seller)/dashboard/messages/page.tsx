@@ -24,7 +24,6 @@ export default async function DashboardMessagesPage({
 
   const conversations = await getConversationsForUser(
     session.userId || "anonymous",
-    "seller",
     sellerId,
   );
 

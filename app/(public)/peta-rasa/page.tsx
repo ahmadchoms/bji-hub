@@ -13,20 +13,26 @@ export const metadata: Metadata = {
 export const revalidate = 120;
 
 export default async function TasteMapPage() {
-  const result = await getCatalogCached(JSON.stringify(normalizeFilters({ pageSize: 100 })));
-  const items: TasteMapItem[] = result.items
-    .filter((l) => Boolean(l.tasteProfile))
-    .map((l) => ({
-      id: l.id,
-      slug: l.slug,
-      title: l.title,
-      originRegion: l.tasteProfile?.originRegion || "Nusantara",
-      roastLevel: l.tasteProfile?.roastLevel || "Medium",
-      acidityScore: l.tasteProfile?.acidityScore || 3,
-      bodyScore: l.tasteProfile?.bodyScore || 3,
-      cuppingScore: l.tasteProfile?.cuppingScore || null,
-      price: Number(l.price),
-    }));
+  let items: TasteMapItem[] = [];
+  try {
+    const result = await getCatalogCached(JSON.stringify(normalizeFilters({ pageSize: 100 })));
+    items = (result?.items || [])
+      .filter((l) => Boolean(l.tasteProfile))
+      .map((l) => ({
+        id: l.id,
+        slug: l.slug,
+        title: l.title,
+        originRegion: l.tasteProfile?.originRegion || "Nusantara",
+        roastLevel: l.tasteProfile?.roastLevel || "Medium",
+        acidityScore: l.tasteProfile?.acidityScore || 3,
+        bodyScore: l.tasteProfile?.bodyScore || 3,
+        cuppingScore: l.tasteProfile?.cuppingScore || null,
+        price: Number(l.price),
+      }));
+  } catch (err) {
+    // Graceful fallback during ISR static build when DB is unmigrated or unreachable
+    console.warn("Failed to fetch taste map items during build/render:", err);
+  }
 
   return (
     <div className="py-8 md:py-12 bg-neutral-50/50 min-h-screen">

@@ -2,6 +2,7 @@ import { getPool } from "@/lib/db/pool";
 import { logger } from "@/lib/logger";
 import { createNotification } from "@/lib/data/notifications";
 import { asUserId } from "@/types/ids";
+import crypto from "node:crypto";
 
 export interface UserNotificationPref {
   userId: string;
@@ -9,11 +10,30 @@ export interface UserNotificationPref {
   emailReminders: boolean;
 }
 
+export const mockNotificationPrefs: Map<string, UserNotificationPref> = new Map();
+
+export function createUnsubscribeToken(userId: string): string {
+  const secret = process.env.COOKIE_SECRET || "unsubscribe-fallback-secret";
+  return crypto.createHmac("sha256", secret).update(`unsub:${userId}`).digest("hex");
+}
+
+export function verifyUnsubscribeToken(userId: string, token: string): boolean {
+  const expected = createUnsubscribeToken(userId);
+  if (token.length !== expected.length) return false;
+  try {
+    return crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected));
+  } catch {
+    return false;
+  }
+}
+
 export async function getUserNotificationPrefs(
   userId: string
 ): Promise<UserNotificationPref> {
   const pool = getPool();
-  if (!pool) return { userId, reminders: true, emailReminders: false };
+  if (!pool) {
+    return mockNotificationPrefs.get(userId) || { userId, reminders: true, emailReminders: false };
+  }
 
   try {
     const res = await pool.query(
@@ -44,7 +64,15 @@ export async function updateUserNotificationPrefs(
   prefs: { reminders?: boolean; emailReminders?: boolean }
 ): Promise<boolean> {
   const pool = getPool();
-  if (!pool) return false;
+  if (!pool) {
+    const existing = mockNotificationPrefs.get(userId) || { userId, reminders: true, emailReminders: false };
+    mockNotificationPrefs.set(userId, {
+      userId,
+      reminders: prefs.reminders ?? existing.reminders,
+      emailReminders: prefs.emailReminders ?? existing.emailReminders,
+    });
+    return true;
+  }
 
   try {
     await pool.query(

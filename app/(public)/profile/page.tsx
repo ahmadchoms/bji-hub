@@ -14,8 +14,10 @@ import { createClient } from "@/lib/supabase/server";
 import { BuyerProfileForm } from "@/components/profile/buyer-profile-form";
 import { AccountSecurityCard } from "@/components/profile/account-security-card";
 import { AccountPrivacyCard } from "@/components/profile/account-privacy-card";
+import { NotificationPrefsCard } from "@/components/profile/notification-prefs-card";
 import type { BuyerAddress } from "@/types";
 import { getUserAddresses, toBuyerAddress } from "@/lib/data/addresses";
+import { getUserNotificationPrefs } from "@/lib/coffee/reminders";
 
 export const metadata = {
   title: "Profil Akun - Biji Hub",
@@ -49,15 +51,25 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
   let userAddress = "";
 
   let userAddresses: BuyerAddress[] = [];
+  let notificationPrefs = { reminders: true, emailReminders: false };
 
   if (session.userId) {
     try {
-      const dbAddresses = await getUserAddresses(session.userId);
+      const [dbAddresses, prefs] = await Promise.all([
+        getUserAddresses(session.userId),
+        getUserNotificationPrefs(session.userId),
+      ]);
       if (dbAddresses.length > 0) {
         userAddresses = dbAddresses.map(toBuyerAddress);
       }
+      if (prefs) {
+        notificationPrefs = {
+          reminders: prefs.reminders,
+          emailReminders: prefs.emailReminders,
+        };
+      }
     } catch {
-      // ignore: optional database address lookup fallback
+      // ignore: optional database address and prefs lookup fallback
     }
   }
 
@@ -223,6 +235,9 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Preferensi Notifikasi & Pengingat (J5) */}
+      <NotificationPrefsCard initialPrefs={notificationPrefs} />
 
       {/* Keamanan Akun & Kredensial */}
       <AccountSecurityCard />

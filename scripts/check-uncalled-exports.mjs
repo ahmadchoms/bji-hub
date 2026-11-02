@@ -38,21 +38,29 @@ const consumerCode = consumerFiles
   .map((f) => fs.readFileSync(f, "utf8"))
   .join("\n");
 
-// Explicit allowed uncalled exports (e.g. Next.js server actions called dynamically or exported for API/cron/contracts)
-const ALLOWED_EXCEPTIONS = new Set([
-  "saveGreenBeanSpecsAction",
-  "getSellerRoastBatchesAction",
-  "addRoastBatchAction",
-  "deleteRoastBatchAction",
-  "getOrderInvoiceDataAction",
-  "getConversationsAction",
-  "getMessagesAction",
-  "sendMessageAction",
-  "suspendSellerAction",
-  "unsuspendSellerAction",
-  "confirmOrderPaymentAction",
-  "updateCoffeeOriginAction",
-]);
+// Explicit allowed uncalled exports with mandatory reason comments (J7)
+const ALLOWED_EXCEPTIONS = {
+  saveGreenBeanSpecsAction: "Green bean specifications update action, wired in Task J3",
+  getSellerRoastBatchesAction: "Exposed for seller batch overview and future analytics integrations",
+  addRoastBatchAction: "Exposed for seller roast batch creation workflows",
+  deleteRoastBatchAction: "Exposed for seller batch deletion workflows",
+  getOrderInvoiceDataAction: "Exposed for client invoice generation and PDF exports",
+  getConversationsAction: "Exposed for messaging polling and realtime UI",
+  getMessagesAction: "Exposed for message thread loading",
+  sendMessageAction: "Exposed for direct chat message sending",
+  suspendSellerAction: "Administrative action for moderation and trust operations",
+  unsuspendSellerAction: "Administrative action for moderation restoration",
+  confirmOrderPaymentAction: "Manual admin confirmation for direct wire transfers",
+  updateCoffeeOriginAction: "Exposed for origin catalog editorial maintenance",
+};
+
+// Validate that every exception has an informative rationale
+for (const [name, reason] of Object.entries(ALLOWED_EXCEPTIONS)) {
+  if (!reason || typeof reason !== "string" || reason.trim().length < 5) {
+    console.error(`[Invariant Violation] ALLOWED_EXCEPTIONS entry '${name}' must have a valid explanatory rationale.`);
+    process.exit(1);
+  }
+}
 
 const uncalled = [];
 
@@ -62,7 +70,7 @@ for (const file of actionFiles) {
   const matches = content.matchAll(/export\s+async\s+function\s+([a-zA-Z0-9_]+)\s*\(/g);
   for (const match of matches) {
     const fnName = match[1];
-    if (ALLOWED_EXCEPTIONS.has(fnName)) continue;
+    if (fnName in ALLOWED_EXCEPTIONS) continue;
 
     // Count occurrences in consumer files
     // If the function only appears once (its own declaration), it has no callers

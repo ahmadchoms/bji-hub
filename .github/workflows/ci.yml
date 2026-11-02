@@ -59,6 +59,9 @@ jobs:
       - name: Codebase Invariants Check
         run: npm run lint:invariants
 
+      - name: Uncalled Action Exports Check
+        run: npm run lint:exports
+
       - name: Audit Production Dependencies
         run: npm audit --omit=dev --audit-level=high
         continue-on-error: true

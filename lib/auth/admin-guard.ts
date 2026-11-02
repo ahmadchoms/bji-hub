@@ -1,23 +1,34 @@
 import "server-only";
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { Session } from "@/lib/auth/roles";
 
 /**
- * Checks whether the current session has satisfied MFA (AAL2 level) for administrative actions.
- * Fail-closed: any Supabase network failure or missing MFA returns false.
+ * Fetch authenticator assurance level from Supabase.
+ * Cached per request via React cache to deduplicate calls across middleware, guards, and actions.
  */
-export async function isAdminMfaSatisfied(): Promise<boolean> {
-  if (process.env.ADMIN_MFA_REQUIRED === "false") return true;
-  if (process.env.DATA_SOURCE === "mock" || process.env.NODE_ENV === "test") return true;
+export const getAdminAalLevel = cache(async (): Promise<{ currentLevel: string | null; nextLevel: string | null } | null> => {
   try {
     const supabase = await createClient();
     const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    if (error || !data) return false;
-    return data.currentLevel === "aal2";
+    if (error || !data) return null;
+    return { currentLevel: data.currentLevel ?? null, nextLevel: data.nextLevel ?? null };
   } catch {
-    return false;
+    return null;
   }
-}
+});
+
+/**
+ * Checks whether the current session has satisfied MFA (AAL2 level) for administrative actions.
+ * Fail-closed: any Supabase network failure or missing MFA returns false.
+ * Cached per request to eliminate redundant network calls.
+ */
+export const isAdminMfaSatisfied = cache(async (): Promise<boolean> => {
+  if (process.env.ADMIN_MFA_REQUIRED === "false") return true;
+  if (process.env.DATA_SOURCE === "mock" || process.env.NODE_ENV === "test") return true;
+  const aal = await getAdminAalLevel();
+  return aal?.currentLevel === "aal2";
+});
 
 /**
  * The single source of truth for checking if an actor is authorized to act as an admin.

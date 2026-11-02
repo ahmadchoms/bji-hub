@@ -1,7 +1,11 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { getLotCuppingData } from "./lots";
 
 describe("lib/data/lots.ts - Coffee Lot & Cupping Card Data (H1)", () => {
+  beforeEach(() => {
+    vi.stubEnv("DATA_SOURCE", "mock");
+  });
+
   it("returns null for invalid lot codes (length / characters)", async () => {
     expect(await getLotCuppingData("ab")).toBeNull();
     expect(await getLotCuppingData("INVALID LOT CODE WITH SPACES!")).toBeNull();

@@ -129,13 +129,11 @@ export async function requireRole(
     const isMock = process.env.DATA_SOURCE === "mock" || process.env.NODE_ENV === "test";
     const mfaRequired = process.env.ADMIN_MFA_REQUIRED !== "false";
     if (!isMock && mfaRequired && !returnTo.startsWith("/admin/mfa")) {
-      const { isAdminMfaSatisfied } = await import("@/lib/auth/admin-guard");
+      const { isAdminMfaSatisfied, getAdminAalLevel } = await import("@/lib/auth/admin-guard");
       const satisfied = await isAdminMfaSatisfied();
       if (!satisfied) {
         try {
-          const { createClient } = await import("@/lib/supabase/server");
-          const supabase = await createClient();
-          const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+          const aal = await getAdminAalLevel();
           if (aal && aal.nextLevel === "aal2" && aal.currentLevel !== "aal2") {
             redirect("/admin/mfa/verify");
           }

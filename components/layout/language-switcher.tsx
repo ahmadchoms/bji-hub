@@ -1,7 +1,6 @@
 "use client";
 
 import { useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Globe } from "lucide-react";
 import { setLocaleAction } from "@/actions/locale.actions";
 import { type Locale } from "@/lib/i18n";
@@ -14,7 +13,6 @@ interface LanguageSwitcherProps {
 const SHOW_LANGUAGE_SWITCHER = false;
 
 export function LanguageSwitcher({ currentLocale }: LanguageSwitcherProps) {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   if (!SHOW_LANGUAGE_SWITCHER) return null;

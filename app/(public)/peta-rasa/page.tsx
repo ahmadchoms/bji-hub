@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export const revalidate = 120;
 
 export default async function TasteMapPage() {
-  let items: TasteMapItem[] = [];
+  const items: TasteMapItem[] = [];
   let excludedCount = 0;
   let loadError: string | null = null;
 

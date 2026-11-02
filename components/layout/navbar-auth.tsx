@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Receipt,
+  Handbag,
   MessageSquare,
   Store,
   User,
@@ -18,6 +19,7 @@ import {
   clearCachedAuth,
   type NavbarAuthState,
 } from "@/lib/auth/client-session";
+import { t, type Locale } from "@/lib/i18n";
 
 export { useNavbarAuth, clearCachedAuth, type NavbarAuthState };
 
@@ -38,8 +40,10 @@ function handleClientLogout() {
 
 export function NavbarAuth({
   auth,
+  locale = "id",
 }: {
   auth?: NavbarAuthState;
+  locale?: Locale;
 }) {
   const fetched = useNavbarAuth();
   const current = auth || fetched;
@@ -112,7 +116,9 @@ export function NavbarAuth({
   const isSeller = role === "seller";
   const ordersHref = authenticated ? "/orders" : "/login?next=/orders";
   const storeHref = isSeller ? "/dashboard" : "/open-store";
-  const storeLabel = isSeller ? storeName || "Toko Saya" : "Toko";
+  const storeLabel = isSeller
+    ? storeName || (locale === "en" ? "My Store" : "Toko Saya")
+    : (locale === "en" ? "Store" : "Toko");
 
   return (
     <div className="flex items-center gap-1">
@@ -125,12 +131,12 @@ export function NavbarAuth({
         className="relative p-2 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-md transition-colors"
         title={
           activeOrdersCount > 0
-            ? `Riwayat Pesanan (${activeOrdersCount} aktif)`
-            : "Riwayat Pesanan"
+            ? (locale === "en" ? `My Orders (${activeOrdersCount} active)` : `Riwayat Pesanan (${activeOrdersCount} aktif)`)
+            : (locale === "en" ? "My Orders" : "Riwayat Pesanan")
         }
-        aria-label="Riwayat Pesanan"
+        aria-label={locale === "en" ? "My Orders" : "Riwayat Pesanan"}
       >
-        <Receipt className="w-4 h-4" />
+        <Handbag className="w-4 h-4" />
         {activeOrdersCount > 0 && (
           <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-amber-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1 animate-in zoom-in-50">
             {activeOrdersCount > 9 ? "9+" : activeOrdersCount}
@@ -337,15 +343,15 @@ export function NavbarAuth({
                 className="flex items-center gap-2 px-3 py-2 text-xs text-neutral-700 hover:bg-neutral-50 transition-colors"
               >
                 <User className="w-3.5 h-3.5 text-neutral-600" />
-                <span>Profil Saya</span>
+                <span>{locale === "en" ? "My Profile" : "Profil Saya"}</span>
               </Link>
               <Link
                 href="/orders"
                 onClick={() => setProfileOpen(false)}
                 className="flex items-center gap-2 px-3 py-2 text-xs text-neutral-700 hover:bg-neutral-50 transition-colors"
               >
-                <Receipt className="w-3.5 h-3.5 text-neutral-600" />
-                <span>Pesanan Saya</span>
+                <Handbag className="w-3.5 h-3.5 text-neutral-600" />
+                <span>{t("nav.orders", locale)}</span>
               </Link>
               {isSeller && (
                 <Link
@@ -354,7 +360,7 @@ export function NavbarAuth({
                   className="flex items-center gap-2 px-3 py-2 text-xs text-primary-800 font-semibold hover:bg-primary-50 transition-colors"
                 >
                   <Store className="w-3.5 h-3.5 text-primary-600" />
-                  <span>Dashboard Toko</span>
+                  <span>{locale === "en" ? "Store Dashboard" : "Dashboard Toko"}</span>
                 </Link>
               )}
               <div className="border-t border-neutral-100 my-1" />
@@ -364,7 +370,7 @@ export function NavbarAuth({
                   className="flex w-full items-center gap-2 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5" />
-                  <span>Keluar Akun</span>
+                  <span>{t("nav.logout", locale)}</span>
                 </button>
               </form>
             </div>
@@ -374,10 +380,10 @@ export function NavbarAuth({
         <Link
           href="/login"
           className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded-md transition-colors"
-          title="Masuk ke Akun"
+          title={t("nav.login", locale)}
         >
           <User className="w-4 h-4 text-neutral-600" />
-          <span>Masuk</span>
+          <span>{t("nav.login", locale)}</span>
         </Link>
       )}
     </div>
@@ -386,9 +392,11 @@ export function NavbarAuth({
 
 export function NavbarAuthMobile({
   auth,
+  locale = "id",
   onClose,
 }: {
   auth?: NavbarAuthState;
+  locale?: Locale;
   onClose?: () => void;
 }) {
   const fetched = useNavbarAuth();
@@ -399,7 +407,9 @@ export function NavbarAuthMobile({
   const isSeller = role === "seller";
   const ordersHref = authenticated ? "/orders" : "/login?next=/orders";
   const storeHref = isSeller ? "/dashboard" : "/open-store";
-  const storeLabel = isSeller ? storeName || "Toko Saya" : "Buka Toko Mitra";
+  const storeLabel = isSeller
+    ? storeName || (locale === "en" ? "My Store" : "Toko Saya")
+    : (locale === "en" ? "Open Store" : "Buka Toko Mitra");
 
   if (isLoading) {
     return (
@@ -418,8 +428,8 @@ export function NavbarAuthMobile({
         className="flex items-center justify-between px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md"
       >
         <div className="flex items-center gap-2.5">
-          <Receipt className="w-4 h-4 text-neutral-600" />
-          <span>Riwayat Pesanan</span>
+          <Handbag className="w-4 h-4 text-neutral-600" />
+          <span>{locale === "en" ? "My Orders" : "Riwayat Pesanan"}</span>
         </div>
         {activeOrdersCount > 0 && (
           <span className="bg-amber-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
@@ -444,7 +454,7 @@ export function NavbarAuthMobile({
           className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md"
         >
           <User className="w-4 h-4 text-neutral-600" />
-          <span>Profil ({user.firstName})</span>
+          <span>{locale === "en" ? `Profile (${user.firstName})` : `Profil (${user.firstName})`}</span>
         </Link>
       ) : (
         <Link
@@ -453,7 +463,7 @@ export function NavbarAuthMobile({
           className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md"
         >
           <User className="w-4 h-4 text-neutral-600" />
-          <span>Masuk ke Akun</span>
+          <span>{t("nav.login", locale)}</span>
         </Link>
       )}
 
@@ -471,7 +481,7 @@ export function NavbarAuthMobile({
               className="flex w-full items-center gap-2 px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-md cursor-pointer"
             >
               <LogOut className="h-4 w-4" />
-              <span>Keluar dari Akun</span>
+              <span>{t("nav.logout", locale)}</span>
             </button>
           </form>
         </div>

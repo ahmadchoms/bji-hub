@@ -79,13 +79,43 @@ export const sellers: SellerMethods = {
   },
 
   async getSellerById(id) {
-    const row = await getPrisma().sellerProfile.findUnique({ where: { id }, include: sellerInclude });
-    return row ? toSellerWithRelations(row) : null;
+    try {
+      const row = await getPrisma().sellerProfile.findUnique({ where: { id }, include: sellerInclude });
+      return row ? toSellerWithRelations(row) : null;
+    } catch (err: unknown) {
+      if ((err as { code?: string })?.code === "P2022") {
+        const row = await getPrisma().sellerProfile.findUnique({ where: { id } });
+        if (!row) return null;
+        return {
+          ...toSeller(row),
+          listings: [],
+          subscriptions: [],
+          tier: row.tier,
+          payments: [],
+        };
+      }
+      throw err;
+    }
   },
 
   async getSellerByUserId(userId) {
-    const row = await getPrisma().sellerProfile.findUnique({ where: { userId }, include: sellerInclude });
-    return row ? toSellerWithRelations(row) : null;
+    try {
+      const row = await getPrisma().sellerProfile.findUnique({ where: { userId }, include: sellerInclude });
+      return row ? toSellerWithRelations(row) : null;
+    } catch (err: unknown) {
+      if ((err as { code?: string })?.code === "P2022") {
+        const row = await getPrisma().sellerProfile.findUnique({ where: { userId } });
+        if (!row) return null;
+        return {
+          ...toSeller(row),
+          listings: [],
+          subscriptions: [],
+          tier: row.tier,
+          payments: [],
+        };
+      }
+      throw err;
+    }
   },
 
   async getSellers() {

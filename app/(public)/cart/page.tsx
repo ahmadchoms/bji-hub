@@ -10,6 +10,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { checkAuthAction } from "@/actions/auth.actions";
+import { LoadingState } from "@/components/shared/loading-state";
 import {
   ShoppingCart,
   Trash2,
@@ -119,14 +120,7 @@ export default function CartPage() {
       : "Beli";
 
   if (!isLoaded || isLoggedIn === null) {
-    return (
-      <div className="py-16 text-center">
-        <PageContainer className="max-w-md mx-auto space-y-4">
-          <div className="w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs text-neutral-600">Memuat keranjang belanja...</p>
-        </PageContainer>
-      </div>
-    );
+    return <LoadingState message="Memuat keranjang belanja..." />;
   }
 
   if (isLoggedIn === false) {

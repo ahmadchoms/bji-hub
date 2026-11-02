@@ -165,6 +165,17 @@ export function t(key: TranslationKey, locale: Locale = "id"): string {
   return dict[key] || DICTIONARIES.id[key] || key;
 }
 
+export function getLocalizedText(
+  idText: string,
+  enText?: string | null,
+  locale: Locale = "id",
+): string {
+  if (locale === "en" && enText && enText.trim()) {
+    return enText;
+  }
+  return idText;
+}
+
 export interface CurrencyRateData {
   code: string;
   perIdr: number;

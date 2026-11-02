@@ -14,9 +14,13 @@ import { StartChatButton } from "@/components/chat/start-chat-button";
 
 interface ProductPurchaseBoxProps {
   listing: ListingWithRelations;
+  locale?: "id" | "en";
 }
 
-export function ProductPurchaseBox({ listing }: ProductPurchaseBoxProps) {
+export function ProductPurchaseBox({
+  listing,
+  locale = "id",
+}: ProductPurchaseBoxProps) {
   const isGreenBean = listing.category.slug === "green-beans";
 
   const [quantity, setQuantity] = useState<number>(listing.minOrderQty || 1);
@@ -47,13 +51,13 @@ export function ProductPurchaseBox({ listing }: ProductPurchaseBoxProps) {
         <div className="flex items-baseline justify-between">
           <div>
             <p className="text-xs font-mono text-neutral-600 uppercase tracking-widest mb-1">
-              Harga
+              {locale === "en" ? "Price" : "Harga"}
             </p>
-            <PriceText price={listing.price} unit={listing.unit} size="lg" />
+            <PriceText price={listing.price} unit={listing.unit} size="lg" showEstimate={locale === "en"} />
           </div>
           <div className="text-right">
             <p className="text-xs font-mono text-neutral-600 uppercase tracking-widest mb-1">
-              Min. Order
+              {locale === "en" ? "Min. Order" : "Min. Order"}
             </p>
             <span className="font-mono text-sm font-bold text-neutral-900">
               {listing.minOrderQty} {listing.unit}

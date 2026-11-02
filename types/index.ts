@@ -177,7 +177,9 @@ export interface Listing {
   sellerId: SellerProfileId;
   categoryId: string;
   title: string;
+  titleEn?: string | null;
   description?: string;
+  descriptionEn?: string | null;
   price: number;
   unit: string; // e.g. "kg", "250g", "box", "unit"
   minOrderQty: number;

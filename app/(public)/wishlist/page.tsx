@@ -11,6 +11,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Heart, Trash2, ArrowRight, Store, Coffee, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { checkAuthAction } from "@/actions/auth.actions";
+import { LoadingState } from "@/components/shared/loading-state";
 
 export default function WishlistPage() {
   const { isLoaded, items, totalItems, removeFromWishlist, clearWishlist } =
@@ -56,18 +57,7 @@ export default function WishlistPage() {
   };
 
   if (!isLoaded || isLoggedIn === null) {
-    return (
-      <div className="py-12 bg-neutral-50/50 min-h-[70vh]">
-        <PageContainer className="max-w-5xl mx-auto">
-          <div className="h-64 flex items-center justify-center">
-            <div className="flex items-center gap-2 text-sm text-neutral-600 font-mono">
-              <span className="w-2 h-2 rounded-full bg-primary-600 animate-ping" />
-              Memuat daftar favorit...
-            </div>
-          </div>
-        </PageContainer>
-      </div>
-    );
+    return <LoadingState message="Memuat daftar favorit..." />;
   }
 
   if (isLoggedIn === false) {

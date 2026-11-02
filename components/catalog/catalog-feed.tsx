@@ -8,9 +8,11 @@ import {
 import { TokopediaSortBar } from "@/components/catalog/tokopedia-sort-bar";
 import { ProductList } from "@/components/catalog/product-feed";
 import { LoadMore } from "@/components/catalog/load-more";
+import { getServerLocale } from "@/lib/i18n/server";
 
 export async function CatalogFeed({ params }: { params: CatalogParams }) {
   try {
+    const locale = await getServerLocale();
     const filterParams = normalizeFilters({
       categorySlug: params.category || params.kategori,
       originRegion: params.origin || params.asal,
@@ -59,7 +61,7 @@ export async function CatalogFeed({ params }: { params: CatalogParams }) {
         <TokopediaSortBar total={feed.total} />
         {feed.items.length ? (
           <>
-            <ProductList items={feed.items} />
+            <ProductList items={feed.items} locale={locale} />
             {nextUrl && (
               <div className="flex justify-center py-8">
                 <LoadMore href={nextUrl} />
@@ -117,14 +119,25 @@ export async function CatalogFeed({ params }: { params: CatalogParams }) {
     );
   } catch (err) {
     logger.error("catalog.feed_render_failed", err as Error);
+    const isP2022 =
+      (err as { code?: string })?.code === "P2022" ||
+      (err as Error)?.message?.includes("does not exist");
     return (
-      <div className="py-10">
-        <p className="font-display text-xl text-neutral-900">
+      <div className="py-12 text-center max-w-md mx-auto space-y-3">
+        <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto text-lg">
+          ⚠️
+        </div>
+        <p className="font-display text-lg font-semibold text-neutral-900">
           Gagal memuat produk.
+        </p>
+        <p className="text-xs text-neutral-600 leading-relaxed">
+          {isP2022
+            ? "Database belum dimigrasi (skema Prisma terbaru belum diterapkan di database Supabase). Silakan jalankan 'npm run db:deploy' di terminal/deployment."
+            : "Terjadi kendala saat mengambil data produk. Silakan coba beberapa saat lagi."}
         </p>
         <Link
           href="/"
-          className="mt-3 inline-block text-sm font-medium text-primary-600 hover:underline"
+          className="inline-block text-xs font-semibold px-4 py-2 rounded-md bg-primary-600 text-white hover:bg-primary-700 transition-colors"
         >
           Coba lagi
         </Link>

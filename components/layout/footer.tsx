@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { getServerLocale } from "@/lib/i18n/server";
+import { t } from "@/lib/i18n";
 
-export function Footer() {
+export async function Footer() {
+  const locale = await getServerLocale();
+
   return (
     <footer className="border-t border-neutral-300 py-5">
       <nav
@@ -8,31 +12,31 @@ export function Footer() {
         aria-label="Footer"
       >
         <Link href="/about" className="hover:text-primary-900 coarse:min-h-11 inline-flex items-center">
-          Tentang
+          {locale === "en" ? "About Us" : "Tentang"}
         </Link>
         <Link href="/asal-kopi" className="hover:text-primary-900 coarse:min-h-11 inline-flex items-center">
-          Asal Kopi
+          {t("nav.origins", locale)}
         </Link>
         <Link href="/contact" className="hover:text-primary-900">
-          Kontak
+          {locale === "en" ? "Contact" : "Kontak"}
         </Link>
         <Link href="/terms" className="hover:text-primary-900">
-          Syarat
+          {t("footer.terms", locale)}
         </Link>
         <Link href="/privacy" className="hover:text-primary-900">
-          Privasi
+          {t("footer.privacy", locale)}
         </Link>
         <Link href="/refund-policy" className="hover:text-primary-900">
-          Retur & Refund
+          {locale === "en" ? "Returns & Refunds" : "Retur & Refund"}
         </Link>
         <Link href="/shipping-policy" className="hover:text-primary-900">
-          Pengiriman
+          {locale === "en" ? "Shipping Policy" : "Pengiriman"}
         </Link>
         <Link href="/pricing" className="hover:text-primary-900">
-          Harga
+          {locale === "en" ? "Seller Pricing" : "Harga"}
         </Link>
         <Link href="/register?role=seller" className="hover:text-primary-900">
-          Jual Kopi
+          {locale === "en" ? "Sell Coffee" : "Jual Kopi"}
         </Link>
       </nav>
     </footer>

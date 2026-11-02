@@ -34,6 +34,7 @@ import { getBundleItems } from "@/lib/coffee/bundles";
 import { getPriceTiers, getGreenBeanSpecs } from "@/lib/coffee/b2b";
 import { getCropFreshnessLabel } from "@/lib/coffee/harvest";
 import { Award } from "lucide-react";
+import { getServerLocale } from "@/lib/i18n/server";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
@@ -106,6 +107,7 @@ export async function generateMetadata({
 export default async function ProductDetailPage({ params }: ProductPageProps) {
   const { slug } = await params;
   const listing = await getListingBySlug(slug);
+  const locale = await getServerLocale();
 
   if (
     !listing ||
@@ -114,6 +116,9 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   ) {
     notFound();
   }
+
+  const displayTitle = locale === "en" && listing.titleEn ? listing.titleEn : listing.title;
+  const displayDesc = locale === "en" && listing.descriptionEn ? listing.descriptionEn : listing.description;
 
   const relatedResult = await getListingFeed({
     categorySlug: listing.category.slug,
@@ -187,7 +192,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           aria-label="Breadcrumb"
         >
           <Link href="/" className="hover:text-primary-700">
-            Beranda
+            {locale === "en" ? "Home" : "Beranda"}
           </Link>
           <span>/</span>
           <Link
@@ -198,7 +203,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           </Link>
           <span>/</span>
           <span className="text-neutral-900 truncate max-w-xs">
-            {listing.title}
+            {displayTitle}
           </span>
         </nav>
 
@@ -206,7 +211,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
           {/* Left: Images + Description */}
           <div className="lg:col-span-7 space-y-8">
-            <ImageGallery images={listing.images} title={listing.title} />
+            <ImageGallery images={listing.images} title={displayTitle} />
 
             <TasteSpecList tasteProfile={listing.tasteProfile} />
 
@@ -214,11 +219,13 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
             <div className="space-y-3">
               <h3 className="font-display text-lg font-semibold text-neutral-900 pb-2 border-b border-neutral-300">
-                Deskripsi
+                {locale === "en" ? "Description" : "Deskripsi"}
               </h3>
               <p className="text-sm text-neutral-700 leading-relaxed whitespace-pre-line">
-                {listing.description ||
-                  "Biji kopi pilihan yang diproses dengan dedikasi tinggi oleh petani lokal untuk menghadirkan cita rasa terbaik khas tanah Nusantara."}
+                {displayDesc ||
+                  (locale === "en"
+                    ? "Premium specialty coffee beans carefully processed by local Indonesian farmers to bring out authentic archipelago flavors."
+                    : "Biji kopi pilihan yang diproses dengan dedikasi tinggi oleh petani lokal untuk menghadirkan cita rasa terbaik khas tanah Nusantara.")}
               </p>
             </div>
             <FlavorProfile tasteProfile={listing.tasteProfile} />
@@ -501,7 +508,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
               )}
 
               {/* Pricing, Grind Selector, Stock & Purchase Box */}
-              <ProductPurchaseBox listing={listing} />
+              <ProductPurchaseBox listing={listing} locale={locale} />
 
               {/* B2B WhatsApp Negotiation Alternative */}
               <div className="relative my-3">

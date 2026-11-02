@@ -18,7 +18,7 @@ export function LanguageSwitcher({ currentLocale }: LanguageSwitcherProps) {
     if (newLocale === currentLocale || isPending) return;
     startTransition(async () => {
       await setLocaleAction(newLocale);
-      router.refresh();
+      window.location.reload();
     });
   };
 

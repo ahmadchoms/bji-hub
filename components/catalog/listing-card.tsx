@@ -4,6 +4,7 @@ import { Star } from "lucide-react";
 import { ListingWithRelations } from "@/types";
 import { cn } from "@/lib/utils";
 import { formatRupiah } from "@/components/shared/price-text";
+import { formatEstimatedPrice } from "@/lib/i18n";
 import { TrackVisible } from "../shared/track-visible";
 import { CompareButton } from "./compare-button";
 import { WishlistButton } from "@/components/wishlist/wishlist-button";
@@ -15,6 +16,7 @@ interface ListingCardProps {
   priority?: boolean;
   className?: string;
   isAd?: boolean;
+  locale?: "id" | "en";
 }
 
 export function ListingCard({
@@ -22,7 +24,9 @@ export function ListingCard({
   priority = false,
   className,
   isAd = false,
+  locale = "id",
 }: ListingCardProps) {
+  const title = locale === "en" && listing.titleEn ? listing.titleEn : listing.title;
   const image = listing.images[0]?.url;
   const origin = listing.tasteProfile?.originRegion || listing.seller.city;
   const process = listing.tasteProfile?.processMethod || "—";
@@ -50,18 +54,18 @@ export function ListingCard({
           {isOutOfStock && (
             <div className="absolute inset-0 bg-neutral-950/50 backdrop-blur-[1px] flex items-center justify-center z-10">
               <span className="bg-neutral-900/90 text-white font-mono text-xs font-bold px-3 py-1 rounded shadow-md border border-neutral-700 uppercase tracking-wider">
-                Stok Habis
+                {locale === "en" ? "Sold Out" : "Stok Habis"}
               </span>
             </div>
           )}
           {isAd && !isOutOfStock && (
             <span className="absolute top-2 left-2 z-10 text-xs font-mono font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-xs bg-amber-600 text-white shadow-xs">
-              Iklan
+              {locale === "en" ? "Sponsored" : "Iklan"}
             </span>
           )}
           {listing.minOrderQty >= 30 && !isAd && !isOutOfStock && (
             <span className="absolute top-2 left-2 z-10 text-xs font-mono font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-xs bg-primary-900/90 text-white backdrop-blur-xs shadow-xs">
-              Partai B2B
+              {locale === "en" ? "Wholesale B2B" : "Partai B2B"}
             </span>
           )}
           {daysSince !== null &&
@@ -102,7 +106,7 @@ export function ListingCard({
 
         <div className="space-y-2 p-3">
           <h2 className="line-clamp-2 min-h-10 font-display text-base font-semibold leading-snug text-neutral-900 group-hover:underline">
-            {listing.title}
+            {title}
           </h2>
           <div className="flex flex-wrap items-center gap-1 text-xs font-mono">
             <span className="bg-neutral-100 text-neutral-800 px-1.5 py-0.5 rounded font-medium truncate max-w-[120px]">
@@ -122,7 +126,7 @@ export function ListingCard({
               />
             ) : isGreenBean ? (
               <span className="bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-1.5 py-0.5 rounded font-medium">
-                Mentah
+                {locale === "en" ? "Green" : "Mentah"}
               </span>
             ) : null}
             {listing.tasteProfile?.cuppingScore && (
@@ -145,12 +149,18 @@ export function ListingCard({
                 {formatRupiah(listing.price)}
               </p>
               <span className="text-xs font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200 px-1.5 py-0.5 rounded font-mono">
-                Habis
+                {locale === "en" ? "Sold Out" : "Habis"}
               </span>
             </div>
           ) : (
             <p className="font-mono text-base font-bold tabular-nums text-primary-900">
-              {formatRupiah(listing.price)} / {listing.unit}
+              {formatRupiah(listing.price)}
+              {locale === "en" && (
+                <span className="font-sans text-xs text-neutral-600 font-normal ml-1">
+                  ({formatEstimatedPrice(listing.price, "USD").estimatedText})
+                </span>
+              )}
+              {" "}/ {listing.unit}
             </p>
           )}
           {listing.minOrderQty > 1 && (

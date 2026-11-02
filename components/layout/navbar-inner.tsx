@@ -30,6 +30,7 @@ import {
 } from "@/components/layout/navbar-auth";
 import type { Category } from "@/types";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
+import { t } from "@/lib/i18n";
 
 const TRENDING_SEARCHES = [
   "Gayo Bourbon",
@@ -102,26 +103,34 @@ export function NavbarInner({
           <div className="flex items-center gap-3 truncate min-w-0">
             <span className="flex items-center gap-1 text-neutral-600 font-medium shrink-0">
               <MapPin className="w-3 h-3 text-primary-600" />
-              Dikirim ke: <strong className="text-neutral-800">Seluruh Indonesia</strong>
+              {locale === "en" ? (
+                <>Delivered to: <strong className="text-neutral-800">Across Indonesia</strong></>
+              ) : (
+                <>Dikirim ke: <strong className="text-neutral-800">Seluruh Indonesia</strong></>
+              )}
             </span>
             <span className="text-neutral-300">|</span>
-            <span className="text-neutral-600 truncate">Transaksi Belanja Kopi 100% Terverifikasi & Terjamin Aman</span>
+            <span className="text-neutral-600 truncate">
+              {locale === "en"
+                ? "100% Verified & Secure Direct Coffee Marketplace"
+                : "Transaksi Belanja Kopi 100% Terverifikasi & Terjamin Aman"}
+            </span>
           </div>
           <div className="flex items-center gap-4 text-neutral-600 shrink-0">
             <Link href="/about" className="hover:text-primary-700 transition-colors">
-              Tentang Biji Hub
+              {locale === "en" ? "About Us" : "Tentang Biji Hub"}
             </Link>
             <Link href="/peta-rasa" className="hover:text-primary-700 transition-colors">
-              Peta Rasa
+              {locale === "en" ? "Taste Map" : "Peta Rasa"}
             </Link>
             <Link href="/belajar" className="hover:text-primary-700 transition-colors">
-              Pusat Belajar
+              {t("nav.learn", locale)}
             </Link>
             <Link href="/pricing" className="hover:text-primary-700 transition-colors">
-              Paket Penjual
+              {locale === "en" ? "Seller Plans" : "Paket Penjual"}
             </Link>
             <Link href="/contact" className="hover:text-primary-700 transition-colors">
-              Pusat Bantuan
+              {locale === "en" ? "Help Center" : "Pusat Bantuan"}
             </Link>
             <LanguageSwitcher currentLocale={locale} />
           </div>
@@ -149,7 +158,11 @@ export function NavbarInner({
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Cari biji kopi specialty, proses, roastery..."
+                  placeholder={
+                    locale === "en"
+                      ? "Search specialty coffee, process, roastery..."
+                      : "Cari biji kopi specialty, proses, roastery..."
+                  }
                   className="w-full h-9 pl-9 pr-8 rounded-md border border-neutral-200 bg-neutral-50/80 hover:bg-white focus:bg-white text-xs text-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-colors"
                 />
                 {searchQuery && (
@@ -157,8 +170,8 @@ export function NavbarInner({
                     type="button"
                     onClick={() => setSearchQuery("")}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 p-0.5"
-                    title="Hapus pencarian"
-                    aria-label="Hapus pencarian"
+                    title={locale === "en" ? "Clear search" : "Hapus pencarian"}
+                    aria-label={locale === "en" ? "Clear search" : "Hapus pencarian"}
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -169,7 +182,7 @@ export function NavbarInner({
             {/* Trending Keywords Chips */}
             <div className="flex items-center gap-2 pl-2 text-xs text-neutral-600 overflow-hidden whitespace-nowrap">
               <span className="text-neutral-400 text-xs font-medium shrink-0">
-                Pencarian populer:
+                {locale === "en" ? "Popular searches:" : "Pencarian populer:"}
               </span>
               <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
                 {TRENDING_SEARCHES.map((item) => (
@@ -198,7 +211,7 @@ export function NavbarInner({
             <WishlistNavBadge showBadge={auth.authenticated} />
 
             {/* Pulau Auth Dinamis */}
-            <NavbarAuth auth={auth} />
+            <NavbarAuth auth={auth} locale={locale} />
           </div>
         </div>
       </header>
@@ -227,10 +240,11 @@ export function NavbarInner({
               </SheetTrigger>
 
               <SheetContent side="right" className="w-80 p-0 sm:max-w-xs">
-                <SheetHeader className="border-b border-neutral-200/80 p-4 text-left">
+                <SheetHeader className="border-b border-neutral-200/80 p-4 text-left flex flex-row items-center justify-between">
                   <SheetTitle className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
-                    Menu & Navigasi
+                    {locale === "en" ? "Menu & Navigation" : "Menu & Navigasi"}
                   </SheetTitle>
+                  <LanguageSwitcher currentLocale={locale} />
                 </SheetHeader>
 
                 <div className="flex flex-col justify-between h-[calc(100vh-57px)] p-4 overflow-y-auto space-y-4">
@@ -241,7 +255,7 @@ export function NavbarInner({
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Cari kopi..."
+                      placeholder={locale === "en" ? "Search coffee..." : "Cari kopi..."}
                       className="w-full h-9 pl-9 pr-3 rounded-md border border-neutral-200 bg-neutral-50 text-xs text-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400"
                     />
                   </form>
@@ -249,7 +263,7 @@ export function NavbarInner({
                   {/* Kategori Mobile */}
                   <div className="space-y-1">
                     <p className="text-xs font-mono uppercase tracking-wider text-neutral-400 font-semibold px-2">
-                      Kategori Kopi
+                      {locale === "en" ? "Categories" : "Kategori Kopi"}
                     </p>
                     <nav className="flex flex-col gap-0.5">
                       {categories.map((cat) => (
@@ -267,28 +281,28 @@ export function NavbarInner({
                         onClick={() => setMobileOpen(false)}
                         className="flex items-center justify-between px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md coarse:min-h-11"
                       >
-                        <span>Peta Asal Kopi Nusantara</span>
+                        <span>{t("nav.origins", locale)}</span>
                       </Link>
                       <Link
                         href="/peta-rasa"
                         onClick={() => setMobileOpen(false)}
                         className="flex items-center justify-between px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md coarse:min-h-11"
                       >
-                        <span>Peta Sebaran Rasa (Taste Map)</span>
+                        <span>{locale === "en" ? "Taste Map" : "Peta Sebaran Rasa (Taste Map)"}</span>
                       </Link>
                       <Link
                         href="/belajar"
                         onClick={() => setMobileOpen(false)}
                         className="flex items-center justify-between px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md coarse:min-h-11"
                       >
-                        <span>Pusat Belajar Kopi</span>
+                        <span>{t("nav.learn", locale)}</span>
                       </Link>
                       <Link
                         href="/"
                         onClick={() => setMobileOpen(false)}
                         className="px-3 py-2 text-xs font-semibold text-primary-700 hover:bg-primary-50 rounded-md coarse:min-h-11 flex items-center"
                       >
-                        Semua Produk Kopi →
+                        {locale === "en" ? "All Coffee Products →" : "Semua Produk Kopi →"}
                       </Link>
                     </nav>
                   </div>
@@ -296,7 +310,7 @@ export function NavbarInner({
                   {/* Menu Akses Cepat */}
                   <div className="space-y-1 pt-3 border-t border-neutral-200/80">
                     <p className="text-xs font-mono uppercase tracking-wider text-neutral-400 font-semibold px-2">
-                      Aktivitas & Akun
+                      {locale === "en" ? "Activity & Account" : "Aktivitas & Akun"}
                     </p>
 
                     <Link
@@ -305,12 +319,13 @@ export function NavbarInner({
                       className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md"
                     >
                       <Heart className="w-4 h-4 text-rose-500" />
-                      <span>Kopi Favorit</span>
+                      <span>{locale === "en" ? "Saved Coffee" : "Kopi Favorit"}</span>
                     </Link>
 
                     {/* Dynamic Auth & Mobile Navigation */}
                     <NavbarAuthMobile
                       auth={auth}
+                      locale={locale}
                       onClose={() => setMobileOpen(false)}
                     />
                   </div>

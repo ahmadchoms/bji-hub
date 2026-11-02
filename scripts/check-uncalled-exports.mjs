@@ -40,7 +40,6 @@ const consumerCode = consumerFiles
 
 // Explicit allowed uncalled exports with mandatory reason comments (J7)
 const ALLOWED_EXCEPTIONS = {
-  saveGreenBeanSpecsAction: "Green bean specifications update action, wired in Task J3",
   getSellerRoastBatchesAction: "Exposed for seller batch overview and future analytics integrations",
   addRoastBatchAction: "Exposed for seller roast batch creation workflows",
   deleteRoastBatchAction: "Exposed for seller batch deletion workflows",

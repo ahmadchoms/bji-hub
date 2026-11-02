@@ -206,12 +206,27 @@ export async function createCheckoutOrderAction(
     if (l.status && l.status !== "active") {
       return fail(`Produk "${l.title}" sedang tidak aktif atau diarsipkan`);
     }
-    if (l.stock === 0) {
+    const { getBundleEffectiveStock, getBundleItems } = await import("@/lib/coffee/bundles");
+    const bundleStock = await getBundleEffectiveStock(l.id);
+    const availableStock = bundleStock !== null ? bundleStock : l.stock;
+
+    if (bundleStock !== null && bundleStock <= 0) {
+      const children = await getBundleItems(l.id);
+      const exhausted = children.find((c) => (c.childStock ?? 0) < c.quantity);
+      if (exhausted) {
+        return fail(
+          `Paket "${l.title}" tidak dapat dipesan karena varian "${exhausted.childTitle || "anak"}" telah habis`,
+        );
+      }
       return fail(`Maaf, stok untuk "${l.title}" telah habis terjual`);
     }
-    if (l.stock !== undefined && it.quantity > l.stock) {
+
+    if (availableStock === 0) {
+      return fail(`Maaf, stok untuk "${l.title}" telah habis terjual`);
+    }
+    if (availableStock !== undefined && it.quantity > availableStock) {
       return fail(
-        `Pesanan untuk "${l.title}" (${it.quantity}) melebihi stok yang tersedia (${l.stock} ${l.unit})`,
+        `Pesanan untuk "${l.title}" (${it.quantity}) melebihi stok yang tersedia (${availableStock} ${l.unit})`,
       );
     }
     if (l.minOrderQty !== undefined && it.quantity < l.minOrderQty) {

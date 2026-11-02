@@ -184,6 +184,7 @@ export interface Listing {
   unit: string; // e.g. "kg", "250g", "box", "unit"
   minOrderQty: number;
   stock?: number; // Remaining inventory quantity
+  kind?: "single" | "bundle";
   status: "active" | "draft" | "archived" | "suspended";
   isBoosted: boolean;
   boostUntil?: string | null;

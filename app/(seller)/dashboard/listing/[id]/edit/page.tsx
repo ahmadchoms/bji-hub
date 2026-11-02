@@ -1,6 +1,8 @@
-import { getListingById, getCategories } from "@/lib/data";
+import { getListingById, getCategories, getSellerById } from "@/lib/data";
 import { getApprovedProducersForSeller } from "@/lib/data/producers";
 import { getRoastBatchesByListing } from "@/lib/coffee/roast-batch";
+import { getPriceTiers, getGreenBeanSpecs } from "@/lib/coffee/b2b";
+import { getBundleItems } from "@/lib/coffee/bundles";
 import { SectionHeader } from "@/components/shared/section-header";
 import { ListingForm } from "@/components/dashboard/listing-form";
 import { notFound } from "next/navigation";
@@ -15,16 +17,24 @@ export default async function EditListingPage({
 }: EditListingPageProps) {
   const { id } = await params;
   const { sellerId } = await requireSeller(`/dashboard/listing/${id}`);
-  const [listing, categories, producers, batches] = await Promise.all([
+  const [listing, categories, producers, batches, priceTiers, greenBeanSpecs, bundleItems, seller] = await Promise.all([
     getListingById(id),
     getCategories(),
     getApprovedProducersForSeller(sellerId).catch(() => []),
     getRoastBatchesByListing(id).catch(() => []),
+    getPriceTiers(id).catch(() => []),
+    getGreenBeanSpecs(id).catch(() => null),
+    getBundleItems(id).catch(() => []),
+    getSellerById(sellerId).catch(() => null),
   ]);
 
   if (!listing || listing.sellerId !== sellerId) {
     notFound();
   }
+
+  const availableChildren = (seller?.listings || [])
+    .filter((l) => l.id !== id && l.status === "active" && l.kind !== "bundle")
+    .map((l) => ({ id: l.id, title: l.title, stock: l.stock, price: Number(l.price) }));
 
   return (
     <div className="space-y-6">
@@ -35,6 +45,10 @@ export default async function EditListingPage({
         hasRoastBatches={batches.length > 0}
         isEditing
         listingId={listing.id}
+        initialPriceTiers={priceTiers}
+        initialGreenBeanSpecs={greenBeanSpecs}
+        initialBundleItems={bundleItems.map((b) => ({ childListingId: b.childListingId, quantity: b.quantity }))}
+        availableChildren={availableChildren}
         defaultValues={{
           title: listing.title,
           categoryId: listing.categoryId,

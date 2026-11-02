@@ -137,6 +137,15 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     getPriceTiers(listing.id).catch(() => []),
     getGreenBeanSpecs(listing.id).catch(() => null),
   ]);
+
+  // Use effective bundle stock computed from minimum child component availability (J3)
+  if (bundleItems.length > 0) {
+    const { getBundleEffectiveStock } = await import("@/lib/coffee/bundles");
+    const bundleStock = await getBundleEffectiveStock(listing.id);
+    if (bundleStock !== null) {
+      listing.stock = bundleStock;
+    }
+  }
   const reviewStats = computeReviewStats(reviews);
   const slaResult = await calculateRoastToShipSla(listing.sellerId);
   const cropFreshness = getCropFreshnessLabel(listing.tasteProfile?.cropYear);

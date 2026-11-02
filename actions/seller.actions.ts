@@ -174,6 +174,23 @@ export async function saveListingAction(
         revalidateListing(updated.slug);
       }
     }
+
+    // Revalidate parent bundles if this listing is a child (J3)
+    const { getPool } = await import("@/lib/db/pool");
+    const pool = getPool();
+    if (pool) {
+      pool.query(
+        `SELECT l.slug FROM public.bundle_items b
+         JOIN public.listings l ON b.bundle_listing_id = l.id
+         WHERE b.child_listing_id = $1`,
+        [listingId],
+      ).then((res) => {
+        for (const row of res.rows) {
+          if (row.slug) revalidateListing(row.slug);
+        }
+      }).catch(() => {}); // ignore: non-blocking bundle revalidation
+    }
+
     return ok({ id: updated.id });
   }
 
@@ -463,5 +480,106 @@ export async function addRoastBatchAction(
   } catch (error) {
     logger.error("seller.add_roast_batch_failed", error);
     return fail("Gagal menambahkan batch sangrai.");
+  }
+}
+
+const saveGreenBeanSpecsSchema = z.object({
+  listingId: z.string().min(1, "ID produk wajib diisi"),
+  screenSize: z.string().max(50).optional().nullable(),
+  moisturePct: z.number().min(0).max(100).optional().nullable(),
+  densityGl: z.number().min(0).max(2000).optional().nullable(),
+  waterActivity: z.number().min(0).max(1).optional().nullable(),
+  primaryDefects: z.number().int().min(0).max(1000).optional().nullable(),
+  secondaryDefects: z.number().int().min(0).max(1000).optional().nullable(),
+  coaUrl: z.string().url("URL COA harus valid").max(500).optional().nullable().or(z.literal("")),
+});
+
+export async function saveGreenBeanSpecsAction(
+  input: unknown,
+): Promise<ActionResult<boolean>> {
+  const { sellerId } = await requireSeller("/dashboard/listing");
+  const parsed = saveGreenBeanSpecsSchema.safeParse(input);
+  if (!parsed.success) {
+    return fail(
+      "Data spesifikasi green bean tidak valid",
+      parsed.error.flatten().fieldErrors as FieldErrors,
+    );
+  }
+
+  try {
+    const { saveGreenBeanSpecs } = await import("@/lib/coffee/b2b");
+    const { listingId, ...specs } = parsed.data;
+    await saveGreenBeanSpecs(listingId, sellerId, {
+      ...specs,
+      coaUrl: specs.coaUrl || null,
+    });
+    revalidatePath("/dashboard/listing");
+    return ok(true);
+  } catch (err) {
+    return fail((err as Error).message || "Gagal menyimpan spesifikasi green bean");
+  }
+}
+
+const priceTierItemSchema = z.object({
+  minQty: z.number().int().min(2, "Jumlah minimum minimal 2"),
+  unitPrice: z.number().min(1, "Harga satuan harus lebih dari 0"),
+});
+
+const savePriceTiersSchema = z.object({
+  listingId: z.string().min(1, "ID produk wajib diisi"),
+  tiers: z.array(priceTierItemSchema),
+});
+
+export async function savePriceTiersAction(
+  input: unknown,
+): Promise<ActionResult<boolean>> {
+  const { sellerId } = await requireSeller("/dashboard/listing");
+  const parsed = savePriceTiersSchema.safeParse(input);
+  if (!parsed.success) {
+    return fail(
+      "Data harga bertingkat tidak valid",
+      parsed.error.flatten().fieldErrors as FieldErrors,
+    );
+  }
+
+  try {
+    const { savePriceTiers } = await import("@/lib/coffee/b2b");
+    await savePriceTiers(parsed.data.listingId, sellerId, parsed.data.tiers);
+    revalidatePath("/dashboard/listing");
+    return ok(true);
+  } catch (err) {
+    return fail((err as Error).message || "Gagal menyimpan harga bertingkat");
+  }
+}
+
+const bundleChildItemSchema = z.object({
+  childListingId: z.string().min(1, "ID produk anak wajib diisi"),
+  quantity: z.number().int().min(1, "Jumlah produk minimal 1"),
+});
+
+const saveBundleItemsSchema = z.object({
+  bundleListingId: z.string().min(1, "ID produk paket wajib diisi"),
+  items: z.array(bundleChildItemSchema).min(2, "Paket minimal 2 produk").max(5, "Paket maksimal 5 produk"),
+});
+
+export async function saveBundleItemsAction(
+  input: unknown,
+): Promise<ActionResult<boolean>> {
+  const { sellerId } = await requireSeller("/dashboard/listing");
+  const parsed = saveBundleItemsSchema.safeParse(input);
+  if (!parsed.success) {
+    return fail(
+      "Data paket bundle tidak valid",
+      parsed.error.flatten().fieldErrors as FieldErrors,
+    );
+  }
+
+  try {
+    const { saveBundleItems } = await import("@/lib/coffee/bundles");
+    await saveBundleItems(parsed.data.bundleListingId, sellerId, parsed.data.items);
+    revalidatePath("/dashboard/listing");
+    return ok(true);
+  } catch (err) {
+    return fail((err as Error).message || "Gagal menyimpan isi paket bundle");
   }
 }

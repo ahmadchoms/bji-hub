@@ -19,6 +19,9 @@ export interface GreenBeanSpecDetail {
   coaUrl?: string | null;
 }
 
+export const mockPriceTiers: PriceTierDetail[] = [];
+export const mockGreenBeanSpecs: GreenBeanSpecDetail[] = [];
+
 /**
  * Calculates effective unit price on the server according to volume price tiers.
  * If quantity reaches tier threshold, the tiered price is used.
@@ -30,7 +33,12 @@ export async function getEffectiveTieredPrice(
   baseUnitPrice: number
 ): Promise<number> {
   const pool = getPool();
-  if (!pool) return baseUnitPrice;
+  if (!pool) {
+    const tiers = mockPriceTiers
+      .filter((t) => t.listingId === listingId && t.minQty <= quantity)
+      .sort((a, b) => b.minQty - a.minQty);
+    return tiers[0]?.unitPrice ?? baseUnitPrice;
+  }
 
   try {
     const res = await pool.query(
@@ -63,7 +71,11 @@ export async function getPriceTiers(
   listingId: string
 ): Promise<PriceTierDetail[]> {
   const pool = getPool();
-  if (!pool) return [];
+  if (!pool) {
+    return mockPriceTiers
+      .filter((t) => t.listingId === listingId)
+      .sort((a, b) => a.minQty - b.minQty);
+  }
 
   try {
     const res = await pool.query(
@@ -90,13 +102,120 @@ export async function getPriceTiers(
 }
 
 /**
+ * Saves monotonic tiered prices for a listing.
+ */
+export async function savePriceTiers(
+  listingId: string,
+  sellerProfileId: string,
+  tiers: Array<{ minQty: number; unitPrice: number }>,
+): Promise<boolean> {
+  const pool = getPool();
+
+  if (!pool) {
+    // Validate monotonic rules in mock
+    for (let i = 0; i < tiers.length; i++) {
+      const t = tiers[i];
+      if (t.minQty < 2) {
+        throw new Error("Jumlah minimum harga bertingkat minimal 2");
+      }
+      if (i > 0) {
+        const prev = tiers[i - 1];
+        if (t.minQty <= prev.minQty) {
+          throw new Error("Jumlah minimum (min_qty) harus bertambah naik di setiap tier");
+        }
+        if (t.unitPrice >= prev.unitPrice) {
+          throw new Error("Harga satuan (unit_price) harus semakin murah (turun) seiring bertambahnya jumlah");
+        }
+      }
+    }
+    // Replace mock tiers
+    for (let i = mockPriceTiers.length - 1; i >= 0; i--) {
+      if (mockPriceTiers[i].listingId === listingId) {
+        mockPriceTiers.splice(i, 1);
+      }
+    }
+    for (const t of tiers) {
+      mockPriceTiers.push({
+        id: `pt-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        listingId,
+        minQty: t.minQty,
+        unitPrice: t.unitPrice,
+      });
+    }
+    return true;
+  }
+
+  try {
+    // 1. Ownership check
+    const ownerRes = await pool.query(
+      `SELECT id, price FROM public.listings WHERE id = $1 AND "sellerId" = $2`,
+      [listingId, sellerProfileId],
+    );
+    if (ownerRes.rows.length === 0) {
+      throw new Error("Hanya pemilik toko yang dapat mengatur harga bertingkat");
+    }
+    const basePrice = Number(ownerRes.rows[0].price);
+
+    // 2. Validate monotonic constraint
+    for (let i = 0; i < tiers.length; i++) {
+      const t = tiers[i];
+      if (t.minQty < 2) {
+        throw new Error("Jumlah minimum harga bertingkat minimal 2");
+      }
+      if (t.unitPrice >= basePrice) {
+        throw new Error(`Harga bertingkat (Rp${t.unitPrice.toLocaleString()}) harus lebih murah dari harga dasar (Rp${basePrice.toLocaleString()})`);
+      }
+      if (i > 0) {
+        const prev = tiers[i - 1];
+        if (t.minQty <= prev.minQty) {
+          throw new Error("Jumlah minimum (min_qty) harus bertambah naik di setiap tier");
+        }
+        if (t.unitPrice >= prev.unitPrice) {
+          throw new Error("Harga satuan (unit_price) harus semakin murah (turun) seiring bertambahnya jumlah");
+        }
+      }
+    }
+
+    // 3. Atomically replace tiers
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query(`DELETE FROM public.price_tiers WHERE listing_id = $1`, [listingId]);
+
+      for (const t of tiers) {
+        await client.query(
+          `INSERT INTO public.price_tiers (listing_id, min_qty, unit_price, created_at)
+           VALUES ($1, $2, $3, NOW())`,
+          [listingId, t.minQty, t.unitPrice],
+        );
+      }
+      await client.query("COMMIT");
+      return true;
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    logger.error(
+      "b2b.save_price_tiers_failed",
+      err instanceof Error ? err : new Error(String(err))
+    );
+    throw err;
+  }
+}
+
+/**
  * Retrieves technical green bean specifications for a listing.
  */
 export async function getGreenBeanSpecs(
   listingId: string
 ): Promise<GreenBeanSpecDetail | null> {
   const pool = getPool();
-  if (!pool) return null;
+  if (!pool) {
+    return mockGreenBeanSpecs.find((s) => s.listingId === listingId) ?? null;
+  }
 
   try {
     const res = await pool.query(
@@ -138,7 +257,13 @@ export async function saveGreenBeanSpecs(
   specs: Omit<GreenBeanSpecDetail, "listingId">
 ): Promise<boolean> {
   const pool = getPool();
-  if (!pool) return false;
+  if (!pool) {
+    const idx = mockGreenBeanSpecs.findIndex((s) => s.listingId === listingId);
+    const item: GreenBeanSpecDetail = { listingId, ...specs };
+    if (idx >= 0) mockGreenBeanSpecs[idx] = item;
+    else mockGreenBeanSpecs.push(item);
+    return true;
+  }
 
   try {
     // 1. Verify seller ownership

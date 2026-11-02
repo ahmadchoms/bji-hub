@@ -171,6 +171,15 @@ for (const file of sourceFiles) {
   }
 }
 
+// Invariant 8: Taste profile scores must not use '|| <default>' falsy fallback (J4)
+for (const file of sourceFiles) {
+  if (isTestFile(file)) continue;
+  const content = fs.readFileSync(file, "utf8");
+  if (/(?:acidityScore|bodyScore|sweetnessScore)\s*\|\|\s*\d/.test(content)) {
+    errors.push(`[Invariant Violation] Disallowed falsy score fallback '|| <number>' in ${file}. Use '??' and validate numerical score honesty.`);
+  }
+}
+
 if (errors.length > 0) {
   console.error("Invariant checks failed:\n" + errors.join("\n"));
   process.exit(1);

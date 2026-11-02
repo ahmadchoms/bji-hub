@@ -139,9 +139,7 @@ export function toListing(row: ListingRow): ListingWithRelations {
     sellerId: asSellerProfileId(row.sellerId),
     categoryId: row.categoryId,
     title: row.title,
-    titleEn: (row as { titleEn?: string | null }).titleEn ?? null,
     description: row.description ?? "",
-    descriptionEn: (row as { descriptionEn?: string | null }).descriptionEn ?? null,
     price: num(row.price),
     unit: row.unit,
     minOrderQty: row.minOrderQty,
@@ -161,6 +159,10 @@ export function toListing(row: ListingRow): ListingWithRelations {
       sortOrder: image.sortOrder,
     })),
   };
+  const titleEn = (row as { titleEn?: string | null }).titleEn;
+  if (titleEn) listing.titleEn = titleEn;
+  const descriptionEn = (row as { descriptionEn?: string | null }).descriptionEn;
+  if (descriptionEn) listing.descriptionEn = descriptionEn;
   if (row.tasteProfile) listing.tasteProfile = toTaste(row.tasteProfile);
   const nextRoastDate = (row as { nextRoastDate?: Date | string | null }).nextRoastDate;
   if (nextRoastDate) listing.nextRoastDate = iso(nextRoastDate as Date).slice(0, 10);

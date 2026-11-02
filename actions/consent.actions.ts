@@ -1,6 +1,5 @@
 "use server";
 
-import { createHmac } from "crypto";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
@@ -9,22 +8,12 @@ import { getClientIp } from "@/lib/client-ip";
 import {
   recordUserConsent,
   hasUserAcceptedLatest,
+  hashIp,
   type UserConsentRecord,
 } from "@/lib/data/consents";
 import { ConsentDocument, CURRENT_VERSIONS } from "@/lib/legal/versions";
 
 const consentDocumentSchema = z.enum(["terms", "privacy", "seller_agreement"]);
-
-export function hashIp(ip: string): string {
-  const secret = process.env.COOKIE_SECRET;
-  if (!secret) {
-    if (process.env.NODE_ENV === "production" && process.env.DATA_SOURCE !== "mock") {
-      throw new Error("CRITICAL: COOKIE_SECRET wajib diisi di production untuk HMAC IP consent");
-    }
-    return createHmac("sha256", "biji-legal-salt-dev").update(ip).digest("hex").slice(0, 32);
-  }
-  return createHmac("sha256", secret).update(ip).digest("hex").slice(0, 32);
-}
 
 export async function recordConsentAction(
   rawDocument: unknown,

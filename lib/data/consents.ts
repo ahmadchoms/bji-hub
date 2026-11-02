@@ -2,6 +2,18 @@ import { getPool } from "@/lib/db/pool";
 import { logger } from "@/lib/logger";
 import { assertMockAllowed } from "@/lib/data/mock-guard";
 import { ConsentDocument, CURRENT_VERSIONS } from "@/lib/legal/versions";
+import { createHmac } from "node:crypto";
+
+export function hashIp(ip: string): string {
+  const secret = process.env.COOKIE_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production" && process.env.DATA_SOURCE !== "mock") {
+      throw new Error("CRITICAL: COOKIE_SECRET wajib diisi di production untuk HMAC IP consent");
+    }
+    return createHmac("sha256", "biji-legal-salt-dev").update(ip).digest("hex").slice(0, 32);
+  }
+  return createHmac("sha256", secret).update(ip).digest("hex").slice(0, 32);
+}
 
 export interface UserConsentRecord {
   id: string;

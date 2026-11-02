@@ -176,20 +176,14 @@ export async function saveListingAction(
     }
 
     // Revalidate parent bundles if this listing is a child (J3)
-    const { getPool } = await import("@/lib/db/pool");
-    const pool = getPool();
-    if (pool) {
-      pool.query(
-        `SELECT l.slug FROM public.bundle_items b
-         JOIN public.listings l ON b.bundle_listing_id = l.id
-         WHERE b.child_listing_id = $1`,
-        [listingId],
-      ).then((res) => {
-        for (const row of res.rows) {
-          if (row.slug) revalidateListing(row.slug);
+    const { getParentBundleSlugs } = await import("@/lib/coffee/bundles");
+    getParentBundleSlugs(listingId)
+      .then((slugs) => {
+        for (const slug of slugs) {
+          revalidateListing(slug);
         }
-      }).catch(() => {}); // ignore: non-blocking bundle revalidation
-    }
+      })
+      .catch(() => {}); // ignore: non-blocking bundle revalidation
 
     return ok({ id: updated.id });
   }

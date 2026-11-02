@@ -195,3 +195,29 @@ export async function saveBundleItems(
     throw err;
   }
 }
+
+/**
+ * Returns parent bundle slugs that include the specified child listing.
+ * Used for cache revalidation when child listing details or stock change.
+ */
+export async function getParentBundleSlugs(
+  childListingId: string,
+): Promise<string[]> {
+  const pool = getPool();
+  if (!pool) return [];
+
+  try {
+    const res = await pool.query(
+      `SELECT l.slug FROM public.bundle_items b
+       JOIN public.listings l ON b.bundle_listing_id = l.id
+       WHERE b.child_listing_id = $1`,
+      [childListingId],
+    );
+    return res.rows.map((r) => r.slug).filter(Boolean);
+  } catch (err) {
+    logger.warn("bundles.get_parent_slugs_failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return [];
+  }
+}

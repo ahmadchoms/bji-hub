@@ -10,9 +10,14 @@ interface LanguageSwitcherProps {
   currentLocale: Locale;
 }
 
+// ponytail: hidden until full i18n Phase 1 roll-out (J6 Option B)
+const SHOW_LANGUAGE_SWITCHER = false;
+
 export function LanguageSwitcher({ currentLocale }: LanguageSwitcherProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+
+  if (!SHOW_LANGUAGE_SWITCHER) return null;
 
   const handleToggle = (newLocale: Locale) => {
     if (newLocale === currentLocale || isPending) return;

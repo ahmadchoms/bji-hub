@@ -4,7 +4,9 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 import { getSession } from "@/lib/auth/session";
+import { hasAdminRole } from "@/lib/auth/admin-guard";
 import { getClientIp } from "@/lib/client-ip";
+import { logger } from "@/lib/logger";
 import {
   recordUserConsent,
   hasUserAcceptedLatest,
@@ -18,33 +20,38 @@ const consentDocumentSchema = z.enum(["terms", "privacy", "seller_agreement"]);
 export async function recordConsentAction(
   rawDocument: unknown,
 ): Promise<ActionResult<UserConsentRecord>> {
-  const session = await getSession();
-  if (session.role === "guest" || !session.userId) {
-    return fail("Autentikasi diperlukan untuk mencatat persetujuan");
+  try {
+    const session = await getSession();
+    if (session.role === "guest" || !session.userId) {
+      return fail("Autentikasi diperlukan untuk mencatat persetujuan");
+    }
+
+    const parseResult = consentDocumentSchema.safeParse(rawDocument);
+    if (!parseResult.success) {
+      return fail("Dokumen persetujuan tidak valid");
+    }
+
+    const document = parseResult.data;
+    if (document === "seller_agreement" && session.role !== "seller") {
+      return fail("Perjanjian Penjual hanya dapat disetujui oleh penjual");
+    }
+
+    const clientIp = await getClientIp();
+    const ipHash = hashIp(clientIp);
+
+    const consent = await recordUserConsent({
+      userId: session.userId,
+      document,
+      version: CURRENT_VERSIONS[document],
+      ipHash,
+    });
+
+    revalidatePath("/", "layout");
+    return ok(consent);
+  } catch (err) {
+    logger.error("consent.record_failed", err);
+    return fail("Gagal mencatat persetujuan. Silakan coba kembali.");
   }
-
-  const parseResult = consentDocumentSchema.safeParse(rawDocument);
-  if (!parseResult.success) {
-    return fail("Dokumen persetujuan tidak valid");
-  }
-
-  const document = parseResult.data;
-  if (document === "seller_agreement" && session.role !== "seller") {
-    return fail("Perjanjian Penjual hanya dapat disetujui oleh penjual");
-  }
-
-  const clientIp = await getClientIp();
-  const ipHash = hashIp(clientIp);
-
-  const consent = await recordUserConsent({
-    userId: session.userId,
-    document,
-    version: CURRENT_VERSIONS[document],
-    ipHash,
-  });
-
-  revalidatePath("/", "layout");
-  return ok(consent);
 }
 
 export async function checkPendingConsentsAction(): Promise<
@@ -54,7 +61,7 @@ export async function checkPendingConsentsAction(): Promise<
   }>
 > {
   const session = await getSession();
-  if (session.role === "guest" || !session.userId) {
+  if (session.role === "guest" || hasAdminRole(session) || !session.userId) {
     return ok({ allAccepted: true, pendingDocuments: [] });
   }
 

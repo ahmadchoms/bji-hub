@@ -118,4 +118,20 @@ describe("actions/consent.actions (H6)", () => {
       expect(res.error).toContain("Perjanjian Penjual");
     }
   });
+
+  it("exempts admin from pending consents gate", async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      role: "admin",
+      userId: asUserId("admin-consent-789"),
+      email: "admin@biji.test",
+      sellerId: null,
+    });
+
+    const check = await checkPendingConsentsAction();
+    expect(check.success).toBe(true);
+    if (check.success) {
+      expect(check.data.allAccepted).toBe(true);
+      expect(check.data.pendingDocuments).toEqual([]);
+    }
+  });
 });

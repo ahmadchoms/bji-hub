@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
+import { hasAdminRole } from "@/lib/auth/admin-guard";
 import { checkPendingConsentsAction } from "@/actions/consent.actions";
 import { PublicShell } from "@/components/layout/public-shell";
 
@@ -39,7 +40,7 @@ export default async function PublicLayout({
   children: React.ReactNode;
 }) {
   const session = await getSession();
-  if (session.role !== "guest" && session.userId) {
+  if (session.role !== "guest" && !hasAdminRole(session) && session.userId) {
     const headerList = await headers();
     const pathname = headerList.get("x-pathname") || "";
 

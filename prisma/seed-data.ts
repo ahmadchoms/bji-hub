@@ -55,6 +55,9 @@ export async function seedDatabase(
   await prisma.user.createMany({
     data: [
       { id: getId("user-admin"), email: "admin@example.com", role: "ADMIN" as const },
+      { id: "user-admin-1", email: "admin@bijihub.com", role: "ADMIN" as const },
+      { id: "user-buyer-1", email: "buyer@bijihub.com", role: "BUYER" as const },
+      { id: "user-seller-1", email: "seller@bijihub.com", role: "SELLER" as const },
       ...mockSellers.map((seller) => ({
         id: getId(seller.userId),
         email: `${seller.slug}@example.com`,
@@ -62,6 +65,7 @@ export async function seedDatabase(
         createdAt: new Date(seller.createdAt),
       })),
     ],
+    skipDuplicates: true,
   });
 
   await prisma.sellerProfile.createMany({

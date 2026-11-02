@@ -27,14 +27,16 @@ export default async function ConsentPage({ searchParams }: ConsentPageProps) {
   const res = await checkPendingConsentsAction();
   const pendingDocs = res.success ? res.data.pendingDocuments : [];
 
+  const target = !next || next === "/consent" ? "/" : next;
+
   if (pendingDocs.length === 0) {
-    redirect(next || "/");
+    redirect(target);
   }
 
   return (
     <div className="py-12 md:py-16 bg-neutral-50/50 min-h-[70vh] flex items-center">
       <PageContainer>
-        <ConsentGateway pendingDocuments={pendingDocs} returnTo={next || "/"} />
+        <ConsentGateway pendingDocuments={pendingDocs} returnTo={target} />
       </PageContainer>
     </div>
   );

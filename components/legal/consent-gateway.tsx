@@ -19,6 +19,7 @@ export function ConsentGateway({
   returnTo = "/",
 }: ConsentGatewayProps) {
   const router = useRouter();
+  const safeReturnTo = !returnTo || returnTo === "/consent" ? "/" : returnTo;
   const [pending, setPending] = useState<ConsentDocument[]>(initialPending);
   const [isPending, startTransition] = useTransition();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -37,7 +38,7 @@ export function ConsentGateway({
         const nextPending = pending.filter((d) => d !== doc);
         setPending(nextPending);
         if (nextPending.length === 0) {
-          router.push(returnTo);
+          router.push(safeReturnTo);
           router.refresh();
         }
       } else {
@@ -57,7 +58,7 @@ export function ConsentGateway({
         }
       }
       setPending([]);
-      router.push(returnTo);
+      router.push(safeReturnTo);
       router.refresh();
     });
   };
@@ -75,7 +76,7 @@ export function ConsentGateway({
           <p className="text-xs text-emerald-800">
             Seluruh kebijakan telah Anda setujui. Mengalihkan kembali...
           </p>
-          <Link href={returnTo}>
+          <Link href={safeReturnTo}>
             <Button size="sm" className="mt-2 text-xs">
               Lanjut ke Halaman Utama <ArrowRight className="w-3.5 h-3.5 ml-1" />
             </Button>

@@ -11,6 +11,7 @@ import {
   User,
   LogOut,
   Package,
+  ShieldAlert,
 } from "lucide-react";
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { logoutAction } from "@/actions/auth.actions";
@@ -114,6 +115,7 @@ export function NavbarAuth({
   }
 
   const isSeller = role === "seller";
+  const isAdmin = role === "admin";
   const ordersHref = authenticated ? "/orders" : "/login?next=/orders";
   const storeHref = isSeller ? "/dashboard" : "/open-store";
   const storeLabel = isSeller
@@ -226,6 +228,18 @@ export function NavbarAuth({
 
       {/* Border Vertikal */}
       <div className="h-5 w-px bg-neutral-200 mx-1.5" />
+
+      {/* Tombol Panel Admin */}
+      {isAdmin && (
+        <Link
+          href="/admin"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-md transition-colors"
+          title="Panel Admin Biji Hub"
+        >
+          <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+          <span>Panel Admin</span>
+        </Link>
+      )}
 
       {/* Tombol Toko (Hover Dropdown) */}
       <div
@@ -363,6 +377,16 @@ export function NavbarAuth({
                   <span>{locale === "en" ? "Store Dashboard" : "Dashboard Toko"}</span>
                 </Link>
               )}
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  onClick={() => setProfileOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2 text-xs text-rose-700 font-semibold hover:bg-rose-50 transition-colors"
+                >
+                  <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+                  <span>Panel Admin</span>
+                </Link>
+              )}
               <div className="border-t border-neutral-100 my-1" />
               <form action={logoutAction} onSubmit={handleClientLogout} className="w-full">
                 <button
@@ -405,6 +429,7 @@ export function NavbarAuthMobile({
     current;
 
   const isSeller = role === "seller";
+  const isAdmin = role === "admin";
   const ordersHref = authenticated ? "/orders" : "/login?next=/orders";
   const storeHref = isSeller ? "/dashboard" : "/open-store";
   const storeLabel = isSeller
@@ -446,6 +471,17 @@ export function NavbarAuthMobile({
         <Store className="w-4 h-4 text-neutral-600" />
         <span>{storeLabel}</span>
       </Link>
+
+      {isAdmin && (
+        <Link
+          href="/admin"
+          onClick={onClose}
+          className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-md"
+        >
+          <ShieldAlert className="w-4 h-4 text-rose-600" />
+          <span>Panel Admin</span>
+        </Link>
+      )}
 
       {user ? (
         <Link

@@ -15,7 +15,7 @@ export async function hasReportedMessages(conversationId: string): Promise<boole
         `SELECT 1 FROM public.audit_logs al
          WHERE (al.action = 'chat.message_reported' AND al.target_id = $1)
             OR (al.action = 'chat.message_reported' AND EXISTS (
-                 SELECT 1 FROM public.messages m WHERE m.id::text = al.target_id AND m.conversation_id = $1
+                 SELECT 1 FROM public.messages m WHERE m.id::text = al.target_id AND m.conversation_id::text = $1
                ))
          LIMIT 1`,
         [conversationId],

@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+// Disable JIT evaluation probe in Zod to prevent strict CSP securitypolicyviolation in browsers
+z.config({ jitless: true });
+
 export const loginSchema = z.object({
   email: z
     .string()

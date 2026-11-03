@@ -111,6 +111,7 @@ describe("GET /api/health (B8)", () => {
     });
 
     it("returns 503 when a subsystem is missing required configuration", async () => {
+      vi.stubEnv("DATA_SOURCE", "mock");
       vi.stubEnv("NODE_ENV", "development");
       vi.stubEnv("CRON_SECRET", "supersecret");
       vi.stubEnv("MIDTRANS_SERVER_KEY", "");

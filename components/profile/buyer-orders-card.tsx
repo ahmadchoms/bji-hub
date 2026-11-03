@@ -47,7 +47,7 @@ function getOrderProductImage(order: Order): string {
   if ((order as unknown as { listingImageUrl?: string }).listingImageUrl) {
     return (order as unknown as { listingImageUrl?: string }).listingImageUrl!;
   }
-  return "https://images.unsplash.com/photo-1587734195503-904fca47e0e9?auto=format&fit=crop&q=80&w=400";
+  return "/assets/coffee-placeholder.jpg";
 }
 
 export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {

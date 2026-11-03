@@ -200,6 +200,29 @@ for (const file of sourceFiles) {
   }
 }
 
+// Invariant 10: Disallow external third-party image hotlinks in app/ and components/ (Audit #13 Item 4)
+const uiFiles = [...walk("app"), ...walk("components")];
+const externalImageRegex = /https?:\/\/(?:images\.unsplash\.com\/|[^\s"'`>]+\.(?:png|jpg|jpeg|webp|avif|gif))/i;
+const allowedImageDomains = [
+  // Whitelist if needed for approved CDNs
+];
+
+for (const file of uiFiles) {
+  if (isTestFile(file)) continue;
+  const normalized = file.replace(/\\/g, "/");
+  const content = fs.readFileSync(file, "utf8");
+  const match = content.match(externalImageRegex);
+  if (match) {
+    const url = match[0];
+    const isAllowed = allowedImageDomains.some((d) => url.includes(d));
+    if (!isAllowed) {
+      errors.push(
+        `[Invariant Violation] External image hotlink disallowed in UI: '${url}' in ${normalized}. Use local public assets or Supabase storage.`
+      );
+    }
+  }
+}
+
 if (errors.length > 0) {
   console.error("Invariant checks failed:\n" + errors.join("\n"));
   process.exit(1);

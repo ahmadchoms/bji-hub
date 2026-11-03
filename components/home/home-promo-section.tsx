@@ -13,7 +13,7 @@ export function HomePromoSection() {
             {/* Background Coffee Texture with Low Opacity */}
             <div className="absolute right-0 top-0 bottom-0 w-1/2 md:w-3/5 pointer-events-none select-none overflow-hidden z-0">
               <Image
-                src="https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=1200&q=80"
+                src="/assets/promo-coffee-bg.jpg"
                 alt="Tekstur Biji Kopi"
                 fill
                 sizes="(max-width: 768px) 50vw, 35vw"

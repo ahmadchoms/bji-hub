@@ -9,6 +9,7 @@ import {
   X,
   MapPin,
   Heart,
+  Globe,
 } from "lucide-react";
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
@@ -222,6 +223,7 @@ export function NavbarInner({
           <Logo size="md" />
 
           <div className="flex items-center gap-1.5">
+            <LanguageSwitcher currentLocale={locale} className="hidden sm:inline-flex" />
             <CartNavBadge showBadge={auth.authenticated} />
             <WishlistNavBadge showBadge={auth.authenticated} />
 
@@ -247,7 +249,7 @@ export function NavbarInner({
                   <LanguageSwitcher currentLocale={locale} />
                 </SheetHeader>
 
-                <div className="flex flex-col justify-between h-[calc(100vh-57px)] p-4 overflow-y-auto space-y-4">
+                <div className="flex flex-col justify-start h-[calc(100vh-57px)] p-4 overflow-y-auto space-y-4">
                   {/* Search Mobile */}
                   <form onSubmit={handleSearchSubmit} className="relative w-full">
                     <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -262,7 +264,7 @@ export function NavbarInner({
 
                   {/* Kategori Mobile */}
                   <div className="space-y-1">
-                    <p className="text-xs font-mono uppercase tracking-wider text-neutral-400 font-semibold px-2">
+                    <p className="text-xs uppercase tracking-wider text-neutral-600 font-semibold px-2">
                       {locale === "en" ? "Categories" : "Kategori Kopi"}
                     </p>
                     <nav className="flex flex-col gap-0.5">
@@ -309,7 +311,7 @@ export function NavbarInner({
 
                   {/* Menu Akses Cepat */}
                   <div className="space-y-1 pt-3 border-t border-neutral-200/80">
-                    <p className="text-xs font-mono uppercase tracking-wider text-neutral-400 font-semibold px-2">
+                    <p className="text-xs uppercase tracking-wider text-neutral-600 font-semibold px-2">
                       {locale === "en" ? "Activity & Account" : "Aktivitas & Akun"}
                     </p>
 
@@ -328,6 +330,15 @@ export function NavbarInner({
                       locale={locale}
                       onClose={() => setMobileOpen(false)}
                     />
+                  </div>
+
+                  {/* Pilihan Bahasa Mobile */}
+                  <div className="pt-3 border-t border-neutral-200/80 flex items-center justify-between px-2">
+                    <span className="text-xs font-medium text-neutral-600 flex items-center gap-1.5">
+                      <Globe className="w-3.5 h-3.5 text-neutral-600" />
+                      {locale === "en" ? "Language" : "Pilihan Bahasa"}
+                    </span>
+                    <LanguageSwitcher currentLocale={locale} />
                   </div>
                 </div>
               </SheetContent>

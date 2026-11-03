@@ -31,7 +31,7 @@ export interface DashboardNavItem {
 interface DashboardShellProps {
   nav: readonly DashboardNavItem[];
   rootHref: string;
-  title: string;
+  title?: string;
   children: React.ReactNode;
 }
 
@@ -70,7 +70,7 @@ function NavLinks({
       {groups.map((group, groupIdx) => (
         <div key={group.name || `group-${groupIdx}`} className="space-y-1">
           {group.name && !collapsed && (
-            <p className="px-3 pt-2 pb-1 font-mono text-xs uppercase tracking-widest text-neutral-600">
+            <p className="px-3 pt-2 pb-1 text-xs font-semibold uppercase tracking-wider text-neutral-600">
               {group.name}
             </p>
           )}
@@ -122,10 +122,10 @@ function NavLinks({
                 onClick={onNavigate}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "font-mono group relative flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm font-semibold tracking-wide transition-all duration-150 select-none coarse:min-h-11",
+                  "group relative flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm font-medium transition-all duration-150 select-none coarse:min-h-11",
                   focusRing,
                   active
-                    ? "bg-primary-50/90 text-primary-900 font-bold shadow-xs"
+                    ? "bg-primary-50/90 text-primary-900 font-semibold shadow-xs"
                     : "text-neutral-600 hover:bg-neutral-100/70 hover:text-neutral-900",
                 )}
               >
@@ -160,7 +160,7 @@ function LogoutButton({ collapsed = false }: { collapsed?: boolean }) {
         title="Keluar"
         aria-label="Keluar"
         className={cn(
-          "cursor-pointer font-mono font-semibold flex text-sm text-neutral-600 hover:text-red-600 hover:bg-red-50 transition-colors rounded-md",
+          "cursor-pointer font-medium flex text-sm text-neutral-600 hover:text-red-600 hover:bg-red-50 transition-colors rounded-md",
           focusRing,
           collapsed
             ? "h-10 w-10 mx-auto items-center justify-center coarse:min-h-11 coarse:min-w-11"
@@ -243,15 +243,9 @@ export function DashboardShell({
           </button>
         </div>
 
-        {!collapsed && (
-          <p className="px-4 pb-1 pt-4 font-mono text-xs uppercase tracking-widest text-neutral-600">
-            {title}
-          </p>
-        )}
-
         <nav
-          className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden scrollbar-none"
-          aria-label={`Menu ${title}`}
+          className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden scrollbar-none pt-2"
+          aria-label={title ? `Menu ${title}` : "Menu Navigasi"}
         >
           <NavLinks nav={nav} rootHref={rootHref} collapsed={collapsed} />
         </nav>
@@ -278,13 +272,14 @@ export function DashboardShell({
           </SheetTrigger>
           <SheetContent side="left" className="w-64 p-0">
             <SheetHeader className="border-b border-neutral-300 p-4">
-              <SheetTitle className="font-mono text-xs uppercase tracking-widest text-neutral-600">
-                {title}
+              <SheetTitle className="sr-only">
+                {title || "Menu Navigasi"}
               </SheetTitle>
+              <Logo size="sm" />
             </SheetHeader>
             <nav
               className="flex flex-1 flex-col overflow-y-auto py-2"
-              aria-label={`Menu ${title} mobile`}
+              aria-label={title ? `Menu ${title} mobile` : "Menu Navigasi mobile"}
             >
               <NavLinks
                 nav={nav}

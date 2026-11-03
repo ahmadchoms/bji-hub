@@ -7,15 +7,11 @@ import { type Locale } from "@/lib/i18n";
 
 interface LanguageSwitcherProps {
   currentLocale: Locale;
+  className?: string;
 }
 
-// ponytail: hidden until full i18n Phase 1 roll-out (J6 Option B)
-const SHOW_LANGUAGE_SWITCHER = false;
-
-export function LanguageSwitcher({ currentLocale }: LanguageSwitcherProps) {
+export function LanguageSwitcher({ currentLocale, className }: LanguageSwitcherProps) {
   const [isPending, startTransition] = useTransition();
-
-  if (!SHOW_LANGUAGE_SWITCHER) return null;
 
   const handleToggle = (newLocale: Locale) => {
     if (newLocale === currentLocale || isPending) return;
@@ -26,16 +22,20 @@ export function LanguageSwitcher({ currentLocale }: LanguageSwitcherProps) {
   };
 
   return (
-    <div className="flex items-center gap-1 text-xs border border-neutral-300 rounded-md p-0.5 bg-surface-base">
-      <Globe className="w-3.5 h-3.5 text-neutral-600 ml-1.5 mr-0.5 shrink-0" />
+    <div
+      className={`inline-flex items-center gap-1 text-xs border border-neutral-300 rounded-md p-0.5 bg-surface-base shadow-2xs ${
+        className || ""
+      }`}
+    >
+      <Globe className="w-3.5 h-3.5 text-neutral-600 ml-1 mr-0.5 shrink-0" />
       <button
         type="button"
         onClick={() => handleToggle("id")}
         disabled={isPending}
-        className={`px-1.5 py-0.5 rounded text-xs font-semibold transition-colors ${
+        className={`px-1.5 py-0.5 rounded text-xs font-semibold transition-colors coarse:min-h-11 coarse:min-w-11 inline-flex items-center justify-center ${
           currentLocale === "id"
             ? "bg-primary-900 text-white"
-            : "text-neutral-600 hover:text-neutral-900"
+            : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100"
         }`}
         aria-label="Bahasa Indonesia"
       >
@@ -46,10 +46,10 @@ export function LanguageSwitcher({ currentLocale }: LanguageSwitcherProps) {
         type="button"
         onClick={() => handleToggle("en")}
         disabled={isPending}
-        className={`px-1.5 py-0.5 rounded text-xs font-semibold transition-colors ${
+        className={`px-1.5 py-0.5 rounded text-xs font-semibold transition-colors coarse:min-h-11 coarse:min-w-11 inline-flex items-center justify-center ${
           currentLocale === "en"
             ? "bg-primary-900 text-white"
-            : "text-neutral-600 hover:text-neutral-900"
+            : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100"
         }`}
         aria-label="English Language"
       >

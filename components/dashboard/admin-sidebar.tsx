@@ -43,7 +43,7 @@ const ADMIN_NAV: readonly DashboardNavItem[] = [
 
 export function AdminSidebar({ children }: { children: React.ReactNode }) {
   return (
-    <DashboardShell nav={ADMIN_NAV} rootHref="/admin" title="Admin">
+    <DashboardShell nav={ADMIN_NAV} rootHref="/admin">
       {children}
     </DashboardShell>
   );

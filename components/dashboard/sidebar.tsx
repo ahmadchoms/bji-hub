@@ -41,7 +41,7 @@ const SELLER_NAV: readonly DashboardNavItem[] = [
 
 export function DashboardSidebar({ children }: { children: React.ReactNode }) {
   return (
-    <DashboardShell nav={SELLER_NAV} rootHref="/dashboard" title="Penjual">
+    <DashboardShell nav={SELLER_NAV} rootHref="/dashboard">
       {children}
     </DashboardShell>
   );

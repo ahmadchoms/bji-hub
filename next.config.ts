@@ -62,6 +62,9 @@ const nextConfig: NextConfig = {
   },
   compress: true,
   poweredByHeader: false,
+  experimental: {
+    optimizePackageImports: ["lucide-react", "date-fns", "@tanstack/react-query"],
+  },
   images: {
     minimumCacheTTL: 2592000,
     formats: ["image/avif", "image/webp"],

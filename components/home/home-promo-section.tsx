@@ -1,7 +1,22 @@
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { PageContainer } from "@/components/layout/page-container";
-import { CoffeeGuideWizard } from "@/components/catalog/coffee-guide-wizard";
-import { TasteQuizModal } from "@/components/catalog/taste-quiz-modal";
+
+const CoffeeGuideWizard = dynamic(
+  () =>
+    import("@/components/catalog/coffee-guide-wizard").then(
+      (m) => m.CoffeeGuideWizard,
+    ),
+  { ssr: true },
+);
+
+const TasteQuizModal = dynamic(
+  () =>
+    import("@/components/catalog/taste-quiz-modal").then(
+      (m) => m.TasteQuizModal,
+    ),
+  { ssr: true },
+);
 
 export function HomePromoSection() {
   return (

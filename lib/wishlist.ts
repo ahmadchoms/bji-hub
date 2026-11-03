@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { hasSessionCookie } from "./auth/client-session";
 import type { ListingWithRelations } from "@/types";
 
 export interface WishlistItem {
@@ -34,12 +35,17 @@ export function getStoredWishlist(): WishlistItem[] {
   }
 }
 
+let isSyncingWishlist = false;
+let hasSyncedWishlist = false;
+
 export async function syncWishlistWithCloud(): Promise<void> {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || !hasSessionCookie() || isSyncingWishlist || hasSyncedWishlist) return;
+  isSyncingWishlist = true;
   try {
     const { syncCloudWishlistAction } = await import("@/actions/wishlist.actions");
     const local = getStoredWishlist();
     const res = await syncCloudWishlistAction(local);
+    hasSyncedWishlist = true;
     if (res.success && res.data?.items) {
       const merged = res.data.items;
       if (JSON.stringify(merged) !== JSON.stringify(local)) {
@@ -55,6 +61,8 @@ export async function syncWishlistWithCloud(): Promise<void> {
   } catch {
     // ignore: wishlist storage fallback
     // Graceful fallback for offline / mock testing
+  } finally {
+    isSyncingWishlist = false;
   }
 }
 

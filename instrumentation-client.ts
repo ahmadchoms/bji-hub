@@ -10,15 +10,18 @@ Sentry.init({
   enabled: Boolean(dsn) && process.env.NODE_ENV === "production",
   environment: process.env.VERCEL_ENV || process.env.NODE_ENV,
 
-  // Add Session Replay with strict privacy protections (S3)
-  integrations: [
-    Sentry.replayIntegration({
-      maskAllText: true,
-      maskAllInputs: true,
-      blockAllMedia: true,
-      block: [".sentry-block"],
-    }),
-  ],
+  // Add Session Replay only when enabled in production with active DSN to prevent main-thread blocking
+  integrations:
+    Boolean(dsn) && process.env.NODE_ENV === "production" && process.env.NEXT_PUBLIC_ENABLE_SENTRY_REPLAY === "true"
+      ? [
+          Sentry.replayIntegration({
+            maskAllText: true,
+            maskAllInputs: true,
+            blockAllMedia: true,
+            block: [".sentry-block"],
+          }),
+        ]
+      : [],
 
   // Sample 10% of client traces
   tracesSampleRate: 0.1,

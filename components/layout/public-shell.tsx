@@ -1,7 +1,12 @@
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { CompareProvider } from "@/context/compare-context";
-import { CompareDrawer } from "@/components/catalog/compare-drawer";
+import dynamic from "next/dynamic";
+
+const CompareDrawer = dynamic(
+  () => import("@/components/catalog/compare-drawer").then((m) => m.CompareDrawer),
+  { ssr: false }
+);
 
 export function PublicShell({ children }: { children: React.ReactNode }) {
   return (

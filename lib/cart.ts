@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { hasSessionCookie } from "./auth/client-session";
 
 export interface CartItem {
   listingId: string;
@@ -35,14 +36,19 @@ export function getStoredCart(): CartItem[] {
   }
 }
 
+let isSyncingCart = false;
+let hasSyncedCart = false;
+
 export async function syncCartWithCloud(
   mode: "merge" | "replace" = "merge",
 ): Promise<void> {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || !hasSessionCookie() || isSyncingCart || hasSyncedCart) return;
+  isSyncingCart = true;
   try {
     const { syncCloudCartAction } = await import("@/actions/cart.actions");
     const local = getStoredCart();
     const res = await syncCloudCartAction(local, mode);
+    hasSyncedCart = true;
     if (res.success && res.data?.items) {
       const merged = res.data.items;
       if (JSON.stringify(merged) !== JSON.stringify(local)) {
@@ -57,6 +63,8 @@ export async function syncCartWithCloud(
     }
   } catch {
     // ignore: cart sync fallback
+  } finally {
+    isSyncingCart = false;
   }
 }
 

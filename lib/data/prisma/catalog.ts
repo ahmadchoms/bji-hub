@@ -7,6 +7,7 @@ import {
   toCategory,
   toListing,
 } from "@/lib/data/prisma/mappers";
+import { ISLAND_REGION_MAP } from "@/lib/data/origins";
 import type { CatalogFeedResult, FeedItem, ListingFilters } from "@/types";
 
 const memoryCache = new Map<string, { value: unknown; expiresAt: number }>();
@@ -39,14 +40,24 @@ function buildWhere(filters: ListingFilters): Prisma.ListingWhereInput {
     where.category = { slug: filters.categorySlug };
 
   const taste: Prisma.TasteProfileWhereInput = {};
-  if (filters.originRegion && filters.originRegion !== ALL)
-    taste.originRegion = filters.originRegion;
   if (filters.processMethod && filters.processMethod !== ALL)
     taste.processMethod = filters.processMethod;
   if (filters.roastLevel && filters.roastLevel !== ALL)
     taste.roastLevel = filters.roastLevel;
   if (typeof filters.minCuppingScore === "number" && !Number.isNaN(filters.minCuppingScore))
     taste.cuppingScore = { gte: filters.minCuppingScore };
+
+  if (filters.originRegion && filters.originRegion !== ALL) {
+    const norm = filters.originRegion.toLowerCase().trim();
+    const islandKeywords = ISLAND_REGION_MAP[norm];
+    if (islandKeywords && islandKeywords.length > 0) {
+      taste.OR = islandKeywords.map((kw) => ({
+        originRegion: { contains: kw, mode: "insensitive" as const },
+      }));
+    } else {
+      taste.originRegion = { contains: filters.originRegion, mode: "insensitive" as const };
+    }
+  }
 
   if (filters.sort === "freshest") {
     taste.roastDate = { lte: new Date() };

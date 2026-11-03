@@ -262,62 +262,71 @@ export function NavbarInner({
                   </form>
 
                   {/* Kategori Mobile */}
-                  <div className="space-y-1">
-                    <p className="text-xs uppercase tracking-wider text-neutral-600 font-semibold px-2">
+                  <div className="space-y-1.5">
+                    <p className="text-xs uppercase tracking-wider text-neutral-600 font-semibold px-3 mb-1">
                       {locale === "en" ? "Categories" : "Kategori Kopi"}
                     </p>
-                    <nav className="flex flex-col gap-0.5">
+                    <nav className="flex flex-col gap-1">
                       {categories.map((cat) => (
                         <Link
                           key={cat.id}
                           href={`/?category=${cat.slug}`}
                           onClick={() => setMobileOpen(false)}
-                          className="flex items-center justify-between px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md"
+                          className="flex items-center justify-between px-3 py-2.5 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors coarse:min-h-11"
                         >
                           <span>{cat.name}</span>
                         </Link>
                       ))}
+                    </nav>
+                  </div>
+
+                  {/* Eksplorasi & Edukasi */}
+                  <div className="space-y-1.5 pt-3.5 border-t border-neutral-200/80">
+                    <p className="text-xs uppercase tracking-wider text-neutral-600 font-semibold px-3 mb-1">
+                      {locale === "en" ? "Explore & Learn" : "Eksplorasi & Edukasi"}
+                    </p>
+                    <nav className="flex flex-col gap-1">
                       <Link
                         href="/origins"
                         onClick={() => setMobileOpen(false)}
-                        className="flex items-center justify-between px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md coarse:min-h-11"
+                        className="flex items-center justify-between px-3 py-2.5 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors coarse:min-h-11"
                       >
                         <span>{t("nav.origins", locale)}</span>
                       </Link>
                       <Link
                         href="/taste-map"
                         onClick={() => setMobileOpen(false)}
-                        className="flex items-center justify-between px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md coarse:min-h-11"
+                        className="flex items-center justify-between px-3 py-2.5 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors coarse:min-h-11"
                       >
                         <span>{locale === "en" ? "Taste Map" : "Peta Sebaran Rasa (Taste Map)"}</span>
                       </Link>
                       <Link
                         href="/learn"
                         onClick={() => setMobileOpen(false)}
-                        className="flex items-center justify-between px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md coarse:min-h-11"
+                        className="flex items-center justify-between px-3 py-2.5 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors coarse:min-h-11"
                       >
                         <span>{t("nav.learn", locale)}</span>
                       </Link>
                       <Link
                         href="/"
                         onClick={() => setMobileOpen(false)}
-                        className="px-3 py-2 text-xs font-semibold text-primary-700 hover:bg-primary-50 rounded-md coarse:min-h-11 flex items-center"
+                        className="flex items-center justify-between px-3 py-2.5 text-xs font-semibold text-primary-800 bg-primary-50 hover:bg-primary-100/80 rounded-md transition-colors coarse:min-h-11 mt-1"
                       >
-                        {locale === "en" ? "All Coffee Products →" : "Semua Produk Kopi →"}
+                        <span>{locale === "en" ? "All Coffee Products →" : "Semua Produk Kopi →"}</span>
                       </Link>
                     </nav>
                   </div>
 
                   {/* Menu Akses Cepat */}
-                  <div className="space-y-1 pt-3 border-t border-neutral-200/80">
-                    <p className="text-xs uppercase tracking-wider text-neutral-600 font-semibold px-2">
+                  <div className="space-y-1.5 pt-3.5 border-t border-neutral-200/80">
+                    <p className="text-xs uppercase tracking-wider text-neutral-600 font-semibold px-3 mb-1">
                       {locale === "en" ? "Activity & Account" : "Aktivitas & Akun"}
                     </p>
 
                     <Link
                       href="/wishlist"
                       onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md"
+                      className="flex items-center gap-2.5 px-3 py-2.5 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors coarse:min-h-11"
                     >
                       <Heart className="w-4 h-4 text-rose-500" />
                       <span>{locale === "en" ? "Saved Coffee" : "Kopi Favorit"}</span>

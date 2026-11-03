@@ -16,6 +16,7 @@ import {
   Subscription,
 } from "@/types";
 import { asSellerProfileId } from "@/types/ids";
+import { ISLAND_REGION_MAP } from "@/lib/data/origins";
 import {
   mockCategories,
   mockListings,
@@ -113,16 +114,14 @@ async function findListings(
 
   // Origin region filter (supports exact region or island match)
   if (filters.originRegion && filters.originRegion !== "all") {
-    const target = filters.originRegion.toLowerCase();
+    const target = filters.originRegion.toLowerCase().trim();
+    const islandKeywords = ISLAND_REGION_MAP[target];
     results = results.filter((item) => {
       const region = item.tasteProfile?.originRegion?.toLowerCase() || "";
-      if (region === target || region.includes(target)) return true;
-      if (target === "sumatera" && (region.includes("gayo") || region.includes("mandheling") || region.includes("kerinci"))) return true;
-      if (target === "jawa" && (region.includes("java") || region.includes("preanger") || region.includes("ijen") || region.includes("ciwidey"))) return true;
-      if (target === "sulawesi" && (region.includes("toraja") || region.includes("enrekang"))) return true;
-      if ((target === "bali" || target === "ntt" || target === "nusa tenggara") && (region.includes("kintamani") || region.includes("bajawa") || region.includes("flores"))) return true;
-      if (target === "papua" && region.includes("wamena")) return true;
-      return false;
+      if (islandKeywords && islandKeywords.length > 0) {
+        return islandKeywords.some((kw) => region.includes(kw) || kw.includes(region));
+      }
+      return region === target || region.includes(target) || target.includes(region);
     });
   }
 

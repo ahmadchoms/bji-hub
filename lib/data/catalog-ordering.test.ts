@@ -107,4 +107,20 @@ describe("Catalog Ordering & Rating Denormalization (N4)", () => {
     expect(target?.ratingCount).toBe(2);
     expect(target?.ratingAvg).toBe(4.5);
   });
+
+  it("filters listings by island preset (e.g. Sumatera matches Gayo)", async () => {
+    const { items: sumatraItems } = await getListings({ originRegion: "Sumatera" });
+    expect(sumatraItems.length).toBeGreaterThan(0);
+    const hasGayo = sumatraItems.some(
+      (item) => item.tasteProfile?.originRegion?.toLowerCase().includes("gayo")
+    );
+    expect(hasGayo).toBe(true);
+
+    const { items: javaItems } = await getListings({ originRegion: "Jawa" });
+    expect(javaItems.length).toBeGreaterThan(0);
+    const hasPreanger = javaItems.some(
+      (item) => item.tasteProfile?.originRegion?.toLowerCase().includes("preanger")
+    );
+    expect(hasPreanger).toBe(true);
+  });
 });

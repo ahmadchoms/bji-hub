@@ -27,7 +27,7 @@ export function ConsentGateway({
   const docLinks: Record<ConsentDocument, string> = {
     terms: "/terms",
     privacy: "/privacy",
-    seller_agreement: "/kebijakan-produk",
+    seller_agreement: "/product-policy",
   };
 
   const handleConsent = (doc: ConsentDocument) => {

@@ -59,8 +59,8 @@ export async function createProducerAction(
     });
 
     revalidatePath("/admin/producers");
-    revalidatePath("/petani");
-    revalidatePath("/asal-kopi");
+    revalidatePath("/producers");
+    revalidatePath("/origins");
     return ok(created);
   } catch (error) {
     return fail("Gagal menambahkan produser: " + (error as Error).message);
@@ -96,9 +96,9 @@ export async function verifyProducerClaimsAction(
     });
 
     revalidatePath("/admin/producers");
-    revalidatePath(`/petani/${updated.slug}`);
-    revalidatePath("/petani");
-    revalidatePath("/asal-kopi");
+    revalidatePath(`/producers/${updated.slug}`);
+    revalidatePath("/producers");
+    revalidatePath("/origins");
     return ok(updated);
   } catch (error) {
     return fail("Gagal memverifikasi klaim produser: " + (error as Error).message);

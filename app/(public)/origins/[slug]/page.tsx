@@ -73,7 +73,7 @@ export default async function OriginDetailPage({
             Beranda
           </Link>
           <span>/</span>
-          <Link href="/asal-kopi" className="hover:text-primary-700 coarse:min-h-11 inline-flex items-center">
+          <Link href="/origins" className="hover:text-primary-700 coarse:min-h-11 inline-flex items-center">
             Asal Kopi
           </Link>
           <span>/</span>
@@ -86,7 +86,7 @@ export default async function OriginDetailPage({
         <div className="rounded-2xl border border-neutral-200 bg-linear-to-b from-neutral-50 to-white p-6 md:p-8 space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Link
-              href="/asal-kopi"
+              href="/origins"
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary-800 hover:text-primary-900 coarse:min-h-11"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
@@ -172,7 +172,7 @@ export default async function OriginDetailPage({
 
                       <h3 className="font-display text-base font-bold text-neutral-900">
                         <Link
-                          href={`/petani/${producer.slug}`}
+                          href={`/producers/${producer.slug}`}
                           className="hover:text-primary-800 focus:outline-none focus:ring-2 focus:ring-primary-600 rounded coarse:min-h-11 inline-block"
                         >
                           {producer.name}
@@ -216,7 +216,7 @@ export default async function OriginDetailPage({
 
                     <div className="pt-3 border-t border-neutral-100">
                       <Link
-                        href={`/petani/${producer.slug}`}
+                        href={`/producers/${producer.slug}`}
                         className="inline-flex items-center gap-1 text-xs font-semibold text-primary-800 hover:text-primary-900 coarse:min-h-11"
                       >
                         <span>Lihat Profil Petani & Lot Kopi →</span>

@@ -15,7 +15,7 @@ export async function register() {
       const schemaStatus = await getSchemaStatus();
       if (!schemaStatus.ok && schemaStatus.missing && schemaStatus.missing.length > 0) {
         const { logger } = await import("@/lib/logger");
-        logger.error("db.schema_behind", undefined, { missing: schemaStatus.missing });
+        logger.warn("db.schema_behind", { missing: schemaStatus.missing });
         const { notifyAdmins } = await import("@/lib/data/notifications");
         notifyAdmins({
           title: "Peringatan Migrasi Skema Tertinggal",

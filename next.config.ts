@@ -93,6 +93,41 @@ const nextConfig: NextConfig = {
         destination: "/",
         permanent: true,
       },
+      {
+        source: "/belajar",
+        destination: "/learn",
+        permanent: true,
+      },
+      {
+        source: "/asal-kopi",
+        destination: "/origins",
+        permanent: true,
+      },
+      {
+        source: "/asal-kopi/:slug*",
+        destination: "/origins/:slug*",
+        permanent: true,
+      },
+      {
+        source: "/peta-rasa",
+        destination: "/taste-map",
+        permanent: true,
+      },
+      {
+        source: "/kebijakan-produk",
+        destination: "/product-policy",
+        permanent: true,
+      },
+      {
+        source: "/petani",
+        destination: "/producers",
+        permanent: true,
+      },
+      {
+        source: "/petani/:slug*",
+        destination: "/producers/:slug*",
+        permanent: true,
+      },
     ];
   },
   async headers() {

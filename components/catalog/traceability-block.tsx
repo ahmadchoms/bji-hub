@@ -47,7 +47,7 @@ export function TraceabilityBlock({
           </span>
           {producer ? (
             <Link
-              href={`/petani/${producer.slug}`}
+              href={`/producers/${producer.slug}`}
               className="font-medium text-primary-800 hover:text-primary-900 hover:underline inline-flex items-center gap-1 text-sm coarse:min-h-11"
             >
               <span>{producer.name}</span>
@@ -68,7 +68,7 @@ export function TraceabilityBlock({
             Wilayah / Terroir
           </span>
           <Link
-            href="/asal-kopi"
+            href="/origins"
             className="font-medium text-primary-800 hover:text-primary-900 hover:underline inline-flex items-center gap-1 text-sm coarse:min-h-11"
           >
             <span>{tasteProfile.originRegion}</span>

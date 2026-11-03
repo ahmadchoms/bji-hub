@@ -33,7 +33,7 @@ describe("Dynamic Sitemap (PERF-7)", () => {
 
     // Static routes
     expect(urls).toContain(`${baseUrl}`);
-    expect(urls).toContain(`${baseUrl}/asal-kopi`);
+    expect(urls).toContain(`${baseUrl}/origins`);
     expect(urls).toContain(`${baseUrl}/open-store`);
     expect(urls).toContain(`${baseUrl}/pricing`);
     expect(urls).toContain(`${baseUrl}/shipping-policy`);
@@ -41,7 +41,7 @@ describe("Dynamic Sitemap (PERF-7)", () => {
     // Dynamic routes
     expect(urls).toContain(`${baseUrl}/product/gayo-natural-microlot`);
     expect(urls).toContain(`${baseUrl}/store/roastery-nusantara`);
-    expect(urls).toContain(`${baseUrl}/asal-kopi/gayo`);
-    expect(urls).toContain(`${baseUrl}/petani/koperasi-baburrayyan-gayo`);
+    expect(urls).toContain(`${baseUrl}/origins/gayo`);
+    expect(urls).toContain(`${baseUrl}/producers/koperasi-baburrayyan-gayo`);
   });
 });

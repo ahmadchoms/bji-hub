@@ -87,7 +87,7 @@ export default async function ProducerDetailPage({ params }: ProducerPageProps) 
           {origin && (
             <>
               <Link
-                href={`/asal-kopi/${toOriginSlug(origin)}`}
+                href={`/origins/${toOriginSlug(origin)}`}
                 className="hover:text-primary-700 coarse:min-h-11 inline-flex items-center"
               >
                 {origin.name}
@@ -104,7 +104,7 @@ export default async function ProducerDetailPage({ params }: ProducerPageProps) 
         <div className="rounded-2xl border border-neutral-200 bg-white p-6 md:p-8 space-y-6 shadow-xs">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-100 pb-4">
             <Link
-              href={origin ? `/asal-kopi/${toOriginSlug(origin)}` : "/asal-kopi"}
+              href={origin ? `/origins/${toOriginSlug(origin)}` : "/origins"}
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary-800 hover:text-primary-900 coarse:min-h-11"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
@@ -243,7 +243,7 @@ export default async function ProducerDetailPage({ params }: ProducerPageProps) 
                 Belum ada lot kopi aktif yang saat ini ditawarkan dari produser ini.
               </p>
               <Link
-                href="/asal-kopi"
+                href="/origins"
                 className="inline-block mt-2 text-xs font-semibold text-primary-800 hover:underline coarse:min-h-11"
               >
                 Jelajahi Asal Kopi Lainnya →

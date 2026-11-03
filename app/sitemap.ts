@@ -8,9 +8,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${baseUrl}`, lastModified: new Date(), changeFrequency: "daily", priority: 1.0 },
-    { url: `${baseUrl}/belajar`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
-    { url: `${baseUrl}/asal-kopi`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
-    { url: `${baseUrl}/kebijakan-produk`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
+    { url: `${baseUrl}/learn`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
+    { url: `${baseUrl}/origins`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
+    { url: `${baseUrl}/taste-map`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },
+    { url: `${baseUrl}/product-policy`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
     { url: `${baseUrl}/open-store`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
     { url: `${baseUrl}/pricing`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
     { url: `${baseUrl}/about`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
@@ -62,14 +63,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
 
     const originRoutes: MetadataRoute.Sitemap = origins.map((origin) => ({
-      url: `${baseUrl}/asal-kopi/${toOriginSlug(origin)}`,
+      url: `${baseUrl}/origins/${toOriginSlug(origin)}`,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.8,
     }));
 
     const producerRoutes: MetadataRoute.Sitemap = producers.map((producer) => ({
-      url: `${baseUrl}/petani/${producer.slug}`,
+      url: `${baseUrl}/producers/${producer.slug}`,
       lastModified: producer.createdAt ? new Date(producer.createdAt) : new Date(),
       changeFrequency: "weekly",
       priority: 0.7,

@@ -294,7 +294,7 @@ export default function BelajarPage() {
                 lokal.
               </p>
             </div>
-            <Link href="/catalog">
+            <Link href="/">
               <Button
                 variant="secondary"
                 size="sm"

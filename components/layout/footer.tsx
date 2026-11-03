@@ -14,7 +14,7 @@ export async function Footer() {
         <Link href="/about" className="hover:text-primary-900 coarse:min-h-11 inline-flex items-center">
           {locale === "en" ? "About Us" : "Tentang"}
         </Link>
-        <Link href="/asal-kopi" className="hover:text-primary-900 coarse:min-h-11 inline-flex items-center">
+        <Link href="/origins" className="hover:text-primary-900 coarse:min-h-11 inline-flex items-center">
           {t("nav.origins", locale)}
         </Link>
         <Link href="/contact" className="hover:text-primary-900">

@@ -121,10 +121,10 @@ export function NavbarInner({
             <Link href="/about" className="hover:text-primary-700 transition-colors">
               {locale === "en" ? "About Us" : "Tentang Biji Hub"}
             </Link>
-            <Link href="/peta-rasa" className="hover:text-primary-700 transition-colors">
+            <Link href="/taste-map" className="hover:text-primary-700 transition-colors">
               {locale === "en" ? "Taste Map" : "Peta Rasa"}
             </Link>
-            <Link href="/belajar" className="hover:text-primary-700 transition-colors">
+            <Link href="/learn" className="hover:text-primary-700 transition-colors">
               {t("nav.learn", locale)}
             </Link>
             <Link href="/pricing" className="hover:text-primary-700 transition-colors">
@@ -278,21 +278,21 @@ export function NavbarInner({
                         </Link>
                       ))}
                       <Link
-                        href="/asal-kopi"
+                        href="/origins"
                         onClick={() => setMobileOpen(false)}
                         className="flex items-center justify-between px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md coarse:min-h-11"
                       >
                         <span>{t("nav.origins", locale)}</span>
                       </Link>
                       <Link
-                        href="/peta-rasa"
+                        href="/taste-map"
                         onClick={() => setMobileOpen(false)}
                         className="flex items-center justify-between px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md coarse:min-h-11"
                       >
                         <span>{locale === "en" ? "Taste Map" : "Peta Sebaran Rasa (Taste Map)"}</span>
                       </Link>
                       <Link
-                        href="/belajar"
+                        href="/learn"
                         onClick={() => setMobileOpen(false)}
                         className="flex items-center justify-between px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100 rounded-md coarse:min-h-11"
                       >

@@ -70,7 +70,7 @@ export default async function CoffeeOriginsPage() {
 
                   <h2 className="font-display text-xl font-bold text-neutral-900 group-hover:text-primary-800 transition-colors">
                     <Link
-                      href={`/asal-kopi/${slug}`}
+                      href={`/origins/${slug}`}
                       className="focus:outline-none focus:ring-2 focus:ring-primary-600 rounded"
                     >
                       <span className="absolute inset-0" aria-hidden="true" />

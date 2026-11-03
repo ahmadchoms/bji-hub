@@ -51,6 +51,23 @@ const jakarta = localFont({
   display: "swap",
 });
 
+const spaceMono = localFont({
+  src: [
+    {
+      path: "./fonts/SpaceMono-Regular.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "./fonts/SpaceMono-Bold.woff2",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  variable: "--font-mono",
+  display: "swap",
+});
+
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://bijihub.com";
 
 export const metadata: Metadata = {
@@ -94,7 +111,7 @@ export default async function RootLayout({
 }>) {
   const locale = await getServerLocale();
   return (
-    <html lang={locale} className={`${fraunces.variable} ${jakarta.variable}`}>
+    <html lang={locale} className={`${fraunces.variable} ${jakarta.variable} ${spaceMono.variable}`}>
       <body className="font-sans bg-background text-foreground antialiased min-h-screen">
         <Providers>
           <WebVitalsReporter />

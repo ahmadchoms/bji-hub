@@ -117,11 +117,12 @@ async function findListings(
     const target = filters.originRegion.toLowerCase().trim();
     const islandKeywords = ISLAND_REGION_MAP[target];
     results = results.filter((item) => {
-      const region = item.tasteProfile?.originRegion?.toLowerCase() || "";
+      const region = item.tasteProfile?.originRegion?.toLowerCase()?.trim();
+      if (!region) return false;
       if (islandKeywords && islandKeywords.length > 0) {
-        return islandKeywords.some((kw) => region.includes(kw) || kw.includes(region));
+        return islandKeywords.some((kw) => region.includes(kw) || kw === region);
       }
-      return region === target || region.includes(target) || target.includes(region);
+      return region === target || region.includes(target);
     });
   }
 

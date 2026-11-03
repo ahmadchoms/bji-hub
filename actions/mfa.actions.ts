@@ -33,7 +33,8 @@ export async function enrollMfaAction(): Promise<ActionResult<MfaEnrollResult>> 
     const { data: factorList } = await supabase.auth.mfa.listFactors();
     if (factorList) {
       // If user already has a verified TOTP factor, redirect to verify
-      if (factorList.totp && factorList.totp.length > 0) {
+      const hasVerified = factorList.totp?.some((f) => f.status === "verified");
+      if (hasVerified) {
         const { redirect } = await import("next/navigation");
         redirect("/admin/mfa/verify");
       }

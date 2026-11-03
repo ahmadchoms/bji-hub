@@ -1,7 +1,6 @@
+import { headers } from "next/headers";
 import { AdminSidebar } from "@/components/dashboard/admin-sidebar";
-import { getSession } from "@/lib/auth/session";
-import { isAdminAllowed } from "@/lib/auth/admin-guard";
-import { redirect } from "next/navigation";
+import { requireRole } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -10,14 +9,9 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getSession();
-  if (session.isSuspended) {
-    redirect("/login?error=suspended");
-  }
-  const allowed = await isAdminAllowed(session);
-  if (!allowed) {
-    redirect("/login?next=%2Fadmin");
-  }
+  const headerList = await headers();
+  const pathname = headerList.get("x-pathname") || "/admin";
+  await requireRole(["admin"], pathname);
 
   return (
     <div className="min-h-screen bg-surface-alt">

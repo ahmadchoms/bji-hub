@@ -24,7 +24,7 @@ export const getAdminAalLevel = cache(async (): Promise<{ currentLevel: string |
  * Cached per request to eliminate redundant network calls.
  */
 export const isAdminMfaSatisfied = cache(async (): Promise<boolean> => {
-  if (process.env.ADMIN_MFA_REQUIRED !== "true") return true;
+  if (process.env.ADMIN_MFA_REQUIRED === "false") return true;
   if (process.env.DATA_SOURCE === "mock" || process.env.NODE_ENV === "test") return true;
   const aal = await getAdminAalLevel();
   return aal?.currentLevel === "aal2";

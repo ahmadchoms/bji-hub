@@ -59,27 +59,6 @@ export const getSession = cache(async (): Promise<Session> => {
         }
 
         if (dbUser) {
-          const adminEmails = (process.env.ADMIN_EMAILS || "")
-            .split(",")
-            .map((e) => e.trim().toLowerCase())
-            .filter(Boolean);
-
-          const isEmailAdmin =
-            adminEmails.includes(dbUser.email.toLowerCase()) ||
-            dbUser.email.toLowerCase() === "admin@bijihub.com";
-
-          if (isEmailAdmin && dbUser.role !== "ADMIN") {
-            try {
-              await prisma.user.update({
-                where: { id: dbUser.id },
-                data: { role: "ADMIN" },
-              });
-              dbUser.role = "ADMIN";
-            } catch {
-              dbUser.role = "ADMIN";
-            }
-          }
-
           const roleMap: Record<string, Role> = {
             ADMIN: "admin",
             SELLER: "seller",
@@ -148,7 +127,7 @@ export async function requireRole(
   // Admin MFA Enforcement (H2: fail-closed)
   if (allowed.includes("admin") && session.role === "admin") {
     const isMock = process.env.DATA_SOURCE === "mock" || process.env.NODE_ENV === "test";
-    const mfaRequired = process.env.ADMIN_MFA_REQUIRED === "true";
+    const mfaRequired = process.env.ADMIN_MFA_REQUIRED !== "false";
     if (!isMock && mfaRequired && !returnTo.startsWith("/admin/mfa")) {
       const { isAdminMfaSatisfied, getAdminAalLevel } = await import("@/lib/auth/admin-guard");
       const satisfied = await isAdminMfaSatisfied();

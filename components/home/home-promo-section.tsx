@@ -7,7 +7,6 @@ const CoffeeGuideWizard = dynamic(
     import("@/components/catalog/coffee-guide-wizard").then(
       (m) => m.CoffeeGuideWizard,
     ),
-  { ssr: true },
 );
 
 const TasteQuizModal = dynamic(
@@ -15,7 +14,6 @@ const TasteQuizModal = dynamic(
     import("@/components/catalog/taste-quiz-modal").then(
       (m) => m.TasteQuizModal,
     ),
-  { ssr: true },
 );
 
 export function HomePromoSection() {

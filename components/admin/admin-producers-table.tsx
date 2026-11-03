@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DataTableContainer } from "@/components/dashboard/data-table-container";
 import {
   createProducerAction,
   verifyProducerClaimsAction,
@@ -192,7 +193,7 @@ export function AdminProducersTable({ producers: initialProducers }: AdminProduc
       </div>
 
       {/* Table */}
-      <div className="rounded-md border border-neutral-200 bg-white overflow-hidden">
+      <DataTableContainer>
         <Table>
           <TableHeader>
             <TableRow className="bg-neutral-50/80">
@@ -284,7 +285,7 @@ export function AdminProducersTable({ producers: initialProducers }: AdminProduc
             )}
           </TableBody>
         </Table>
-      </div>
+      </DataTableContainer>
 
       {/* Modal Add Producer */}
       {isOpenAdd && (

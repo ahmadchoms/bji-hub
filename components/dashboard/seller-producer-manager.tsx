@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { DataTableContainer } from "@/components/dashboard/data-table-container";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -155,16 +156,18 @@ export function SellerProducerManager({
       </div>
 
       {/* Attributions Table */}
-      <Card className="border border-neutral-300 rounded-xl bg-white shadow-2xs overflow-hidden">
-        <CardHeader className="border-b border-neutral-200 pb-3">
-          <CardTitle className="text-base text-neutral-900">
-            Daftar Hubungan Produser Toko Anda
-          </CardTitle>
-          <CardDescription className="text-xs text-neutral-600">
-            Hanya produser dengan status &quot;Disetujui&quot; yang dapat dipilih pada formulir pembuatan produk kopi Anda.
-          </CardDescription>
-        </CardHeader>
-
+      <DataTableContainer
+        header={
+          <div>
+            <h3 className="font-heading text-base leading-snug font-medium text-neutral-900">
+              Daftar Hubungan Produser Toko Anda
+            </h3>
+            <p className="text-xs text-neutral-600 mt-0.5">
+              Hanya produser dengan status &quot;Disetujui&quot; yang dapat dipilih pada formulir pembuatan produk kopi Anda.
+            </p>
+          </div>
+        }
+      >
         {attributions.length === 0 ? (
           <div className="p-8 text-center text-xs text-neutral-600 space-y-2">
             <Sprout className="w-8 h-8 text-neutral-300 mx-auto" />
@@ -179,8 +182,7 @@ export function SellerProducerManager({
             </Button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
+          <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-xs">Nama Produser</TableHead>
@@ -247,9 +249,8 @@ export function SellerProducerManager({
                 })}
               </TableBody>
             </Table>
-          </div>
         )}
-      </Card>
+      </DataTableContainer>
 
       {/* Dialog Ajukan Produser */}
       <Dialog open={showRequestDialog} onOpenChange={setShowRequestDialog}>

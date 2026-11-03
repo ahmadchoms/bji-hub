@@ -17,10 +17,10 @@ export function HomePromoSection() {
                 alt="Tekstur Biji Kopi"
                 fill
                 sizes="(max-width: 768px) 50vw, 35vw"
-                className="object-cover object-right opacity-15 mix-blend-luminosity"
+                className="object-cover object-right opacity-35 mix-blend-luminosity"
                 priority
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-neutral-900 via-neutral-900/60 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-r from-neutral-900 via-neutral-900/50 to-transparent" />
             </div>
 
             <div className="relative z-10 space-y-2">

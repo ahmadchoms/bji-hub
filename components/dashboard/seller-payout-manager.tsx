@@ -6,6 +6,7 @@ import Link from "next/link";
 import { formatRupiah } from "@/components/shared/price-text";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { DataTableContainer } from "@/components/dashboard/data-table-container";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -238,23 +239,24 @@ export function SellerPayoutManager({
       </Card>
 
       {/* Riwayat Penarikan Dana */}
-      <Card className="border border-neutral-300 rounded-xl bg-white shadow-2xs overflow-hidden">
-        <CardHeader className="border-b border-neutral-200 pb-4">
-          <CardTitle className="text-base text-neutral-900">
-            Riwayat Pencairan Dana
-          </CardTitle>
-          <CardDescription className="text-xs text-neutral-600">
-            Daftar pengajuan penarikan dana penjualan ke rekening bank Anda.
-          </CardDescription>
-        </CardHeader>
-
+      <DataTableContainer
+        header={
+          <div>
+            <h3 className="font-heading text-base leading-snug font-medium text-neutral-900">
+              Riwayat Pencairan Dana
+            </h3>
+            <p className="text-xs text-neutral-600 mt-0.5">
+              Daftar pengajuan penarikan dana penjualan ke rekening bank Anda.
+            </p>
+          </div>
+        }
+      >
         {payouts.length === 0 ? (
           <div className="p-8 text-center text-xs text-neutral-600">
             Belum ada riwayat pengajuan penarikan dana.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
+          <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-xs">ID & Tanggal</TableHead>
@@ -319,9 +321,8 @@ export function SellerPayoutManager({
                 ))}
               </TableBody>
             </Table>
-          </div>
         )}
-      </Card>
+      </DataTableContainer>
 
       {/* Dialog Ajukan Penarikan Dana */}
       <Dialog open={showRequestDialog} onOpenChange={setShowRequestDialog}>

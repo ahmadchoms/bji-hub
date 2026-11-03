@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { DataTableContainer } from "@/components/dashboard/data-table-container";
 import { createVoucherAction, toggleVoucherActiveAction } from "@/actions/voucher.actions";
 import type { VoucherData } from "@/lib/data/vouchers";
 import { Tag, Plus, CheckCircle2, AlertCircle, Calendar, Hash } from "lucide-react";
@@ -264,85 +265,83 @@ export function VoucherManager({ initialVouchers, isAdmin = false, sellerId }: V
       )}
 
       {/* Voucher Table / List */}
-      <Card className="border-neutral-200 dark:border-neutral-800 bg-card shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="border-b bg-muted/40 text-muted-foreground">
-                <th className="p-3 font-semibold">Kode Voucher</th>
-                <th className="p-3 font-semibold">Tipe & Nilai</th>
-                <th className="p-3 font-semibold">Min. Belanja</th>
-                <th className="p-3 font-semibold">Pemakaian</th>
-                <th className="p-3 font-semibold">Masa Berlaku</th>
-                <th className="p-3 font-semibold">Status</th>
-                <th className="p-3 font-semibold text-right">Aksi</th>
+      <DataTableContainer>
+        <table className="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr className="border-b border-neutral-200 bg-neutral-50/80 text-neutral-700">
+              <th className="p-3 font-semibold">Kode Voucher</th>
+              <th className="p-3 font-semibold">Tipe & Nilai</th>
+              <th className="p-3 font-semibold">Min. Belanja</th>
+              <th className="p-3 font-semibold">Pemakaian</th>
+              <th className="p-3 font-semibold">Masa Berlaku</th>
+              <th className="p-3 font-semibold">Status</th>
+              <th className="p-3 font-semibold text-right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-neutral-200">
+            {vouchers.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="p-6 text-center text-neutral-600 text-xs">
+                  Belum ada voucher yang dibuat. Klik tombol &quot;Buat Voucher Baru&quot; di atas untuk memulai promo.
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {vouchers.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="p-6 text-center text-muted-foreground text-xs">
-                    Belum ada voucher yang dibuat. Klik tombol &quot;Buat Voucher Baru&quot; di atas untuk memulai promo.
+            ) : (
+              vouchers.map((v) => (
+                <tr key={v.id} className="hover:bg-neutral-50/60 transition-colors">
+                  <td className="p-3 font-mono font-bold text-neutral-900">
+                    <div className="flex items-center gap-1.5">
+                      <Tag className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                      <span>{v.code}</span>
+                    </div>
+                  </td>
+                  <td className="p-3">
+                    {v.type === "percent" && `${v.value}% (Maks Rp ${Number(v.maxDiscount || 0).toLocaleString("id-ID")})`}
+                    {v.type === "fixed" && `Rp ${Number(v.value).toLocaleString("id-ID")}`}
+                    {v.type === "free_shipping" && "Gratis Ongkir"}
+                  </td>
+                  <td className="p-3">
+                    Rp {Number(v.minSubtotal).toLocaleString("id-ID")}
+                  </td>
+                  <td className="p-3">
+                    <span className="flex items-center gap-1">
+                      <Hash className="h-3 w-3 text-neutral-400" />
+                      {v.usedCount} / {v.usageLimit || "∞"}
+                    </span>
+                  </td>
+                  <td className="p-3 text-neutral-600">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {new Date(v.startsAt).toLocaleDateString("id-ID")} - {new Date(v.endsAt).toLocaleDateString("id-ID")}
+                    </span>
+                  </td>
+                  <td className="p-3">
+                    {v.active ? (
+                      <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40">
+                        Aktif
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs bg-neutral-100 text-neutral-600 border-neutral-200 dark:bg-neutral-900">
+                        Nonaktif
+                      </Badge>
+                    )}
+                  </td>
+                  <td className="p-3 text-right">
+                    <Button
+                      size="sm"
+                      variant={v.active ? "outline" : "default"}
+                      className="text-xs h-7 px-2.5 coarse:min-h-11"
+                      disabled={isPending}
+                      onClick={() => handleToggleActive(v.id, v.active)}
+                    >
+                      {v.active ? "Nonaktifkan" : "Aktifkan"}
+                    </Button>
                   </td>
                 </tr>
-              ) : (
-                vouchers.map((v) => (
-                  <tr key={v.id} className="hover:bg-muted/20 transition-colors">
-                    <td className="p-3 font-mono font-bold text-foreground">
-                      <div className="flex items-center gap-1.5">
-                        <Tag className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-                        <span>{v.code}</span>
-                      </div>
-                    </td>
-                    <td className="p-3">
-                      {v.type === "percent" && `${v.value}% (Maks Rp ${Number(v.maxDiscount || 0).toLocaleString("id-ID")})`}
-                      {v.type === "fixed" && `Rp ${Number(v.value).toLocaleString("id-ID")}`}
-                      {v.type === "free_shipping" && "Gratis Ongkir"}
-                    </td>
-                    <td className="p-3">
-                      Rp {Number(v.minSubtotal).toLocaleString("id-ID")}
-                    </td>
-                    <td className="p-3">
-                      <span className="flex items-center gap-1">
-                        <Hash className="h-3 w-3 text-muted-foreground" />
-                        {v.usedCount} / {v.usageLimit || "∞"}
-                      </span>
-                    </td>
-                    <td className="p-3 text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(v.startsAt).toLocaleDateString("id-ID")} - {new Date(v.endsAt).toLocaleDateString("id-ID")}
-                      </span>
-                    </td>
-                    <td className="p-3">
-                      {v.active ? (
-                        <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40">
-                          Aktif
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-xs bg-neutral-100 text-neutral-600 border-neutral-200 dark:bg-neutral-900">
-                          Nonaktif
-                        </Badge>
-                      )}
-                    </td>
-                    <td className="p-3 text-right">
-                      <Button
-                        size="sm"
-                        variant={v.active ? "outline" : "default"}
-                        className="text-xs h-7 px-2.5"
-                        disabled={isPending}
-                        onClick={() => handleToggleActive(v.id, v.active)}
-                      >
-                        {v.active ? "Nonaktifkan" : "Aktifkan"}
-                      </Button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+              ))
+            )}
+          </tbody>
+        </table>
+      </DataTableContainer>
     </div>
   );
 }

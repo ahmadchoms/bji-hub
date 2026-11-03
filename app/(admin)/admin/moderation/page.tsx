@@ -15,6 +15,7 @@ import {
 import { Eye } from "lucide-react";
 import { getAdminListings } from "@/lib/data";
 import { ModerationActions } from "@/components/dashboard/moderation-actions";
+import { DataTableContainer } from "@/components/dashboard/data-table-container";
 import { cn } from "cn";
 import { EmptyState } from "@/components/shared/empty-state";
 
@@ -48,7 +49,7 @@ export default async function AdminModerationPage() {
         />
       ) : (
         <>
-          <div className="hidden md:block border border-neutral-300 bg-surface-base rounded-sm overflow-hidden">
+          <DataTableContainer className="hidden md:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -129,7 +130,7 @@ export default async function AdminModerationPage() {
                 })}
               </TableBody>
             </Table>
-          </div>
+          </DataTableContainer>
 
           <div className="md:hidden space-y-3">
             {listings.map((listing) => {

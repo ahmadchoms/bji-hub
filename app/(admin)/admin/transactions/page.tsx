@@ -17,6 +17,7 @@ import { getAllOrders } from "@/lib/data/orders";
 import { paymentTypeLabel } from "@/lib/payments";
 import { AdminOrderDisputes } from "@/components/admin/admin-order-disputes";
 import { ExportCsvButton, type CsvColumn } from "@/components/shared/export-csv-button";
+import { DataTableContainer } from "@/components/dashboard/data-table-container";
 
 const PAYMENT_STATUS_MAP: Record<
   string,
@@ -94,7 +95,7 @@ export default async function AdminTransaksiPage() {
           />
         ) : (
           <>
-            <div className="hidden md:block border border-neutral-300 bg-surface-base rounded-sm overflow-hidden">
+            <DataTableContainer className="hidden md:block">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -140,7 +141,7 @@ export default async function AdminTransaksiPage() {
                   })}
                 </TableBody>
               </Table>
-            </div>
+            </DataTableContainer>
 
             <div className="md:hidden space-y-3">
               {payments.map((pay) => {

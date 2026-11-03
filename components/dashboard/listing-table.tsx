@@ -26,6 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DataTableContainer } from "@/components/dashboard/data-table-container";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Pencil, Eye, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -371,9 +372,9 @@ export function ListingTable({ listings, className }: ListingTableProps) {
 
   return (
     <>
-      <div
+      <DataTableContainer
         className={cn(
-          "hidden md:block border border-neutral-300 bg-surface-base rounded-sm overflow-hidden",
+          "hidden md:block",
           className,
         )}
       >
@@ -500,7 +501,7 @@ export function ListingTable({ listings, className }: ListingTableProps) {
             })}
           </TableBody>
         </Table>
-      </div>
+      </DataTableContainer>
 
       <div className={cn("md:hidden space-y-3", className)}>
         {listings.map((listing) => {

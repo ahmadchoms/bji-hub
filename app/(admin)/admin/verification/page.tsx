@@ -2,6 +2,7 @@ import { SectionHeader } from "@/components/shared/section-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { getPendingVerifications } from "@/lib/data";
 import { VerificationActions } from "@/components/dashboard/verification-actions";
+import { DataTableContainer } from "@/components/dashboard/data-table-container";
 import {
   Table,
   TableBody,
@@ -39,7 +40,7 @@ export default async function AdminVerificationPage() {
           description="Tidak ada antrean verifikasi yang membutuhkan tindakan saat ini."
         />
       ) : (
-        <div className="border border-neutral-300 bg-surface-base rounded-sm overflow-hidden">
+        <DataTableContainer>
           <Table>
             <TableHeader>
               <TableRow>
@@ -115,7 +116,7 @@ export default async function AdminVerificationPage() {
               ))}
             </TableBody>
           </Table>
-        </div>
+        </DataTableContainer>
       )}
     </div>
   );

@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DataTableContainer } from "@/components/dashboard/data-table-container";
 import {
   createCoffeeOriginAction,
   toggleCoffeeOriginAction,
@@ -290,7 +291,7 @@ export function AdminOriginsTable({ origins: initialOrigins }: AdminOriginsTable
       )}
 
       {/* Table */}
-      <div className="border border-neutral-300 bg-surface-base rounded-sm overflow-hidden">
+      <DataTableContainer>
         <Table>
           <TableHeader>
             <TableRow className="bg-neutral-50/70 text-xs">
@@ -383,7 +384,7 @@ export function AdminOriginsTable({ origins: initialOrigins }: AdminOriginsTable
             )}
           </TableBody>
         </Table>
-      </div>
+      </DataTableContainer>
     </div>
   );
 }

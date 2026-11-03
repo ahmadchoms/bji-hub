@@ -64,12 +64,8 @@ export async function getSellerBankDetails(
       }
       return null;
     } catch (err) {
-      logger.warn("payout.get_bank_details_fallback", { sellerId, error: (err as Error).message });
-      const msg = (err as Error)?.message?.toLowerCase() || "";
-      if (msg.includes("does not exist") || msg.includes("column")) {
-        return null;
-      }
-      assertMockAllowed("getSellerBankDetails");
+      logger.error("payout.get_bank_details_error", err as Error, { sellerId });
+      throw err;
     }
   } else {
     assertMockAllowed("getSellerBankDetails:no_pool");

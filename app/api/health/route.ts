@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPrisma } from "@/lib/data/prisma/client";
+import { getSchemaStatus, type SchemaStatus } from "@/lib/db/schema-check";
 import { logger } from "@/lib/logger";
 import { timingSafeEqual } from "crypto";
 
@@ -42,6 +43,7 @@ export async function GET(req: Request) {
       payment: { status: string; environment: string };
       email: string;
       configuration: { status: "ok" | "degraded"; missingOptionalVars: string[] };
+      schema?: SchemaStatus;
     } = {
       database: "ok",
       storage: "ok",
@@ -57,6 +59,18 @@ export async function GET(req: Request) {
     };
 
     let isHealthy = true;
+
+    // Schema readiness check (K1)
+    try {
+      const schemaStatus = await getSchemaStatus();
+      checks.schema = schemaStatus;
+      if (!schemaStatus.ok) {
+        checks.configuration.status = "degraded";
+      }
+    } catch (err) {
+      checks.configuration.status = "degraded";
+      logger.error("health.schema_check_failed", err);
+    }
 
     // Live DB check without TTL cache
     try {

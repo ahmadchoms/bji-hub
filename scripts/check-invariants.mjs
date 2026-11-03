@@ -93,6 +93,7 @@ const schemaContent = fs.readFileSync("prisma/schema.prisma", "utf8");
 const validMappedTables = new Set(
   Array.from(schemaContent.matchAll(/@@map\("([^"]+)"\)/g)).map((m) => m[1])
 );
+validMappedTables.add("_prisma_migrations");
 
 for (const file of sourceFiles) {
   if (isTestFile(file)) continue;
@@ -177,6 +178,25 @@ for (const file of sourceFiles) {
   const content = fs.readFileSync(file, "utf8");
   if (/(?:acidityScore|bodyScore|sweetnessScore)\s*\|\|\s*\d/.test(content)) {
     errors.push(`[Invariant Violation] Disallowed falsy score fallback '|| <number>' in ${file}. Use '??' and validate numerical score honesty.`);
+  }
+}
+
+// Invariant 9: No schema tolerance patterns (K1: undefined_table, does not exist, P2021, P2022)
+for (const file of sourceFiles) {
+  if (isTestFile(file)) continue;
+  const normalized = file.replace(/\\/g, "/");
+  if (!normalized.startsWith("lib/") && !normalized.startsWith("actions/")) continue;
+  if (normalized === "lib/db/schema-check.ts") continue;
+  const content = fs.readFileSync(file, "utf8");
+  if (
+    /includes\(["']does not exist["']\)/i.test(content) ||
+    /undefined_table/i.test(content) ||
+    /\bP2021\b/.test(content) ||
+    /\bP2022\b/.test(content)
+  ) {
+    errors.push(
+      `[Invariant Violation] Disallowed schema tolerance pattern in ${normalized}. Production code must not tolerate unmigrated schemas.`
+    );
   }
 }
 

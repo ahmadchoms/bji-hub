@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { getAdminStats } from "@/lib/data";
+import { getSchemaStatus } from "@/lib/db/schema-check";
 import { StatList } from "@/components/dashboard/stat-list";
 import { EmptyState } from "@/components/shared/empty-state";
 import { AlertTriangle } from "lucide-react";
@@ -27,6 +28,7 @@ const PAYMENT_STATUS_MAP: Record<
 
 export default async function AdminOverviewPage() {
   const stats = await getAdminStats();
+  const schemaStatus = await getSchemaStatus();
 
   const missingEnvVars: string[] = [];
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) missingEnvVars.push("SUPABASE_SERVICE_ROLE_KEY");
@@ -39,6 +41,20 @@ export default async function AdminOverviewPage() {
         title="Admin Panel"
         subtitle="Pantau platform, verifikasi toko penjual, dan kelola produk."
       />
+
+      {!schemaStatus.ok && schemaStatus.missing && schemaStatus.missing.length > 0 && (
+        <div className="p-4 bg-red-50 border border-red-300 rounded-lg flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-red-700 shrink-0 mt-0.5" />
+          <div className="space-y-1 text-sm text-red-900">
+            <p className="font-semibold">Peringatan Skema Database Tertinggal ({schemaStatus.missing.length} migrasi)</p>
+            <p className="text-xs text-red-800">
+              Database belum termigrasi secara penuh. Migrasi berikut belum diterapkan:{" "}
+              <span className="font-mono font-medium">{schemaStatus.missing.join(", ")}</span>.
+              Jalankan <code className="bg-red-100 px-1 py-0.5 rounded font-mono">npx prisma migrate deploy</code> pada target deployment.
+            </p>
+          </div>
+        </div>
+      )}
 
       {missingEnvVars.length > 0 && (
         <div className="p-4 bg-amber-50 border border-amber-300 rounded-lg flex items-start gap-3">

@@ -12,7 +12,7 @@ const productionSchema = z.object({
   MIDTRANS_SERVER_KEY: z.string().min(1, "MIDTRANS_SERVER_KEY wajib diisi"),
   MIDTRANS_CLIENT_KEY: z.string().min(1, "MIDTRANS_CLIENT_KEY wajib diisi"),
   MIDTRANS_IS_PRODUCTION: z.enum(["true", "false"]).optional(),
-  COOKIE_SECRET: z.string().min(1, "COOKIE_SECRET wajib diisi di production"),
+  COOKIE_SECRET: z.string().min(32, "COOKIE_SECRET wajib diisi minimal 32 karakter di production"),
   NEXT_PUBLIC_APP_URL: z.string().optional(),
   PAYMENT_PROVIDER: z.enum(["midtrans", "mock"]).optional().default("midtrans"),
   NEXT_PUBLIC_GOOGLE_CLIENT_ID: z.string().optional(),

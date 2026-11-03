@@ -11,7 +11,7 @@ export interface TasteMapItem {
   slug: string;
   title: string;
   originRegion?: string;
-  roastLevel: string;
+  roastLevel?: string;
   acidityScore: number; // 1-5
   bodyScore: number; // 1-5
   cuppingScore?: number | null;
@@ -272,9 +272,11 @@ export function TasteMap({ items, className }: TasteMapProps) {
                 <h4 className="font-bold text-base text-foreground leading-snug">
                   {selected.title}
                 </h4>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Sangrai: {selected.roastLevel}
-                </p>
+                {selected.roastLevel && (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Sangrai: {selected.roastLevel}
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-2 pt-1 border-t border-neutral-100 dark:border-neutral-800 text-xs">

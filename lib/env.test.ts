@@ -121,4 +121,17 @@ describe("validateEnv", () => {
 
     expect(() => validateEnv()).not.toThrow();
   });
+
+  it("throws in production when COOKIE_SECRET is shorter than 32 characters (K2)", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("DATA_SOURCE", "prisma");
+    vi.stubEnv("DATABASE_URL", "postgresql://user:pass@localhost:5432/db");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
+    vi.stubEnv("MIDTRANS_SERVER_KEY", "server-key");
+    vi.stubEnv("MIDTRANS_CLIENT_KEY", "client-key");
+    vi.stubEnv("COOKIE_SECRET", "too-short");
+
+    expect(() => validateEnv()).toThrow(/COOKIE_SECRET wajib diisi minimal 32 karakter/);
+  });
 });

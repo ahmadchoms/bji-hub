@@ -57,6 +57,9 @@ const nextConfig: NextConfig = {
       process.env.MIDTRANS_CLIENT_KEY ||
       "",
   },
+  outputFileTracingIncludes: {
+    "/api/health": ["./prisma/migrations/**/*"],
+  },
   compress: true,
   poweredByHeader: false,
   images: {

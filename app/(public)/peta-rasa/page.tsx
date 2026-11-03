@@ -35,7 +35,7 @@ export default async function TasteMapPage() {
           slug: l.slug,
           title: l.title,
           originRegion: tp.originRegion ?? undefined,
-          roastLevel: tp.roastLevel ?? "Medium",
+          roastLevel: tp.roastLevel ?? undefined,
           acidityScore: tp.acidityScore,
           bodyScore: tp.bodyScore,
           cuppingScore: tp.cuppingScore ?? null,

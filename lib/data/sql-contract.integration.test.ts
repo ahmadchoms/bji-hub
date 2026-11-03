@@ -28,6 +28,7 @@ import * as payoutActions from "@/actions/payout.actions";
 import * as reviewActions from "@/actions/review.actions";
 import * as currencyActions from "@/actions/currency.actions";
 import * as lots from "./lots";
+import * as schemaCheck from "../db/schema-check";
 
 /**
  * Asserts that executing a database function does NOT fail with PostgreSQL schema errors:
@@ -803,5 +804,9 @@ describe("Real PostgreSQL Behavioral Tests (A2)", () => {
       await client.query("RESET ROLE").catch(() => null);
       client.release();
     }
+  });
+
+  it("schema-check: executes queries without schema errors", async () => {
+    await expectNoSchemaError(() => schemaCheck.getSchemaStatus());
   });
 });

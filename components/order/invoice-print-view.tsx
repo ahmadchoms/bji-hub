@@ -497,7 +497,7 @@ export function InvoicePrintView({
                 Sertifikasi Bukti Transaksi Resmi
               </div>
               <p className="leading-relaxed">
-                Bukti transaksi ini diterbitkan secara sah oleh sistem Biji Hub dan berlaku sebagai bukti pembayaran yang valid. Pembayaran telah diverifikasi secara elektronik via payment gateway Midtrans.
+                Bukti transaksi ini diterbitkan secara sah oleh sistem Biji Hub dan berlaku sebagai bukti pembayaran yang valid. Pembayaran telah diverifikasi secara elektronik melalui sistem pembayaran resmi Biji Hub.
               </p>
             </div>
           </div>

@@ -455,8 +455,8 @@ export function OrderPrintModal({
                 <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0" />
                 <span>
                   Invoice ini sah dan diterbitkan otomatis oleh sistem Biji Hub.
-                  Pembayaran telah diverifikasi secara elektronik via Midtrans
-                  payment gateway.
+                  Pembayaran telah diverifikasi secara elektronik melalui sistem
+                  pembayaran resmi Biji Hub.
                 </span>
               </div>
             </div>

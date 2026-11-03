@@ -82,7 +82,7 @@ export function ResumePaymentButton({
         router.refresh();
       } else {
         toast.info(
-          "Status pembayaran masih belum terverifikasi di Midtrans. Silakan selesaikan pembayaran terlebih dahulu.",
+          "Status pembayaran masih belum terverifikasi. Silakan selesaikan pembayaran terlebih dahulu.",
         );
       }
     });

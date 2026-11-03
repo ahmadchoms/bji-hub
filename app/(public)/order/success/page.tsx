@@ -172,7 +172,7 @@ export default async function OrderSuccessPage({
                   ? "Paket Anda sedang dalam perjalanan oleh kurir. Segera periksa paket setelah tiba dan klik konfirmasi di bawah."
                   : isPaid
                     ? "Pembayaran Anda telah terverifikasi aman di sistem Biji Hub. Penjual telah diberitahu untuk segera memproses & mengirimkan pesanan."
-                    : "Menunggu penyelesaian pembayaran. Jika sudah membayar melalui Snap Midtrans, status pesanan akan terbarui secara otomatis."}
+                    : "Menunggu penyelesaian pembayaran. Jika sudah membayar, status pesanan akan terbarui secara otomatis."}
           </p>
 
           {/* Review Action when completed */}
@@ -195,7 +195,7 @@ export default async function OrderSuccessPage({
                 <Clock className="w-4 h-4 text-amber-700" /> Belum Menyelesaikan Pembayaran?
               </p>
               <p className="text-xs text-amber-900/80">
-                Klik tombol di samping untuk membuka jendela Midtrans Snap atau verifikasi status pembayaran terbaru.
+                Klik tombol di samping untuk membuka jendela pembayaran atau verifikasi status pembayaran terbaru.
               </p>
               <PaymentStatusPoller
                 orderId={order.id}

@@ -46,7 +46,7 @@ export default async function AdminOverviewPage() {
           <div className="space-y-1 text-sm text-amber-900">
             <p className="font-semibold">Peringatan Konfigurasi Lingkungan (Degraded)</p>
             <p className="text-xs text-amber-800">
-              Variabel operasional berikut belum diatur: <span className="font-mono font-medium">{missingEnvVars.join(", ")}</span>. Operasi otomatisasi hapus akun Supabase, endpoint cron terjadwal, atau email transaksi beroperasi dalam mode terbatas.
+              Variabel operasional berikut belum diatur: <span className="font-mono font-medium">{missingEnvVars.join(", ")}</span>. Operasi otomatisasi hapus akun pengguna, endpoint cron terjadwal, atau email transaksi beroperasi dalam mode terbatas.
             </p>
           </div>
         </div>

@@ -62,7 +62,7 @@ export default async function DashboardOrdersPage() {
             Daftar Pesanan Masuk
           </h2>
           <p className="text-xs text-neutral-600">
-            {orders.length} total pesanan dari pembeli dengan garansi pembayaran Midtrans.
+            {orders.length} total pesanan dari pembeli dengan garansi pembayaran aman Biji Hub.
           </p>
         </div>
 

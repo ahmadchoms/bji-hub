@@ -263,7 +263,7 @@ export function CatalogSidebarFilter({
 
         {/* Quick Island Presets */}
         <div>
-          <span className="text-xs text-neutral-400 font-semibold uppercase tracking-wider block mb-1">
+          <span className="text-xs text-neutral-400 font-semibold uppercase tracking-wider block mb-1 pl-5">
             Kepulauan
           </span>
           <div className="flex flex-wrap gap-1.5">
@@ -291,7 +291,7 @@ export function CatalogSidebarFilter({
         {/* Detailed Origins List */}
         {origins.length > 0 && (
           <div className="pt-1">
-            <span className="text-xs text-neutral-400 font-semibold uppercase tracking-wider block mb-1">
+            <span className="text-xs text-neutral-400 font-semibold uppercase tracking-wider block mb-1 pl-5">
               Daerah / Penghasil
             </span>
             <div className="space-y-1 max-h-40 overflow-y-auto pr-1 scrollbar-none">

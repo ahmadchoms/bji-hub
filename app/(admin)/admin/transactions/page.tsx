@@ -54,7 +54,7 @@ export default async function AdminTransaksiPage() {
   }));
 
   const paymentCsvColumns: CsvColumn<typeof formattedPaymentCsvData[number]>[] = [
-    { key: "midtransOrderId", label: "ID Order Midtrans" },
+    { key: "midtransOrderId", label: "Referensi Pembayaran" },
     { key: "seller", label: "Seller" },
     { key: "amount", label: "Nominal (IDR)" },
     { key: "status", label: "Status" },
@@ -76,14 +76,14 @@ export default async function AdminTransaksiPage() {
       <div className="space-y-4 pt-6 border-t border-neutral-300">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <SectionHeader
-            title="Riwayat Pembayaran Gateway (Midtrans)"
+            title="Riwayat Pembayaran"
             subtitle={`${payments.length} transaksi · Total: ${formatRupiah(totalRevenue)}`}
           />
           <ExportCsvButton
             data={formattedPaymentCsvData}
-            filename={`laporan-gateway-midtrans-${format(new Date(), "yyyyMMdd")}`}
+            filename={`laporan-transaksi-${format(new Date(), "yyyyMMdd")}`}
             columns={paymentCsvColumns}
-            label="Ekspor CSV Gateway"
+            label="Ekspor CSV Transaksi"
           />
         </div>
 

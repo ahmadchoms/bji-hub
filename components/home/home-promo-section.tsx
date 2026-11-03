@@ -8,7 +8,7 @@ export function HomePromoSection() {
       <PageContainer>
         <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-stretch">
           {/* Promo Banner Card */}
-          <div className="md:col-span-8 rounded-xl bg-gradient-to-br from-neutral-900 via-neutral-900 to-primary-950 text-white p-5 sm:p-6 flex flex-col justify-between shadow-xs">
+          <div className="md:col-span-8 rounded-xl bg-neutral-900 border border-neutral-800 text-white p-5 sm:p-6 flex flex-col justify-between shadow-xs">
             <div className="space-y-2">
               <h1 className="text-xl sm:text-2xl font-display font-bold text-white tracking-tight">
                 Bursa Kopi Specialty Nusantara

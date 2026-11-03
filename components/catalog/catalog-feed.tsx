@@ -132,7 +132,7 @@ export async function CatalogFeed({ params }: { params: CatalogParams }) {
         </p>
         <p className="text-xs text-neutral-600 leading-relaxed">
           {isP2022
-            ? "Database belum dimigrasi (skema Prisma terbaru belum diterapkan di database Supabase). Silakan jalankan 'npm run db:deploy' di terminal/deployment."
+            ? "Database belum dimigrasi (skema database terbaru belum diterapkan). Silakan jalankan migrasi database di deployment."
             : "Terjadi kendala saat mengambil data produk. Silakan coba beberapa saat lagi."}
         </p>
         <Link

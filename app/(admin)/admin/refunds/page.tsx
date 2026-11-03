@@ -20,7 +20,7 @@ export default async function AdminRefundsPage() {
     <div className="space-y-6">
       <SectionHeader
         title="Antrean Pengembalian Dana (Refund)"
-        subtitle="Kelola pengembalian dana pembeli untuk pesanan dibatalkan atau sengketa yang disetujui. Mendukung retry gateway Midtrans otomatis dan penyelesaian transfer manual."
+        subtitle="Kelola pengembalian dana pembeli untuk pesanan dibatalkan atau sengketa yang disetujui. Mendukung pengembalian otomatis dan penyelesaian transfer manual."
       />
 
       <AdminRefundQueue refunds={refunds} />

@@ -438,7 +438,7 @@ export function BillingSection({
                           ) : (
                             <RefreshCw className="h-3 w-3" />
                           )}
-                          Cek Status Midtrans
+                          Cek Status
                         </Button>
                       </div>
                     )}

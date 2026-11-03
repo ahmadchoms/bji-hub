@@ -93,6 +93,9 @@ export function TokopediaSortBar({ total }: { total: number }) {
   const readyStock = searchParams.get("ready_stock") || searchParams.get("stok_tersedia");
   if (readyStock === "true") activeChips.push({ label: "Ready Stock", keys: ["ready_stock", "stok_tersedia"] });
 
+  const flavour = searchParams.get("flavour") || searchParams.get("flavor") || searchParams.get("rasa");
+  if (flavour) activeChips.push({ label: `Flavour: ${flavour}`, keys: ["flavour", "flavor", "rasa"] });
+
   return (
     <div className="space-y-2.5 pb-3 border-b border-neutral-200">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

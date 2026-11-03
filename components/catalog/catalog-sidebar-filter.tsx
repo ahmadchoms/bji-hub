@@ -117,7 +117,11 @@ export function CatalogSidebarFilter({
   const isReadyStock =
     searchParams.get("ready_stock") === "true" ||
     searchParams.get("stok_tersedia") === "true";
-  const currentRasa = searchParams.get("rasa") || "";
+  const currentRasa =
+    searchParams.get("flavour") ||
+    searchParams.get("flavor") ||
+    searchParams.get("rasa") ||
+    "";
 
   // Merge default categories with props
   const allCategories = (() => {
@@ -152,6 +156,10 @@ export function CatalogSidebarFilter({
       if (key === "roast") params.delete("sangrai");
       if (key === "category") params.delete("kategori");
       if (key === "ready_stock") params.delete("stok_tersedia");
+      if (key === "flavour") {
+        params.delete("flavor");
+        params.delete("rasa");
+      }
       if (key === "cupping_score") {
         params.delete("min_cupping");
         params.delete("skor_cupping");
@@ -419,7 +427,7 @@ export function CatalogSidebarFilter({
                   } else {
                     newTags.push(preset.tag);
                   }
-                  replaceParam("rasa", newTags.join(","));
+                  replaceParam("flavour", newTags.join(","));
                 }}
                 className={cn(
                   "px-2.5 py-1 rounded border text-xs font-medium transition-colors coarse:min-h-11 inline-flex items-center",

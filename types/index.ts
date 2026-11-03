@@ -273,6 +273,7 @@ export interface ListingFilters {
   originRegion?: string;
   processMethod?: string;
   roastLevel?: string;
+  flavour?: string;
   rasa?: string;
   minPrice?: number;
   maxPrice?: number;

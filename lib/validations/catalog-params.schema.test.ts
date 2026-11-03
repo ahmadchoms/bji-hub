@@ -36,12 +36,18 @@ describe("catalog-params.schema", () => {
     expect(id.ready_stock).toBe(true);
   });
 
-  it("parses rasa and flavor parameter correctly", () => {
-    const res = parseCatalogParams({ rasa: "jeruk,madu" });
-    expect(res.rasa).toBe("jeruk,madu");
+  it("parses flavour, flavor, and legacy rasa parameter correctly", () => {
+    const en = parseCatalogParams({ flavour: "fruity,floral" });
+    expect(en.flavour).toBe("fruity,floral");
+    expect(en.rasa).toBe("fruity,floral");
 
     const alias = parseCatalogParams({ flavor: "cokelat" });
+    expect(alias.flavour).toBe("cokelat");
     expect(alias.rasa).toBe("cokelat");
+
+    const legacy = parseCatalogParams({ rasa: "jeruk,madu" });
+    expect(legacy.flavour).toBe("jeruk,madu");
+    expect(legacy.rasa).toBe("jeruk,madu");
   });
 
   it("supports legacy Indonesian parameters for backward compatibility", () => {

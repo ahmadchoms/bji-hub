@@ -141,8 +141,9 @@ async function findListings(
   }
 
   // Flavor notes / Flavor wheel filter (COF-4)
-  if (filters.rasa && filters.rasa !== "all") {
-    const rawRasa = filters.rasa
+  const flavourFilter = filters.flavour || filters.rasa;
+  if (flavourFilter && flavourFilter !== "all") {
+    const rawRasa = flavourFilter
       .toLowerCase()
       .split(/[,+]/)
       .map((r) => r.trim())

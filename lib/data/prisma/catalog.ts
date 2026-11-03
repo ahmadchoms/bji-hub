@@ -63,8 +63,9 @@ function buildWhere(filters: ListingFilters): Prisma.ListingWhereInput {
   if (filters.isBoosted) where.isBoosted = true;
   if (filters.readyStock) where.stock = { gt: 0 };
 
-  if (filters.rasa && filters.rasa !== ALL) {
-    const rawTags = filters.rasa
+  const flavourFilter = filters.flavour || filters.rasa;
+  if (flavourFilter && flavourFilter !== ALL) {
+    const rawTags = flavourFilter
       .split(/[,+]/)
       .map((t) => t.trim().toLowerCase())
       .filter(Boolean);

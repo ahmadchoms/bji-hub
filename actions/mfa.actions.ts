@@ -28,6 +28,23 @@ export async function enrollMfaAction(): Promise<ActionResult<MfaEnrollResult>> 
     }
 
     const supabase = await createClient();
+
+    // Check existing factors first
+    const { data: factorList } = await supabase.auth.mfa.listFactors();
+    if (factorList) {
+      // If user already has a verified TOTP factor, redirect to verify
+      if (factorList.totp && factorList.totp.length > 0) {
+        const { redirect } = await import("next/navigation");
+        redirect("/admin/mfa/verify");
+      }
+
+      // Clean up stale unverified factors to prevent "factor already exists" error
+      const unverified = factorList.all?.filter((f) => f.status === "unverified" && f.factor_type === "totp") || [];
+      for (const factor of unverified) {
+        await supabase.auth.mfa.unenroll({ factorId: factor.id });
+      }
+    }
+
     const { data, error } = await supabase.auth.mfa.enroll({
       factorType: "totp",
     });

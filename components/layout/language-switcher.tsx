@@ -32,7 +32,7 @@ export function LanguageSwitcher({ currentLocale, className }: LanguageSwitcherP
         type="button"
         onClick={() => handleToggle("id")}
         disabled={isPending}
-        className={`px-1.5 py-0.5 rounded text-xs font-semibold transition-colors coarse:min-h-11 coarse:min-w-11 inline-flex items-center justify-center ${
+        className={`px-1.5 py-0.5 rounded text-xs font-semibold transition-colors coarse:min-h-10 inline-flex items-center justify-center ${
           currentLocale === "id"
             ? "bg-primary-900 text-white"
             : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100"
@@ -46,7 +46,7 @@ export function LanguageSwitcher({ currentLocale, className }: LanguageSwitcherP
         type="button"
         onClick={() => handleToggle("en")}
         disabled={isPending}
-        className={`px-1.5 py-0.5 rounded text-xs font-semibold transition-colors coarse:min-h-11 coarse:min-w-11 inline-flex items-center justify-center ${
+        className={`px-1.5 py-0.5 rounded text-xs font-semibold transition-colors coarse:min-h-10 inline-flex items-center justify-center ${
           currentLocale === "en"
             ? "bg-primary-900 text-white"
             : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100"

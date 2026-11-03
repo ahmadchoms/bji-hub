@@ -1,6 +1,8 @@
 "use client";
 
 import { useCompare } from "@/context/compare-context";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 import { X, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -14,6 +16,8 @@ import {
 import { useState } from "react";
 
 export function CompareDrawer() {
+  const pathname = usePathname();
+  const isProductPage = pathname?.startsWith("/product/");
   const { compareList, removeFromCompare, clearCompare } = useCompare();
   const [openModal, setOpenModal] = useState(false);
 
@@ -24,7 +28,10 @@ export function CompareDrawer() {
       {/* Floating Bottom Bar */}
       <aside
         aria-label="Bar perbandingan produk"
-        className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-neutral-900 text-white px-4 py-3 rounded-xl shadow-xl border border-neutral-800 flex items-center gap-4 max-w-xl w-[92vw] sm:w-auto animate-in fade-in slide-in-from-bottom-3"
+        className={cn(
+          "fixed left-1/2 -translate-x-1/2 z-40 bg-neutral-900 text-white px-4 py-3 rounded-xl shadow-xl border border-neutral-800 flex items-center gap-4 max-w-xl w-[92vw] sm:w-auto animate-in fade-in slide-in-from-bottom-3",
+          isProductPage ? "bottom-20 lg:bottom-4" : "bottom-4"
+        )}
       >
         <div className="flex items-center gap-2">
           <span className="text-xs font-mono font-medium text-neutral-300">

@@ -16,6 +16,7 @@ interface AddToCartButtonProps {
   showIcon?: boolean;
   label?: string;
   disabled?: boolean;
+  iconOnly?: boolean;
 }
 
 export function AddToCartButton({
@@ -27,6 +28,7 @@ export function AddToCartButton({
   showIcon = true,
   label = "Tambah ke Keranjang",
   disabled = false,
+  iconOnly = false,
 }: AddToCartButtonProps) {
   const [added, setAdded] = useState(false);
 
@@ -62,6 +64,8 @@ export function AddToCartButton({
     setTimeout(() => setAdded(false), 2000);
   };
 
+  const buttonTitle = added ? "Tersimpan di Keranjang" : label;
+
   return (
     <Button
       type="button"
@@ -69,20 +73,33 @@ export function AddToCartButton({
       disabled={disabled}
       size={size === "md" ? "default" : size}
       onClick={handleClick}
+      aria-label={buttonTitle}
+      title={buttonTitle}
       className={`transition-all duration-200 ${
         added
           ? "bg-emerald-50 text-emerald-700 border-emerald-300"
           : "text-neutral-800 border-neutral-300 hover:border-neutral-400"
       } ${className || ""}`}
     >
-      {showIcon && (
-        added ? (
-          <Check className="w-4 h-4 mr-1.5 text-emerald-600" />
+      {showIcon &&
+        (added ? (
+          <Check
+            className={
+              iconOnly
+                ? "w-4 h-4 text-emerald-600"
+                : "w-4 h-4 mr-1.5 text-emerald-600"
+            }
+          />
         ) : (
-          <ShoppingCart className="w-4 h-4 mr-1.5 text-neutral-600" />
-        )
-      )}
-      {added ? "Tersimpan di Keranjang" : label}
+          <ShoppingCart
+            className={
+              iconOnly
+                ? "w-4 h-4 text-neutral-600"
+                : "w-4 h-4 mr-1.5 text-neutral-600"
+            }
+          />
+        ))}
+      {!iconOnly && (added ? "Tersimpan di Keranjang" : label)}
     </Button>
   );
 }

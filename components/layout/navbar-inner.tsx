@@ -223,7 +223,7 @@ export function NavbarInner({
           <Logo size="md" />
 
           <div className="flex items-center gap-1.5">
-            <LanguageSwitcher currentLocale={locale} className="hidden sm:inline-flex" />
+            <LanguageSwitcher currentLocale={locale} />
             <CartNavBadge showBadge={auth.authenticated} />
             <WishlistNavBadge showBadge={auth.authenticated} />
 
@@ -242,11 +242,10 @@ export function NavbarInner({
               </SheetTrigger>
 
               <SheetContent side="right" className="w-80 p-0 sm:max-w-xs">
-                <SheetHeader className="border-b border-neutral-200/80 p-4 text-left flex flex-row items-center justify-between">
+                <SheetHeader className="border-b border-neutral-200/80 p-4 text-left">
                   <SheetTitle className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
                     {locale === "en" ? "Menu & Navigation" : "Menu & Navigasi"}
                   </SheetTitle>
-                  <LanguageSwitcher currentLocale={locale} />
                 </SheetHeader>
 
                 <div className="flex flex-col justify-start h-[calc(100vh-57px)] p-4 overflow-y-auto space-y-4">

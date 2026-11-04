@@ -1,9 +1,13 @@
+import type { Metadata } from "next";
 import { PageContainer } from "@/components/layout/page-container";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Kebijakan Pengiriman - Biji Hub",
   description:
     "Ketentuan pengemasan kopi, batas waktu pengiriman roastery, tarif ongkos kirim, dan pelacakan resi kurir di Biji Hub.",
+  alternates: {
+    canonical: "/shipping-policy",
+  },
 };
 
 export default function ShippingPolicyPage() {

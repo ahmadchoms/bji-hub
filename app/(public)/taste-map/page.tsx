@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   title: "Peta Sebaran Rasa Kopi Nusantara (Taste Map) • Biji Hub",
   description:
     "Jelajahi peta interaktif 2 dimensi sebaran keasaman (acidity) dan ketebalan rasa (body) kopi specialty Indonesia.",
+  alternates: {
+    canonical: "/taste-map",
+  },
 };
 
 export const revalidate = 120;

@@ -11,6 +11,9 @@ interface LanguageSwitcherProps {
 }
 
 export function LanguageSwitcher({ currentLocale, className }: LanguageSwitcherProps) {
+  // ponytail: Sembunyikan pemilih bahasa sampai terjemahan inti lengkap (S2). Aktifkan kembali pasca-peluncuran.
+  return null;
+
   const [isPending, startTransition] = useTransition();
 
   const handleToggle = (newLocale: Locale) => {

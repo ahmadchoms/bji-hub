@@ -1,9 +1,13 @@
+import type { Metadata } from "next";
 import { PageContainer } from "@/components/layout/page-container";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Syarat & Ketentuan - Biji Hub",
   description:
     "Syarat dan ketentuan bertransaksi, perlindungan pembeli, dan ketentuan toko di marketplace Biji Hub.",
+  alternates: {
+    canonical: "/terms",
+  },
 };
 
 export default function SyaratPage() {

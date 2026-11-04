@@ -10,6 +10,9 @@ import { getOrdersByBuyer } from "@/lib/data/orders";
 export const metadata: Metadata = {
   title: "Riwayat Pesanan - Biji Hub",
   description: "Pantau status pengiriman, bukti resi, dan riwayat pesanan kopi Anda.",
+  alternates: {
+    canonical: "/orders",
+  },
 };
 
 export const dynamic = "force-dynamic";

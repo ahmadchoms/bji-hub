@@ -8,6 +8,9 @@ import { ConsentGateway } from "@/components/legal/consent-gateway";
 export const metadata: Metadata = {
   title: "Persetujuan Dokumen Kebijakan | Biji Hub",
   description: "Tinjau dan setujui syarat layanan dan kebijakan privasi Biji Hub.",
+  alternates: {
+    canonical: "/consent",
+  },
 };
 
 export const dynamic = "force-dynamic";

@@ -1,9 +1,13 @@
+import type { Metadata } from "next";
 import { PageContainer } from "@/components/layout/page-container";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Kebijakan Retur & Pengembalian Dana - Biji Hub",
   description:
     "Prosedur pengajuan retur barang, garansi kualitas kopi, dan ketentuan pengembalian dana (refund) di Biji Hub.",
+  alternates: {
+    canonical: "/refund-policy",
+  },
 };
 
 export default function RefundPolicyPage() {

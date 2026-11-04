@@ -88,13 +88,6 @@ export const metadata: Metadata = {
     "marketplace kopi",
     "biji hub",
   ],
-  alternates: {
-    canonical: "/",
-    languages: {
-      "id-ID": "/",
-      "en-US": "/?lang=en",
-    },
-  },
   openGraph: {
     title: "Biji Hub — Marketplace Kopi Specialty Indonesia",
     description:

@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   title: "Kebijakan Klaim Produk & Standar Kopi - Biji Hub",
   description:
     "Standar keaslian, transparansi asal-usul, sertifikasi organik, dan kebijakan klaim produk di Biji Hub.",
+  alternates: {
+    canonical: "/product-policy",
+  },
 };
 
 export default function KebijakanProdukPage() {

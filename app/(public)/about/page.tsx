@@ -1,9 +1,13 @@
+import type { Metadata } from "next";
 import { PageContainer } from "@/components/layout/page-container";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Tentang Biji Hub - Marketplace Kopi Specialty Nusantara",
   description:
     "Mengenal Biji Hub, platform bursa kopi specialty Indonesia yang menghubungkan petani, prosesor, roastery, dan penikmat kopi seduh.",
+  alternates: {
+    canonical: "/about",
+  },
 };
 
 export default function TentangPage() {

@@ -1,9 +1,13 @@
+import type { Metadata } from "next";
 import { PageContainer } from "@/components/layout/page-container";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Kebijakan Privasi - Biji Hub",
   description:
     "Kebijakan privasi perlindungan data pribadi pengguna, pembeli, dan penjual di ekosistem marketplace Biji Hub.",
+  alternates: {
+    canonical: "/privacy",
+  },
 };
 
 export default function PrivacyPage() {

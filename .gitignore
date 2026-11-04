@@ -58,3 +58,4 @@ BIJI-HUB-AGENT-TASKS.md
 # Sentry Config File
 .env.sentry-build-plugin
 .vscode/
+skills-lock.json

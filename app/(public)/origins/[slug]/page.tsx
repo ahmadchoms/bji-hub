@@ -27,6 +27,9 @@ export async function generateMetadata({
     description:
       origin.description ||
       `Karakteristik terroir, ketinggian, dan profil kopi specialty dari ${origin.name}, ${origin.country}.`,
+    alternates: {
+      canonical: `/origins/${slug}`,
+    },
   };
 }
 

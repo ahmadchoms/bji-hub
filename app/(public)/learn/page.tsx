@@ -15,6 +15,9 @@ export const metadata: Metadata = {
   title: "Pusat Belajar Kopi Nusantara • Biji Hub",
   description:
     "Panduan komprehensif kopi specialty Indonesia: glosarium istilah kopi, cara memilih biji pertama, panduan seduh per metode, dan profil asal kopi daerah.",
+  alternates: {
+    canonical: "/learn",
+  },
   openGraph: {
     title: "Pusat Belajar Kopi Nusantara • Biji Hub",
     description:

@@ -22,6 +22,9 @@ import { getUserNotificationPrefs } from "@/lib/coffee/reminders";
 export const metadata = {
   title: "Profil Akun - Biji Hub",
   description: "Kelola akun pengguna dan akses direktori kopi specialty Indonesia.",
+  alternates: {
+    canonical: "/profile",
+  },
 };
 
 export const dynamic = "force-dynamic";

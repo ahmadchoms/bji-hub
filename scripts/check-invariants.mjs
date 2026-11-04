@@ -223,6 +223,47 @@ for (const file of uiFiles) {
   }
 }
 
+// Invariant 11: SEO Canonical & Hreflang Integrity (Audit S1)
+const rootLayoutContent = fs.readFileSync("app/layout.tsx", "utf8");
+if (rootLayoutContent.includes("canonical:")) {
+  errors.push(
+    "[Invariant Violation] Root layout (app/layout.tsx) must not declare a global canonical override. Canonical must be declared per public route."
+  );
+}
+if (/languages:\s*\{[^}]*\?lang=/i.test(rootLayoutContent)) {
+  errors.push(
+    "[Invariant Violation] Root layout (app/layout.tsx) must not declare hreflang pointing to query parameters without dedicated locale routes."
+  );
+}
+
+const requiredCanonicalPages = [
+  "app/(public)/page.tsx",
+  "app/(public)/product/[slug]/page.tsx",
+  "app/(public)/origins/[slug]/page.tsx",
+  "app/(public)/store/[slug]/page.tsx",
+  "app/(public)/learn/page.tsx",
+  "app/(public)/origins/page.tsx",
+  "app/(public)/about/page.tsx",
+  "app/(public)/taste-map/page.tsx",
+  "app/(public)/terms/page.tsx",
+  "app/(public)/privacy/page.tsx",
+  "app/(public)/refund-policy/page.tsx",
+  "app/(public)/shipping-policy/page.tsx",
+  "app/(public)/product-policy/page.tsx",
+  "app/(public)/contact/page.tsx",
+];
+
+for (const pagePath of requiredCanonicalPages) {
+  if (fs.existsSync(pagePath)) {
+    const pageContent = fs.readFileSync(pagePath, "utf8");
+    if (!pageContent.includes("canonical:")) {
+      errors.push(
+        `[Invariant Violation] Public route ${pagePath} is missing explicit canonical declaration in metadata.`
+      );
+    }
+  }
+}
+
 if (errors.length > 0) {
   console.error("Invariant checks failed:\n" + errors.join("\n"));
   process.exit(1);

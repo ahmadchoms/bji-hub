@@ -1,4 +1,14 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Paket & Tarif Layanan Roastery - Biji Hub",
+  description:
+    "Skema komisi transparan, biaya transaksi, dan fitur promosi boost untuk roastery dan penjual kopi specialty di Biji Hub.",
+  alternates: {
+    canonical: "/pricing",
+  },
+};
 import { PageContainer } from "@/components/layout/page-container";
 import { buttonVariants } from "@/components/ui/button";
 import {

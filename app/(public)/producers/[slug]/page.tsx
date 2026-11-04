@@ -40,6 +40,9 @@ export async function generateMetadata({
     description:
       producer.story ||
       `Profil produser kopi specialty ${producer.name} di ${producer.village || producer.province || "Indonesia"}.`,
+    alternates: {
+      canonical: `/producers/${slug}`,
+    },
   };
 }
 

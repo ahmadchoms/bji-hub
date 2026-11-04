@@ -1,5 +1,12 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { PageContainer } from "@/components/layout/page-container";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/",
+  },
+};
 import { CategoryQuickGrid } from "@/components/catalog/category-quick-grid";
 import { CatalogSidebarFilter } from "@/components/catalog/catalog-sidebar-filter";
 import {

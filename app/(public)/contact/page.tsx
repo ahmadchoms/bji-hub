@@ -1,9 +1,13 @@
+import type { Metadata } from "next";
 import { PageContainer } from "@/components/layout/page-container";
 import { Mail, MessageSquare } from "lucide-react";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Kontak & Bantuan - Biji Hub",
   description: "Hubungi tim operasional dan dukungan marketplace kopi Biji Hub.",
+  alternates: {
+    canonical: "/contact",
+  },
 };
 
 export default function KontakPage() {

@@ -9,6 +9,9 @@ export const metadata: Metadata = {
   title: "Peta & Asal Kopi Nusantara | Biji Hub",
   description:
     "Jelajahi ketertelusuran kopi specialty Indonesia dari Aceh Gayo, Toraja, Mandheling, Java Preanger, Bali Kintamani, hingga Lembah Baliem Papua.",
+  alternates: {
+    canonical: "/origins",
+  },
 };
 
 export default async function CoffeeOriginsPage() {

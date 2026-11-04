@@ -1,13 +1,17 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { PageContainer } from "@/components/layout/page-container";
 import { SellerOnboardingForm } from "@/components/auth/seller-onboarding-form";
 import { Store, ShieldCheck, Zap } from "lucide-react";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Buka Toko Kopi - Biji Hub",
   description:
     "Daftarkan kebun, koperasi, atau roastery kopi Anda di Biji Hub. Mulai pasang listing dan jangkau pasar specialty coffee langsung.",
+  alternates: {
+    canonical: "/open-store",
+  },
 };
 
 export default async function BukaTokoPage() {

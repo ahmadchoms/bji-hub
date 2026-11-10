@@ -28,8 +28,7 @@ import { OrderReviewModal } from "@/components/order/order-review-modal";
 import { ShipmentTrackingModal } from "@/components/order/shipment-tracking-modal";
 import { OrderPrintModal } from "@/components/order/order-print-modal";
 import { OrderStatusStepper } from "@/components/order/order-status-stepper";
-import { ResumePaymentButton } from "@/components/order/resume-payment-button";
-import { PaymentStatusPoller } from "@/components/order/payment-status-poller";
+import { StaticPaymentInstructions } from "@/components/order/static-payment-instructions";
 import { SnapLoader } from "@/components/payment/snap-loader";
 import { PaymentCountdown } from "@/components/order/payment-countdown";
 import { buildOrderPaidNotificationUrl } from "@/lib/notifications";
@@ -187,27 +186,12 @@ export default async function OrderSuccessPage({
           )}
         </div>
 
-        {/* Tombol Bayar Sekarang / Cek Status jika pending payment */}
+        {/* Instruksi Pembayaran QRIS & Transfer Bank jika pending payment */}
         {order.status === "pending_payment" && (
-          <div className="p-4 sm:p-5 bg-amber-50 border border-amber-200 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
-            <div className="space-y-1">
-              <p className="text-sm font-bold text-amber-950 flex items-center gap-1.5">
-                <Clock className="w-4 h-4 text-amber-700" /> Belum Menyelesaikan Pembayaran?
-              </p>
-              <p className="text-xs text-amber-900/80">
-                Klik tombol di samping untuk membuka jendela pembayaran atau verifikasi status pembayaran terbaru.
-              </p>
-              <PaymentStatusPoller
-                orderId={order.id}
-                accessToken={t || order.accessToken || undefined}
-              />
-            </div>
-            <ResumePaymentButton
-              orderId={order.id}
-              orderNumber={order.orderNumber}
-              accessToken={t || order.accessToken || undefined}
-            />
-          </div>
+          <StaticPaymentInstructions
+            order={order}
+            accessToken={t || order.accessToken || undefined}
+          />
         )}
 
         {/* Konfirmasi Penerimaan Barang CTA & Auto-Release Banner (when shipped) */}

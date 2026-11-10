@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ExportCsvButton, type CsvColumn } from "@/components/shared/export-csv-button";
-import { resolveDisputeAction, autoCompleteOrdersAction } from "@/actions/order.actions";
+import { resolveDisputeAction, autoCompleteOrdersAction, confirmOrderPaymentAction } from "@/actions/order.actions";
+import { normalizeWhatsAppNumber } from "@/lib/utils";
 import { buildDisputeResolvedNotificationUrl } from "@/lib/notifications";
 import { ShipmentTrackingModal } from "@/components/order/shipment-tracking-modal";
 import { OrderPrintModal } from "@/components/order/order-print-modal";
@@ -68,9 +69,11 @@ export function AdminOrderDisputes({ orders: initialOrders }: AdminOrderDisputes
   const [isAutoCompleting, setIsAutoCompleting] = useState(false);
 
   const disputedCount = orders.filter((o) => o.status === "disputed").length;
+  const pendingPaymentCount = orders.filter((o) => o.status === "pending_payment").length;
 
   const filteredOrders = orders.filter((order) => {
     if (filter === "disputed" && order.status !== "disputed") return false;
+    if (filter === "pending_payment" && order.status !== "pending_payment") return false;
     if (filter === "paid" && order.status !== "paid") return false;
     if (filter === "shipped" && order.status !== "shipped") return false;
     if (filter === "completed" && order.status !== "completed") return false;
@@ -121,6 +124,25 @@ export function AdminOrderDisputes({ orders: initialOrders }: AdminOrderDisputes
         );
       } else {
         toast.error(res.error || "Gagal menyelesaikan komplain");
+      }
+    });
+  };
+
+  const handleConfirmPayment = (orderId: string, orderNumber: string, totalAmount: number) => {
+    const confirmMessage = `Konfirmasi pembayaran untuk pesanan ${orderNumber} sebesar ${formatRupiah(totalAmount)}?\n\nSetelah dikonfirmasi, status pesanan akan menjadi 'Perlu Dikirim' dan penjual akan mendapatkan notifikasi.`;
+    if (!window.confirm(confirmMessage)) return;
+
+    startTransition(async () => {
+      const res = await confirmOrderPaymentAction(orderId);
+      if (res.success) {
+        setOrders((prev) =>
+          prev.map((o) => (o.id === orderId ? { ...o, status: "paid" as OrderStatus } : o)),
+        );
+        toast.success(
+          `Pembayaran pesanan ${orderNumber} berhasil dikonfirmasi lunas! Notifikasi telah dikirim ke penjual.`,
+        );
+      } else {
+        toast.error(res.error || "Gagal mengonfirmasi pembayaran pesanan");
       }
     });
   };
@@ -227,6 +249,20 @@ export function AdminOrderDisputes({ orders: initialOrders }: AdminOrderDisputes
           >
             <AlertCircle className="w-3 h-3" />
             Komplain ({disputedCount})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilter("pending_payment")}
+            className={`px-3 py-1.5 rounded-sm font-medium transition-colors flex items-center gap-1 ${
+              filter === "pending_payment"
+                ? "bg-amber-600 text-white"
+                : pendingPaymentCount > 0
+                  ? "bg-amber-100 text-amber-900 font-bold border border-amber-300 hover:bg-amber-200"
+                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+            }`}
+          >
+            <Clock className="w-3 h-3" />
+            Menunggu Bayar ({pendingPaymentCount})
           </button>
           <button
             type="button"
@@ -398,6 +434,47 @@ export function AdminOrderDisputes({ orders: initialOrders }: AdminOrderDisputes
                       >
                         <MessageCircle className="w-3 h-3" />
                         Kirim WA ke Pembeli
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {/* Pending Payment Manual Confirmation Action Box */}
+                {order.status === "pending_payment" && (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded text-amber-950 space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 font-semibold text-amber-900">
+                        <Clock className="w-4 h-4 text-amber-700 shrink-0" />
+                        Menunggu Pembayaran Manual / QRIS
+                      </div>
+                      <span className="font-mono font-bold text-xs text-amber-950 bg-amber-100 px-2 py-0.5 rounded border border-amber-300">
+                        Total Tagihan: {formatRupiah(order.totalAmount)}
+                      </span>
+                    </div>
+                    <p className="text-amber-800 text-xs">
+                      Pastikan mutasi dana transfer atau QRIS dari pembeli (<strong>{order.buyerName}</strong>) telah masuk sebelum menekan tombol konfirmasi.
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <Button
+                        size="sm"
+                        disabled={isPending}
+                        onClick={() => handleConfirmPayment(order.id, order.orderNumber, order.totalAmount)}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white h-7 text-xs font-semibold"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                        Konfirmasi Lunas (Manual)
+                      </Button>
+                      <a
+                        href={`https://wa.me/${normalizeWhatsAppNumber(order.buyerPhone)}?text=${encodeURIComponent(
+                          `Halo ${order.buyerName}, ini Admin Biji Hub mengenai pesanan Anda #${order.orderNumber}. Apakah sudah melakukan transfer/scan QRIS sebesar ${formatRupiah(order.totalAmount)}? Mohon kirimkan struk/bukti pembayarannya ya. Terima kasih!`,
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-amber-900 bg-amber-100/70 border border-amber-300 px-2.5 py-1 rounded hover:bg-amber-200 font-medium"
+                        title="Chat pembeli di WhatsApp untuk meminta bukti transfer"
+                      >
+                        <MessageCircle className="w-3 h-3" />
+                        Chat Pembeli di WA
                       </a>
                     </div>
                   </div>

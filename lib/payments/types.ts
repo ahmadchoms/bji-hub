@@ -45,7 +45,7 @@ export interface RefundResult {
 }
 
 export interface PaymentProvider {
-  readonly id: "midtrans" | "mock";
+  readonly id: "manual" | "midtrans" | "mock";
   createPayment(input: CreatePaymentInput): Promise<CreatePaymentResult | null>;
   getStatus(orderRef: string): Promise<PaymentStatusResult | null>;
   parseWebhook(rawBody: string): Promise<ParsedWebhook | null>;

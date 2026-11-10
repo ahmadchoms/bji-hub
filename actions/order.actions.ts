@@ -86,7 +86,7 @@ export async function createCheckoutOrderAction(
     orderNumber: string;
     snapToken: string | null;
     payment: {
-      provider: "midtrans" | "mock";
+      provider: "manual" | "midtrans" | "mock";
       token: string | null;
     };
     totalAmount: number;
@@ -133,7 +133,7 @@ export async function createCheckoutOrderAction(
         orderNumber: existing.orderNumber,
         snapToken: existing.snapToken ?? null,
         payment: {
-          provider: (existing.paymentProvider as "midtrans" | "mock") ?? "midtrans",
+          provider: (existing.paymentProvider as "manual" | "midtrans" | "mock") ?? "manual",
           token: existing.snapToken ?? null,
         },
         totalAmount: existing.totalAmount,
@@ -547,6 +547,7 @@ export async function confirmOrderPaymentAction(
   revalidatePath("/orders");
   revalidatePath("/order/success");
   revalidatePath("/dashboard/orders");
+  revalidatePath("/admin/transactions");
   return ok({ success: true });
 }
 
@@ -1185,7 +1186,7 @@ export async function resumeOrderPaymentAction(
   ActionResult<{
     snapToken: string | null;
     payment: {
-      provider: "midtrans" | "mock";
+      provider: "manual" | "midtrans" | "mock";
       token: string | null;
     };
     orderNumber: string;

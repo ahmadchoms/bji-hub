@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getPaymentProvider } from "@/lib/payments";
+import { midtransProvider } from "@/lib/payments/midtrans-provider";
 import { getPrisma } from "@/lib/data/prisma/client";
 import { logger } from "@/lib/logger";
 
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
-  const provider = getPaymentProvider();
+  const provider = midtransProvider;
   const parsed = await provider.parseWebhook(rawBody);
 
   // 1. Signature Verification

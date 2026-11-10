@@ -4,6 +4,29 @@ function getBaseAppUrl(): string {
   return (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/+$/, "");
 }
 
+export function buildManualPaymentConfirmationUrl(data: {
+  adminPhone?: string;
+  orderNumber: string;
+  buyerName: string;
+  totalAmount: number;
+}): string {
+  const rawPhone =
+    data.adminPhone ||
+    process.env.NEXT_PUBLIC_ADMIN_WHATSAPP ||
+    process.env.ADMIN_WHATSAPP ||
+    "081234567890";
+  const phone = normalizeWhatsAppNumber(rawPhone);
+  const text = `Halo Admin Biji Hub, saya ingin konfirmasi pembayaran pesanan saya:
+
+Nomor Pesanan: ${data.orderNumber}
+Nama Pembeli: ${data.buyerName}
+Total Pembayaran: ${formatRupiah(data.totalAmount)}
+
+Bukti transfer / struk QRIS saya lampirkan di pesan ini. Mohon bantuannya untuk memverifikasi pesanan saya. Terima kasih!`;
+
+  return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+}
+
 export function buildOrderPaidNotificationUrl(data: {
   sellerPhone: string;
   sellerName?: string;

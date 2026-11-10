@@ -41,7 +41,7 @@ import { validateVoucherAction } from "@/actions/voucher.actions";
 import { updateBuyerProfileAction } from "@/actions/auth.actions";
 import { useCart } from "@/lib/cart";
 import { computeTotalWeightGrams } from "@/lib/shipping-weight";
-import { useSnap } from "@/hooks/use-snap";
+// [MIDTRANS DORMANT]: import { useSnap } from "@/hooks/use-snap";
 import { cn } from "@/lib/utils";
 
 interface CheckoutFormProps {
@@ -114,7 +114,7 @@ export function CheckoutForm({
   const [shippingError, setShippingError] = useState<string | null>(null);
   const [shippingRetryCount, setShippingRetryCount] = useState<number>(0);
 
-  const { pay } = useSnap();
+  // [MIDTRANS DORMANT]: const { pay } = useSnap();
   const idempotencyKeyRef = useRef<string>("");
   if (!idempotencyKeyRef.current) {
     idempotencyKeyRef.current =
@@ -193,11 +193,14 @@ export function CheckoutForm({
     setVoucherError(null);
   };
 
-  const midtransClientKey =
-    process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY ||
-    process.env.MIDTRANS_CLIENT_KEY;
-  const isPaymentConfigured =
-    Boolean(midtransClientKey) || process.env.DATA_SOURCE === "mock";
+  // [MIDTRANS DORMANT]: Dinonaktifkan sementara menunggu verifikasi akun bisnis.
+  // Pembayaran aktif dengan QRIS Statis & Transfer Bank Manual.
+  // const midtransClientKey =
+  //   process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY ||
+  //   process.env.MIDTRANS_CLIENT_KEY;
+  // const isPaymentConfigured =
+  //   Boolean(midtransClientKey) || process.env.DATA_SOURCE === "mock";
+  const isPaymentConfigured = true;
 
   useEffect(() => {
     let canceled = false;
@@ -330,12 +333,12 @@ export function CheckoutForm({
           idempotencyKeyRef.current = crypto.randomUUID();
         }
 
-        const { snapToken, orderNumber, accessToken, payment } = res.data;
+        const { orderNumber, accessToken, payment } = res.data;
         const redirectUrl = accessToken
           ? `/order/success?orderNumber=${orderNumber}&t=${encodeURIComponent(accessToken)}`
           : `/order/success?orderNumber=${orderNumber}`;
 
-        const providerId = payment?.provider ?? "midtrans";
+        const providerId = payment?.provider ?? "manual";
 
         if (providerId === "mock") {
           if (activeItems && activeItems.length > 0) {
@@ -346,6 +349,18 @@ export function CheckoutForm({
           return;
         }
 
+        if (providerId === "manual") {
+          if (activeItems && activeItems.length > 0) {
+            activeItems.forEach((i) => removeFromCart(i.listingId, i.grindSize));
+          }
+          toast.success("Pesanan berhasil dibuat! Silakan selesaikan pembayaran via QRIS atau Transfer Bank.");
+          router.push(redirectUrl);
+          return;
+        }
+
+        // [MIDTRANS DORMANT]: Dinonaktifkan sementara menunggu verifikasi entitas bisnis.
+        // Aktifkan kembali blok di bawah jika akun Midtrans Production sudah aktif:
+        /*
         if (providerId !== "midtrans") {
           toast.error("Metode pembayaran tidak tersedia");
           return;
@@ -388,6 +403,7 @@ export function CheckoutForm({
           toast.info("Jendela pembayaran otomatis tidak terbuka. Silakan lanjutkan dari rincian pesanan.");
           router.push(redirectUrl);
         }
+        */
       } catch {
         // ignore: UI error toast already handled
         toast.error("Terjadi kesalahan saat memproses pembayaran.");

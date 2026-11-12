@@ -324,7 +324,21 @@ export function CheckoutForm({
         });
 
         if (!res.success) {
-          toast.error("Gagal memproses pesanan", { description: res.error });
+          const isPendingDuplicate = res.error?.includes("menunggu pembayaran");
+          toast.error("Gagal memproses pesanan", {
+            description: res.error,
+            action: isPendingDuplicate
+              ? {
+                  label: "Lihat Pesanan",
+                  onClick: () => router.push("/orders"),
+                }
+              : undefined,
+          });
+          if (isPendingDuplicate) {
+            setTimeout(() => {
+              router.push("/orders");
+            }, 1800);
+          }
           return;
         }
 
@@ -349,14 +363,13 @@ export function CheckoutForm({
           return;
         }
 
-        if (providerId === "manual") {
-          if (activeItems && activeItems.length > 0) {
-            activeItems.forEach((i) => removeFromCart(i.listingId, i.grindSize));
-          }
-          toast.success("Pesanan berhasil dibuat! Silakan selesaikan pembayaran via QRIS atau Transfer Bank.");
-          router.push(redirectUrl);
-          return;
+        // Semua metode pembayaran aktif (manual / static QRIS / midtrans dormant fallback)
+        if (activeItems && activeItems.length > 0) {
+          activeItems.forEach((i) => removeFromCart(i.listingId, i.grindSize));
         }
+        toast.success("Pesanan berhasil dibuat! Silakan selesaikan pembayaran via QRIS atau Transfer Bank.");
+        router.push(redirectUrl);
+        return;
 
         // [MIDTRANS DORMANT]: Dinonaktifkan sementara menunggu verifikasi entitas bisnis.
         // Aktifkan kembali blok di bawah jika akun Midtrans Production sudah aktif:

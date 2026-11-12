@@ -169,6 +169,16 @@ async function getRajaOngkirDestinationId(
   return null;
 }
 
+function formatCourierDisplayName(code?: string, rawName?: string): string {
+  const c = (code || "").toLowerCase();
+  if (c === "jne") return "JNE";
+  if (c === "tiki") return "TIKI";
+  if (c === "pos") return "POS Indonesia";
+  if (c === "sicepat") return "SiCepat";
+  if (c === "jnt" || c === "j&t") return "J&T Express";
+  return rawName || code?.toUpperCase() || "Kurir";
+}
+
 async function fetchRajaOngkirCost(
   originId: string,
   destId: string,
@@ -213,10 +223,11 @@ async function fetchRajaOngkirCost(
         const cleanEtd = c.etd
           ? `${c.etd.replace(/days?/gi, "").trim()} hari`
           : "2-3 hari";
+        const courierCode = c.code || courier;
         return {
-          id: `${c.code || courier}-${c.service.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${c.cost}`,
-          courierCode: c.code || courier,
-          courierName: c.name || courier.toUpperCase(),
+          id: `${courierCode}-${c.service.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${c.cost}`,
+          courierCode,
+          courierName: formatCourierDisplayName(courierCode, c.name),
           service: c.service,
           cost: Number(c.cost || 0),
           etd: cleanEtd,

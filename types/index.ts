@@ -191,6 +191,7 @@ export interface Listing {
   ratingAvg?: number | null;
   ratingCount?: number;
   nextRoastDate?: string | null;
+  grindOptions?: string[];
   createdAt: string;
 }
 

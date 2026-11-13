@@ -723,6 +723,7 @@ export async function createListing(
     tasteProfile:
       category.slug === "equipment" ? null : toTasteProfile(id, data, `taste-${id}`),
     nextRoastDate: data.nextRoastDate,
+    grindOptions: data.grindOptions ?? [],
     flavorTags: data.flavorTags ?? [],
   };
   mockListings.unshift(listing);
@@ -760,6 +761,7 @@ export async function updateListing(
             listing.tasteProfile?.id ?? `taste-${listing.id}`,
           ),
     nextRoastDate: data.nextRoastDate,
+    grindOptions: data.grindOptions !== undefined ? data.grindOptions : listing.grindOptions,
     flavorTags: data.flavorTags ?? listing.flavorTags ?? [],
   });
   return listing;

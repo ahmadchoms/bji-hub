@@ -417,7 +417,7 @@ export function ListingTable({ listings, className }: ListingTableProps) {
                       >
                         {listing.title}
                       </Link>
-                      <div className="flex items-center gap-1.5 mt-0.5">
+                      <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                         {isActiveBoost(listing) && (
                           <span className="text-xs font-mono text-neutral-600">
                             Boost aktif sampai{" "}
@@ -429,7 +429,7 @@ export function ListingTable({ listings, className }: ListingTableProps) {
                           </span>
                         )}
                         {listing.seller.isVerified && (
-                          <VerifiedBadge size="sm" />
+                          <VerifiedBadge size="sm" showLabel={false} className="shrink-0" />
                         )}
                       </div>
                     </div>

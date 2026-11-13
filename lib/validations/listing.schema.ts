@@ -65,6 +65,7 @@ const listingBaseSchema = z.object({
   dryingDays: z.number().int().min(0).max(100).optional().nullable(),
   roastDate: z.string().optional(),
   nextRoastDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Format tanggal tidak valid").optional().nullable().or(z.literal("")),
+  grindOptions: z.array(z.string()).optional(),
   flavorTags: z.array(z.string().max(50)).optional(),
   images: z
     .array(listingImageSchema)

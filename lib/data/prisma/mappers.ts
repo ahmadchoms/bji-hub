@@ -166,6 +166,8 @@ export function toListing(row: ListingRow): ListingWithRelations {
   if (row.tasteProfile) listing.tasteProfile = toTaste(row.tasteProfile);
   const nextRoastDate = (row as { nextRoastDate?: Date | string | null }).nextRoastDate;
   if (nextRoastDate) listing.nextRoastDate = iso(nextRoastDate as Date).slice(0, 10);
+  const grindOptions = (row as { grindOptions?: string[] }).grindOptions;
+  if (grindOptions && grindOptions.length > 0) listing.grindOptions = grindOptions;
   const flavorTags = (row as { flavorTags?: Array<{ tag: string }> }).flavorTags;
   if (flavorTags && flavorTags.length > 0) listing.flavorTags = flavorTags.map((ft) => ft.tag);
   return listing;

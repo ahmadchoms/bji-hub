@@ -162,6 +162,7 @@ model Listing {
   ratingAvg   Decimal?      @map("rating_avg") @db.Decimal(3, 2)
   ratingCount   Int           @default(0) @map("rating_count")
   nextRoastDate DateTime?     @map("next_roast_date") @db.Date
+  grindOptions  String[]      @default([]) @map("grind_options")
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @default(now()) @updatedAt
 

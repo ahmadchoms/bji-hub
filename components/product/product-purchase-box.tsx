@@ -22,10 +22,22 @@ export function ProductPurchaseBox({
   locale = "id",
 }: ProductPurchaseBoxProps) {
   const isGreenBean = listing.category.slug === "green-beans";
+  const isRoastedBean = listing.category.slug === "roasted-beans";
+
+  const availableGrindOptions =
+    isRoastedBean && listing.grindOptions && listing.grindOptions.length > 0
+      ? listing.grindOptions
+      : isRoastedBean
+      ? (GRIND_OPTIONS as unknown as string[])
+      : [];
+
+  const hasMultipleGrindOptions = isRoastedBean && availableGrindOptions.length > 1;
 
   const [quantity, setQuantity] = useState<number>(listing.minOrderQty || 1);
   const [confirmedGreenBean, setConfirmedGreenBean] = useState(false);
-  const [selectedGrind, setSelectedGrind] = useState<string>("Biji Utuh (Whole Bean)");
+  const [selectedGrind, setSelectedGrind] = useState<string>(
+    availableGrindOptions[0] || "Biji Utuh (Whole Bean)"
+  );
   const [showCalculator, setShowCalculator] = useState(false);
 
   const isOutOfStock = listing.stock === 0;
@@ -41,7 +53,7 @@ export function ProductPurchaseBox({
 
   const subtotal = Number(listing.price) * quantity;
   const directCheckoutUrl = `/checkout/${listing.slug}?qty=${quantity}${
-    !isGreenBean && selectedGrind ? `&grind=${encodeURIComponent(selectedGrind)}` : ""
+    isRoastedBean && selectedGrind ? `&grind=${encodeURIComponent(selectedGrind)}` : ""
   }`;
 
   return (
@@ -119,12 +131,12 @@ export function ProductPurchaseBox({
         </div>
       )}
 
-      {/* Grind Selector & Brew Method Matcher (COF-3) */}
-      {!isGreenBean && !isOutOfStock && (
+      {/* Grind Selector & Brew Method Matcher (COF-3) - Khusus Kategori Biji Sangrai */}
+      {isRoastedBean && !isOutOfStock && (
         <div className="space-y-2 pt-2 border-t border-neutral-200">
           <div className="flex items-center justify-between">
             <label className="text-xs font-semibold text-neutral-800">
-              Pilihan Bentuk & Gilingan:
+              {hasMultipleGrindOptions ? "Pilihan Bentuk & Gilingan:" : "Format Produk:"}
             </label>
             <button
               type="button"
@@ -136,23 +148,36 @@ export function ProductPurchaseBox({
             </button>
           </div>
 
-          <select
-            value={selectedGrind}
-            onChange={(e) => setSelectedGrind(e.target.value)}
-            className="w-full h-9 px-3 rounded-sm border border-neutral-300 bg-white text-xs font-medium text-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-400 cursor-pointer"
-          >
-            {GRIND_OPTIONS.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
-            ))}
-          </select>
+          {hasMultipleGrindOptions ? (
+            <select
+              value={selectedGrind}
+              onChange={(e) => setSelectedGrind(e.target.value)}
+              className="w-full h-9 px-3 rounded-sm border border-neutral-300 bg-white text-xs font-medium text-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-400 cursor-pointer"
+            >
+              {availableGrindOptions.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div className="flex items-center justify-between p-2.5 bg-neutral-100 rounded border border-neutral-200 text-xs">
+              <span className="font-semibold text-neutral-900">
+                {availableGrindOptions[0] || "Biji Utuh (Whole Bean)"}
+              </span>
+              <span className="text-xs text-neutral-600 font-medium italic">
+                Hanya Biji Utuh
+              </span>
+            </div>
+          )}
 
           {showCalculator && (
             <div className="pt-2 animate-in fade-in-50">
               <BrewCalculator
                 onSelectGrind={(grind) => {
-                  setSelectedGrind(grind);
+                  if (availableGrindOptions.includes(grind)) {
+                    setSelectedGrind(grind);
+                  }
                   setShowCalculator(false);
                 }}
               />
@@ -247,7 +272,7 @@ export function ProductPurchaseBox({
                 unit: listing.unit,
                 minOrderQty: listing.minOrderQty,
                 quantity: quantity,
-                grindSize: isGreenBean ? undefined : selectedGrind,
+                grindSize: isRoastedBean ? selectedGrind : undefined,
                 imageUrl: listing.images?.[0]?.url,
                 sellerId: listing.sellerId,
                 sellerName: listing.seller.businessName,

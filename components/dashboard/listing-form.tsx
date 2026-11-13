@@ -8,6 +8,7 @@ import {
 } from "@/lib/validations/listing.schema";
 import { Category, Producer } from "@/types";
 import { COFFEE_VARIETIES } from "@/lib/coffee/taxonomy";
+import { GRIND_OPTIONS } from "@/lib/coffee/brew-methods";
 import { FormField } from "@/components/shared/form-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -177,6 +178,9 @@ export function ListingForm({
       stock: 100,
       varieties: [],
       flavorTags: [],
+      grindOptions: defaultValues?.grindOptions?.length
+        ? defaultValues.grindOptions
+        : (GRIND_OPTIONS as unknown as string[]),
       ...defaultValues,
     },
   });
@@ -210,6 +214,10 @@ export function ListingForm({
     selectedCategory?.slug === "green-beans" ||
     selectedCategory?.name?.toLowerCase().includes("green") ||
     false;
+  const isRoastedBean =
+    selectedCategory?.slug === "roasted-beans" ||
+    selectedCategory?.name?.toLowerCase().includes("roasted") ||
+    false;
 
   const onSubmit = async (data: ListingFormValues) => {
     // Validate price tiers monotonic constraint if present (J3)
@@ -225,6 +233,10 @@ export function ListingForm({
         description: "Paket cicip/bundle harus terdiri dari 2 hingga 5 varian produk.",
       });
       return;
+    }
+
+    if (!isRoastedBean) {
+      data.grindOptions = [];
     }
 
     try {
@@ -300,6 +312,7 @@ export function ListingForm({
 
   const selectedCategoryName = selectedCategory?.name;
   const isEquipment = selectedCategory?.slug === "equipment";
+  const currentGrindOptions = watch("grindOptions") ?? (GRIND_OPTIONS as unknown as string[]);
 
   const selectedStatus = watch("status");
   const selectedStatusLabel = STATUS_OPTIONS.find(
@@ -1140,6 +1153,88 @@ export function ListingForm({
                   placeholder="https://storage.example.com/coa/gayo-lot-1.pdf"
                 />
               </FormField>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3c. Layanan Bentuk & Gilingan untuk Pembeli (Hanya Roasted Beans) */}
+      {isRoastedBean && (
+        <div className="border border-neutral-300 bg-surface-base rounded-sm p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-display text-lg text-neutral-900 font-semibold">
+                Layanan Bentuk & Gilingan (Grind Options)
+              </h3>
+              <p className="text-xs text-neutral-600 mt-0.5">
+                Atur apakah pembeli bisa memilih varian gilingan atau produk ini hanya dijual dalam bentuk biji utuh (whole bean).
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant={currentGrindOptions.length === 1 && currentGrindOptions[0] === "Biji Utuh (Whole Bean)" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setValue("grindOptions", ["Biji Utuh (Whole Bean)"], { shouldValidate: true })}
+                className="text-xs coarse:min-h-11 cursor-pointer"
+              >
+                Hanya Biji Utuh (Whole Bean Only)
+              </Button>
+              <Button
+                type="button"
+                variant={currentGrindOptions.length === GRIND_OPTIONS.length ? "default" : "outline"}
+                size="sm"
+                onClick={() => setValue("grindOptions", [...GRIND_OPTIONS], { shouldValidate: true })}
+                className="text-xs coarse:min-h-11 cursor-pointer"
+              >
+                Semua Opsi Gilingan Tersedia
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 border-t border-neutral-200">
+              {GRIND_OPTIONS.map((option) => {
+                const isChecked = currentGrindOptions.includes(option);
+                return (
+                  <label
+                    key={option}
+                    className={cn(
+                      "flex items-start gap-2.5 p-3 rounded border text-xs cursor-pointer transition-colors",
+                      isChecked
+                        ? "border-primary-600 bg-primary-50/40 text-neutral-900 font-medium"
+                        : "border-neutral-200 bg-neutral-50/60 text-neutral-600 hover:bg-neutral-100/60"
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={(e) => {
+                        let next: string[];
+                        if (e.target.checked) {
+                          next = [...currentGrindOptions, option];
+                        } else {
+                          next = currentGrindOptions.filter((o) => o !== option);
+                          if (next.length === 0) {
+                            next = ["Biji Utuh (Whole Bean)"];
+                          }
+                        }
+                        setValue("grindOptions", next, { shouldValidate: true });
+                      }}
+                      className="mt-0.5 h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                    />
+                    <div>
+                      <span className="block font-semibold">{option}</span>
+                      <span className="text-xs text-neutral-600">
+                        {option === "Biji Utuh (Whole Bean)"
+                          ? "Biji kopi utuh siap giling sendiri di rumah"
+                          : "Gilingan gratis disesuaikan alat seduh pembeli"}
+                      </span>
+                    </div>
+                  </label>
+                );
+              })}
             </div>
           </div>
         </div>

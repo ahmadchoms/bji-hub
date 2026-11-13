@@ -175,6 +175,7 @@ export const sellers: SellerMethods = {
               stock: data.stock ?? 100,
               status: data.status,
               nextRoastDate: data.nextRoastDate ? new Date(data.nextRoastDate) : null,
+              grindOptions: data.grindOptions ?? [],
               tasteProfile: hasTasteProfile(data, category.slug) ? { create: tasteData(data) } : undefined,
               images: { create: imageRows(data) },
               ...(data.flavorTags && data.flavorTags.length > 0
@@ -215,6 +216,7 @@ export const sellers: SellerMethods = {
           minOrderQty: data.minOrderQty,
           ...(data.stock !== undefined ? { stock: data.stock } : {}),
           ...(data.nextRoastDate !== undefined ? { nextRoastDate: data.nextRoastDate ? new Date(data.nextRoastDate) : null } : {}),
+          ...(data.grindOptions !== undefined ? { grindOptions: data.grindOptions } : {}),
           categoryId: category.id,
           // A listing suspended by an admin cannot be reactivated by the seller.
           status: listing.status === "suspended" ? "suspended" : data.status,

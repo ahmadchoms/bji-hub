@@ -14,7 +14,7 @@ const productionSchema = z.object({
   MIDTRANS_IS_PRODUCTION: z.enum(["true", "false"]).optional(),
   COOKIE_SECRET: z.string().min(32, "COOKIE_SECRET wajib diisi minimal 32 karakter di production"),
   NEXT_PUBLIC_APP_URL: z.string().optional(),
-  PAYMENT_PROVIDER: z.enum(["midtrans", "mock"]).optional().default("midtrans"),
+  PAYMENT_PROVIDER: z.enum(["manual", "midtrans", "mock"]).optional().default("manual"),
   NEXT_PUBLIC_GOOGLE_CLIENT_ID: z.string().optional(),
   NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
   HEALTH_CHECK_TOKEN: z.string().optional(),

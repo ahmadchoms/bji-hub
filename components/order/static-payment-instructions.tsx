@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import type { Order } from "@/types";
 import { formatRupiah } from "@/components/shared/price-text";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import {
   RefreshCw,
   Loader2,
   AlertCircle,
+  Download,
 } from "lucide-react";
 
 interface StaticPaymentInstructionsProps {
@@ -27,14 +29,9 @@ interface StaticPaymentInstructionsProps {
 
 const BANK_ACCOUNTS = [
   {
-    bankName: "BCA",
-    accountNumber: "1234567890",
-    accountHolder: "PT BIJI HUB INDONESIA",
-  },
-  {
-    bankName: "Mandiri",
-    accountNumber: "9876543210",
-    accountHolder: "PT BIJI HUB INDONESIA",
+    bankName: "SeaBank",
+    accountNumber: "901424699198",
+    accountHolder: "B.JI MARKETPLACE",
   },
 ];
 
@@ -157,7 +154,7 @@ export function StaticPaymentInstructions({
             }`}
           >
             <Building2 className="w-4 h-4" />
-            Transfer Bank Manual (BCA / Mandiri)
+            Transfer Bank Manual (SeaBank / Antar-Bank)
           </button>
         </div>
 
@@ -165,67 +162,37 @@ export function StaticPaymentInstructions({
         {activeTab === "qris" && (
           <div className="space-y-4">
             <div className="flex flex-col md:flex-row items-center gap-6 p-4 bg-neutral-50 border border-neutral-200 rounded-lg">
-              {/* QR Box SVG Rendering */}
+              {/* QR Box Gopay Merchant */}
               <div className="bg-white p-3 rounded-lg border border-neutral-300 shadow-xs flex flex-col items-center shrink-0">
-                <div className="w-48 h-48 sm:w-52 sm:h-52 bg-white flex flex-col items-center justify-between p-2 border border-neutral-200 rounded">
-                  <div className="text-xs font-black text-rose-700 tracking-wider flex items-center gap-1">
-                    <span className="px-1 py-0.5 bg-rose-700 text-white rounded font-sans font-black text-xs">
-                      QRIS
-                    </span>
-                    <span>STANDAR PEMBAYARAN</span>
+                <div className="w-56 sm:w-64 bg-white flex flex-col items-center p-2 border border-neutral-200 rounded">
+                  <div className="relative w-52 h-72 sm:w-60 sm:h-84 overflow-hidden rounded">
+                    <Image
+                      src="/assets/qris.jpeg"
+                      alt="QRIS B.JI MARKETPLACE"
+                      fill
+                      className="object-contain"
+                      sizes="(max-width: 640px) 208px, 240px"
+                      priority
+                    />
                   </div>
-
-                  {/* Representative High-contrast QR pattern */}
-                  <svg
-                    className="w-36 h-36 sm:w-40 sm:h-40 text-neutral-900"
-                    viewBox="0 0 100 100"
-                    fill="currentColor"
-                    role="img"
-                    aria-label="QRIS Code Biji Hub"
-                  >
-                    {/* Top-Left Finder */}
-                    <rect x="5" y="5" width="30" height="30" rx="3" fill="black" />
-                    <rect x="10" y="10" width="20" height="20" rx="2" fill="white" />
-                    <rect x="15" y="15" width="10" height="10" rx="1" fill="black" />
-
-                    {/* Top-Right Finder */}
-                    <rect x="65" y="5" width="30" height="30" rx="3" fill="black" />
-                    <rect x="70" y="10" width="20" height="20" rx="2" fill="white" />
-                    <rect x="75" y="15" width="10" height="10" rx="1" fill="black" />
-
-                    {/* Bottom-Left Finder */}
-                    <rect x="5" y="65" width="30" height="30" rx="3" fill="black" />
-                    <rect x="10" y="70" width="20" height="20" rx="2" fill="white" />
-                    <rect x="15" y="75" width="10" height="10" rx="1" fill="black" />
-
-                    {/* Data dots pattern */}
-                    <rect x="42" y="8" width="6" height="6" />
-                    <rect x="52" y="8" width="6" height="6" />
-                    <rect x="42" y="18" width="6" height="6" />
-                    <rect x="52" y="24" width="6" height="6" />
-                    <rect x="10" y="42" width="6" height="6" />
-                    <rect x="20" y="42" width="6" height="6" />
-                    <rect x="30" y="42" width="6" height="6" />
-                    <rect x="42" y="42" width="16" height="16" rx="2" fill="#2d6a4f" />
-                    <rect x="65" y="42" width="6" height="6" />
-                    <rect x="75" y="42" width="6" height="6" />
-                    <rect x="85" y="42" width="6" height="6" />
-                    <rect x="42" y="65" width="6" height="6" />
-                    <rect x="52" y="65" width="6" height="6" />
-                    <rect x="65" y="65" width="6" height="6" />
-                    <rect x="75" y="75" width="6" height="6" />
-                    <rect x="85" y="85" width="6" height="6" />
-                    <rect x="65" y="85" width="6" height="6" />
-                    <rect x="52" y="80" width="6" height="6" />
-                  </svg>
-
-                  <div className="text-xs font-bold text-neutral-800 text-center">
-                    BIJI HUB INDONESIA
+                  <div className="text-xs font-bold text-neutral-900 text-center mt-2">
+                    B.JI MARKETPLACE
                   </div>
                 </div>
-                <span className="text-xs text-neutral-600 mt-2 font-mono">
-                  NMID: ID1020000000000
-                </span>
+                <div className="flex items-center justify-between w-full px-1 mt-2 text-xs">
+                  <span className="text-neutral-600 font-mono">
+                    NMID: ID1026640649103
+                  </span>
+                  <a
+                    href="/assets/qris.jpeg"
+                    download="QRIS-BJI-MARKETPLACE.jpeg"
+                    className="inline-flex items-center gap-1 text-primary-700 hover:text-primary-800 font-semibold underline ml-2"
+                    title="Unduh gambar QRIS untuk discan dari galeri HP"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Unduh QR</span>
+                  </a>
+                </div>
               </div>
 
               {/* QR Instructions */}
@@ -235,13 +202,13 @@ export function StaticPaymentInstructions({
                 </p>
                 <ol className="list-decimal pl-4 space-y-1.5 leading-relaxed text-neutral-600">
                   <li>
-                    Buka aplikasi <strong>m-Banking</strong> (BCA, Mandiri, BRI, BNI, Jago, dll.) atau <strong>e-Wallet</strong> (GoPay, OVO, Dana, ShopeePay).
+                    Buka aplikasi <strong>m-Banking</strong> (BCA, Mandiri, BRI, BNI, SeaBank, Jago, dll.) atau <strong>e-Wallet</strong> (GoPay, OVO, Dana, ShopeePay).
                   </li>
                   <li>
-                    Pilih menu <strong>Bayar / Scan QRIS</strong> dan arahkan kamera ke barcode di samping.
+                    Pilih menu <strong>Bayar / Scan QRIS</strong> dan arahkan kamera ke barcode di samping (atau unduh gambar QR di atas dan scan dari galeri foto).
                   </li>
                   <li>
-                    Pastikan nama merchant adalah <strong>BIJI HUB INDONESIA</strong>.
+                    Pastikan nama merchant adalah <strong>B.JI MARKETPLACE</strong> (NMID: ID1026640649103).
                   </li>
                   <li>
                     Masukkan nominal transfer tepat sebesar{" "}
@@ -251,7 +218,7 @@ export function StaticPaymentInstructions({
                     .
                   </li>
                   <li>
-                    Selesaikan transaksi dan <strong>simpan bukti transfer (screenshot)</strong>.
+                    Selesaikan transaksi dan <strong>simpan bukti transfer (screenshot)</strong> untuk dikonfirmasi via WhatsApp ke admin di bawah.
                   </li>
                 </ol>
               </div>
@@ -263,7 +230,7 @@ export function StaticPaymentInstructions({
         {activeTab === "bank" && (
           <div className="space-y-3">
             <p className="text-xs text-neutral-600">
-              Silakan lakukan transfer antar-bank ke salah satu rekening resmi Biji Hub berikut:
+              Silakan lakukan transfer antar-bank atau transfer e-wallet ke rekening resmi berikut:
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {BANK_ACCOUNTS.map((acc) => (
@@ -283,7 +250,7 @@ export function StaticPaymentInstructions({
                   <div className="space-y-0.5">
                     <span className="text-xs text-neutral-600">Nomor Rekening:</span>
                     <div className="flex items-center justify-between gap-2 bg-white px-2.5 py-1.5 rounded border border-neutral-300">
-                      <span className="font-mono font-bold text-sm text-neutral-900">
+                      <span className="font-mono font-bold text-base text-neutral-900 tracking-wide">
                         {acc.accountNumber}
                       </span>
                       <Button

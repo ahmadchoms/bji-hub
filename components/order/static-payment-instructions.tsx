@@ -165,7 +165,7 @@ export function StaticPaymentInstructions({
               {/* QR Box Gopay Merchant */}
               <div className="bg-white p-3 rounded-lg border border-neutral-300 shadow-xs flex flex-col items-center shrink-0">
                 <div className="w-56 sm:w-64 bg-white flex flex-col items-center p-2 border border-neutral-200 rounded">
-                  <div className="relative w-52 h-72 sm:w-60 sm:h-84 overflow-hidden rounded">
+                  <div className="relative w-52 h-64 sm:w-60 sm:h-72 overflow-hidden rounded">
                     <Image
                       src="/assets/qris.jpeg"
                       alt="QRIS B.JI MARKETPLACE"

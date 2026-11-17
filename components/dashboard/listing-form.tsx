@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Save, Plus, Trash2, Package, Layers } from "lucide-react";
+import { Loader2, Save, Plus, Trash2, Package, Layers, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import {
@@ -302,10 +302,13 @@ export function ListingForm({
       );
       router.push("/dashboard/listing");
       router.refresh();
-    } catch {
-      // ignore: UI error toast already handled
+    } catch (err) {
+      console.error("Gagal menyimpan produk:", err);
       toast.error("Gagal menyimpan produk", {
-        description: "Terjadi kesalahan. Coba lagi.",
+        description:
+          err instanceof Error
+            ? err.message
+            : "Terjadi kesalahan. Coba lagi.",
       });
     }
   };
@@ -1353,12 +1356,15 @@ export function ListingForm({
                         : [...currentVarieties, v.id];
                       setValue("varieties", updated, { shouldValidate: true });
                     }}
-                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors coarse:min-h-11 ${
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 coarse:min-h-11 cursor-pointer active:scale-95 ${
                       isSelected
-                        ? "bg-primary-800 text-white border-primary-800"
-                        : "bg-neutral-100 text-neutral-700 border-neutral-300 hover:bg-neutral-200"
+                        ? "bg-primary-900 text-white border-primary-900 shadow-xs ring-1 ring-primary-900"
+                        : "bg-neutral-100 text-neutral-700 border-neutral-300 hover:bg-neutral-200 hover:text-neutral-900"
                     }`}
                   >
+                    {isSelected && (
+                      <Check className="w-3.5 h-3.5 text-secondary-200 shrink-0" />
+                    )}
                     {v.name}
                   </button>
                 );

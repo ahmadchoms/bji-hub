@@ -151,46 +151,49 @@ export const sellers: SellerMethods = {
     ]);
     if (!seller || !category) return null;
 
-    return await prisma.$transaction(async (tx) => {
-      if (typeof maxListings === "number") {
-        const count = await tx.listing.count({ where: { sellerId } });
-        if (count >= maxListings) return null;
-      }
-
-      for (let attempt = 0; attempt < 5; attempt++) {
-        const root = slugify(data.title) || "produk";
-        const existing = await tx.listing.findMany({ where: { slug: { startsWith: root } }, select: { slug: true } });
-        const slug = uniqueSlug(data.title, new Set(existing.map((row) => row.slug)));
-        try {
-          const row = await tx.listing.create({
-            data: {
-              slug,
-              sellerId,
-              categoryId: category.id,
-              title: data.title,
-              description: data.description,
-              price: data.price,
-              unit: data.unit,
-              minOrderQty: data.minOrderQty,
-              stock: data.stock ?? 100,
-              status: data.status,
-              nextRoastDate: data.nextRoastDate ? new Date(data.nextRoastDate) : null,
-              grindOptions: data.grindOptions ?? [],
-              tasteProfile: hasTasteProfile(data, category.slug) ? { create: tasteData(data) } : undefined,
-              images: { create: imageRows(data) },
-              ...(data.flavorTags && data.flavorTags.length > 0
-                ? { flavorTags: { create: data.flavorTags.map((tag) => ({ tag })) } }
-                : {}),
-            },
-            include: listingInclude,
-          });
-          return toListing(row);
-        } catch (error) {
-          if (!isUniqueViolation(error)) throw error;
+    return await prisma.$transaction(
+      async (tx) => {
+        if (typeof maxListings === "number") {
+          const count = await tx.listing.count({ where: { sellerId } });
+          if (count >= maxListings) return null;
         }
-      }
-      throw new Error("Could not allocate a unique slug for the listing");
-    });
+
+        for (let attempt = 0; attempt < 5; attempt++) {
+          const root = slugify(data.title) || "produk";
+          const existing = await tx.listing.findMany({ where: { slug: { startsWith: root } }, select: { slug: true } });
+          const slug = uniqueSlug(data.title, new Set(existing.map((row) => row.slug)));
+          try {
+            const row = await tx.listing.create({
+              data: {
+                slug,
+                sellerId,
+                categoryId: category.id,
+                title: data.title,
+                description: data.description,
+                price: data.price,
+                unit: data.unit,
+                minOrderQty: data.minOrderQty,
+                stock: data.stock ?? 100,
+                status: data.status,
+                nextRoastDate: data.nextRoastDate ? new Date(data.nextRoastDate) : null,
+                grindOptions: data.grindOptions ?? [],
+                tasteProfile: hasTasteProfile(data, category.slug) ? { create: tasteData(data) } : undefined,
+                images: { create: imageRows(data) },
+                ...(data.flavorTags && data.flavorTags.length > 0
+                  ? { flavorTags: { create: data.flavorTags.map((tag) => ({ tag })) } }
+                  : {}),
+              },
+              include: listingInclude,
+            });
+            return toListing(row);
+          } catch (error) {
+            if (!isUniqueViolation(error)) throw error;
+          }
+        }
+        throw new Error("Could not allocate a unique slug for the listing");
+      },
+      { maxWait: 10000, timeout: 25000 },
+    );
   },
 
   /** Returns null when the listing does not exist or belongs to another seller. */
@@ -203,34 +206,37 @@ export const sellers: SellerMethods = {
     if (!listing || listing.sellerId !== sellerId || !category) return null;
 
     const taste = tasteData(data);
-    const row = await prisma.$transaction(async (tx) => {
-      await tx.listingImage.deleteMany({ where: { listingId } });
-      await tx.listingFlavorTag.deleteMany({ where: { listingId } });
-      return tx.listing.update({
-        where: { id: listingId },
-        data: {
-          title: data.title,
-          description: data.description,
-          price: data.price,
-          unit: data.unit,
-          minOrderQty: data.minOrderQty,
-          ...(data.stock !== undefined ? { stock: data.stock } : {}),
-          ...(data.nextRoastDate !== undefined ? { nextRoastDate: data.nextRoastDate ? new Date(data.nextRoastDate) : null } : {}),
-          ...(data.grindOptions !== undefined ? { grindOptions: data.grindOptions } : {}),
-          categoryId: category.id,
-          // A listing suspended by an admin cannot be reactivated by the seller.
-          status: listing.status === "suspended" ? "suspended" : data.status,
-          images: { create: imageRows(data) },
-          tasteProfile: hasTasteProfile(data, category.slug)
-            ? { upsert: { create: taste, update: taste } }
-            : undefined,
-          ...(data.flavorTags && data.flavorTags.length > 0
-            ? { flavorTags: { create: data.flavorTags.map((tag) => ({ tag })) } }
-            : {}),
-        },
-        include: listingInclude,
-      });
-    });
+    const row = await prisma.$transaction(
+      async (tx) => {
+        await tx.listingImage.deleteMany({ where: { listingId } });
+        await tx.listingFlavorTag.deleteMany({ where: { listingId } });
+        return tx.listing.update({
+          where: { id: listingId },
+          data: {
+            title: data.title,
+            description: data.description,
+            price: data.price,
+            unit: data.unit,
+            minOrderQty: data.minOrderQty,
+            ...(data.stock !== undefined ? { stock: data.stock } : {}),
+            ...(data.nextRoastDate !== undefined ? { nextRoastDate: data.nextRoastDate ? new Date(data.nextRoastDate) : null } : {}),
+            ...(data.grindOptions !== undefined ? { grindOptions: data.grindOptions } : {}),
+            categoryId: category.id,
+            // A listing suspended by an admin cannot be reactivated by the seller.
+            status: listing.status === "suspended" ? "suspended" : data.status,
+            images: { create: imageRows(data) },
+            tasteProfile: hasTasteProfile(data, category.slug)
+              ? { upsert: { create: taste, update: taste } }
+              : undefined,
+            ...(data.flavorTags && data.flavorTags.length > 0
+              ? { flavorTags: { create: data.flavorTags.map((tag) => ({ tag })) } }
+              : {}),
+          },
+          include: listingInclude,
+        });
+      },
+      { maxWait: 10000, timeout: 25000 },
+    );
     return toListing(row);
   },
 };

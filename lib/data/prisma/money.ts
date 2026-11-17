@@ -26,23 +26,26 @@ export const money: MoneyMethods = {
     if (!listing || listing.sellerId !== sellerId) return null;
 
     const now = Date.now();
-    const payment = await prisma.$transaction(async (tx) => {
-      await tx.listing.update({
-        where: { id: listingId },
-        data: { isBoosted: true, boostUntil: new Date(now + days * DAY_MS) },
-      });
-      return tx.payment.create({
-        data: {
-          sellerId,
-          listingId,
-          type: "boost",
-          amount,
-          status: "paid",
-          midtransOrderId: orderId(amount === 0 ? "CREDIT-BOOST" : "MOCK-BOOST", now),
-          paidAt: new Date(now),
-        },
-      });
-    });
+    const payment = await prisma.$transaction(
+      async (tx) => {
+        await tx.listing.update({
+          where: { id: listingId },
+          data: { isBoosted: true, boostUntil: new Date(now + days * DAY_MS) },
+        });
+        return tx.payment.create({
+          data: {
+            sellerId,
+            listingId,
+            type: "boost",
+            amount,
+            status: "paid",
+            midtransOrderId: orderId(amount === 0 ? "CREDIT-BOOST" : "MOCK-BOOST", now),
+            paidAt: new Date(now),
+          },
+        });
+      },
+      { maxWait: 10000, timeout: 25000 },
+    );
     return toPayment(payment);
   },
 
@@ -57,47 +60,50 @@ export const money: MoneyMethods = {
     if (!seller) return null;
 
     const now = Date.now();
-    return prisma.$transaction(async (tx) => {
-      const mine = (await tx.subscription.findMany({ where: { sellerId: input.sellerId } })).map(toSubscription);
+    return prisma.$transaction(
+      async (tx) => {
+        const mine = (await tx.subscription.findMany({ where: { sellerId: input.sellerId } })).map(toSubscription);
 
-      let subscription;
-      if (input.kind === "renew") {
-        const current = resolvePlanState(mine, now).subscription;
-        if (!current || current.tier !== input.tier) return null;
-        subscription = await tx.subscription.update({
-          where: { id: current.id },
-          data: { expiresAt: new Date(input.expiresAt), cancelAtPeriodEnd: false },
-        });
-      } else {
-        await tx.subscription.updateMany({
-          where: { sellerId: input.sellerId, status: "active" },
-          data: { status: "canceled" },
-        });
-        subscription = await tx.subscription.create({
+        let subscription;
+        if (input.kind === "renew") {
+          const current = resolvePlanState(mine, now).subscription;
+          if (!current || current.tier !== input.tier) return null;
+          subscription = await tx.subscription.update({
+            where: { id: current.id },
+            data: { expiresAt: new Date(input.expiresAt), cancelAtPeriodEnd: false },
+          });
+        } else {
+          await tx.subscription.updateMany({
+            where: { sellerId: input.sellerId, status: "active" },
+            data: { status: "canceled" },
+          });
+          subscription = await tx.subscription.create({
+            data: {
+              sellerId: input.sellerId,
+              tier: input.tier,
+              status: "active",
+              startedAt: new Date(now),
+              expiresAt: new Date(input.expiresAt),
+            },
+          });
+        }
+        await tx.sellerProfile.update({ where: { id: input.sellerId }, data: { tier: input.tier } });
+
+        const payment = await tx.payment.create({
           data: {
             sellerId: input.sellerId,
-            tier: input.tier,
-            status: "active",
-            startedAt: new Date(now),
-            expiresAt: new Date(input.expiresAt),
+            subscriptionId: subscription.id,
+            type: "subscription",
+            amount: input.amount,
+            status: "paid",
+            midtransOrderId: orderId("MOCK-SUB", now),
+            paidAt: new Date(now),
           },
         });
-      }
-      await tx.sellerProfile.update({ where: { id: input.sellerId }, data: { tier: input.tier } });
-
-      const payment = await tx.payment.create({
-        data: {
-          sellerId: input.sellerId,
-          subscriptionId: subscription.id,
-          type: "subscription",
-          amount: input.amount,
-          status: "paid",
-          midtransOrderId: orderId("MOCK-SUB", now),
-          paidAt: new Date(now),
-        },
-      });
-      return { subscription: toSubscription(subscription), payment: toPayment(payment) };
-    });
+        return { subscription: toSubscription(subscription), payment: toPayment(payment) };
+      },
+      { maxWait: 10000, timeout: 25000 },
+    );
   },
 
   async setCancelAtPeriodEnd(sellerId, value) {

@@ -221,26 +221,22 @@ export function DashboardShell({
       >
         <div
           className={cn(
-            "flex items-center border-b border-neutral-300",
-            collapsed
-              ? "flex-col justify-center gap-2 py-2.5 px-2"
-              : "h-14 justify-between px-4",
+            "flex h-14 items-center border-b border-neutral-300",
+            collapsed ? "justify-center px-2" : "justify-between px-4",
           )}
         >
           <Logo size="sm" iconOnly={collapsed} />
-          <button
-            type="button"
-            onClick={toggleCollapse}
-            className="flex items-center justify-center text-neutral-600 hover:text-neutral-900 rounded-md p-1.5 hover:bg-neutral-200/60 transition-colors coarse:min-h-11 coarse:min-w-11"
-            title={collapsed ? "Perlebar Sidebar" : "Ciutkan Sidebar"}
-            aria-label={collapsed ? "Perlebar Sidebar" : "Ciutkan Sidebar"}
-          >
-            {collapsed ? (
-              <PanelLeft className="h-4 w-4" />
-            ) : (
+          {!collapsed && (
+            <button
+              type="button"
+              onClick={toggleCollapse}
+              className="flex items-center justify-center text-neutral-600 hover:text-neutral-900 rounded-md p-1.5 hover:bg-neutral-200/60 transition-colors coarse:min-h-11 coarse:min-w-11 cursor-pointer"
+              title="Ciutkan Sidebar"
+              aria-label="Ciutkan Sidebar"
+            >
               <PanelLeftClose className="h-4 w-4" />
-            )}
-          </button>
+            </button>
+          )}
         </div>
 
         <nav
@@ -250,7 +246,29 @@ export function DashboardShell({
           <NavLinks nav={nav} rootHref={rootHref} collapsed={collapsed} />
         </nav>
 
-        <div className="border-t border-neutral-300 p-2">
+        <div className="border-t border-neutral-300 p-2 space-y-1">
+          <button
+            type="button"
+            onClick={toggleCollapse}
+            title={collapsed ? "Perlebar Sidebar" : "Ciutkan Sidebar"}
+            aria-label={collapsed ? "Perlebar Sidebar" : "Ciutkan Sidebar"}
+            className={cn(
+              "cursor-pointer font-medium flex text-sm text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/60 transition-colors rounded-md",
+              focusRing,
+              collapsed
+                ? "h-10 w-10 mx-auto items-center justify-center coarse:min-h-11 coarse:min-w-11"
+                : "min-h-10 w-full items-center gap-2.5 px-3 text-left coarse:min-h-11",
+            )}
+          >
+            {collapsed ? (
+              <PanelLeft className="h-5 w-5 shrink-0" />
+            ) : (
+              <>
+                <PanelLeftClose className="h-4 w-4 shrink-0" />
+                <span>Ciutkan Sidebar</span>
+              </>
+            )}
+          </button>
           <LogoutButton collapsed={collapsed} />
         </div>
       </aside>

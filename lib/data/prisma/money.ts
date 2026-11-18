@@ -80,7 +80,7 @@ export const money: MoneyMethods = {
               data: {
                 sellerId: input.sellerId,
                 tier: input.tier,
-                status: "pending",
+                status: "past_due",
                 startedAt: new Date(now),
                 expiresAt: new Date(input.expiresAt),
               },
@@ -97,7 +97,7 @@ export const money: MoneyMethods = {
             data: {
               sellerId: input.sellerId,
               tier: input.tier,
-              status: isMidtransActive ? "pending" : "active",
+              status: isMidtransActive ? "past_due" : "active",
               startedAt: new Date(now),
               expiresAt: new Date(input.expiresAt),
             },

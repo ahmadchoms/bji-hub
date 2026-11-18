@@ -5,7 +5,7 @@ import { z } from "zod";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 import { requireSeller } from "@/lib/auth/session";
 import { isActiveBoost } from "@/lib/boost";
-import { BOOST_OPTIONS, getPlan } from "@/lib/plans";
+import { BOOST_OPTIONS, boostOptionLabel, getPlan } from "@/lib/plans";
 import { boostSchema } from "@/lib/validations/boost.schema";
 import { listingSchema } from "@/lib/validations/listing.schema";
 import { sellerProfileSchema } from "@/lib/validations/seller-profile.schema";
@@ -14,6 +14,7 @@ import {
   createListing,
   getCategories,
   getListingById,
+  getSellerById,
   getSellerPayments,
   getSellerPlanState,
   getSellerStats,
@@ -291,7 +292,7 @@ export async function purchaseBoostAction(
       items: [
         {
           id: `boost-${parsed.data.duration}`,
-          name: `Boost Listing (${option.label})`,
+          name: `Boost Listing (${boostOptionLabel(option)})`,
           price: charge.amount,
           quantity: 1,
         },

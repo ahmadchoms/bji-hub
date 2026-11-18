@@ -693,7 +693,9 @@ export async function createListing(
 ): Promise<ListingWithRelations | null> {
   await simulateDelay(300);
   const seller = mockSellers.find((s) => s.id === sellerId);
-  const category = mockCategories.find((c) => c.id === data.categoryId);
+  const category = mockCategories.find(
+    (c) => c.id === data.categoryId || c.slug === data.categorySlug || c.slug === data.categoryId,
+  );
   if (!seller || !category) return null;
 
   if (typeof maxListings === "number") {
@@ -738,7 +740,9 @@ export async function updateListing(
 ): Promise<ListingWithRelations | null> {
   await simulateDelay(300);
   const listing = mockListings.find((l) => l.id === listingId);
-  const category = mockCategories.find((c) => c.id === data.categoryId);
+  const category = mockCategories.find(
+    (c) => c.id === data.categoryId || c.slug === data.categorySlug || c.slug === data.categoryId,
+  );
   if (!listing || listing.sellerId !== sellerId || !category) return null;
 
   Object.assign(listing, {

@@ -239,6 +239,10 @@ export function ListingForm({
       data.grindOptions = [];
     }
 
+    if (selectedCategory?.slug) {
+      data.categorySlug = selectedCategory.slug;
+    }
+
     try {
       const result = await saveListingAction(data, listingId);
       if (!result.success) {
@@ -377,9 +381,13 @@ export function ListingForm({
           >
             <Select
               value={selectedCategoryId ?? ""}
-              onValueChange={(v) =>
-                setValue("categoryId", v ?? "", { shouldValidate: true })
-              }
+              onValueChange={(v) => {
+                setValue("categoryId", v ?? "", { shouldValidate: true });
+                const cat = categories.find((c) => c.id === v);
+                if (cat?.slug) {
+                  setValue("categorySlug", cat.slug, { shouldValidate: true });
+                }
+              }}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Pilih kategori">
@@ -805,71 +813,80 @@ export function ListingForm({
             </Select>
           </FormField>
 
-          <FormField
-            label="Tingkat Sangrai (Roast Level)"
-            required
-            error={errors.roastLevel?.message}
-          >
-            <Select
-              value={watch("roastLevel") ?? "Medium"}
-              onValueChange={(v) =>
-                setValue(
-                  "roastLevel",
-                  (v as ListingFormValues["roastLevel"]) || "Medium",
-                  { shouldValidate: true },
-                )
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Pilih tingkat">
-                  {watch("roastLevel") || "Pilih tingkat"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {ROAST_LEVELS.map((l) => (
-                  <SelectItem key={l} value={l}>
-                    {l}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </FormField>
+          {!isGreenBean && (
+            <>
+              <FormField
+                label="Tingkat Sangrai (Roast Level)"
+                required={selectedStatus === "active"}
+                error={errors.roastLevel?.message}
+              >
+                <Select
+                  value={watch("roastLevel") ?? "Medium"}
+                  onValueChange={(v) =>
+                    setValue(
+                      "roastLevel",
+                      (v as ListingFormValues["roastLevel"]) || "Medium",
+                      { shouldValidate: true },
+                    )
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Pilih tingkat">
+                      {watch("roastLevel") || "Pilih tingkat"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ROAST_LEVELS.map((l) => (
+                      <SelectItem key={l} value={l}>
+                        {l}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormField>
 
-          <FormField
-            label="Tanggal Sangrai"
-            required
-            error={errors.roastDate?.message}
-            helperText={
-              hasRoastBatches
-                ? "Tanggal sangrai diturunkan otomatis dari batch pemanggangan Anda."
-                : "Tanggal pemanggangan batch kopi"
-            }
-          >
-            <Input
-              type="date"
-              max={new Date().toLocaleDateString("en-CA")}
-              readOnly={hasRoastBatches}
-              className={hasRoastBatches ? "bg-neutral-100 cursor-not-allowed text-neutral-600" : ""}
-              {...register("roastDate")}
-            />
-          </FormField>
+              <FormField
+                label="Tanggal Sangrai"
+                required={selectedStatus === "active"}
+                error={errors.roastDate?.message}
+                helperText={
+                  hasRoastBatches
+                    ? "Tanggal sangrai diturunkan otomatis dari batch pemanggangan Anda."
+                    : "Tanggal pemanggangan batch kopi"
+                }
+              >
+                <Input
+                  type="date"
+                  max={new Date().toLocaleDateString("en-CA")}
+                  readOnly={hasRoastBatches}
+                  className={hasRoastBatches ? "bg-neutral-100 cursor-not-allowed text-neutral-600" : ""}
+                  {...register("roastDate")}
+                />
+              </FormField>
 
-          <FormField
-            label="Jadwal Sangrai Berikutnya"
-            error={errors.nextRoastDate?.message}
-            helperText="Opsional: Tanggal perkiraan batch berikutnya untuk mengaktifkan antrean waitlist"
-          >
-            <Input
-              type="date"
-              min={new Date().toLocaleDateString("en-CA")}
-              {...register("nextRoastDate")}
-            />
-          </FormField>
+              <FormField
+                label="Jadwal Sangrai Berikutnya"
+                error={errors.nextRoastDate?.message}
+                helperText="Opsional: Tanggal perkiraan batch berikutnya untuk mengaktifkan antrean waitlist"
+              >
+                <Input
+                  type="date"
+                  min={new Date().toLocaleDateString("en-CA")}
+                  {...register("nextRoastDate")}
+                />
+              </FormField>
+            </>
+          )}
 
           <FormField
             label="Tahun Panen (Crop Year)"
+            required={isGreenBean && selectedStatus === "active"}
             error={errors.cropYear?.message}
-            helperText="Opsional (standar B2B, misal: 2024/2025)"
+            helperText={
+              isGreenBean
+                ? "Wajib untuk green bean aktif (standar B2B, misal: 2024/2025)"
+                : "Opsional (standar B2B, misal: 2024/2025)"
+            }
           >
             <Input
               {...register("cropYear")}

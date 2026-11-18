@@ -12,6 +12,7 @@ import { sellerProfileSchema } from "@/lib/validations/seller-profile.schema";
 import {
   activateBoost,
   createListing,
+  getCategories,
   getListingById,
   getSellerPayments,
   getSellerPlanState,
@@ -61,7 +62,26 @@ export async function saveListingAction(
   listingId?: string,
 ): Promise<ActionResult<{ id: string }>> {
   const { sellerId } = await requireSeller("/dashboard/listing");
-  const parsed = listingSchema.safeParse(input);
+
+  let enrichedInput = input;
+  if (
+    typeof input === "object" &&
+    input !== null &&
+    "categoryId" in input &&
+    typeof (input as { categoryId: unknown }).categoryId === "string"
+  ) {
+    const rawCategoryId = (input as { categoryId: string }).categoryId;
+    const rawCategorySlug = (input as { categorySlug?: unknown }).categorySlug;
+    if (!rawCategorySlug) {
+      const categories = await getCategories();
+      const cat = categories.find((c) => c.id === rawCategoryId);
+      if (cat) {
+        enrichedInput = { ...input, categorySlug: cat.slug };
+      }
+    }
+  }
+
+  const parsed = listingSchema.safeParse(enrichedInput);
   if (!parsed.success)
     return fail(
       "Data tidak valid",

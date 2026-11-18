@@ -24,6 +24,7 @@ const listingBaseSchema = z.object({
     .min(5, "Judul produk minimal 5 karakter")
     .max(120, "Judul produk maksimal 120 karakter"),
   categoryId: z.string().min(1, "Kategori wajib dipilih"),
+  categorySlug: z.string().optional(),
   description: z
     .string()
     .min(20, "Deskripsi produk minimal 20 karakter")
@@ -82,13 +83,17 @@ export const listingSchema = listingBaseSchema.superRefine((value, ctx) => {
   }
 
   const isGreenBean =
+    value.categorySlug === "green-beans" ||
     value.categoryId === "cat-1" ||
     value.categoryId === "green-beans" ||
+    value.categoryId === "de7c6d19-1109-442b-807f-02807feb8e13" ||
     value.categoryId.toLowerCase().includes("green");
 
   const isEquipment =
+    value.categorySlug === "equipment" ||
     value.categoryId === "cat-4" ||
     value.categoryId === "equipment" ||
+    value.categoryId === "63576b55-ba37-4f63-9e36-98ea446b60ac" ||
     value.categoryId.toLowerCase().includes("equipment");
 
   if (value.status === "active") {

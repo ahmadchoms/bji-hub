@@ -44,6 +44,7 @@ import { syncPaymentStatusAction } from "@/actions/subscription.actions";
 import { BoostCredits } from "@/lib/boost-credits";
 import { formatWib } from "@/lib/format-date";
 import { Loader2, RefreshCw } from "lucide-react";
+import { useSnap } from "@/hooks/use-snap";
 
 interface BillingSectionProps {
   subscription?: Subscription;
@@ -81,6 +82,7 @@ export function BillingSection({
   className,
 }: BillingSectionProps) {
   const router = useRouter();
+  const { pay: paySnap } = useSnap();
   const [boostDialogOpen, setBoostDialogOpen] = useState(false);
   const [selectedListing, setSelectedListing] = useState("");
   const [selectedDuration, setSelectedDuration] = useState("");
@@ -129,9 +131,8 @@ export function BillingSection({
       }
 
       // If Midtrans Snap token was returned, open Midtrans popup
-      if (result.data.snapToken && typeof window !== "undefined" && (window as unknown as { snap?: { pay: (token: string, options: unknown) => void } }).snap) {
-        const snap = (window as unknown as { snap: { pay: (token: string, options: unknown) => void } }).snap;
-        snap.pay(result.data.snapToken, {
+      if (result.data.snapToken) {
+        paySnap(result.data.snapToken, {
           onSuccess: () => {
             toast.success("Pembayaran berhasil!");
             router.refresh();

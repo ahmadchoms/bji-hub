@@ -223,9 +223,21 @@ export async function POST(req: NextRequest) {
 
     // If subscription payment succeeded, activate subscription
     if (nextPaymentStatus === "paid" && payment.subscriptionId) {
-      await tx.subscription.update({
+      const sub = await tx.subscription.update({
         where: { id: payment.subscriptionId },
         data: { status: "active" },
+      });
+      await tx.sellerProfile.update({
+        where: { id: payment.sellerId },
+        data: { tier: sub.tier },
+      });
+      await tx.subscription.updateMany({
+        where: {
+          sellerId: payment.sellerId,
+          status: "active",
+          id: { not: sub.id },
+        },
+        data: { status: "canceled" },
       });
     }
 

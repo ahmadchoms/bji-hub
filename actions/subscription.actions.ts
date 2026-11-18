@@ -53,12 +53,29 @@ export async function subscribePlanAction(input: unknown): Promise<
 
   let snapToken: string | null = null;
   if (amount > 0) {
-    const { getPaymentProvider } = await import("@/lib/payments");
-    const paymentRes = await getPaymentProvider().createPayment({
+    const { midtransProvider } = await import("@/lib/payments/midtrans-provider");
+    const { getSellerById } = await import("@/lib/data");
+    const seller = await getSellerById(sellerId);
+    const provider = process.env.MIDTRANS_SERVER_KEY
+      ? midtransProvider
+      : (await import("@/lib/payments")).getPaymentProvider();
+    const paymentRes = await provider.createPayment({
       orderRef: result.payment.midtransOrderId,
       amount,
-      customer: { name: "Seller", email: "seller@bijihub.com" },
-      items: [],
+      customer: {
+        name: seller?.businessName || "Seller Biji Hub",
+        email:
+          (seller as unknown as { user?: { email?: string } })?.user?.email ||
+          "seller@bijihub.com",
+      },
+      items: [
+        {
+          id: `sub-${parsed.data.tier}`,
+          name: `Langganan Biji Hub Paket ${getPlan(parsed.data.tier).name} (${parsed.data.months} Bulan)`,
+          price: amount,
+          quantity: 1,
+        },
+      ],
     });
     snapToken = paymentRes?.clientToken ?? null;
   }

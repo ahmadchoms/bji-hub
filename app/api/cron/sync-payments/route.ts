@@ -65,9 +65,21 @@ export async function GET(req: Request) {
         });
 
         if (nextStatus === "paid" && pay.subscriptionId) {
-          await tx.subscription.update({
+          const sub = await tx.subscription.update({
             where: { id: pay.subscriptionId },
             data: { status: "active" },
+          });
+          await tx.sellerProfile.update({
+            where: { id: pay.sellerId },
+            data: { tier: sub.tier },
+          });
+          await tx.subscription.updateMany({
+            where: {
+              sellerId: pay.sellerId,
+              status: "active",
+              id: { not: sub.id },
+            },
+            data: { status: "canceled" },
           });
         }
 

@@ -60,6 +60,8 @@ export const money: MoneyMethods = {
     if (!seller) return null;
 
     const now = Date.now();
+    const isMidtransActive = Boolean(process.env.MIDTRANS_SERVER_KEY && input.amount > 0);
+
     return prisma.$transaction(
       async (tx) => {
         const mine = (await tx.subscription.findMany({ where: { sellerId: input.sellerId } })).map(toSubscription);
@@ -68,26 +70,43 @@ export const money: MoneyMethods = {
         if (input.kind === "renew") {
           const current = resolvePlanState(mine, now).subscription;
           if (!current || current.tier !== input.tier) return null;
-          subscription = await tx.subscription.update({
-            where: { id: current.id },
-            data: { expiresAt: new Date(input.expiresAt), cancelAtPeriodEnd: false },
-          });
+          if (!isMidtransActive) {
+            subscription = await tx.subscription.update({
+              where: { id: current.id },
+              data: { expiresAt: new Date(input.expiresAt), cancelAtPeriodEnd: false },
+            });
+          } else {
+            subscription = await tx.subscription.create({
+              data: {
+                sellerId: input.sellerId,
+                tier: input.tier,
+                status: "pending",
+                startedAt: new Date(now),
+                expiresAt: new Date(input.expiresAt),
+              },
+            });
+          }
         } else {
-          await tx.subscription.updateMany({
-            where: { sellerId: input.sellerId, status: "active" },
-            data: { status: "canceled" },
-          });
+          if (!isMidtransActive) {
+            await tx.subscription.updateMany({
+              where: { sellerId: input.sellerId, status: "active" },
+              data: { status: "canceled" },
+            });
+          }
           subscription = await tx.subscription.create({
             data: {
               sellerId: input.sellerId,
               tier: input.tier,
-              status: "active",
+              status: isMidtransActive ? "pending" : "active",
               startedAt: new Date(now),
               expiresAt: new Date(input.expiresAt),
             },
           });
         }
-        await tx.sellerProfile.update({ where: { id: input.sellerId }, data: { tier: input.tier } });
+
+        if (!isMidtransActive) {
+          await tx.sellerProfile.update({ where: { id: input.sellerId }, data: { tier: input.tier } });
+        }
 
         const payment = await tx.payment.create({
           data: {
@@ -95,9 +114,9 @@ export const money: MoneyMethods = {
             subscriptionId: subscription.id,
             type: "subscription",
             amount: input.amount,
-            status: "paid",
-            midtransOrderId: orderId("MOCK-SUB", now),
-            paidAt: new Date(now),
+            status: isMidtransActive ? "pending" : "paid",
+            midtransOrderId: orderId(isMidtransActive ? "SUB" : input.amount === 0 ? "FREE-SUB" : "MOCK-SUB", now),
+            paidAt: isMidtransActive ? null : new Date(now),
           },
         });
         return { subscription: toSubscription(subscription), payment: toPayment(payment) };

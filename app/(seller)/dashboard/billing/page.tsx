@@ -5,6 +5,7 @@ import { PlanSection } from "@/components/dashboard/plan-section";
 import { BillingSection } from "@/components/dashboard/billing-section";
 import { getBoostCredits } from "@/lib/boost-credits";
 import { getPlan } from "@/lib/plans";
+import { SnapLoader } from "@/components/payment/snap-loader";
 
 export default async function DashboardBillingPage() {
   const { sellerId } = await requireSeller();
@@ -19,6 +20,7 @@ export default async function DashboardBillingPage() {
 
   return (
     <div className="space-y-10">
+      <SnapLoader />
       <SectionHeader
         title="Langganan & Pembayaran"
         subtitle="Kelola paket langganan, boost listing, dan riwayat pembayaran."

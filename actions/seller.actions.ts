@@ -274,13 +274,28 @@ export async function purchaseBoostAction(
 
   let snapToken: string | null = null;
   if (charge.amount > 0) {
-    const { getPaymentProvider } = await import("@/lib/payments");
-    const provider = getPaymentProvider();
+    const { midtransProvider } = await import("@/lib/payments/midtrans-provider");
+    const seller = await getSellerById(sellerId);
+    const provider = process.env.MIDTRANS_SERVER_KEY
+      ? midtransProvider
+      : (await import("@/lib/payments")).getPaymentProvider();
     const paymentRes = await provider.createPayment({
       orderRef: payment.midtransOrderId,
       amount: charge.amount,
-      customer: { name: "Seller", email: "seller@bijihub.com" },
-      items: [],
+      customer: {
+        name: seller?.businessName || "Seller Biji Hub",
+        email:
+          (seller as unknown as { user?: { email?: string } })?.user?.email ||
+          "seller@bijihub.com",
+      },
+      items: [
+        {
+          id: `boost-${parsed.data.duration}`,
+          name: `Boost Listing (${option.label})`,
+          price: charge.amount,
+          quantity: 1,
+        },
+      ],
     });
     snapToken = paymentRes?.clientToken ?? null;
   }

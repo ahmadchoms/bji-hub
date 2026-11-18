@@ -10,6 +10,7 @@ import {
   resumePlanAction,
   subscribePlanAction,
 } from "@/actions/subscription.actions";
+import { useSnap } from "@/hooks/use-snap";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -56,6 +57,7 @@ const textButton =
 
 export function PlanSection({ state, listingCount }: PlanSectionProps) {
   const router = useRouter();
+  const { pay: paySnap } = useSnap();
   const [target, setTarget] = useState<Exclude<PlanTier, "free"> | null>(null);
   const [months, setMonths] = useState<PlanMonths>(1);
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -97,21 +99,8 @@ export function PlanSection({ state, listingCount }: PlanSectionProps) {
         const result = await subscribePlanAction({ tier: target, months });
         if (!result.success) return { ok: false, message: result.error };
 
-        if (
-          result.data.snapToken &&
-          typeof window !== "undefined" &&
-          (
-            window as unknown as {
-              snap?: { pay: (token: string, options: unknown) => void };
-            }
-          ).snap
-        ) {
-          const snap = (
-            window as unknown as {
-              snap: { pay: (token: string, options: unknown) => void };
-            }
-          ).snap;
-          snap.pay(result.data.snapToken, {
+        if (result.data.snapToken) {
+          paySnap(result.data.snapToken, {
             onSuccess: () => {
               toast.success("Pembayaran langganan berhasil!");
               router.refresh();

@@ -369,7 +369,7 @@ export function OrderDetailDialog({
                     <p className="font-semibold text-neutral-900 truncate">
                       {item.title || `Produk #${item.listingId}`}
                     </p>
-                    <p className="text-[11px] text-neutral-600 mt-0.5">
+                    <p className="text-xs text-neutral-600 mt-0.5">
                       {item.quantity} {item.unit || "item"} × {formatRupiah(item.unitPrice)}
                       {item.grindSize ? ` (${item.grindSize})` : ""}
                     </p>

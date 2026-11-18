@@ -477,7 +477,7 @@ export default function CartPage() {
                         {formatRupiah(firstSelectedSellerSubtotal)}
                       </span>
                     </div>
-                    <p className="text-[11px] text-amber-800 leading-snug">
+                    <p className="text-xs text-amber-800 leading-snug">
                       Karena kota pengiriman berbeda, transaksi diselesaikan per toko. Produk dari {selectedSellerEntries.length - 1} toko lainnya tetap aman di keranjang.
                     </p>
                   </div>

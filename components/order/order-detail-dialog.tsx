@@ -358,52 +358,85 @@ export function OrderDetailDialog({
             </div>
           </div>
 
-          <div className="flex items-start gap-3">
-            {productImage ? (
-              <div className="relative w-14 h-14 rounded-md overflow-hidden bg-neutral-100 border border-neutral-200 shrink-0">
-                <Image
-                  src={productImage}
-                  alt={order.listingTitle || "Produk Kopi"}
-                  fill
-                  sizes="56px"
-                  className="object-cover"
-                />
-              </div>
-            ) : (
-              <div className="w-14 h-14 rounded-md bg-neutral-100 border border-neutral-200 flex items-center justify-center shrink-0 text-neutral-400">
-                <Package className="w-6 h-6" />
-              </div>
-            )}
-
-            <div className="flex-1 min-w-0">
-              {order.listingSlug ? (
-                <Link
-                  href={`/product/${order.listingSlug}`}
-                  className="font-bold text-neutral-900 text-xs sm:text-sm hover:text-primary-700 hover:underline line-clamp-1 transition-colors"
+          {order.items && order.items.length > 1 ? (
+            <div className="divide-y divide-neutral-100">
+              {order.items.map((item, idx) => (
+                <div
+                  key={item.id || item.listingId || idx}
+                  className="py-2.5 first:pt-0 last:pb-0 flex items-center justify-between gap-3 text-xs"
                 >
-                  {order.listingTitle || `Produk #${order.listingId}`}
-                </Link>
-              ) : (
-                <p className="font-bold text-neutral-900 text-xs sm:text-sm line-clamp-1">
-                  {order.listingTitle || `Produk #${order.listingId}`}
-                </p>
-              )}
-              <p className="text-xs text-neutral-600 mt-0.5">
-                {order.quantity} pcs/kg × {formatRupiah(order.itemPrice)}
-              </p>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-neutral-900 truncate">
+                      {item.title || `Produk #${item.listingId}`}
+                    </p>
+                    <p className="text-[11px] text-neutral-600 mt-0.5">
+                      {item.quantity} {item.unit || "item"} × {formatRupiah(item.unitPrice)}
+                      {item.grindSize ? ` (${item.grindSize})` : ""}
+                    </p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="font-mono font-bold text-neutral-900">
+                      {formatRupiah(item.unitPrice * item.quantity)}
+                    </span>
+                  </div>
+                </div>
+              ))}
               {order.notes && (
-                <p className="text-xs text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200/80 mt-1 inline-block">
-                  Catatan: {order.notes}
-                </p>
+                <div className="pt-2">
+                  <p className="text-xs text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200/80 inline-block">
+                    Catatan: {order.notes}
+                  </p>
+                </div>
               )}
             </div>
+          ) : (
+            <div className="flex items-start gap-3">
+              {productImage ? (
+                <div className="relative w-14 h-14 rounded-md overflow-hidden bg-neutral-100 border border-neutral-200 shrink-0">
+                  <Image
+                    src={productImage}
+                    alt={order.listingTitle || "Produk Kopi"}
+                    fill
+                    sizes="56px"
+                    className="object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-14 h-14 rounded-md bg-neutral-100 border border-neutral-200 flex items-center justify-center shrink-0 text-neutral-400">
+                  <Package className="w-6 h-6" />
+                </div>
+              )}
 
-            <div className="text-right shrink-0">
-              <span className="font-mono font-bold text-xs sm:text-sm text-neutral-900">
-                {formatRupiah(order.subtotal)}
-              </span>
+              <div className="flex-1 min-w-0">
+                {order.listingSlug ? (
+                  <Link
+                    href={`/product/${order.listingSlug}`}
+                    className="font-bold text-neutral-900 text-xs sm:text-sm hover:text-primary-700 hover:underline line-clamp-1 transition-colors"
+                  >
+                    {order.listingTitle || `Produk #${order.listingId}`}
+                  </Link>
+                ) : (
+                  <p className="font-bold text-neutral-900 text-xs sm:text-sm line-clamp-1">
+                    {order.listingTitle || `Produk #${order.listingId}`}
+                  </p>
+                )}
+                <p className="text-xs text-neutral-600 mt-0.5">
+                  {order.quantity} pcs/kg × {formatRupiah(order.itemPrice)}
+                </p>
+                {order.notes && (
+                  <p className="text-xs text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200/80 mt-1 inline-block">
+                    Catatan: {order.notes}
+                  </p>
+                )}
+              </div>
+
+              <div className="text-right shrink-0">
+                <span className="font-mono font-bold text-xs sm:text-sm text-neutral-900">
+                  {formatRupiah(order.subtotal)}
+                </span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Rincian Pembayaran */}

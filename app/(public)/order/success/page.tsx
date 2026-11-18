@@ -240,26 +240,62 @@ export default async function OrderSuccessPage({
             </h2>
 
             <div className="space-y-3">
-              <div>
-                <p className="text-xs text-neutral-600">Produk</p>
-                <p className="text-sm font-semibold text-neutral-900">
-                  {order.listingTitle || `Produk ID #${order.listingId}`}
-                </p>
-                {order.sellerName && (
-                  <p className="text-xs text-neutral-600 mt-0.5">Penjual: {order.sellerName}</p>
-                )}
-              </div>
+              {order.items && order.items.length > 1 ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-neutral-800">
+                      Rincian Produk ({order.items.length} item)
+                    </p>
+                    {order.sellerName && (
+                      <p className="text-xs text-neutral-600">Penjual: {order.sellerName}</p>
+                    )}
+                  </div>
+                  <div className="divide-y divide-neutral-100 border border-neutral-150 rounded p-2.5 bg-neutral-50/50">
+                    {order.items.map((item, idx) => (
+                      <div
+                        key={item.id || item.listingId || idx}
+                        className="py-1.5 first:pt-0 last:pb-0 flex items-center justify-between text-xs"
+                      >
+                        <div className="min-w-0 pr-2">
+                          <p className="font-semibold text-neutral-900 truncate">
+                            {item.title || `Produk #${item.listingId}`}
+                          </p>
+                          <p className="text-[11px] text-neutral-600">
+                            {item.quantity} {item.unit || "item"} × {formatRupiah(item.unitPrice)}
+                            {item.grindSize ? ` (${item.grindSize})` : ""}
+                          </p>
+                        </div>
+                        <span className="font-mono font-medium text-neutral-900 shrink-0">
+                          {formatRupiah(item.unitPrice * item.quantity)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <p className="text-xs text-neutral-600">Produk</p>
+                    <p className="text-sm font-semibold text-neutral-900">
+                      {order.listingTitle || `Produk ID #${order.listingId}`}
+                    </p>
+                    {order.sellerName && (
+                      <p className="text-xs text-neutral-600 mt-0.5">Penjual: {order.sellerName}</p>
+                    )}
+                  </div>
 
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <span className="text-neutral-600">Jumlah:</span>{" "}
-                  <span className="font-medium text-neutral-900">{order.quantity} pcs/kg</span>
-                </div>
-                <div>
-                  <span className="text-neutral-600">Harga Satuan:</span>{" "}
-                  <span className="font-medium text-neutral-900">{formatRupiah(order.itemPrice)}</span>
-                </div>
-              </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="text-neutral-600">Jumlah:</span>{" "}
+                      <span className="font-medium text-neutral-900">{order.quantity} pcs/kg</span>
+                    </div>
+                    <div>
+                      <span className="text-neutral-600">Harga Satuan:</span>{" "}
+                      <span className="font-medium text-neutral-900">{formatRupiah(order.itemPrice)}</span>
+                    </div>
+                  </div>
+                </>
+              )}
 
               <div className="pt-2 border-t border-neutral-100">
                 <p className="text-xs text-neutral-600">Kurir Pengiriman</p>

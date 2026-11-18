@@ -114,9 +114,20 @@ export default function CartPage() {
     .map((i) => i.listingId)
     .join(",");
 
-  const mainBuyButtonText =
-    firstSelectedSellerItems.length > 1
-      ? `Beli (${firstSelectedSellerItems.length})`
+  const isMultiSellerSelected = selectedSellerEntries.length > 1;
+  const firstSelectedSellerSubtotal = firstSelectedSellerItems.reduce(
+    (sum, i) => sum + i.price * i.quantity,
+    0,
+  );
+  const firstSelectedSellerCount = firstSelectedSellerItems.reduce(
+    (sum, i) => sum + i.quantity,
+    0,
+  );
+
+  const mainBuyButtonText = isMultiSellerSelected
+    ? `Beli dari ${firstSelectedSeller?.[1]?.sellerName || "Toko"} (${firstSelectedSellerItems.length})`
+    : firstSelectedSellerItems.length > 1
+      ? `Beli (${firstSelectedSellerItems.length} produk)`
       : "Beli";
 
   if (!isLoaded || isLoggedIn === null) {
@@ -454,21 +465,41 @@ export default function CartPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 pt-4 text-xs">
-                <div className="flex justify-between text-neutral-600">
-                  <span>Total Produk ({selectedTotalCount} item)</span>
-                  <span className="font-mono font-semibold text-neutral-900">
-                    {formatRupiah(selectedTotalAmount)}
-                  </span>
-                </div>
+                {isMultiSellerSelected ? (
+                  <div className="space-y-2 bg-amber-50/70 p-3 rounded border border-amber-200">
+                    <div className="flex items-center gap-1.5 font-bold text-amber-950">
+                      <Store className="w-3.5 h-3.5 text-amber-800 shrink-0" />
+                      <span>Checkout Aktif: {firstSelectedSeller?.[1]?.sellerName}</span>
+                    </div>
+                    <div className="flex justify-between text-neutral-600">
+                      <span>Produk Toko Ini ({firstSelectedSellerCount} item)</span>
+                      <span className="font-mono font-semibold text-neutral-900">
+                        {formatRupiah(firstSelectedSellerSubtotal)}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-amber-800 leading-snug">
+                      Karena kota pengiriman berbeda, transaksi diselesaikan per toko. Produk dari {selectedSellerEntries.length - 1} toko lainnya tetap aman di keranjang.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex justify-between text-neutral-600">
+                    <span>Total Produk ({selectedTotalCount} item)</span>
+                    <span className="font-mono font-semibold text-neutral-900">
+                      {formatRupiah(selectedTotalAmount)}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between text-neutral-600 text-xs">
                   <span>Ongkos Kirim & Asuransi</span>
                   <span className="italic">Dihitung saat checkout</span>
                 </div>
 
                 <div className="pt-3 border-t border-neutral-200 flex justify-between items-baseline font-bold text-sm">
-                  <span className="text-neutral-900">Total Estimasi</span>
+                  <span className="text-neutral-900">
+                    {isMultiSellerSelected ? "Estimasi Toko Ini" : "Total Estimasi"}
+                  </span>
                   <span className="font-mono text-primary-700 text-base">
-                    {formatRupiah(selectedTotalAmount)}
+                    {formatRupiah(isMultiSellerSelected ? firstSelectedSellerSubtotal : selectedTotalAmount)}
                   </span>
                 </div>
 

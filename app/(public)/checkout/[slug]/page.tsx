@@ -15,6 +15,7 @@ import { getUserAddresses, toBuyerAddress } from "@/lib/data/addresses";
 
 interface CheckoutPageProps {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
 export const dynamic = "force-dynamic";
@@ -35,7 +36,10 @@ export async function generateMetadata({
   };
 }
 
-export default async function CheckoutPage({ params }: CheckoutPageProps) {
+export default async function CheckoutPage({
+  params,
+  searchParams,
+}: CheckoutPageProps) {
   const { slug } = await params;
   const listing = await getListingBySlug(slug);
 
@@ -44,7 +48,20 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
   }
 
   const session = await getSession();
-  const checkoutUrl = `/checkout/${slug}`;
+
+  const sp = searchParams ? await searchParams : {};
+  const queryParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(sp)) {
+    if (typeof value === "string") {
+      queryParams.set(key, value);
+    } else if (Array.isArray(value)) {
+      value.forEach((val) => queryParams.append(key, val));
+    }
+  }
+  const queryString = queryParams.toString();
+  const checkoutUrl = queryString
+    ? `/checkout/${slug}?${queryString}`
+    : `/checkout/${slug}`;
 
   // 1. Must be logged in
   if (session.role === "guest") {

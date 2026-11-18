@@ -453,15 +453,21 @@ export function BuyerOrdersCard({ orders }: BuyerOrdersCardProps) {
                           href={`/product/${ord.listingSlug}`}
                           className="font-bold text-neutral-900 text-sm hover:text-primary-700 hover:underline transition-colors line-clamp-1 sm:line-clamp-2"
                         >
-                          {ord.listingTitle || `Produk #${ord.listingId}`}
+                          {ord.items && ord.items.length > 1
+                            ? `${ord.items[0]?.title || ord.listingTitle} (+${ord.items.length - 1} produk lainnya)`
+                            : ord.listingTitle || `Produk #${ord.listingId}`}
                         </Link>
                       ) : (
                         <p className="font-bold text-neutral-900 text-sm line-clamp-1 sm:line-clamp-2">
-                          {ord.listingTitle || `Produk #${ord.listingId}`}
+                          {ord.items && ord.items.length > 1
+                            ? `${ord.items[0]?.title || ord.listingTitle} (+${ord.items.length - 1} produk lainnya)`
+                            : ord.listingTitle || `Produk #${ord.listingId}`}
                         </p>
                       )}
                       <p className="text-xs text-neutral-600 mt-1">
-                        {ord.quantity} barang x {formatRupiah(ord.itemPrice)}
+                        {ord.items && ord.items.length > 1
+                          ? `${ord.items.reduce((acc, it) => acc + it.quantity, 0)} barang (${ord.items.length} varian)`
+                          : `${ord.quantity} barang × ${formatRupiah(ord.itemPrice)}`}
                         {ord.notes && (
                           <span className="ml-1 text-xs text-neutral-400">
                             ({ord.notes})

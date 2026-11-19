@@ -125,10 +125,10 @@ export default function CartPage() {
   );
 
   const mainBuyButtonText = isMultiSellerSelected
-    ? `Beli dari ${firstSelectedSeller?.[1]?.sellerName || "Toko"} (${firstSelectedSellerItems.length})`
-    : firstSelectedSellerItems.length > 1
-      ? `Beli (${firstSelectedSellerItems.length} produk)`
-      : "Beli";
+    ? `Checkout ${firstSelectedSeller?.[1]?.sellerName || "Toko"} (${firstSelectedSellerItems.length})`
+    : firstSelectedSellerItems.length > 0
+      ? `Checkout (${firstSelectedSellerItems.length} produk)`
+      : "Pilih Produk";
 
   if (!isLoaded || isLoggedIn === null) {
     return <LoadingState message="Memuat keranjang belanja..." />;
@@ -268,9 +268,9 @@ export default function CartPage() {
               );
               const firstSlug = group.items[0]?.slug;
               const sellerBuyText =
-                sellerSelected.length > 1
-                  ? `Beli (${sellerSelected.length})`
-                  : "Beli";
+                sellerSelected.length > 0
+                  ? `Checkout Toko Ini (${sellerSelected.length})`
+                  : "Checkout Toko Ini";
 
               return (
                 <div

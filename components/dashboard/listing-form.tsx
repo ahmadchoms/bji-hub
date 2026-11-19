@@ -118,6 +118,11 @@ const MONTH_OPTIONS = [
   { value: 12, label: "Desember" },
 ] as const;
 
+const parseOptionalScore = (v: unknown) =>
+  v === "" || v === null || v === undefined || Number.isNaN(Number(v))
+    ? undefined
+    : Number(v);
+
 export function ListingForm({
   categories,
   producers = [],
@@ -172,8 +177,6 @@ export function ListingForm({
       roastLevel: "Medium",
       status: "draft",
       images: [],
-      acidityScore: 0,
-      bodyScore: 0,
       minOrderQty: 1,
       stock: 100,
       varieties: [],
@@ -242,6 +245,13 @@ export function ListingForm({
     if (selectedCategory?.slug) {
       data.categorySlug = selectedCategory.slug;
     }
+
+    // Sanitize optional number fields from NaN
+    if (typeof data.acidityScore === "number" && Number.isNaN(data.acidityScore)) data.acidityScore = undefined;
+    if (typeof data.bodyScore === "number" && Number.isNaN(data.bodyScore)) data.bodyScore = undefined;
+    if (typeof data.sweetnessScore === "number" && Number.isNaN(data.sweetnessScore)) data.sweetnessScore = undefined;
+    if (typeof data.aromaScore === "number" && Number.isNaN(data.aromaScore)) data.aromaScore = undefined;
+    if (typeof data.aftertasteScore === "number" && Number.isNaN(data.aftertasteScore)) data.aftertasteScore = undefined;
 
     try {
       const result = await saveListingAction(data, listingId);
@@ -976,9 +986,8 @@ export function ListingForm({
 
         <FormField
           label="Catatan Rasa Bebas (Flavor Notes)"
-          required
           error={errors.flavorNotes?.message}
-          helperText="Pisahkan dengan tanda koma, contoh: Nangka, Madu, Gula Aren, Floral"
+          helperText="Opsional. Boleh dikosongkan. Pisahkan dengan tanda koma jika ada, contoh: Nangka, Madu, Gula Aren, Floral"
         >
           <Input
             {...register("flavorNotes")}
@@ -987,18 +996,20 @@ export function ListingForm({
         </FormField>
 
         <div className="space-y-2 pt-3 border-t border-neutral-200">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
             <span className="text-xs font-semibold text-neutral-900 uppercase tracking-wide">
-              Skor Karakter Rasa (0.0 - 5.0)
+              Skor Karakter Rasa (0.0 - 5.0) — Opsional
             </span>
             <span className="text-xs text-neutral-600 font-mono">
               Skala 0 hingga 5
             </span>
           </div>
+          <p className="text-xs text-neutral-600 leading-relaxed">
+            Khusus penjual/roastery yang sudah memiliki catatan cupping. Jika Anda petani atau belum mengetahui skor ini, silakan biarkan kosong.
+          </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
             <FormField
               label="Acidity"
-              required
               error={errors.acidityScore?.message}
             >
               <Input
@@ -1006,16 +1017,18 @@ export function ListingForm({
                 step="0.1"
                 min="0"
                 max="5"
-                {...register("acidityScore", { valueAsNumber: true })}
+                placeholder="Misal: 3.5"
+                {...register("acidityScore", { setValueAs: parseOptionalScore })}
               />
             </FormField>
-            <FormField label="Body" required error={errors.bodyScore?.message}>
+            <FormField label="Body" error={errors.bodyScore?.message}>
               <Input
                 type="number"
                 step="0.1"
                 min="0"
                 max="5"
-                {...register("bodyScore", { valueAsNumber: true })}
+                placeholder="Misal: 3.5"
+                {...register("bodyScore", { setValueAs: parseOptionalScore })}
               />
             </FormField>
             <FormField label="Sweetness" error={errors.sweetnessScore?.message}>
@@ -1024,7 +1037,8 @@ export function ListingForm({
                 step="0.1"
                 min="0"
                 max="5"
-                {...register("sweetnessScore", { valueAsNumber: true })}
+                placeholder="Misal: 3.5"
+                {...register("sweetnessScore", { setValueAs: parseOptionalScore })}
               />
             </FormField>
             <FormField label="Aroma" error={errors.aromaScore?.message}>
@@ -1033,7 +1047,8 @@ export function ListingForm({
                 step="0.1"
                 min="0"
                 max="5"
-                {...register("aromaScore", { valueAsNumber: true })}
+                placeholder="Misal: 3.5"
+                {...register("aromaScore", { setValueAs: parseOptionalScore })}
               />
             </FormField>
             <FormField label="Aftertaste" error={errors.aftertasteScore?.message}>
@@ -1042,7 +1057,8 @@ export function ListingForm({
                 step="0.1"
                 min="0"
                 max="5"
-                {...register("aftertasteScore", { valueAsNumber: true })}
+                placeholder="Misal: 3.5"
+                {...register("aftertasteScore", { setValueAs: parseOptionalScore })}
               />
             </FormField>
           </div>

@@ -4,6 +4,7 @@ import { Star } from "lucide-react";
 import { ListingWithRelations } from "@/types";
 import { cn } from "@/lib/utils";
 import { formatRupiah } from "@/components/shared/price-text";
+import { VerifiedBadge } from "@/components/shared/verified-badge";
 import { formatEstimatedPrice } from "@/lib/i18n";
 import { TrackVisible } from "../shared/track-visible";
 import { CompareButton } from "./compare-button";
@@ -115,12 +116,10 @@ export function ListingCard({
           </div>
 
           <div className="flex items-center justify-between gap-1.5 text-xs text-neutral-600 pt-2 border-t border-neutral-100">
-            <div className="flex items-center gap-1 truncate">
+            <div className="flex items-center gap-1 min-w-0 flex-1">
               <span className="truncate font-medium">{listing.seller.businessName}</span>
               {listing.seller.isVerified && (
-                <span className="inline-block text-xs font-semibold text-accent-700 bg-accent-100 px-1 py-0.5 rounded-xs border border-accent-500/20 shrink-0">
-                  Terverifikasi
-                </span>
+                <VerifiedBadge size="sm" showLabel={false} className="shrink-0" />
               )}
             </div>
 

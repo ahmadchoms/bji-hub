@@ -62,16 +62,16 @@ export function ProductPurchaseBox({
       <div className="p-4 bg-neutral-50 border border-neutral-300 rounded-sm">
         <div className="flex items-baseline justify-between">
           <div>
-            <p className="text-xs font-mono text-neutral-600 uppercase tracking-widest mb-1">
+            <p className="text-xs font-medium text-neutral-600 uppercase tracking-wider mb-1">
               {locale === "en" ? "Price" : "Harga"}
             </p>
             <PriceText price={listing.price} unit={listing.unit} size="lg" showEstimate={locale === "en"} />
           </div>
           <div className="text-right">
-            <p className="text-xs font-mono text-neutral-600 uppercase tracking-widest mb-1">
+            <p className="text-xs font-medium text-neutral-600 uppercase tracking-wider mb-1">
               {locale === "en" ? "Min. Order" : "Min. Order"}
             </p>
-            <span className="font-mono text-sm font-bold text-neutral-900">
+            <span className="font-sans text-sm font-bold tabular-nums text-neutral-900">
               {listing.minOrderQty} {listing.unit}
             </span>
           </div>
@@ -201,7 +201,7 @@ export function ProductPurchaseBox({
               >
                 <Minus className="w-3.5 h-3.5" />
               </button>
-              <span className="w-10 text-center font-mono font-bold text-neutral-900 text-xs">
+              <span className="w-10 text-center font-sans tabular-nums font-bold text-neutral-900 text-xs">
                 {quantity}
               </span>
               <button

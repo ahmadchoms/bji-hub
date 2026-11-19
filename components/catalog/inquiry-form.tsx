@@ -88,7 +88,7 @@ export function InquiryForm({
           className,
         )}
       >
-        <h4 className="font-display text-lg text-accent-700 font-semibold">
+        <h4 className="text-base text-accent-700 font-semibold">
           Permintaan Penawaran Berhasil Terkirim!
         </h4>
         <p className="text-sm text-neutral-700 leading-relaxed max-w-sm mx-auto">
@@ -117,7 +117,7 @@ export function InquiryForm({
       )}
     >
       <div className="pb-3 border-b border-neutral-200">
-        <h4 className="font-display text-lg text-neutral-900 font-semibold">
+        <h4 className="text-base text-neutral-900 font-semibold">
           Formulir Permintaan Penawaran & Sampel
         </h4>
         <p className="text-xs text-neutral-600 leading-relaxed mt-1">

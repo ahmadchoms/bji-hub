@@ -141,7 +141,7 @@ export default function CartPage() {
           <div className="w-16 h-16 rounded-full bg-primary-50 flex items-center justify-center mx-auto text-primary-600">
             <ShoppingCart className="w-8 h-8" />
           </div>
-          <h1 className="text-xl font-bold font-display text-neutral-900">
+          <h1 className="text-xl font-bold text-neutral-900">
             Masuk untuk Mengakses Keranjang
           </h1>
           <p className="text-xs text-neutral-600 max-w-sm mx-auto leading-relaxed">
@@ -498,7 +498,7 @@ export default function CartPage() {
                   <span className="text-neutral-900">
                     {isMultiSellerSelected ? "Estimasi Toko Ini" : "Total Estimasi"}
                   </span>
-                  <span className="font-mono text-primary-700 text-base">
+                  <span className="font-sans tabular-nums font-bold text-primary-700 text-base">
                     {formatRupiah(isMultiSellerSelected ? firstSelectedSellerSubtotal : selectedTotalAmount)}
                   </span>
                 </div>

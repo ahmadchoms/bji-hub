@@ -27,7 +27,7 @@ export function TraceabilityBlock({
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-200 pb-3">
         <div className="flex items-center gap-2">
           <MapPin className="h-4 w-4 text-primary-700" aria-hidden="true" />
-          <h3 className="font-display text-base font-semibold text-neutral-900">
+          <h3 className="text-base font-semibold text-neutral-900">
             Asal-usul & Ketertelusuran
           </h3>
         </div>
@@ -42,7 +42,7 @@ export function TraceabilityBlock({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
         {/* Produser / Petani */}
         <div className="space-y-1">
-          <span className="font-mono text-neutral-600 uppercase tracking-wider block">
+          <span className="font-medium text-neutral-600 uppercase tracking-wider block">
             Produser / Pengolah
           </span>
           {producer ? (

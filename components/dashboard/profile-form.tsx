@@ -214,7 +214,7 @@ export function ProfileForm({ seller, className }: ProfileFormProps) {
     <div className={cn("space-y-8", className)}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         <div className="border border-neutral-300 bg-surface-base rounded-sm p-5 space-y-5">
-          <h3 className="font-display text-lg text-neutral-900 font-semibold pb-3 border-b border-neutral-300">
+          <h3 className="text-base text-neutral-900 font-semibold pb-3 border-b border-neutral-300">
             Informasi Toko
           </h3>
 
@@ -434,7 +434,7 @@ export function ProfileForm({ seller, className }: ProfileFormProps) {
       </form>
 
       <div className="border border-neutral-300 bg-surface-base rounded-sm p-5 space-y-4">
-        <h3 className="font-display text-lg text-neutral-900 font-semibold pb-3 border-b border-neutral-300">
+        <h3 className="text-base text-neutral-900 font-semibold pb-3 border-b border-neutral-300">
           Verifikasi Toko
         </h3>
 

@@ -45,14 +45,14 @@ export function TasteSpecList({ tasteProfile, className }: TasteSpecListProps) {
 
   return (
     <div className={cn("space-y-3", className)}>
-      <h4 className="font-display text-lg text-neutral-900 font-semibold pb-2 border-b border-neutral-300">
+      <h4 className="text-base text-neutral-900 font-semibold pb-2 border-b border-neutral-300">
         Spesifikasi Teknis
       </h4>
 
       <dl className="space-y-2">
         {specs.map((item, idx) => (
           <div key={idx} className="flex items-baseline justify-between py-1 border-b border-neutral-100 last:border-0">
-            <dt className="text-xs font-mono text-neutral-600 uppercase tracking-wider">
+            <dt className="text-xs font-medium text-neutral-600 uppercase tracking-wider">
               {item.label}
             </dt>
             <dd className="text-sm text-neutral-900 font-medium text-right">

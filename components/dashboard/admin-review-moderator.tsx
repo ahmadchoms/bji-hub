@@ -48,7 +48,7 @@ export function AdminReviewModerator({ initialReviews }: AdminReviewModeratorPro
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold font-display text-foreground">
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">
           Moderasi & Antrean Ulasan Dilaporkan
         </h1>
         <p className="text-xs sm:text-sm text-muted-foreground mt-1">

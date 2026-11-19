@@ -334,7 +334,7 @@ export function ListingForm({
       {/* 1. Foto Produk */}
       <div className="border border-neutral-300 bg-surface-base rounded-sm p-6 space-y-4">
         <div>
-          <h3 className="font-display text-lg text-neutral-900 font-semibold">
+          <h3 className="text-base font-semibold text-neutral-900">
             Foto Produk
           </h3>
           <p className="text-xs text-neutral-600 mt-0.5">
@@ -358,7 +358,7 @@ export function ListingForm({
       {/* 2. Informasi Utama Produk */}
       <div className="border border-neutral-300 bg-surface-base rounded-sm p-6 space-y-5">
         <div>
-          <h3 className="font-display text-lg text-neutral-900 font-semibold">
+          <h3 className="text-base font-semibold text-neutral-900">
             Informasi Produk
           </h3>
           <p className="text-xs text-neutral-600 mt-0.5">
@@ -588,7 +588,7 @@ export function ListingForm({
           <div className="flex items-center gap-2">
             <Package className="w-5 h-5 text-neutral-700" />
             <div>
-              <h3 className="font-display text-lg text-neutral-900 font-semibold">
+              <h3 className="text-base font-semibold text-neutral-900">
                 Paket Cicip / Bundle (Tasting Flight)
               </h3>
               <p className="text-xs text-neutral-600 mt-0.5">
@@ -733,7 +733,7 @@ export function ListingForm({
       {/* 3. Spesifikasi & Profil Rasa */}
       {isEquipment ? (
         <div className="border border-neutral-300 bg-surface-base rounded-sm p-6 space-y-2">
-          <h3 className="font-display text-lg text-neutral-900 font-semibold">
+          <h3 className="text-base font-semibold text-neutral-900">
             Spesifikasi Produk (Alat & Peralatan)
           </h3>
           <p className="text-xs text-neutral-600 leading-relaxed">
@@ -743,7 +743,7 @@ export function ListingForm({
       ) : (
         <div className="border border-neutral-300 bg-surface-base rounded-sm p-6 space-y-5">
           <div>
-            <h3 className="font-display text-lg text-neutral-900 font-semibold">
+            <h3 className="text-base font-semibold text-neutral-900">
               Spesifikasi & Karakter Rasa
             </h3>
             <p className="text-xs text-neutral-600 mt-0.5">
@@ -1056,7 +1056,7 @@ export function ListingForm({
           <div className="flex items-center gap-2">
             <Layers className="w-5 h-5 text-neutral-700" />
             <div>
-              <h3 className="font-display text-lg text-neutral-900 font-semibold">
+              <h3 className="text-base font-semibold text-neutral-900">
                 Spesifikasi Teknis Green Bean (Standar SCA / Ekspor)
               </h3>
               <p className="text-xs text-neutral-600 mt-0.5">
@@ -1183,7 +1183,7 @@ export function ListingForm({
         <div className="border border-neutral-300 bg-surface-base rounded-sm p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-display text-lg text-neutral-900 font-semibold">
+              <h3 className="text-base font-semibold text-neutral-900">
                 Layanan Bentuk & Gilingan (Grind Options)
               </h3>
               <p className="text-xs text-neutral-600 mt-0.5">
@@ -1264,7 +1264,7 @@ export function ListingForm({
       {!isEquipment && (
         <div className="border border-neutral-300 bg-surface-base rounded-sm p-6 space-y-5">
           <div>
-            <h3 className="font-display text-lg text-neutral-900 font-semibold">
+            <h3 className="text-base font-semibold text-neutral-900">
               Asal-usul & Ketertelusuran (Traceability)
             </h3>
             <p className="text-xs text-neutral-600 mt-0.5">

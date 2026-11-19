@@ -68,7 +68,7 @@ export function ListingCard({
             />
           ) : (
             <div className="flex h-full items-center justify-center p-4 text-center">
-              <span className="font-display text-lg text-primary-900 font-semibold">
+              <span className="text-lg text-primary-900 font-semibold">
                 {origin}
               </span>
             </div>
@@ -76,7 +76,7 @@ export function ListingCard({
         </div>
 
         <div className="space-y-2 p-3">
-          <h2 className="line-clamp-2 min-h-10 font-display text-sm font-semibold leading-snug text-neutral-900 group-hover:underline">
+          <h2 className="line-clamp-2 min-h-10 text-sm font-semibold leading-snug text-neutral-900 group-hover:underline">
             {title}
           </h2>
 
@@ -94,22 +94,22 @@ export function ListingCard({
           <div className="pt-1">
             {isOutOfStock ? (
               <div className="flex items-center justify-between">
-                <p className="font-mono text-base font-bold tabular-nums text-neutral-400 line-through">
+                <p className="font-sans text-base font-bold tabular-nums text-neutral-400 line-through">
                   {formatRupiah(listing.price)}
                 </p>
-                <span className="text-xs font-mono font-semibold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200 px-1.5 py-0.5 rounded">
+                <span className="text-xs font-sans font-semibold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200 px-1.5 py-0.5 rounded">
                   {locale === "en" ? "Sold Out" : "Habis"}
                 </span>
               </div>
             ) : (
-              <p className="font-mono text-base font-bold tabular-nums text-primary-950">
+              <p className="font-sans text-base font-bold tabular-nums text-primary-950">
                 {formatRupiah(listing.price)}
                 {locale === "en" && (
-                  <span className="font-sans text-xs text-neutral-600 font-normal ml-1">
+                  <span className="text-xs text-neutral-600 font-normal ml-1">
                     ({formatEstimatedPrice(listing.price, "USD").estimatedText})
                   </span>
                 )}
-                <span className="font-sans text-xs font-normal text-neutral-600"> / {listing.unit}</span>
+                <span className="text-xs font-normal text-neutral-600"> / {listing.unit}</span>
               </p>
             )}
           </div>

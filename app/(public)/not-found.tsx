@@ -7,7 +7,7 @@ export default function PublicNotFound() {
       <p className="font-mono text-xs uppercase tracking-widest text-neutral-600">
         Kode 404
       </p>
-      <h1 className="font-display text-3xl font-semibold text-neutral-900">
+      <h1 className="text-3xl font-bold text-neutral-900">
         Halaman tidak ditemukan
       </h1>
       <p className="text-sm text-neutral-600">

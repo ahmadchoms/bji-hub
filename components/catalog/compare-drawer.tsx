@@ -100,7 +100,7 @@ export function CompareDrawer() {
                 Reset Perbandingan
               </button>
             </div>
-            <DialogTitle className="font-display text-xl font-bold text-neutral-900 mt-1">
+            <DialogTitle className="text-xl font-bold text-neutral-900 mt-1">
               Komparasi Spesifikasi Lot Kopi
             </DialogTitle>
             <DialogDescription className="text-xs text-neutral-600">
@@ -122,7 +122,7 @@ export function CompareDrawer() {
                         <div className="flex items-start justify-between gap-1">
                           <Link
                             href={`/product/${item.slug}`}
-                            className="font-display text-sm font-bold text-neutral-900 hover:underline line-clamp-2"
+                            className="text-sm font-bold text-neutral-900 hover:underline line-clamp-2"
                           >
                             {item.title}
                           </Link>

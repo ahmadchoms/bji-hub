@@ -74,7 +74,7 @@ export async function CatalogFeed({ params }: { params: CatalogParams }) {
             <div className="w-12 h-12 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center mx-auto mb-3 text-2xl">
               ☕
             </div>
-            <h3 className="font-display text-lg font-semibold text-neutral-900">
+            <h3 className="text-lg font-semibold text-neutral-900">
               {params.q
                 ? `Tidak Ada Hasil untuk "${params.q}"`
                 : "Tidak Ada Biji Kopi yang Cocok"}
@@ -128,7 +128,7 @@ export async function CatalogFeed({ params }: { params: CatalogParams }) {
         <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto text-lg">
           ⚠️
         </div>
-        <p className="font-display text-lg font-semibold text-neutral-900">
+        <p className="text-lg font-semibold text-neutral-900">
           Gagal memuat produk.
         </p>
         <p className="text-xs text-neutral-600 leading-relaxed">

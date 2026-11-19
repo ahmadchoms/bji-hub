@@ -27,7 +27,7 @@ export function MetricsChart({ data, className }: MetricsChartProps) {
           className,
         )}
       >
-        <p className="font-display text-sm text-neutral-600 italic">
+        <p className="text-sm text-neutral-600 italic">
           Belum ada data analitik untuk periode ini.
         </p>
       </div>
@@ -37,7 +37,7 @@ export function MetricsChart({ data, className }: MetricsChartProps) {
   return (
     <div className={cn("space-y-4", className)}>
       <div className="pb-2 border-b border-neutral-300">
-        <h3 className="font-display text-lg text-neutral-900 font-semibold">
+        <h3 className="text-base font-semibold text-neutral-900">
           Tayangan & Klik
         </h3>
         <p className="text-xs text-neutral-600 font-mono">

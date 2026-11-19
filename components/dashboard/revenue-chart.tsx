@@ -52,7 +52,7 @@ export function RevenueChart({ data, totalRevenue, className }: RevenueChartProp
     >
       <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-neutral-200">
         <div>
-          <h3 className="font-display text-base font-bold text-neutral-900">
+          <h3 className="text-base font-bold text-neutral-900">
             Tren Omzet Penjualan
           </h3>
           <p className="text-xs text-neutral-600">

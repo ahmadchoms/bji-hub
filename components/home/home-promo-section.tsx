@@ -55,7 +55,7 @@ export function HomePromoSection() {
           {/* Smart Helper Guide Card */}
           <div className="md:col-span-4 rounded-xl border border-neutral-200/90 bg-neutral-50/80 p-5 flex flex-col justify-between text-neutral-800 shadow-xs">
             <div className="space-y-1.5">
-              <p className="text-xs font-bold font-display uppercase tracking-wider text-neutral-900">
+              <p className="text-xs font-bold uppercase tracking-wider text-neutral-900">
                 Bingung Pilih Kopi?
               </p>
               <p className="text-xs text-neutral-600 leading-relaxed">

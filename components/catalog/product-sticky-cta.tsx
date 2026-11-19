@@ -33,7 +33,7 @@ export function ProductStickyCTA({ listing }: ProductStickyCTAProps) {
         {/* Info Harga Ringkas & Jelas */}
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-1">
-            <span className="font-mono text-base font-bold text-primary-900 tracking-tight leading-none">
+            <span className="font-sans tabular-nums text-base font-bold text-primary-900 tracking-tight leading-none">
               {formatRupiah(listing.price)}
             </span>
             {listing.unit && (

@@ -58,7 +58,7 @@ export function CuppingSheetModal({ listing }: CuppingSheetModalProps) {
               Print / Simpan PDF
             </Button>
           </div>
-          <DialogTitle className="font-display text-lg font-bold text-neutral-900 mt-1">
+          <DialogTitle className="text-lg font-bold text-neutral-900 mt-1">
             {listing.title}
           </DialogTitle>
           <DialogDescription className="text-xs text-neutral-600">

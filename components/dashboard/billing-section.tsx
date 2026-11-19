@@ -175,7 +175,7 @@ export function BillingSection({
       <div className="space-y-3">
         <div className="flex items-center justify-between pb-2 border-b border-neutral-300">
           <div>
-            <h3 className="font-display text-lg text-neutral-900 font-semibold">
+            <h3 className="text-base font-semibold text-neutral-900">
               Promosi Produk
             </h3>
             {credits.total > 0 && (
@@ -315,7 +315,7 @@ export function BillingSection({
       {/* Payment History */}
       <div className="space-y-3">
         <div className="pb-2 border-b border-neutral-300">
-          <h3 className="font-display text-lg text-neutral-900 font-semibold">
+          <h3 className="text-base font-semibold text-neutral-900">
             Riwayat Pembayaran
           </h3>
         </div>

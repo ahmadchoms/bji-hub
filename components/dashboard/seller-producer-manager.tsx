@@ -90,7 +90,7 @@ export function SellerProducerManager({
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-bold text-neutral-900 font-display">
+          <h2 className="text-lg font-bold text-neutral-900">
             Hubungan Produser & Petani Kopi
           </h2>
           <p className="text-xs text-neutral-600">

@@ -29,7 +29,7 @@ export function SubscriptionStatus({
       <h3 className="font-mono text-xs uppercase tracking-widest text-neutral-600">
         Paket
       </h3>
-      <p className="font-display text-lg font-semibold text-neutral-900">
+      <p className="text-lg font-semibold text-neutral-900">
         {plan.name}
       </p>
       <p className="text-xs text-neutral-600">

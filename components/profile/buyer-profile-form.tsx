@@ -295,7 +295,7 @@ export function BuyerProfileForm({
         className="border border-neutral-300 bg-surface-base rounded-sm p-6 space-y-6 shadow-2xs"
       >
         <div className="border-b border-neutral-200 pb-4">
-          <h2 className="font-display text-lg text-neutral-900 font-bold">
+          <h2 className="text-lg text-neutral-900 font-bold">
             Biodata Diri
           </h2>
           <p className="text-xs text-neutral-600 mt-0.5">
@@ -450,7 +450,7 @@ export function BuyerProfileForm({
       <section className="border border-neutral-300 bg-surface-base rounded-sm p-6 space-y-6 shadow-2xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-200 pb-4">
           <div>
-            <h2 className="font-display text-lg text-neutral-900 font-bold">
+            <h2 className="text-lg text-neutral-900 font-bold">
               Daftar Alamat
             </h2>
             <p className="text-xs text-neutral-600 mt-0.5">
@@ -679,7 +679,7 @@ export function BuyerProfileForm({
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-xs text-neutral-900 font-display">
+                      <span className="font-bold text-xs text-neutral-900">
                         {addr.label}
                       </span>
                       {addr.isPrimary && (

@@ -196,14 +196,14 @@ export function PlanSection({ state, listingCount }: PlanSectionProps) {
   return (
     <div className="space-y-3">
       <div className="border-b border-neutral-300 pb-2">
-        <h3 className="font-display text-lg font-semibold text-neutral-900">
+        <h3 className="text-base font-semibold text-neutral-900">
           Paket Saya
         </h3>
       </div>
 
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
         <div>
-          <p className="font-display text-2xl font-semibold text-primary-900">
+          <p className="text-2xl font-bold text-primary-900">
             {current.name}
           </p>
           <p className="mt-1 text-sm text-neutral-600">

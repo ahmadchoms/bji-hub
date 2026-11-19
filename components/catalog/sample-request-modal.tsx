@@ -126,7 +126,7 @@ export function SampleRequestModal({
               B2B & Roastery Direct
             </span>
           </div>
-          <DialogTitle className="font-display text-lg text-primary-900 font-semibold">
+          <DialogTitle className="text-lg text-primary-900 font-semibold">
             Permintaan Sampel & Penawaran Grosir
           </DialogTitle>
           <DialogDescription className="text-xs text-neutral-600">

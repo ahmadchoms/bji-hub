@@ -31,7 +31,7 @@ export default async function OrdersPage() {
       <PageContainer className="max-w-4xl mx-auto space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-neutral-200 pb-4">
           <div>
-            <h1 className="text-2xl font-bold font-display text-neutral-900">
+            <h1 className="text-2xl font-bold text-neutral-900">
               Riwayat Pesanan Saya
             </h1>
             <p className="text-xs text-neutral-600 mt-0.5">

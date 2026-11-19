@@ -43,7 +43,7 @@ export function CategoryQuickGrid({ activeCategory }: CategoryQuickGridProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Tag className="w-4 h-4 text-primary-600" />
-            <h2 className="text-sm font-bold font-display text-neutral-900">
+            <h2 className="text-sm font-bold text-neutral-900">
               Kategori Pilihan
             </h2>
           </div>

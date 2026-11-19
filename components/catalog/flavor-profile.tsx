@@ -82,7 +82,7 @@ export function FlavorProfile({ tasteProfile, className }: FlavorProfileProps) {
   if (!tasteProfile) {
     return (
       <div className={cn("p-6 bg-surface-base rounded-sm border border-neutral-300", className)}>
-        <p className="font-display text-sm text-neutral-600 italic">
+        <p className="text-sm text-neutral-600 italic">
           Profil sensori belum tersedia untuk lot ini.
         </p>
       </div>
@@ -94,7 +94,7 @@ export function FlavorProfile({ tasteProfile, className }: FlavorProfileProps) {
   return (
     <div className={cn("space-y-5", className)}>
       <div className="flex items-baseline justify-between pb-2 border-b border-neutral-300">
-        <h4 className="font-display text-lg text-neutral-900 font-semibold">
+        <h4 className="text-base text-neutral-900 font-semibold">
           Lembar Cupping
         </h4>
         <span className="text-xs font-mono text-neutral-600 uppercase tracking-widest">
@@ -182,7 +182,7 @@ export function FlavorProfile({ tasteProfile, className }: FlavorProfileProps) {
           <span className="text-xs font-mono text-neutral-600 uppercase tracking-widest block mb-1">
             Catatan Rasa
           </span>
-          <p className="font-display text-sm italic text-neutral-700 leading-relaxed">
+          <p className="text-sm italic text-neutral-700 leading-relaxed">
             {flavorText}
           </p>
         </div>

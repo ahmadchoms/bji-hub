@@ -70,7 +70,7 @@ export function ConsentGateway({
           <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
             <CheckCircle2 className="w-6 h-6" />
           </div>
-          <h2 className="text-lg font-bold text-emerald-950 font-display">
+          <h2 className="text-lg font-bold text-emerald-950">
             Persetujuan Selesai
           </h2>
           <p className="text-xs text-emerald-800">
@@ -92,7 +92,7 @@ export function ConsentGateway({
         <div className="w-12 h-12 rounded-full bg-primary-100 text-primary-800 flex items-center justify-center mx-auto">
           <ShieldCheck className="w-6 h-6" />
         </div>
-        <CardTitle className="text-xl font-bold font-display text-neutral-900">
+        <CardTitle className="text-xl font-bold text-neutral-900">
           Pembaruan Kebijakan & Persetujuan
         </CardTitle>
         <CardDescription className="text-xs text-neutral-600 leading-relaxed max-w-md mx-auto">

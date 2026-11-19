@@ -31,18 +31,18 @@ export function PriceText({
   };
 
   return (
-    <div className={cn("inline-flex items-baseline gap-1 font-mono tabular-nums", className)}>
+    <div className={cn("inline-flex items-baseline gap-1 font-sans tabular-nums", className)}>
       <span className={cn("font-bold text-primary-900 tracking-tight", sizeClasses[size])}>
         {formatted}
       </span>
       {unit && (
-        <span className="text-caption text-neutral-600 font-sans font-normal">
+        <span className="text-caption text-neutral-600 font-normal">
           / {unit}
         </span>
       )}
       {estimate && (
         <span
-          className="text-xs text-neutral-600 font-sans font-normal ml-1"
+          className="text-xs text-neutral-600 font-normal ml-1"
           title={estimate.disclaimer}
         >
           ({estimate.estimatedText})

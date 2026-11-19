@@ -292,7 +292,7 @@ export function AdminProducersTable({ producers: initialProducers }: AdminProduc
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-xl shadow-xl border border-neutral-300 max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 space-y-4">
             <div className="flex items-center justify-between border-b pb-3">
-              <h3 className="font-display font-semibold text-lg text-neutral-900">
+              <h3 className="font-semibold text-lg text-neutral-900">
                 Tambah Produser Kopi Baru
               </h3>
               <button

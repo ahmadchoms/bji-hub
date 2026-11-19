@@ -572,7 +572,7 @@ export function CheckoutForm({
         {/* Alamat Pengiriman Tersimpan & Quick Switcher / Inline Editor */}
         <div className="border border-neutral-300 bg-surface-base rounded-sm p-5 space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-neutral-200">
-            <h3 className="font-display text-base font-semibold text-neutral-900 flex items-center gap-2">
+            <h3 className="text-base font-semibold text-neutral-900 flex items-center gap-2">
               <MapPin className="w-4 h-4 text-primary-600" /> Alamat Pengiriman Penerima
             </h3>
             <div className="flex items-center gap-3">
@@ -843,7 +843,7 @@ export function CheckoutForm({
         <div className="border border-neutral-300 bg-surface-base rounded-sm p-5 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-200 pb-2.5">
             <div>
-              <h3 className="font-display text-base font-semibold text-neutral-900 flex items-center gap-2">
+              <h3 className="text-base font-semibold text-neutral-900 flex items-center gap-2">
                 <Truck className="w-4 h-4 text-primary-700" /> Pilihan Pengiriman
               </h3>
               <p className="text-xs text-neutral-600 mt-0.5">
@@ -940,7 +940,7 @@ export function CheckoutForm({
       {/* Kolom Kanan: Ringkasan Biaya & Tombol Bayar (Sticky) */}
       <div className="lg:col-span-5">
         <div className="border border-neutral-300 bg-surface-base rounded-sm p-5 space-y-5 lg:sticky lg:top-24">
-          <h3 className="font-display text-lg font-semibold text-neutral-900 pb-2 border-b border-neutral-200">
+          <h3 className="text-base font-semibold text-neutral-900 pb-2 border-b border-neutral-200">
             Rincian Pembayaran
           </h3>
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Star } from "lucide-react";
 import { ListingWithRelations } from "@/types";
 import { cn } from "@/lib/utils";
 import { formatRupiah } from "@/components/shared/price-text";
@@ -8,58 +9,13 @@ import { formatEstimatedPrice } from "@/lib/i18n";
 import { TrackVisible } from "../shared/track-visible";
 import { CompareButton } from "./compare-button";
 import { WishlistButton } from "@/components/wishlist/wishlist-button";
-import { RoastMeter } from "./roast-meter";
-
-type Locale = "id" | "en";
 
 interface ListingCardProps {
   listing: ListingWithRelations;
   priority?: boolean;
   className?: string;
   isAd?: boolean;
-  locale?: Locale;
-}
-
-interface Copy {
-  soldOut: string;
-  sponsored: string;
-  roast: string;
-  cupping: string;
-  lowStock: (count: number) => string;
-  rating: (avg: string, count: number) => string;
-}
-
-const LOW_STOCK_THRESHOLD = 10;
-const MIN_RATING_COUNT = 3;
-const MAX_FLAVOR_NOTES = 3;
-
-const COPY: Record<Locale, Copy> = {
-  id: {
-    soldOut: "Stok habis",
-    sponsored: "Iklan",
-    roast: "Sangrai",
-    cupping: "Cupping",
-    lowStock: (count) => `Sisa ${count}`,
-    rating: (avg, count) => `Rating ${avg} dari ${count} ulasan`,
-  },
-  en: {
-    soldOut: "Sold out",
-    sponsored: "Sponsored",
-    roast: "Roast",
-    cupping: "Cupping",
-    lowStock: (count) => `${count} left`,
-    rating: (avg, count) => `Rated ${avg} from ${count} reviews`,
-  },
-};
-
-function formatFlavorNotes(notes?: string | null): string {
-  if (!notes) return "";
-  return notes
-    .split(/[,;·]/)
-    .map((note) => note.trim())
-    .filter(Boolean)
-    .slice(0, MAX_FLAVOR_NOTES)
-    .join(" · ");
+  locale?: "id" | "en";
 }
 
 export function ListingCard({
@@ -69,48 +25,30 @@ export function ListingCard({
   isAd = false,
   locale = "id",
 }: ListingCardProps) {
-  const copy = COPY[locale];
-  const taste = listing.tasteProfile;
-
-  const title =
-    locale === "en" && listing.titleEn ? listing.titleEn : listing.title;
+  const title = locale === "en" && listing.titleEn ? listing.titleEn : listing.title;
   const image = listing.images[0]?.url;
-  const origin = taste?.originRegion || listing.seller.city;
-  const meta = [origin, taste?.processMethod].filter(Boolean).join(" · ");
-  const flavorNotes = formatFlavorNotes(taste?.flavorNotes);
-
+  const origin = listing.tasteProfile?.originRegion || listing.seller.city;
+  const process = listing.tasteProfile?.processMethod;
+  const cuppingScore = listing.tasteProfile?.cuppingScore ? Number(listing.tasteProfile.cuppingScore) : null;
+  const flavorNotes = listing.tasteProfile?.flavorNotes;
   const stock = listing.stock ?? 0;
   const isOutOfStock = stock === 0;
-  const isLowStock = !isOutOfStock && stock <= LOW_STOCK_THRESHOLD;
-
-  const ratingCount = listing.ratingCount ?? 0;
-  const hasRating =
-    ratingCount >= MIN_RATING_COUNT && Boolean(listing.ratingAvg);
-  const ratingText = hasRating ? Number(listing.ratingAvg).toFixed(1) : "";
-
-  const cuppingValue =
-    taste?.cuppingScore != null ? Number(taste.cuppingScore) : null;
-  const cuppingText =
-    cuppingValue !== null && Number.isFinite(cuppingValue)
-      ? cuppingValue.toFixed(1)
-      : null;
+  const isLowStock = !isOutOfStock && stock <= 10;
 
   return (
-    <li className={cn("group/item relative min-w-0", className)}>
+    <li className={cn("relative min-w-0 group/item mb-3.5 break-inside-avoid", className)}>
       {isAd && <TrackVisible listingId={listing.id} type="impression" />}
-
-      <div className="absolute right-2 top-2 z-20 flex flex-col gap-1.5">
+      <div className="absolute top-2 right-2 z-20 flex flex-col gap-1.5">
         <WishlistButton listing={listing} variant="icon" />
         <div className="coarse:opacity-100 transition-opacity duration-200 md:opacity-0 md:group-hover/item:opacity-100 md:focus-within:opacity-100">
           <CompareButton listing={listing} variant="icon" />
         </div>
       </div>
-
       <Link
         href={`/product/${listing.slug}`}
-        className="group block rounded-md outline-offset-4"
+        className="group block rounded-md border border-neutral-200 bg-surface-base outline-none transition-all duration-200 hover:border-neutral-900 hover:shadow-xs focus-visible:ring-2 focus-visible:ring-primary-600"
       >
-        <div className="relative aspect-[4/5] overflow-hidden rounded-md bg-secondary">
+        <div className="relative aspect-square overflow-hidden rounded-t-md border-b border-neutral-200 bg-secondary-50">
           {image ? (
             <Image
               src={image}
@@ -124,111 +62,97 @@ export function ListingCard({
               )}
             />
           ) : (
-            <div className="flex h-full items-center justify-center p-6 text-center">
-              <span className="font-display text-xl font-medium leading-tight text-primary-400">
-                {origin}
-              </span>
+            <div className="flex h-full items-center justify-center p-4 text-center">
+              <span className="text-lg text-primary-900 font-semibold">{origin}</span>
             </div>
-          )}
-
-          {isAd && !isOutOfStock && (
-            <span className="absolute bottom-2 left-2 z-10 rounded-sm bg-background/90 px-2 py-0.5 text-xs font-medium uppercase tracking-[0.14em] text-foreground backdrop-blur-sm">
-              {copy.sponsored}
-            </span>
           )}
 
           {isOutOfStock && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60">
-              <span className="rounded-sm bg-background px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-foreground">
-                {copy.soldOut}
+            <div className="absolute inset-0 bg-neutral-950/50 backdrop-blur-[1px] flex items-center justify-center z-10">
+              <span className="bg-neutral-900/90 text-white text-xs font-semibold px-2.5 py-1 rounded shadow-md border border-neutral-700 uppercase tracking-wider">
+                {locale === "en" ? "Sold Out" : "Stok Habis"}
               </span>
             </div>
+          )}
+          {isAd && !isOutOfStock && (
+            <span className="absolute top-2 left-2 z-10 text-xs font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-xs bg-amber-600 text-white shadow-xs">
+              {locale === "en" ? "Sponsored" : "Iklan"}
+            </span>
           )}
         </div>
 
-        <div className="pt-3">
-          {meta && (
-            <p className="truncate text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-              {meta}
-            </p>
-          )}
-
-          <h2 className="mt-1.5 line-clamp-2 min-h-10 font-display text-[15px] font-medium leading-[1.3] text-foreground decoration-1 underline-offset-4 group-hover:underline sm:min-h-11 sm:text-[17px]">
+        <div className="space-y-2 p-3">
+          <h2 className="line-clamp-2 min-h-10 text-sm font-semibold leading-snug text-neutral-900 group-hover:underline">
             {title}
           </h2>
 
-          <p className="mt-1 min-h-5 truncate text-[13px] font-light text-muted-foreground">
-            {flavorNotes}
-          </p>
-
-          {(taste?.roastLevel || cuppingText) && (
-            <div className="mt-2.5 flex items-center justify-between gap-2">
-              {taste?.roastLevel ? (
-                <RoastMeter level={taste.roastLevel} label={copy.roast} />
-              ) : (
-                <span />
-              )}
-              {cuppingText && (
-                <span className="shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
-                  {copy.cupping}{" "}
-                  <span className="text-foreground">{cuppingText}</span>
-                </span>
-              )}
-            </div>
-          )}
-
-          <div className="mt-3 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
-            <span
-              className={cn(
-                "text-base font-semibold tabular-nums",
-                isOutOfStock
-                  ? "text-muted-foreground line-through"
-                  : "text-foreground",
-              )}
-            >
-              {formatRupiah(listing.price)}
+          <div className="flex flex-wrap items-center gap-1 text-xs">
+            <span className="bg-neutral-100 text-neutral-800 px-1.5 py-0.5 rounded font-medium truncate max-w-[120px]">
+              {origin}
             </span>
-            <span className="text-xs font-light text-muted-foreground">
-              / {listing.unit}
-            </span>
-            {locale === "en" && !isOutOfStock && (
-              <span className="text-xs font-light text-muted-foreground">
-                ({formatEstimatedPrice(listing.price, "USD").estimatedText})
+            {process && (
+              <span className="bg-secondary-50 text-secondary-800 border border-secondary-200/60 px-1.5 py-0.5 rounded font-medium">
+                {process}
               </span>
             )}
-            {isLowStock && (
-              <span className="ml-auto text-xs font-medium text-text-warning">
-                {copy.lowStock(stock)}
+            {cuppingScore && (
+              <span className="bg-amber-50 text-amber-900 border border-amber-200 px-1.5 py-0.5 rounded font-medium">
+                Q {cuppingScore.toFixed(1)}
               </span>
             )}
           </div>
 
-          <div className="mt-3 flex items-center justify-between gap-2 border-t border-border/60 pt-3 text-xs">
-            <div className="flex min-w-0 flex-1 items-center gap-1">
-              <span className="truncate font-medium text-muted-foreground">
-                {listing.seller.businessName}
-              </span>
+          {flavorNotes && (
+            <p className="text-xs text-neutral-600 line-clamp-1 italic">
+              {flavorNotes}
+            </p>
+          )}
+
+          <div className="pt-1">
+            {isOutOfStock ? (
+              <div className="flex items-center justify-between">
+                <p className="font-sans text-base font-bold tabular-nums text-neutral-400 line-through">
+                  {formatRupiah(listing.price)}
+                </p>
+                <span className="text-xs font-sans font-semibold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200 px-1.5 py-0.5 rounded">
+                  {locale === "en" ? "Sold Out" : "Habis"}
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-baseline justify-between">
+                <p className="font-sans text-base font-bold tabular-nums text-primary-950">
+                  {formatRupiah(listing.price)}
+                  {locale === "en" && (
+                    <span className="text-xs text-neutral-600 font-normal ml-1">
+                      ({formatEstimatedPrice(listing.price, "USD").estimatedText})
+                    </span>
+                  )}
+                  <span className="text-xs font-normal text-neutral-600"> / {listing.unit}</span>
+                </p>
+                {isLowStock && (
+                  <span className="text-xs font-medium text-amber-700">
+                    Sisa {stock}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between gap-1.5 text-xs text-neutral-600 pt-2 border-t border-neutral-100">
+            <div className="flex items-center gap-1 min-w-0 flex-1">
+              <span className="truncate font-medium">{listing.seller.businessName}</span>
               {listing.seller.isVerified && (
-                <VerifiedBadge
-                  size="sm"
-                  showLabel={false}
-                  className="shrink-0"
-                />
+                <VerifiedBadge size="sm" showLabel={false} className="shrink-0" />
               )}
             </div>
 
-            {hasRating && (
-              <span
-                className="shrink-0 font-semibold tabular-nums text-foreground"
-                aria-label={copy.rating(ratingText, ratingCount)}
-              >
-                {ratingText}
-                <span className="font-light text-muted-foreground">
-                  {" "}
-                  ({ratingCount})
-                </span>
-              </span>
-            )}
+            {listing.ratingCount && listing.ratingCount >= 3 && listing.ratingAvg ? (
+              <div className="flex items-center gap-1 font-semibold text-neutral-800 shrink-0">
+                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" aria-hidden="true" />
+                <span>{listing.ratingAvg.toFixed(1)}</span>
+                <span className="text-neutral-600 font-normal">({listing.ratingCount})</span>
+              </div>
+            ) : null}
           </div>
         </div>
       </Link>

@@ -10,7 +10,7 @@ export function ProductList({
 }) {
   return (
     <ul
-      className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+      className="columns-2 gap-3.5 md:columns-3 xl:columns-4 [column-fill:balance]"
       aria-label="Daftar produk kopi"
     >
       {items.map((item, index) => (
@@ -20,6 +20,7 @@ export function ProductList({
           priority={index < 4}
           isAd={item.isAd}
           locale={locale}
+          className="mb-3.5 break-inside-avoid"
         />
       ))}
     </ul>

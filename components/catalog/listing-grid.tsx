@@ -20,7 +20,7 @@ interface ListingGridProps {
 
 export function ListingGrid({ listings = [], isLoading = false, isError = false, errorMessage, onRetry, skeletonCount = 8, emptyTitle, emptyDescription, emptyAction, className }: ListingGridProps) {
   if (isError) return <div className="py-8"><ErrorState title="Gagal memuat produk." message={errorMessage} onRetry={onRetry} /></div>;
-  if (isLoading) return <ul className={cn("grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5", className)}>{Array.from({ length: skeletonCount }).map((_, index) => <li key={index}><ListingCardSkeleton /></li>)}</ul>;
+  if (isLoading) return <ul className={cn("columns-2 gap-3.5 md:columns-3 xl:columns-4 [column-fill:balance]", className)}>{Array.from({ length: skeletonCount }).map((_, index) => <li key={index} className="mb-3.5 break-inside-avoid"><ListingCardSkeleton /></li>)}</ul>;
   if (!listings.length) return <div className="py-8"><EmptyState title={emptyTitle || "Tidak ada produk yang cocok."} description={emptyDescription || ""} action={emptyAction} /></div>;
-  return <ul className={cn("grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5", className)}>{listings.map((listing, index) => <ListingCard key={listing.id} listing={listing} priority={index < 4} />)}</ul>;
+  return <ul className={cn("columns-2 gap-3.5 md:columns-3 xl:columns-4 [column-fill:balance]", className)}>{listings.map((listing, index) => <ListingCard key={listing.id} listing={listing} priority={index < 4} className="mb-3.5 break-inside-avoid" />)}</ul>;
 }

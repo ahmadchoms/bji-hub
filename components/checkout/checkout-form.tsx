@@ -41,6 +41,7 @@ import { validateVoucherAction } from "@/actions/voucher.actions";
 import { updateBuyerProfileAction } from "@/actions/auth.actions";
 import { useCart } from "@/lib/cart";
 import { computeTotalWeightGrams } from "@/lib/shipping-weight";
+import { formatB2BTaxNote } from "@/lib/order-notes";
 // [MIDTRANS DORMANT]: import { useSnap } from "@/hooks/use-snap";
 import { cn } from "@/lib/utils";
 
@@ -107,6 +108,9 @@ export function CheckoutForm({
   const [isEditingAddress, setIsEditingAddress] = useState(false);
 
   const [notes, setNotes] = useState("");
+  const [isB2BInvoice, setIsB2BInvoice] = useState(false);
+  const [b2bCompanyName, setB2bCompanyName] = useState("");
+  const [b2bTaxId, setB2bTaxId] = useState("");
 
   const [shippingRates, setShippingRates] = useState<ShippingRate[]>([]);
   const [selectedCourierId, setSelectedCourierId] = useState<string>("");
@@ -296,6 +300,11 @@ export function CheckoutForm({
       return;
     }
 
+    const b2bTaxNote = isB2BInvoice
+      ? formatB2BTaxNote(b2bCompanyName, b2bTaxId)
+      : "";
+    const combinedNotes = [notes.trim(), b2bTaxNote].filter(Boolean).join(" | ");
+
     startTransition(async () => {
       try {
         const res = await createCheckoutOrderAction({
@@ -310,7 +319,7 @@ export function CheckoutForm({
           shippingRateId: selectedCourier.id,
           idempotencyKey: idempotencyKeyRef.current,
           grindSize: grindParam,
-          notes: notes.trim(),
+          notes: combinedNotes,
           voucherCode: appliedVoucher?.code,
           ...(activeItems && activeItems.length > 0
             ? {
@@ -746,6 +755,40 @@ export function CheckoutForm({
             </FormField>
           </div>
 
+          {/* B2B / Faktur Pajak Toggle & Fields */}
+          <div className="pt-2 border-t border-neutral-100 space-y-2.5">
+            <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-semibold text-neutral-800">
+              <input
+                type="checkbox"
+                checked={isB2BInvoice}
+                onChange={(e) => setIsB2BInvoice(e.target.checked)}
+                className="w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+              />
+              <span>Butuh Faktur B2B / Input NPWP Perusahaan?</span>
+            </label>
+
+            {isB2BInvoice && (
+              <div className="p-3 bg-neutral-50 rounded border border-neutral-200 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <FormField label="Nama Perusahaan / Kedai (PT/CV/Usaha)" helperText="Nama badan usaha yang tercetak di invoice">
+                  <Input
+                    value={b2bCompanyName}
+                    onChange={(e) => setB2bCompanyName(e.target.value)}
+                    placeholder="Contoh: PT Kopi Harapan Bangsa"
+                    className="text-xs"
+                  />
+                </FormField>
+                <FormField label="Nomor Pokok Wajib Pajak (NPWP)" helperText="15 atau 16 digit NPWP resmi">
+                  <Input
+                    value={b2bTaxId}
+                    onChange={(e) => setB2bTaxId(e.target.value)}
+                    placeholder="Contoh: 01.234.567.8-901.000"
+                    className="text-xs font-mono"
+                  />
+                </FormField>
+              </div>
+            )}
+          </div>
+
           {/* Modal Dialog: Pilih Alamat Pengiriman Tersimpan */}
           <Dialog open={isAddressModalOpen} onOpenChange={setIsAddressModalOpen}>
             <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
@@ -889,50 +932,71 @@ export function CheckoutForm({
               </p>
             </div>
           ) : (
-            <RadioGroup
-              value={selectedCourierId}
-              onValueChange={setSelectedCourierId}
-              className="grid grid-cols-1 gap-2 pt-1"
-            >
-              {shippingRates.map((rate) => (
-                <label
-                  key={rate.id}
-                  htmlFor={`courier-${rate.id}`}
-                  className={cn(
-                    "flex items-start justify-between border p-3 rounded-sm cursor-pointer transition-colors text-xs coarse:min-h-11",
-                    selectedCourierId === rate.id
-                      ? "border-primary-600 bg-primary-50/40 text-primary-950"
-                      : "border-neutral-300 hover:border-neutral-400 text-neutral-800",
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    <RadioGroupItem
-                      id={`courier-${rate.id}`}
-                      value={rate.id}
-                      className="mt-0.5"
-                    />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold text-sm">
-                          {rate.courierName} — {rate.service}
-                        </p>
-                        {rate.isEstimate && (
-                          <span className="text-xs font-medium px-1.5 py-0.5 rounded-xs bg-amber-100 text-amber-900 border border-amber-200">
-                            Estimasi
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-neutral-600 mt-0.5">
-                        Estimasi Tiba: <strong className="text-neutral-900 font-semibold">{rate.etd}</strong> • {rate.description}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="font-mono tabular-nums font-bold text-sm text-neutral-900 shrink-0 ml-2">
-                    {formatRupiah(rate.cost)}
+            <div className="space-y-3 pt-1">
+              {totalWeightGrams >= 5000 && (
+                <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded text-xs text-emerald-950 flex items-center gap-2">
+                  <Truck className="w-4 h-4 text-emerald-700 shrink-0" />
+                  <span>
+                    Total berat pengiriman <strong>{(totalWeightGrams / 1000).toFixed(1)} kg</strong>. Disarankan menggunakan opsi <strong>Kargo B2B</strong> untuk ongkir lebih ekonomis.
                   </span>
-                </label>
-              ))}
-            </RadioGroup>
+                </div>
+              )}
+              <RadioGroup
+                value={selectedCourierId}
+                onValueChange={setSelectedCourierId}
+                className="grid grid-cols-1 gap-2"
+              >
+                {shippingRates.map((rate) => {
+                  const isCargo =
+                    rate.id === "jnt-cargo" ||
+                    rate.courierCode.includes("cargo") ||
+                    rate.service.toLowerCase().includes("kargo");
+                  return (
+                    <label
+                      key={rate.id}
+                      htmlFor={`courier-${rate.id}`}
+                      className={cn(
+                        "flex items-start justify-between border p-3 rounded-sm cursor-pointer transition-colors text-xs coarse:min-h-11",
+                        selectedCourierId === rate.id
+                          ? "border-primary-600 bg-primary-50/40 text-primary-950"
+                          : "border-neutral-300 hover:border-neutral-400 text-neutral-800",
+                      )}
+                    >
+                      <div className="flex items-start gap-3">
+                        <RadioGroupItem
+                          id={`courier-${rate.id}`}
+                          value={rate.id}
+                          className="mt-0.5"
+                        />
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-semibold text-sm">
+                              {rate.courierName} — {rate.service}
+                            </p>
+                            {isCargo && (
+                              <span className="text-xs font-semibold px-1.5 py-0.5 rounded-xs bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                Rekomendasi B2B
+                              </span>
+                            )}
+                            {rate.isEstimate && (
+                              <span className="text-xs font-medium px-1.5 py-0.5 rounded-xs bg-amber-100 text-amber-900 border border-amber-200">
+                                Estimasi
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-neutral-600 mt-0.5">
+                            Estimasi Tiba: <strong className="text-neutral-900 font-semibold">{rate.etd}</strong> • {rate.description}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="font-mono tabular-nums font-bold text-sm text-neutral-900 shrink-0 ml-2">
+                        {formatRupiah(rate.cost)}
+                      </span>
+                    </label>
+                  );
+                })}
+              </RadioGroup>
+            </div>
           )}
         </div>
       </div>

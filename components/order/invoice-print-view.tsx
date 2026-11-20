@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { Order } from "@/types";
 import { formatRupiah } from "@/components/shared/price-text";
+import { parseB2BTaxInfo } from "@/lib/order-notes";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -100,6 +101,8 @@ export function InvoicePrintView({
   const formattedDate = order.createdAt
     ? format(new Date(order.createdAt), "d MMMM yyyy, HH:mm", { locale: idLocale })
     : "-";
+
+  const b2b = parseB2BTaxInfo(order.notes);
 
   return (
     <div className="min-h-screen bg-neutral-100 print:bg-white text-neutral-900 font-sans pb-12 print:pb-0">
@@ -248,6 +251,11 @@ export function InvoicePrintView({
                 </span>
                 <p className="font-bold text-neutral-900 text-base leading-tight">
                   {order.buyerName}
+                  {b2b.companyName && (
+                    <span className="block text-xs font-semibold text-neutral-700">
+                      {b2b.companyName}
+                    </span>
+                  )}
                 </p>
                 <p className="font-mono text-neutral-800 text-sm font-semibold">{order.buyerPhone}</p>
                 <p className="text-neutral-700 text-xs leading-relaxed pt-0.5">
@@ -304,9 +312,15 @@ export function InvoicePrintView({
                 )}
               </div>
 
-              {order.notes && (
+              {(b2b.cleanNotes || b2b.npwp) && (
                 <p className="text-xs text-neutral-800 italic bg-amber-50 p-2 rounded border border-amber-200">
-                  <span className="font-bold not-italic">Catatan Pengiriman:</span> {order.notes}
+                  <span className="font-bold not-italic">Catatan Pengiriman:</span>{" "}
+                  {b2b.cleanNotes || order.notes}
+                  {b2b.npwp && (
+                    <span className="block font-mono not-italic text-neutral-700 mt-0.5">
+                      NPWP: {b2b.npwp}
+                    </span>
+                  )}
                 </p>
               )}
             </div>
@@ -358,6 +372,14 @@ export function InvoicePrintView({
                   Diterbitkan Untuk:
                 </span>
                 <p className="font-bold text-neutral-900 text-sm">{order.buyerName}</p>
+                {b2b.companyName && (
+                  <p className="font-bold text-neutral-800 text-xs">{b2b.companyName}</p>
+                )}
+                {b2b.npwp && (
+                  <p className="font-mono font-semibold text-neutral-800 text-xs">
+                    NPWP: {b2b.npwp}
+                  </p>
+                )}
                 <p className="text-neutral-600 font-mono text-xs">{order.buyerPhone}</p>
                 <p className="text-neutral-600 text-xs">{order.buyerEmail}</p>
                 <p className="text-neutral-700 text-xs pt-1 leading-relaxed">
@@ -414,9 +436,9 @@ export function InvoicePrintView({
                               Profil Gilingan: <strong>{item.grindSize}</strong>
                             </span>
                           )}
-                          {idx === 0 && order.notes && (
+                          {idx === 0 && b2b.cleanNotes && (
                             <span className="text-xs text-neutral-600 italic block mt-1">
-                              Catatan: {order.notes}
+                              Catatan: {b2b.cleanNotes}
                             </span>
                           )}
                         </td>
@@ -437,9 +459,9 @@ export function InvoicePrintView({
                         <span className="font-bold text-neutral-900 text-sm block">
                           {order.listingTitle || `Produk ID #${order.listingId}`}
                         </span>
-                        {order.notes && (
+                        {b2b.cleanNotes && (
                           <span className="text-xs text-neutral-600 italic block mt-1">
-                            Catatan: {order.notes}
+                            Catatan: {b2b.cleanNotes}
                           </span>
                         )}
                       </td>

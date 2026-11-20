@@ -180,22 +180,22 @@ Berikut adalah daftar prioritas perbaikan yang dapat dieksekusi secara bertahap:
 
 ```mermaid
 graph TD
-    subgraph Fase 1: Quick Wins (1-2 Hari)
-        F1A["Standardisasi Tipografi (Kurangi font-display & font-mono di card/price)"]
-        F1B["Label Panduan Alat Seduh pada Pilihan Gilingan Kopi"]
-        F1C["Tombol Reset Filter yang Jelas pada Sidebar Katalog"]
+    subgraph Fase 1: Quick Wins (Selesai)
+        F1A["Standardisasi Tipografi (Plus Jakarta Sans & Tabular Nums) - Selesai"]
+        F1B["Label Panduan Alat Seduh pada Pilihan Gilingan Kopi - Selesai"]
+        F1C["Tombol Reset Filter yang Jelas pada Sidebar Katalog - Selesai"]
     end
 
-    subgraph Fase 2: Edukasi Pemula (3-5 Hari)
-        F2A["Glosarium / Tooltips Istilah Kopi (Proses, Cupping, Tasting Notes)"]
-        F2B["Shortcut 'Baru di Kopi' di Banner Utama untuk Buka Guide Wizard"]
-        F2C["Badge Estimasi Waktu Seduh Terbaik (Resting Period Kopi)"]
+    subgraph Fase 2: Edukasi & Pengalaman Transaksi (Selesai)
+        F2A["Glosarium / Tooltips Istilah Kopi & Cupping - Selesai"]
+        F2B["Katalog Desktop 5 Kolom & Verified Badge Ringkas - Selesai"]
+        F2C["Checkout Keranjang Per-Toko Pola Tokopedia & Skor Rasa Opsional - Selesai"]
     end
 
-    subgraph Fase 3: Peningkatan B2B & Skalabilitas (Minggu Depan)
-        F3A["Opsi Logistik Kargo untuk Pesanan Green Beans > 20kg"]
-        F3B["Input NPWP Perusahaan untuk Download Faktur Resmi"]
-        F3C["Parent-Child Order (Checkout beberapa toko dalam 1 invoice gabungan)"]
+    subgraph Fase 3: Logistik Kargo & Faktur B2B (Selesai - Ramping)
+        F3A["Badge Rekomendasi Kargo B2B & Alert Paket Grosir >= 5kg - Selesai"]
+        F3B["Input NPWP / Badan Usaha di Checkout & Cetak Faktur Resmi - Selesai"]
+        F3C["Parent-Child Order: Dilewati (YAGNI, pola per-toko Tokopedia sudah optimal)"]
     end
 
     Fase 1 --> Fase 2 --> Fase 3

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Order } from "@/types";
 import { formatRupiah } from "@/components/shared/price-text";
+import { parseB2BTaxInfo } from "@/lib/order-notes";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -86,6 +87,8 @@ export function OrderPrintModal({
         locale: idLocale,
       })
     : "-";
+
+  const b2b = parseB2BTaxInfo(order.notes);
 
   const handlePrint = () => {
     // Open clean print page in new tab and auto-trigger window.print()
@@ -206,6 +209,11 @@ export function OrderPrintModal({
                   </span>
                   <p className="font-bold text-neutral-900 text-sm leading-tight">
                     {order.buyerName}
+                    {b2b.companyName && (
+                      <span className="block text-xs font-semibold text-neutral-700">
+                        {b2b.companyName}
+                      </span>
+                    )}
                   </p>
                   <p className="font-mono text-neutral-700 text-xs">
                     {order.buyerPhone}
@@ -265,10 +273,15 @@ export function OrderPrintModal({
                   )}
                 </div>
 
-                {order.notes && (
+                {(b2b.cleanNotes || b2b.npwp) && (
                   <p className="text-xs text-neutral-700 italic bg-amber-50/60 p-1.5 rounded border border-amber-200">
                     <span className="font-bold not-italic">Catatan:</span>{" "}
-                    {order.notes}
+                    {b2b.cleanNotes || order.notes}
+                    {b2b.npwp && (
+                      <span className="block font-mono not-italic text-neutral-700 mt-0.5">
+                        NPWP: {b2b.npwp}
+                      </span>
+                    )}
                   </p>
                 )}
               </div>
@@ -325,6 +338,14 @@ export function OrderPrintModal({
                   <p className="font-bold text-neutral-900">
                     {order.buyerName}
                   </p>
+                  {b2b.companyName && (
+                    <p className="font-bold text-neutral-800 text-xs">{b2b.companyName}</p>
+                  )}
+                  {b2b.npwp && (
+                    <p className="font-mono font-semibold text-neutral-800 text-xs">
+                      NPWP: {b2b.npwp}
+                    </p>
+                  )}
                   <p className="text-neutral-600 font-mono text-xs">
                     {order.buyerPhone}
                   </p>
@@ -378,9 +399,9 @@ export function OrderPrintModal({
                                 Gilingan: {item.grindSize}
                               </span>
                             )}
-                            {idx === 0 && order.notes && (
+                            {idx === 0 && b2b.cleanNotes && (
                               <span className="text-xs text-neutral-600 italic block mt-0.5">
-                                Catatan: {order.notes}
+                                Catatan: {b2b.cleanNotes}
                               </span>
                             )}
                           </td>
@@ -401,9 +422,9 @@ export function OrderPrintModal({
                           <span className="font-medium text-neutral-900 block">
                             {order.listingTitle || `Produk #${order.listingId}`}
                           </span>
-                          {order.notes && (
+                          {b2b.cleanNotes && (
                             <span className="text-xs text-neutral-600 italic block mt-0.5">
-                              Catatan: {order.notes}
+                              Catatan: {b2b.cleanNotes}
                             </span>
                           )}
                         </td>

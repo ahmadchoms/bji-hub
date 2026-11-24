@@ -11,7 +11,6 @@ import {
   Plus,
   ArrowLeft,
   Loader2,
-  Lock,
   MapPin,
   ExternalLink,
   Edit2,
@@ -1170,10 +1169,7 @@ export function CheckoutForm({
                 <span>Pilih Kurir Terlebih Dahulu</span>
               </>
             ) : (
-              <>
-                <Lock className="w-4 h-4" />
-                <span>Bayar Sekarang ({formatRupiah(totalAmount)})</span>
-              </>
+              <span>Bayar Sekarang ({formatRupiah(totalAmount)})</span>
             )}
           </Button>
         </div>
